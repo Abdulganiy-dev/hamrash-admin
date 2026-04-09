@@ -2,7 +2,6 @@ import 'package:clerk_auth/clerk_auth.dart' as clerk_auth;
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:dio/dio.dart';
 
-import '../../main.dart';
 import '../../resources/utils/view_util.dart';
 import '../../services/error_logger_service.dart';
 

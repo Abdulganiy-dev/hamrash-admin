@@ -1,8 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hamrash_admin/api/api_setup/api_client.dart';
+import 'package:hamrash_admin/api/services/supabase_services/admin_profile_service.dart';
+import 'package:hamrash_admin/api/services/supabase_services/role_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/state_service.dart';
+import 'package:hamrash_admin/database/admin_profile_realm_service.dart';
 import 'package:hamrash_admin/database/realm_service.dart';
+import 'package:hamrash_admin/database/role_realm_service.dart';
 import 'package:hamrash_admin/database/state_realm_service.dart';
 import 'package:hamrash_admin/env_config/flavor_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -47,7 +51,23 @@ void setupLocator() {
     () => StateService(stateRealmService: locator<StateRealmService>()),
   );
 
+  locator.registerLazySingleton<RoleRealmService>(
+    () => RoleRealmService(locator<RealmService>()),
+  );
 
+  locator.registerLazySingleton<RoleService>(
+    () => RoleService(roleRealmService: locator<RoleRealmService>()),
+  );
+
+  locator.registerLazySingleton<AdminProfileRealmService>(
+    () => AdminProfileRealmService(locator<RealmService>()),
+  );
+
+  locator.registerLazySingleton<AdminProfileService>(
+    () => AdminProfileService(
+      adminProfileRealmService: locator<AdminProfileRealmService>(),
+    ),
+  );
 
   // // Register Cloudflare services as singletons
   // locator.registerLazySingleton<SecretsService>(() => SecretsService());
