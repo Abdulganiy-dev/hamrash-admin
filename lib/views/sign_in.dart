@@ -32,10 +32,9 @@ class _SignInState extends State<SignIn> {
         title: viewModel.title,
         busy: viewModel.busy,
         body: ScaffoldColumn(
-          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Spacer(),
             SizedBox(
               width: 300,
               child: AppButton(

@@ -165,7 +165,7 @@ class DefaultScaffold extends StatelessWidget {
 
         child: Stack(
           children: [
-            body,
+            SizedBox.expand(child: body),
 
             Positioned.fill(
               child: Container(
