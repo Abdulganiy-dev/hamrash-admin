@@ -50,7 +50,28 @@ class CreateAccountViewModel extends BaseViewModel {
   CreateAccountStep _currentStep = CreateAccountStep.name;
   CreateAccountStep get currentStep => _currentStep;
 
+  /// When true, field validators return null so error UI clears; reset to false on Continue.
+  bool suppressValidationMessages = false;
+
   int get currentPageIndex => _currentStep.index;
+
+  /// Clears red error state until the user taps Continue again (validators still run on Continue).
+  void dismissValidationMessages() {
+    suppressValidationMessages = true;
+    notifyListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      switch (_currentStep) {
+        case CreateAccountStep.name:
+          formKeyName.currentState?.validate();
+          break;
+        case CreateAccountStep.details:
+          formKeyDetails.currentState?.validate();
+          break;
+        case CreateAccountStep.profileImage:
+          break;
+      }
+    });
+  }
 
   void init(BuildContext context) {
     this.context = context;
@@ -76,6 +97,7 @@ class CreateAccountViewModel extends BaseViewModel {
   }
 
   Future<void> goNext(BuildContext context) async {
+    suppressValidationMessages = false;
     switch (_currentStep) {
       case CreateAccountStep.name:
         if (!(formKeyName.currentState?.validate() ?? false)) return;

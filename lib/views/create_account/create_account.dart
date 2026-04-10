@@ -58,7 +58,9 @@ class _CreateAccountState extends State<CreateAccount> {
                   SingleChildScrollView(
                     child: Form(
                       key: model.formKeyName,
+                      autovalidateMode: AutovalidateMode.disabled,
                       child: CreateAccountStepName(
+                        viewModel: model,
                         fullNameController: model.fullNameController,
                         emailController: model.emailController,
                         genderDisplayController: model.genderDisplayController,
@@ -70,7 +72,9 @@ class _CreateAccountState extends State<CreateAccount> {
                   SingleChildScrollView(
                     child: Form(
                       key: model.formKeyDetails,
+                      autovalidateMode: AutovalidateMode.disabled,
                       child: CreateAccountStepDetails(
+                        viewModel: model,
                         stateDisplayController: model.stateDisplayController,
                         roleDisplayController: model.roleDisplayController,
                         locationController: model.locationController,
@@ -124,3 +128,5 @@ class SnappyPagePhysics extends PageScrollPhysics {
     return SnappyPagePhysics(parent: buildParent(ancestor));
   }
 }
+
+

@@ -78,6 +78,9 @@ class AppTextField extends StatefulWidget {
   /// Callback when field value changes
   final void Function(String)? onChanged;
 
+  /// Called when the field gains focus (e.g. to clear submit-time error UI).
+  final VoidCallback? onFocus;
+
   /// Whether to show the character counter
   final bool showCounter;
 
@@ -136,6 +139,7 @@ class AppTextField extends StatefulWidget {
     this.textInputAction,
     this.onSubmitted,
     this.onChanged,
+    this.onFocus,
     this.showCounter = false,
     this.textStyle,
     this.labelStyle,
@@ -159,8 +163,7 @@ class _AppTextFieldState extends State<AppTextField> {
   late FocusNode _focusNode;
   late TextEditingController _controller;
   bool _isFocused = false;
-  bool _hasError = false;
-  String? _errorMessage;
+  bool _hadFocus = false;
 
   @override
   void initState() {
@@ -170,51 +173,29 @@ class _AppTextFieldState extends State<AppTextField> {
 
     // Listen to focus changes
     _focusNode.addListener(_onFocusChange);
-    _controller.addListener(_onTextChange);
-
-    // Validate initial value if validator exists
-    if (widget.validator != null && _controller.text.isNotEmpty) {
-      _validateField();
-    }
   }
 
   @override
   void didUpdateWidget(AppTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.controller != oldWidget.controller) {
-      _controller.removeListener(_onTextChange);
       _controller = widget.controller ?? _controller;
-      _controller.addListener(_onTextChange);
     }
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode.removeListener(_onFocusChange);
       _focusNode = widget.focusNode ?? _focusNode;
       _focusNode.addListener(_onFocusChange);
     }
-    if (widget.errorText != oldWidget.errorText) {
-      _hasError = widget.errorText != null;
-      _errorMessage = widget.errorText;
-    }
   }
 
   void _onFocusChange() {
-    setState(() {
-      _isFocused = _focusNode.hasFocus;
-    });
-  }
-
-  void _onTextChange() {
-    if (widget.validator != null) {
-      _validateField();
+    final hasFocus = _focusNode.hasFocus;
+    if (hasFocus && !_hadFocus) {
+      widget.onFocus?.call();
     }
-    widget.onChanged?.call(_controller.text);
-  }
-
-  void _validateField() {
-    final error = widget.validator?.call(_controller.text);
+    _hadFocus = hasFocus;
     setState(() {
-      _hasError = error != null;
-      _errorMessage = error;
+      _isFocused = hasFocus;
     });
   }
 
@@ -227,7 +208,6 @@ class _AppTextFieldState extends State<AppTextField> {
       _controller.dispose();
     } else {
       _focusNode.removeListener(_onFocusChange);
-      _controller.removeListener(_onTextChange);
     }
     super.dispose();
   }
@@ -241,7 +221,7 @@ class _AppTextFieldState extends State<AppTextField> {
           : DarkColors.strokeColourStrokeSoft;
     }
 
-    if (_hasError || widget.errorText != null) {
+    if (widget.errorText != null) {
       return isLight
           ? LightColors.errorErrorDefault
           : DarkColors.errorErrorDefault;
@@ -283,7 +263,7 @@ class _AppTextFieldState extends State<AppTextField> {
           : DarkColors.textTextDisabled;
     }
 
-    if (_hasError || widget.errorText != null) {
+    if (widget.errorText != null) {
       return isLight
           ? LightColors.errorErrorDefault
           : DarkColors.errorErrorDefault;
@@ -304,7 +284,7 @@ class _AppTextFieldState extends State<AppTextField> {
     final borderColor = _getBorderColor(context);
     final textColor = _getTextColor(context);
     final labelColor = _getLabelColor(context);
-    final errorMessage = widget.errorText ?? _errorMessage;
+    final errorMessage = widget.errorText;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,12 +318,8 @@ class _AppTextFieldState extends State<AppTextField> {
             obscureText: widget.obscureText,
             textInputAction: widget.textInputAction,
             onFieldSubmitted: widget.onSubmitted,
-            onChanged: (value) {
-              if (widget.validator != null) {
-                _validateField();
-              }
-              widget.onChanged?.call(value);
-            },
+            autovalidateMode: AutovalidateMode.disabled,
+            onChanged: widget.onChanged,
             validator: widget.validator,
             enabled: widget.enabled,
             autofillHints: widget.autofillHints,

@@ -161,7 +161,7 @@ class _AppButtonState extends State<AppButton> {
   /// Target scale; [SingleMotionBuilder] animates toward this when it changes.
   double _scaleTarget = 1.0;
 
-  static const double _pressedScale = 0.9;
+  static const double _pressedScale = 0.95;
 
   static const Motion _scaleMotion = Motion.snappySpring();
 
