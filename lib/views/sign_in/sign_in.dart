@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-
-import 'package:flutter/material.dart';
 import 'package:hamrash_admin/assets_util.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
+import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/viewModel/sign_in_view_model.dart';
 import 'package:hamrash_admin/widgets/app_button.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
 
 class SignIn extends StatefulWidget {
@@ -35,36 +35,37 @@ class _SignInState extends State<SignIn> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            Spacer(),
             SizedBox(
               width: 300,
-              child: AppButton(
-                type: AppButtonType.primary,
-                backgroundColorType: AppButtonBackgroundColor.primary,
-
-                textStyle: TextStyle(color: Colors.white),
+              child: AppSecondaryButton(
+                width: 300,
                 isLoading: viewModel.busy,
                 onPressed: viewModel.busy ? null : viewModel.signInWithGoogle,
-                text: viewModel.busy ? 'Signing in...' : 'Continue with Google',
-                customLabel: viewModel.busy
-                    ? null
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Image.asset(
-                            AssetsUtil.googleLogo,
-                            width: 20,
-                            height: 20,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(Icons.login, size: 20);
-                            },
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Continue with Google',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      AssetsUtil.googleLogo,
+                      width: 20,
+                      height: 20,
+                      errorBuilder: (context, error, stackTrace) {
+                        return HugeIcon(
+                          icon: HugeIcons.strokeRoundedLogout03,
+                          size: 20,
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    AppText(
+                     viewModel.busy ? 'Signing in...' : 'Continue with Google',
+                      colorType: AppTextColor.textInverted,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ],
+                ),
               ),
             ),
             SizedBox(
@@ -73,9 +74,9 @@ class _SignInState extends State<SignIn> {
                 'By joining, you agree to our Terms of Service and Privacy Policy.',
                 colorType: AppTextColor.textMute,
                 fontSize: 13,
-                fontWeight: FontWeight.normal,
+                fontWeight: FontWeight.w600,
                 textAlign: TextAlign.center,
-              ).padding(top: 16),
+              ).padding(top: 16, bottom: AppSpacing.lg),
             ),
           ],
         ),

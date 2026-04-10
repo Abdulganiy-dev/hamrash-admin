@@ -70,6 +70,8 @@ dependencies:
   package_info_plus: ^9.0.0
   path: ^1.9.1
   hugeicons: ^1.1.0
+  stupid_simple_sheet: ^0.9.1+1
+  motor: ^1.1.0
 
 dev_dependencies:
   flutter_test:

@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/helpers/haptic_helper.dart';
 import 'package:hamrash_admin/resources/app_colors.dart';
+import 'package:motor/motor.dart';
 
 
 /// Enum for button types
-enum AppButtonType { primary, secondary, outline, text, icon }
+///
+/// [secondary] — light surface, subtle border, dark label (e.g. social sign-in).
+/// [primary] — solid brand fill, inverted label.
+/// [tertiary] — soft brand-tinted fill, brand-colored label.
+enum AppButtonType { primary, secondary, tertiary, outline, text, icon }
 
 /// Color type enum for AppButton background
 enum AppButtonBackgroundColor {
@@ -150,6 +155,9 @@ class AppButton extends StatefulWidget {
   /// Loading indicator color (defaults to foreground color)
   final Color? loadingIndicatorColor;
 
+  /// Optional label widget; if both [child] and [customLabel] are set, [child] wins.
+  final Widget? child;
+
   const AppButton({
     super.key,
     required this.type,
@@ -175,15 +183,16 @@ class AppButton extends StatefulWidget {
     this.customLabel,
     this.loadingIndicatorSize,
     this.loadingIndicatorColor,
+    this.child,
   }) : assert(
          !haveGradient || gradient != null,
          'When haveGradient is true, a LinearGradient must be provided.',
        ),
        assert(
          type == AppButtonType.icon
-             ? (icon != null || customLabel != null)
-             : (text != null || customLabel != null),
-         'Text or customLabel is required for non-icon buttons, icon or customLabel is required for icon button',
+             ? (icon != null || customLabel != null || child != null)
+             : (text != null || customLabel != null || child != null),
+         'Text, child, or customLabel is required for non-icon buttons; icon, child, or customLabel for icon button',
        ),
        assert(
          backgroundColor == null || backgroundColorType == null,
@@ -202,30 +211,23 @@ class AppButton extends StatefulWidget {
   State<AppButton> createState() => _AppButtonState();
 }
 
-class _AppButtonState extends State<AppButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _scaleController;
-  late Animation<double> _scaleAnimation;
+class _AppButtonState extends State<AppButton> {
+  /// Target scale; [SingleMotionBuilder] animates toward this when it changes.
+  double _scaleTarget = 1.0;
 
   // Scale factor when pressed (0.95 = 5% smaller)
   static const double _pressedScale = 0.95;
 
-  @override
-  void initState() {
-    super.initState();
-    _scaleController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: _pressedScale).animate(
-      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
-    );
-  }
+  static const Motion _scaleMotion = Motion.snappySpring();
 
   @override
-  void dispose() {
-    _scaleController.dispose();
-    super.dispose();
+  void didUpdateWidget(AppButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final blocked = widget.isDisabled || widget.isLoading;
+    final wasBlocked = oldWidget.isDisabled || oldWidget.isLoading;
+    if (blocked && !wasBlocked && _scaleTarget != 1.0) {
+      setState(() => _scaleTarget = 1.0);
+    }
   }
 
   /// Get background color based on colorType or explicit color
@@ -291,7 +293,9 @@ class _AppButtonState extends State<AppButton>
       case AppButtonType.primary:
         return isLight ? LightColors.primaryPrimaryDefault : DarkColors.primaryPrimaryDefault;
       case AppButtonType.secondary:
-        return isLight ? LightColors.extraExtraDefault : DarkColors.extraExtraDefault;
+        return isLight ? LightColors.backgroundSurfaceMute : DarkColors.backgroundSurfaceMute;
+      case AppButtonType.tertiary:
+        return isLight ? LightColors.primaryPrimaryMute : DarkColors.primaryPrimaryMute;
       case AppButtonType.outline:
       case AppButtonType.text:
       case AppButtonType.icon:
@@ -370,8 +374,11 @@ class _AppButtonState extends State<AppButton>
 
     switch (widget.type) {
       case AppButtonType.primary:
-      case AppButtonType.secondary:
         return isLight ? LightColors.primaryOncolorWhite : DarkColors.primaryOncolorBlack;
+      case AppButtonType.secondary:
+        return isLight ? LightColors.textTextPrimary : DarkColors.textTextPrimary;
+      case AppButtonType.tertiary:
+        return isLight ? LightColors.textTextBrand : DarkColors.textTextBrand;
       case AppButtonType.outline:
       case AppButtonType.text:
         return isLight ? LightColors.primaryPrimaryDefault : DarkColors.primaryPrimaryDefault;
@@ -415,6 +422,10 @@ class _AppButtonState extends State<AppButton>
       return isLight ? LightColors.strokeColourStrokeSoft : DarkColors.strokeColourStrokeSoft;
     }
 
+    if (widget.type == AppButtonType.secondary) {
+      return isLight ? LightColors.strokeColourStrokeSubtle : DarkColors.strokeColourStrokeSubtle;
+    }
+
     return isLight ? LightColors.strokeColourStrokePrimary : DarkColors.strokeColourStrokePrimary;
   }
 
@@ -431,18 +442,18 @@ class _AppButtonState extends State<AppButton>
   /// Handle press down - scale down
   void handlePressDown() {
     if (!widget.isDisabled && !widget.isLoading) {
-      _scaleController.forward();
+      setState(() => _scaleTarget = _pressedScale);
     }
   }
 
   /// Handle press up - scale back to normal
   void handlePressUp() {
-    _scaleController.reverse();
+    setState(() => _scaleTarget = 1.0);
   }
 
   /// Handle press cancel - scale back to normal
   void handlePressCancel() {
-    _scaleController.reverse();
+    setState(() => _scaleTarget = 1.0);
   }
 
   /// Get default padding based on button type
@@ -504,21 +515,20 @@ class _AppButtonState extends State<AppButton>
       ), // Very large radius for capsule
       side: widget.type == AppButtonType.outline
           ? BorderSide(color: borderColor, width: 1.5)
+          : widget.type == AppButtonType.secondary
+          ? BorderSide(color: borderColor, width: 1)
           : BorderSide.none,
     );
 
     Widget buttonContent;
 
-    // If custom label is provided, use it
-    if (widget.customLabel != null) {
-      buttonContent = widget.customLabel!;
-    }
-    // If loading, show loading indicator
-    else if (widget.isLoading) {
+    if (widget.isLoading) {
       buttonContent = buildLoadingIndicator(context, fgColor);
-    }
-    // Otherwise, build default content
-    else {
+    } else if (widget.child != null) {
+      buttonContent = widget.child!;
+    } else if (widget.customLabel != null) {
+      buttonContent = widget.customLabel!;
+    } else {
       switch (widget.type) {
         case AppButtonType.icon:
           buttonContent = Icon(
@@ -557,6 +567,7 @@ class _AppButtonState extends State<AppButton>
     switch (widget.type) {
       case AppButtonType.primary:
       case AppButtonType.secondary:
+      case AppButtonType.tertiary:
         button = ElevatedButton(
           onPressed: isEnabled
               ? () {}
@@ -666,18 +677,215 @@ class _AppButtonState extends State<AppButton>
             }
           : null,
       onTapCancel: isEnabled ? handlePressCancel : null,
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) {
+      child: SingleMotionBuilder(
+        motion: _scaleMotion,
+        value: _scaleTarget,
+        builder: (context, scale, child) {
           return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: IgnorePointer(
-              ignoring: true, // Prevent button from consuming taps
-              child: button,
-            ),
+            scale: scale,
+            child: child,
           );
         },
+        child: IgnorePointer(
+          ignoring: true, // Prevent button from consuming taps
+          child: button,
+        ),
       ),
+    );
+  }
+}
+
+/// Primary call-to-action — solid brand fill; use [child] for label (e.g. bold white [Text]).
+class AppPrimaryButton extends StatelessWidget {
+  const AppPrimaryButton({
+    super.key,
+    required this.child,
+    this.onPressed,
+    this.isDisabled = false,
+    this.isLoading = false,
+    this.width,
+    this.height,
+    this.padding,
+    this.enableHaptic = true,
+    this.haveGradient = false,
+    this.gradient,
+    this.loadingIndicatorSize,
+    this.loadingIndicatorColor,
+    this.textStyle,
+    this.backgroundColor,
+    this.backgroundColorType,
+    this.foregroundColor,
+    this.foregroundColorType,
+  });
+
+  final Widget child;
+  final VoidCallback? onPressed;
+  final bool isDisabled;
+  final bool isLoading;
+  final double? width;
+  final double? height;
+  final EdgeInsetsGeometry? padding;
+  final bool enableHaptic;
+  final bool haveGradient;
+  final LinearGradient? gradient;
+  final double? loadingIndicatorSize;
+  final Color? loadingIndicatorColor;
+  final TextStyle? textStyle;
+  final Color? backgroundColor;
+  final AppButtonBackgroundColor? backgroundColorType;
+  final Color? foregroundColor;
+  final AppButtonForegroundColor? foregroundColorType;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppButton(
+      type: AppButtonType.primary,
+      text: '',
+      onPressed: onPressed,
+      isDisabled: isDisabled,
+      isLoading: isLoading,
+      width: width,
+      height: height ?? 52,
+      padding: padding,
+      enableHaptic: enableHaptic,
+      haveGradient: haveGradient,
+      gradient: gradient,
+      loadingIndicatorSize: loadingIndicatorSize,
+      loadingIndicatorColor: loadingIndicatorColor,
+      textStyle: textStyle,
+      backgroundColor: backgroundColor,
+      backgroundColorType: backgroundColorType,
+      foregroundColor: foregroundColor,
+      foregroundColorType: foregroundColorType,
+      child: child,
+    );
+  }
+}
+
+/// Secondary action — light surface, subtle border; use [child] for icon + text rows (e.g. Google).
+class AppSecondaryButton extends StatelessWidget {
+  const AppSecondaryButton({
+    super.key,
+    required this.child,
+    this.onPressed,
+    this.isDisabled = false,
+    this.isLoading = false,
+    this.width,
+    this.height,
+    this.padding,
+    this.enableHaptic = true,
+    this.loadingIndicatorSize,
+    this.loadingIndicatorColor,
+    this.textStyle,
+    this.backgroundColor,
+    this.backgroundColorType,
+    this.foregroundColor,
+    this.foregroundColorType,
+    this.borderColor,
+    this.borderColorType,
+  });
+
+  final Widget child;
+  final VoidCallback? onPressed;
+  final bool isDisabled;
+  final bool isLoading;
+  final double? width;
+  final double? height;
+  final EdgeInsetsGeometry? padding;
+  final bool enableHaptic;
+  final double? loadingIndicatorSize;
+  final Color? loadingIndicatorColor;
+  final TextStyle? textStyle;
+  final Color? backgroundColor;
+  final AppButtonBackgroundColor? backgroundColorType;
+  final Color? foregroundColor;
+  final AppButtonForegroundColor? foregroundColorType;
+  final Color? borderColor;
+  final AppButtonBorderColor? borderColorType;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppButton(
+      type: AppButtonType.secondary,
+      text: '',
+      onPressed: onPressed,
+      isDisabled: isDisabled,
+      isLoading: isLoading,
+      width: width,
+      height: height ?? 52,
+      padding: padding,
+      enableHaptic: enableHaptic,
+      loadingIndicatorSize: loadingIndicatorSize,
+      loadingIndicatorColor: loadingIndicatorColor,
+      textStyle: textStyle,
+      backgroundColor: backgroundColor,
+      backgroundColorType: backgroundColorType,
+      foregroundColor: foregroundColor,
+      foregroundColorType: foregroundColorType,
+      borderColor: borderColor,
+      borderColorType: borderColorType,
+      child: child,
+    );
+  }
+}
+
+/// Tertiary action — soft brand-tinted fill, brand text (e.g. “I already have an account”).
+class AppTertiaryButton extends StatelessWidget {
+  const AppTertiaryButton({
+    super.key,
+    required this.child,
+    this.onPressed,
+    this.isDisabled = false,
+    this.isLoading = false,
+    this.width,
+    this.height,
+    this.padding,
+    this.enableHaptic = true,
+    this.loadingIndicatorSize,
+    this.loadingIndicatorColor,
+    this.textStyle,
+    this.backgroundColor,
+    this.backgroundColorType,
+    this.foregroundColor,
+    this.foregroundColorType,
+  });
+
+  final Widget child;
+  final VoidCallback? onPressed;
+  final bool isDisabled;
+  final bool isLoading;
+  final double? width;
+  final double? height;
+  final EdgeInsetsGeometry? padding;
+  final bool enableHaptic;
+  final double? loadingIndicatorSize;
+  final Color? loadingIndicatorColor;
+  final TextStyle? textStyle;
+  final Color? backgroundColor;
+  final AppButtonBackgroundColor? backgroundColorType;
+  final Color? foregroundColor;
+  final AppButtonForegroundColor? foregroundColorType;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppButton(
+      type: AppButtonType.tertiary,
+      text: '',
+      onPressed: onPressed,
+      isDisabled: isDisabled,
+      isLoading: isLoading,
+      width: width,
+      height: height ?? 52,
+      padding: padding,
+      enableHaptic: enableHaptic,
+      loadingIndicatorSize: loadingIndicatorSize,
+      loadingIndicatorColor: loadingIndicatorColor,
+      textStyle: textStyle,
+      backgroundColor: backgroundColor,
+      backgroundColorType: backgroundColorType,
+      foregroundColor: foregroundColor,
+      foregroundColorType: foregroundColorType,
+      child: child,
     );
   }
 }

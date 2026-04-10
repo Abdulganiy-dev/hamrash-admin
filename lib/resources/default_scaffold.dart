@@ -1,9 +1,10 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/helpers/haptic_helper.dart';
+import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 /// A modern, premium default scaffold widget with customizable app bar
 /// and optional back navigation button.
@@ -103,6 +104,11 @@ class DefaultScaffold extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final isLightMode = theme.brightness == Brightness.light;
+    final Color appBarBackgroundColor = isLightMode
+        ? LightColors.backgroundSurfacePrimaryBG
+        : DarkColors.backgroundSurfacePrimaryBG;
+
     // Determine if we should show the back button
     final shouldShowBackButton =
         showBackButton &&
@@ -114,10 +120,16 @@ class DefaultScaffold extends StatelessWidget {
     if (leading != null) {
       leadingWidget = leading;
     } else if (shouldShowBackButton) {
-      leadingWidget = IconButton(
-        icon: const Icon(CupertinoIcons.chevron_left),
-        onPressed: onBackPressed ?? () => _defaultPop(context),
-        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+     leadingWidget = GestureDetector(
+        onTap: onBackPressed ?? () => _defaultPop(context),
+        child: HugeIcon(
+          icon: HugeIcons.strokeRoundedArrowLeft01,
+          size: 24.0,
+          color: isLightMode
+              ? LightColors.textTextInverted
+              : DarkColors.textTextInverted,
+          strokeWidth: 1.5,
+        ),
       );
     }
 
@@ -128,18 +140,15 @@ class DefaultScaffold extends StatelessWidget {
         leading != null ||
         actions != null;
 
-
-
     return Scaffold(
       backgroundColor: backgroundColor ?? colorScheme.surface,
       extendBodyBehindAppBar: extendBodyBehindAppBar,
       appBar: hasAppBar
           ? AppBar(
               elevation: 0,
-              scrolledUnderElevation: 0, 
+              scrolledUnderElevation: 0,
               backgroundColor:
-                  appBarBackgroundColor ??
-                  colorScheme.surface, // Match scaffold background
+                  appBarBackgroundColor, // Match scaffold background
               surfaceTintColor: Colors.transparent, // Remove tint effect
               leading: leadingWidget,
               automaticallyImplyLeading:
@@ -161,7 +170,7 @@ class DefaultScaffold extends StatelessWidget {
           : null,
       body: SafeArea(
         bottom: false,
-          top: showSafeAreaTop,
+        top: showSafeAreaTop,
 
         child: Stack(
           children: [
