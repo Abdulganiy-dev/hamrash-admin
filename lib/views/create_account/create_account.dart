@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/viewModel/create_account_view_model.dart';
+import 'package:hamrash_admin/widgets/step_indicator.dart';
 import 'package:stacked/stacked.dart';
 
 
@@ -27,11 +28,13 @@ class _CreateAccountState extends State<CreateAccount> {
         viewModel.init(context);
       },
       builder: (context, model, _) => DefaultScaffold(
-          title: "",
+          title:null,
+          showBackButton: true,
+          onBackPressed: () => Navigator.of(context).pop(),
           busy: viewModel.busy,
           body: ScaffoldColumn(
             children: [
-              
+              CreateAccountStepIndicator(currentStep: model.currentStep),
             ],
           )),
     );

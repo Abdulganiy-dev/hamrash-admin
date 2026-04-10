@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/helpers/haptic_helper.dart';
 import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
+import 'package:hamrash_admin/widgets/app_button.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
+import 'package:hamrash_admin/widgets/button/app_button.dart';
+import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 /// A modern, premium default scaffold widget with customizable app bar
@@ -120,20 +123,19 @@ class DefaultScaffold extends StatelessWidget {
     if (leading != null) {
       leadingWidget = leading;
     } else if (shouldShowBackButton) {
-     leadingWidget = GestureDetector(
-        onTap: onBackPressed ?? () => _defaultPop(context),
-        child: HugeIcon(
-          icon: HugeIcons.strokeRoundedArrowLeft01,
-          size: 24.0,
-          color: isLightMode
-              ? LightColors.textTextInverted
-              : DarkColors.textTextInverted,
-          strokeWidth: 1.5,
-        ),
+      final backIconColor = isLightMode
+          ? LightColors.textTextInverted
+          : DarkColors.textTextInverted;
+      leadingWidget = AppHugeIconButton(
+        hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
+        hugeIconStrokeWidth: 2,
+        hugeIconRasterSize: 24,
+        iconSize: 35,
+        foregroundColor: backIconColor,
+        onPressed: onBackPressed ?? () => _defaultPop(context),
       );
     }
-
-    // Determine if app bar exists
+    
     final hasAppBar =
         title != null ||
         shouldShowBackButton ||
