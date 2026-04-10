@@ -129,8 +129,7 @@ class DefaultScaffold extends StatelessWidget {
       leadingWidget = AppHugeIconButton(
         hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
         hugeIconStrokeWidth: 2,
-        hugeIconRasterSize: 24,
-        iconSize: 35,
+        hugeIconRasterSize: 35,
         foregroundColor: backIconColor,
         onPressed: onBackPressed ?? () => _defaultPop(context),
       );

@@ -3,6 +3,7 @@ import 'package:hamrash_admin/helpers/haptic_helper.dart';
 import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/widgets/button/app_button_huge_icon.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:motor/motor.dart';
 
 /// A customizable button widget with capsule style and haptic feedback
@@ -133,9 +134,9 @@ class AppButton extends StatefulWidget {
        assert(
          type == AppButtonType.icon
              ? (icon != null ||
-                 hugeIcon != null ||
-                 customLabel != null ||
-                 child != null)
+                   hugeIcon != null ||
+                   customLabel != null ||
+                   child != null)
              : (text != null || customLabel != null || child != null),
          'Text, child, or customLabel is required for non-icon buttons; icon, hugeIcon, child, or customLabel for icon button',
        ),
@@ -160,8 +161,7 @@ class _AppButtonState extends State<AppButton> {
   /// Target scale; [SingleMotionBuilder] animates toward this when it changes.
   double _scaleTarget = 1.0;
 
-
-  static const double _pressedScale = 0.8;
+  static const double _pressedScale = 0.9;
 
   static const Motion _scaleMotion = Motion.snappySpring();
 
@@ -184,63 +184,115 @@ class _AppButtonState extends State<AppButton> {
     if (widget.backgroundColorType != null) {
       switch (widget.backgroundColorType!) {
         case AppButtonBackgroundColor.primary:
-          return isLight ? LightColors.primaryPrimaryDefault : DarkColors.primaryPrimaryDefault;
+          return isLight
+              ? LightColors.primaryPrimaryDefault
+              : DarkColors.primaryPrimaryDefault;
         case AppButtonBackgroundColor.primaryMute:
-          return isLight ? LightColors.primaryPrimaryMute : DarkColors.primaryPrimaryMute;
+          return isLight
+              ? LightColors.primaryPrimaryMute
+              : DarkColors.primaryPrimaryMute;
         case AppButtonBackgroundColor.primaryThin:
-          return isLight ? LightColors.primaryPrimaryThin : DarkColors.primaryPrimaryThin;
+          return isLight
+              ? LightColors.primaryPrimaryThin
+              : DarkColors.primaryPrimaryThin;
         case AppButtonBackgroundColor.success:
-          return isLight ? LightColors.successSuccessDefault : DarkColors.successSuccessDefault;
+          return isLight
+              ? LightColors.successSuccessDefault
+              : DarkColors.successSuccessDefault;
         case AppButtonBackgroundColor.successMute:
-          return isLight ? LightColors.successSuccessMute : DarkColors.successSuccessMute;
+          return isLight
+              ? LightColors.successSuccessMute
+              : DarkColors.successSuccessMute;
         case AppButtonBackgroundColor.successThin:
-          return isLight ? LightColors.successSuccessThin : DarkColors.successSuccessThin;
+          return isLight
+              ? LightColors.successSuccessThin
+              : DarkColors.successSuccessThin;
         case AppButtonBackgroundColor.warning:
-          return isLight ? LightColors.warningWarningDefault : DarkColors.warningWarningDefault;
+          return isLight
+              ? LightColors.warningWarningDefault
+              : DarkColors.warningWarningDefault;
         case AppButtonBackgroundColor.warningMute:
-          return isLight ? LightColors.warningWarningMute : DarkColors.warningWarningMute;
+          return isLight
+              ? LightColors.warningWarningMute
+              : DarkColors.warningWarningMute;
         case AppButtonBackgroundColor.warningThin:
-          return isLight ? LightColors.warningWarningThin : DarkColors.warningWarningThin;
+          return isLight
+              ? LightColors.warningWarningThin
+              : DarkColors.warningWarningThin;
         case AppButtonBackgroundColor.error:
-          return isLight ? LightColors.errorErrorDefault : DarkColors.errorErrorDefault;
+          return isLight
+              ? LightColors.errorErrorDefault
+              : DarkColors.errorErrorDefault;
         case AppButtonBackgroundColor.errorMute:
-          return isLight ? LightColors.errorErrorMute : DarkColors.errorErrorMute;
+          return isLight
+              ? LightColors.errorErrorMute
+              : DarkColors.errorErrorMute;
         case AppButtonBackgroundColor.errorThin:
-          return isLight ? LightColors.errorErrorThin : DarkColors.errorErrorThin;
+          return isLight
+              ? LightColors.errorErrorThin
+              : DarkColors.errorErrorThin;
         case AppButtonBackgroundColor.surfacePrimaryBG:
-          return isLight ? LightColors.backgroundSurfacePrimaryBG : DarkColors.backgroundSurfacePrimaryBG;
+          return isLight
+              ? LightColors.backgroundSurfacePrimaryBG
+              : DarkColors.backgroundSurfacePrimaryBG;
         case AppButtonBackgroundColor.surfaceLayer:
-          return isLight ? LightColors.backgroundSurfaceLayer : DarkColors.backgroundSurfaceLayer;
+          return isLight
+              ? LightColors.backgroundSurfaceLayer
+              : DarkColors.backgroundSurfaceLayer;
         case AppButtonBackgroundColor.surfaceMute:
-          return isLight ? LightColors.backgroundSurfaceMute : DarkColors.backgroundSurfaceMute;
+          return isLight
+              ? LightColors.backgroundSurfaceMute
+              : DarkColors.backgroundSurfaceMute;
         case AppButtonBackgroundColor.surfaceMild:
-          return isLight ? LightColors.backgroundSurfaceMild : DarkColors.backgroundSurfaceMild;
+          return isLight
+              ? LightColors.backgroundSurfaceMild
+              : DarkColors.backgroundSurfaceMild;
         case AppButtonBackgroundColor.extra:
-          return isLight ? LightColors.extraExtraDefault : DarkColors.extraExtraDefault;
+          return isLight
+              ? LightColors.extraExtraDefault
+              : DarkColors.extraExtraDefault;
         case AppButtonBackgroundColor.extraMute:
-          return isLight ? LightColors.extraExtraMute : DarkColors.extraExtraMute;
+          return isLight
+              ? LightColors.extraExtraMute
+              : DarkColors.extraExtraMute;
         case AppButtonBackgroundColor.extraThin:
-          return isLight ? LightColors.extraExtraThin : DarkColors.extraExtraThin;
+          return isLight
+              ? LightColors.extraExtraThin
+              : DarkColors.extraExtraThin;
         case AppButtonBackgroundColor.backdropSoft:
-          return isLight ? LightColors.backgroundBackdropSoft : DarkColors.backgroundBackdropSoft;
+          return isLight
+              ? LightColors.backgroundBackdropSoft
+              : DarkColors.backgroundBackdropSoft;
         case AppButtonBackgroundColor.backdropMild:
-          return isLight ? LightColors.backgroundBackdropMild : DarkColors.backgroundBackdropMild;
+          return isLight
+              ? LightColors.backgroundBackdropMild
+              : DarkColors.backgroundBackdropMild;
         case AppButtonBackgroundColor.backdropWarm:
-          return isLight ? LightColors.backgroundBackdropWarm : DarkColors.backgroundBackdropWarm;
+          return isLight
+              ? LightColors.backgroundBackdropWarm
+              : DarkColors.backgroundBackdropWarm;
       }
     }
 
     if (widget.isDisabled || widget.isLoading) {
-      return isLight ? LightColors.backgroundSurfaceMild : DarkColors.backgroundSurfaceMild;
+      return isLight
+          ? LightColors.backgroundSurfaceMild
+          : DarkColors.backgroundSurfaceMild;
     }
 
     switch (widget.type) {
       case AppButtonType.primary:
-        return isLight ? LightColors.primaryPrimaryDefault : DarkColors.primaryPrimaryDefault;
+        return isLight
+            ? LightColors.primaryPrimaryDefault
+            : DarkColors.primaryPrimaryDefault;
       case AppButtonType.secondary:
-        return isLight ? LightColors.backgroundSurfaceMute : DarkColors.backgroundSurfaceMute;
+        return isLight
+            ? LightColors.backgroundSurfaceMute
+            : DarkColors.backgroundSurfaceMute;
       case AppButtonType.tertiary:
-        return isLight ? LightColors.primaryPrimaryMute : DarkColors.primaryPrimaryMute;
+        return isLight
+            ? LightColors.primaryPrimaryMute
+            : DarkColors.primaryPrimaryMute;
       case AppButtonType.outline:
       case AppButtonType.text:
       case AppButtonType.icon:
@@ -257,78 +309,134 @@ class _AppButtonState extends State<AppButton> {
     if (widget.foregroundColorType != null) {
       switch (widget.foregroundColorType!) {
         case AppButtonForegroundColor.primary:
-          return isLight ? LightColors.primaryPrimaryDefault : DarkColors.primaryPrimaryDefault;
+          return isLight
+              ? LightColors.primaryPrimaryDefault
+              : DarkColors.primaryPrimaryDefault;
         case AppButtonForegroundColor.primaryMute:
-          return isLight ? LightColors.primaryPrimaryMute : DarkColors.primaryPrimaryMute;
+          return isLight
+              ? LightColors.primaryPrimaryMute
+              : DarkColors.primaryPrimaryMute;
         case AppButtonForegroundColor.primaryThin:
-          return isLight ? LightColors.primaryPrimaryThin : DarkColors.primaryPrimaryThin;
+          return isLight
+              ? LightColors.primaryPrimaryThin
+              : DarkColors.primaryPrimaryThin;
         case AppButtonForegroundColor.success:
-          return isLight ? LightColors.successSuccessDefault : DarkColors.successSuccessDefault;
+          return isLight
+              ? LightColors.successSuccessDefault
+              : DarkColors.successSuccessDefault;
         case AppButtonForegroundColor.successMute:
-          return isLight ? LightColors.successSuccessMute : DarkColors.successSuccessMute;
+          return isLight
+              ? LightColors.successSuccessMute
+              : DarkColors.successSuccessMute;
         case AppButtonForegroundColor.successThin:
-          return isLight ? LightColors.successSuccessThin : DarkColors.successSuccessThin;
+          return isLight
+              ? LightColors.successSuccessThin
+              : DarkColors.successSuccessThin;
         case AppButtonForegroundColor.warning:
-          return isLight ? LightColors.warningWarningDefault : DarkColors.warningWarningDefault;
+          return isLight
+              ? LightColors.warningWarningDefault
+              : DarkColors.warningWarningDefault;
         case AppButtonForegroundColor.warningMute:
-          return isLight ? LightColors.warningWarningMute : DarkColors.warningWarningMute;
+          return isLight
+              ? LightColors.warningWarningMute
+              : DarkColors.warningWarningMute;
         case AppButtonForegroundColor.warningThin:
-          return isLight ? LightColors.warningWarningThin : DarkColors.warningWarningThin;
+          return isLight
+              ? LightColors.warningWarningThin
+              : DarkColors.warningWarningThin;
         case AppButtonForegroundColor.error:
-          return isLight ? LightColors.errorErrorDefault : DarkColors.errorErrorDefault;
+          return isLight
+              ? LightColors.errorErrorDefault
+              : DarkColors.errorErrorDefault;
         case AppButtonForegroundColor.errorMute:
-          return isLight ? LightColors.errorErrorMute : DarkColors.errorErrorMute;
+          return isLight
+              ? LightColors.errorErrorMute
+              : DarkColors.errorErrorMute;
         case AppButtonForegroundColor.errorThin:
-          return isLight ? LightColors.errorErrorThin : DarkColors.errorErrorThin;
+          return isLight
+              ? LightColors.errorErrorThin
+              : DarkColors.errorErrorThin;
         case AppButtonForegroundColor.textPrimary:
-          return isLight ? LightColors.textTextPrimary : DarkColors.textTextPrimary;
+          return isLight
+              ? LightColors.textTextPrimary
+              : DarkColors.textTextPrimary;
         case AppButtonForegroundColor.textMute:
           return isLight ? LightColors.textTextMute : DarkColors.textTextMute;
         case AppButtonForegroundColor.textBrand:
           return isLight ? LightColors.textTextBrand : DarkColors.textTextBrand;
         case AppButtonForegroundColor.textInverted:
-          return isLight ? LightColors.textTextInverted : DarkColors.textTextInverted;
+          return isLight
+              ? LightColors.textTextInverted
+              : DarkColors.textTextInverted;
         case AppButtonForegroundColor.textDisabled:
-          return isLight ? LightColors.textTextDisabled : DarkColors.textTextDisabled;
+          return isLight
+              ? LightColors.textTextDisabled
+              : DarkColors.textTextDisabled;
         case AppButtonForegroundColor.iconPrimary:
-          return isLight ? LightColors.iconIconPrimary : DarkColors.iconIconPrimary;
+          return isLight
+              ? LightColors.iconIconPrimary
+              : DarkColors.iconIconPrimary;
         case AppButtonForegroundColor.iconMute:
           return isLight ? LightColors.iconIconMute : DarkColors.iconIconMute;
         case AppButtonForegroundColor.iconBrand:
           return isLight ? LightColors.iconIconBrand : DarkColors.iconIconBrand;
         case AppButtonForegroundColor.iconInverted:
-          return isLight ? LightColors.iconIconInverted : DarkColors.iconIconInverted;
+          return isLight
+              ? LightColors.iconIconInverted
+              : DarkColors.iconIconInverted;
         case AppButtonForegroundColor.iconDisabled:
-          return isLight ? LightColors.iconIconDisabled : DarkColors.iconIconDisabled;
+          return isLight
+              ? LightColors.iconIconDisabled
+              : DarkColors.iconIconDisabled;
         case AppButtonForegroundColor.oncolorWhite:
-          return isLight ? LightColors.primaryOncolorWhite : DarkColors.primaryOncolorWhite;
+          return isLight
+              ? LightColors.primaryOncolorWhite
+              : DarkColors.primaryOncolorWhite;
         case AppButtonForegroundColor.oncolorBlack:
-          return isLight ? LightColors.primaryOncolorBlack : DarkColors.primaryOncolorBlack;
+          return isLight
+              ? LightColors.primaryOncolorBlack
+              : DarkColors.primaryOncolorBlack;
         case AppButtonForegroundColor.extra:
-          return isLight ? LightColors.extraExtraDefault : DarkColors.extraExtraDefault;
+          return isLight
+              ? LightColors.extraExtraDefault
+              : DarkColors.extraExtraDefault;
         case AppButtonForegroundColor.extraMute:
-          return isLight ? LightColors.extraExtraMute : DarkColors.extraExtraMute;
+          return isLight
+              ? LightColors.extraExtraMute
+              : DarkColors.extraExtraMute;
         case AppButtonForegroundColor.extraThin:
-          return isLight ? LightColors.extraExtraThin : DarkColors.extraExtraThin;
+          return isLight
+              ? LightColors.extraExtraThin
+              : DarkColors.extraExtraThin;
       }
     }
 
     if (widget.isDisabled || widget.isLoading) {
-      return isLight ? LightColors.textTextDisabled : DarkColors.textTextDisabled;
+      return isLight
+          ? LightColors.textTextDisabled
+          : DarkColors.textTextDisabled;
     }
 
     switch (widget.type) {
       case AppButtonType.primary:
-        return isLight ? LightColors.primaryOncolorWhite : DarkColors.primaryOncolorBlack;
+        return isLight
+            ? LightColors.primaryOncolorWhite
+            : DarkColors.primaryOncolorBlack;
       case AppButtonType.secondary:
-        return isLight ? LightColors.textTextPrimary : DarkColors.textTextPrimary;
+        return isLight
+            ? LightColors.textTextPrimary
+            : DarkColors.textTextPrimary;
       case AppButtonType.tertiary:
         return isLight ? LightColors.textTextBrand : DarkColors.textTextBrand;
       case AppButtonType.outline:
       case AppButtonType.text:
-        return isLight ? LightColors.primaryPrimaryDefault : DarkColors.primaryPrimaryDefault;
+        return isLight
+            ? LightColors.primaryPrimaryDefault
+            : DarkColors.primaryPrimaryDefault;
       case AppButtonType.icon:
-        return isLight ? LightColors.iconIconPrimary : DarkColors.iconIconPrimary;
+        return isLight
+            ? LightColors.iconIconPrimary
+            : DarkColors.iconIconPrimary;
     }
   }
 
@@ -341,37 +449,63 @@ class _AppButtonState extends State<AppButton> {
     if (widget.borderColorType != null) {
       switch (widget.borderColorType!) {
         case AppButtonBorderColor.strokeSoft:
-          return isLight ? LightColors.strokeColourStrokeSoft : DarkColors.strokeColourStrokeSoft;
+          return isLight
+              ? LightColors.strokeColourStrokeSoft
+              : DarkColors.strokeColourStrokeSoft;
         case AppButtonBorderColor.strokeSubtle:
-          return isLight ? LightColors.strokeColourStrokeSubtle : DarkColors.strokeColourStrokeSubtle;
+          return isLight
+              ? LightColors.strokeColourStrokeSubtle
+              : DarkColors.strokeColourStrokeSubtle;
         case AppButtonBorderColor.strokeMild:
-          return isLight ? LightColors.strokeColourStrokeMild : DarkColors.strokeColourStrokeMild;
+          return isLight
+              ? LightColors.strokeColourStrokeMild
+              : DarkColors.strokeColourStrokeMild;
         case AppButtonBorderColor.strokeWarm:
-          return isLight ? LightColors.strokeColourStrokeWarm : DarkColors.strokeColourStrokeWarm;
+          return isLight
+              ? LightColors.strokeColourStrokeWarm
+              : DarkColors.strokeColourStrokeWarm;
         case AppButtonBorderColor.strokeStrong:
-          return isLight ? LightColors.strokeColourStrokeStrong : DarkColors.strokeColourStrokeStrong;
+          return isLight
+              ? LightColors.strokeColourStrokeStrong
+              : DarkColors.strokeColourStrokeStrong;
         case AppButtonBorderColor.strokePrimary:
-          return isLight ? LightColors.strokeColourStrokePrimary : DarkColors.strokeColourStrokePrimary;
+          return isLight
+              ? LightColors.strokeColourStrokePrimary
+              : DarkColors.strokeColourStrokePrimary;
         case AppButtonBorderColor.primary:
-          return isLight ? LightColors.primaryPrimaryDefault : DarkColors.primaryPrimaryDefault;
+          return isLight
+              ? LightColors.primaryPrimaryDefault
+              : DarkColors.primaryPrimaryDefault;
         case AppButtonBorderColor.primaryMute:
-          return isLight ? LightColors.primaryPrimaryMute : DarkColors.primaryPrimaryMute;
+          return isLight
+              ? LightColors.primaryPrimaryMute
+              : DarkColors.primaryPrimaryMute;
         case AppButtonBorderColor.primaryThin:
-          return isLight ? LightColors.primaryPrimaryThin : DarkColors.primaryPrimaryThin;
+          return isLight
+              ? LightColors.primaryPrimaryThin
+              : DarkColors.primaryPrimaryThin;
         case AppButtonBorderColor.extra:
-          return isLight ? LightColors.extraExtraDefault : DarkColors.extraExtraDefault;
+          return isLight
+              ? LightColors.extraExtraDefault
+              : DarkColors.extraExtraDefault;
       }
     }
 
     if (widget.isDisabled || widget.isLoading) {
-      return isLight ? LightColors.strokeColourStrokeSoft : DarkColors.strokeColourStrokeSoft;
+      return isLight
+          ? LightColors.strokeColourStrokeSoft
+          : DarkColors.strokeColourStrokeSoft;
     }
 
     if (widget.type == AppButtonType.secondary) {
-      return isLight ? LightColors.strokeColourStrokeSubtle : DarkColors.strokeColourStrokeSubtle;
+      return isLight
+          ? LightColors.strokeColourStrokeSubtle
+          : DarkColors.strokeColourStrokeSubtle;
     }
 
-    return isLight ? LightColors.strokeColourStrokePrimary : DarkColors.strokeColourStrokePrimary;
+    return isLight
+        ? LightColors.strokeColourStrokePrimary
+        : DarkColors.strokeColourStrokePrimary;
   }
 
   /// Handle button press with haptic feedback
@@ -444,19 +578,14 @@ class _AppButtonState extends State<AppButton> {
 
   Widget _buildLeadingGraphic(Color fgColor, double outerSize) {
     if (widget.hugeIcon != null) {
-      return AppButtonHugeIcon(
+      return HugeIcon(
         icon: widget.hugeIcon!,
+        size: widget.hugeIconRasterSize ?? 24,
         color: fgColor,
-        outerSize: outerSize,
-        rasterSize: widget.hugeIconRasterSize ?? 24,
         strokeWidth: widget.hugeIconStrokeWidth,
       );
     }
-    return Icon(
-      widget.icon,
-      size: outerSize,
-      color: fgColor,
-    );
+    return Icon(widget.icon, size: outerSize, color: fgColor);
   }
 
   @override
@@ -495,7 +624,7 @@ class _AppButtonState extends State<AppButton> {
         case AppButtonType.icon:
           buttonContent = _buildLeadingGraphic(
             fgColor,
-            widget.iconSize ?? 24,
+            widget.iconSize ?? widget.hugeIconRasterSize ?? 24,
           );
           break;
         case AppButtonType.text:
@@ -591,24 +720,10 @@ class _AppButtonState extends State<AppButton> {
         );
         break;
       case AppButtonType.icon:
-        button = IconButton(
-          padding: EdgeInsets.zero,
-          onPressed: isEnabled
-              ? () {}
-              : null, // Empty callback to keep button enabled, actual logic in GestureDetector
-          icon: buttonContent,
-          style: IconButton.styleFrom(
-            backgroundColor: showGradient ? Colors.transparent : bgColor,
-            foregroundColor: fgColor,
-            padding: defaultPadding,
-            shape: shape,
-            minimumSize: Size(widget.width ?? 48, widget.height ?? 48),
-            fixedSize: widget.width != null || widget.height != null
-                ? Size(widget.width ?? 48, widget.height ?? 48)
-                : null,
-            // Remove splash effect
-            splashFactory: NoSplash.splashFactory,
-          ),
+        button = GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: isEnabled ? () {} : null,
+          child: Center(child: buttonContent),
         );
         break;
     }
@@ -642,10 +757,7 @@ class _AppButtonState extends State<AppButton> {
         motion: _scaleMotion,
         value: _scaleTarget,
         builder: (context, scale, child) {
-          return Transform.scale(
-            scale: scale,
-            child: child,
-          );
+          return Transform.scale(scale: scale, child: child);
         },
         child: IgnorePointer(
           ignoring: true, // Prevent button from consuming taps

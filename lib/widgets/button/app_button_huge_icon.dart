@@ -29,13 +29,6 @@ class AppButtonHugeIcon extends StatelessWidget {
     if ((outerSize - rasterSize).abs() < 0.001) {
       return huge;
     }
-    return SizedBox(
-      width: outerSize,
-      height: outerSize,
-      child: FittedBox(
-        fit: BoxFit.contain,
-        child: huge,
-      ),
-    );
+    return huge;
   }
 }
