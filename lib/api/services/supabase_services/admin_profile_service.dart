@@ -2,7 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../database/admin_profile_realm_service.dart';
 import '../../../database/models/admin_profile_realm.dart';
-import '../../../models/admin_profile_model.dart';
+import '../../models/supabase_models/admin_profile_model.dart';
 
 /// Supabase + Realm for `public.admin_profiles`.
 ///

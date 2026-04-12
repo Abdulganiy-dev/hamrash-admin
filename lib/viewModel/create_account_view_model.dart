@@ -2,9 +2,12 @@ import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/services/supabase_services/role_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/state_service.dart';
+import 'package:hamrash_admin/api/models/supabase_models/role_model.dart';
+import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 import 'package:hamrash_admin/widgets/step_indicator.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CreateAccountViewModel extends BaseViewModel {
   String title = 'Create account';
@@ -22,6 +25,8 @@ class CreateAccountViewModel extends BaseViewModel {
   final roleDisplayController = TextEditingController();
   final locationController = TextEditingController();
 
+ final ImagePicker _imagePicker = ImagePicker();
+  XFile? selectedImage;
   final PageController pageController = PageController();
 
   final StateService stateService = locator<StateService>();
@@ -30,12 +35,13 @@ class CreateAccountViewModel extends BaseViewModel {
 
   List<String> availableStates = [];
 
-  List<String> availableRoles = [];
+  List<RoleModel> availableRoles = [];
+
+  bool _rolesFetchAttempted = false;
 
   List<String> availableGenders = [
     'Male',
     'Female',
-    'Prefer not to say',
   ];
 
   String? _selectedGender;
@@ -50,7 +56,25 @@ class CreateAccountViewModel extends BaseViewModel {
   CreateAccountStep _currentStep = CreateAccountStep.name;
   CreateAccountStep get currentStep => _currentStep;
 
-  /// When true, field validators return null so error UI clears; reset to false on Continue.
+
+  bool get canSwipeToNextPage {
+    switch (_currentStep) {
+      case CreateAccountStep.name:
+        return formKeyName.currentState?.validate() ?? false;
+      case CreateAccountStep.details:
+        return formKeyDetails.currentState?.validate() ?? false;
+      case CreateAccountStep.profileImage:
+        return true;
+    }
+  }
+
+  void goToStep(CreateAccountStep step) {
+    if (_currentStep == step) return;
+    _currentStep = step;
+    notifyListeners();
+  }
+
+
   bool suppressValidationMessages = false;
 
   int get currentPageIndex => _currentStep.index;
@@ -73,27 +97,34 @@ class CreateAccountViewModel extends BaseViewModel {
     });
   }
 
-  void init(BuildContext context) {
+  void init(BuildContext context) async {
     this.context = context;
     emailController.text = clerkEmail ?? '';
+    await Future.wait([
+      fetchStates(),
+      fetchRoles(),
+    ]);
   }
 
   void selectGender(String? value) {
     _selectedGender = value;
     genderDisplayController.text = value ?? '';
     notifyListeners();
+    NavigationService.popScreen();
   }
 
   void selectState(String? value) {
     _selectedState = value;
     stateDisplayController.text = value ?? '';
     notifyListeners();
+    NavigationService.popScreen();
   }
 
-  void selectRole(String? value) {
-    _selectedRole = value;
-    roleDisplayController.text = value ?? '';
+  void selectRole(RoleModel? role) {
+    _selectedRole = role?.name;
+    roleDisplayController.text = role?.displayLabel ?? '';
     notifyListeners();
+    NavigationService.popScreen();
   }
 
   Future<void> goNext(BuildContext context) async {
@@ -172,6 +203,7 @@ class CreateAccountViewModel extends BaseViewModel {
   }
 
    Future<void> fetchStates() async {
+    if (availableStates.isNotEmpty) return;
     setBusy(true);
     try {
       final states = await stateService.fetchStates();
@@ -195,11 +227,12 @@ class CreateAccountViewModel extends BaseViewModel {
   }
 
   Future<void> fetchRoles() async {
+    if (_rolesFetchAttempted) return;
     setBusy(true);
     try {
       final roles = await roleService.fetchRoles();
       if (roles.isNotEmpty) {
-        availableRoles = roles.map((role) => role.name).toList();
+        availableRoles = roles;
       }
     } catch (e, stackTrace) {
       await handleError(
@@ -213,7 +246,33 @@ class CreateAccountViewModel extends BaseViewModel {
       if (availableRoles.isEmpty) {
         availableRoles = [];
       }
+      _rolesFetchAttempted = true;
       notifyListeners();
+    }
+  }
+
+  Future<void> pickImageFromGallery() async {
+    if (selectedImage != null) {
+      selectedImage = null;
+      notifyListeners();
+      return;
+    }
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 100,
+      );
+      if (image != null) {
+        selectedImage = image;
+        notifyListeners();
+      }
+    } catch (e, stackTrace) {
+      await handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'CreateAccountViewModel.pickImageFromGallery',
+        userMessage: 'Failed to pick image. Please try again.',
+      );
     }
   }
 }

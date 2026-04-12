@@ -2,7 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../database/models/app_role_realm.dart';
 import '../../../database/role_realm_service.dart';
-import '../../../models/role_model.dart';
+import '../../models/supabase_models/role_model.dart';
 
 /// Supabase + Realm cache-first for `public.roles` (Pattern 1).
 class RoleService {

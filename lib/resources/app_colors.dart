@@ -30,7 +30,7 @@ class LightColors {
   static const textTextDisabled = Color(0xFFD9D9D9);
 
   // Background colors
-  static const backgroundSurfacePrimaryBG = Color(0xFFe8e8e8); 
+  static const backgroundSurfacePrimaryBG = Color(0xFFFFFFFF);
   static const backgroundSurfaceLayer = Color(0xFFE9E1D9);
   static const backgroundSurfaceMute = Color(0xFFF7F7F7);
   static const backgroundSurfaceMild = Color(0xFFE8E8E8);

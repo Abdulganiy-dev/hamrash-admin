@@ -1,6 +1,6 @@
 import 'package:realm/realm.dart';
 
-import '../models/role_model.dart';
+import '../api/models/supabase_models/role_model.dart';
 import 'models/app_role_realm.dart';
 import 'realm_service.dart';
 

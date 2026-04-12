@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
@@ -33,7 +32,6 @@ class CreateAccountStepName extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         AppText(
           'Welcome, let\'s set up your profile',
           style: theme.textTheme.titleLarge?.copyWith(
@@ -68,10 +66,11 @@ class CreateAccountStepName extends StatelessWidget {
           },
           textInputAction: TextInputAction.next,
         ).padding(bottom: AppSpacing.md),
-        
+
         GestureDetector(
           onTap: () {
             viewModel.dismissValidationMessages();
+
             onGenderFieldTap();
           },
           child: AbsorbPointer(

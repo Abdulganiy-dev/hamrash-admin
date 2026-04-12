@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hamrash_admin/api/api_setup/api_client.dart';
+import 'package:hamrash_admin/api/services/cloudflare_services/cloudflare_dio_client.dart';
+import 'package:hamrash_admin/api/services/cloudflare_services/image_service.dart';
+import 'package:hamrash_admin/api/services/cloudflare_services/secret_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/admin_profile_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/role_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/state_service.dart';
@@ -68,6 +71,14 @@ void setupLocator() {
       adminProfileRealmService: locator<AdminProfileRealmService>(),
     ),
   );
+
+  locator.registerLazySingleton<CloudflareDioClient>(
+    () => CloudflareDioClient(),
+  );
+
+  locator.registerLazySingleton<SecretService>(() => SecretService());
+
+  locator.registerLazySingleton<ImageService>(() => ImageService());
 
   // // Register Cloudflare services as singletons
   // locator.registerLazySingleton<SecretsService>(() => SecretsService());

@@ -34,7 +34,7 @@ class CreateAccountStepDetails extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppText(
-          'Where you work and what you do',
+          'State, role, and your address',
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
           ),

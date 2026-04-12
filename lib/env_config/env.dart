@@ -11,6 +11,13 @@ abstract class Env {
   String get supabaseAnonKey;
   String get clerkRedirectUrl;
   String get clerkDeepLinkUrl;
+
+  /// Cloudflare API (user token or global key). Prefer `--dart-define` for secrets.
+  String get cloudflareEmail;
+
+  String get cloudflareApiToken;
+
+  String get cloudflareAccountId;
 }
 
 class DevEnv implements Env {
@@ -43,6 +50,26 @@ class DevEnv implements Env {
 
   @override
   String get clerkDeepLinkUrl => '';
+
+  /// Optional for user API tokens (`cfut_`); required with a Global API key.
+  @override
+  String get cloudflareEmail => const String.fromEnvironment(
+        'CLOUDFLARE_EMAIL',
+        defaultValue: 'hamrashinternationalsch@gmail.com',
+      );
+
+  /// Never commit a real token. Pass at build/run time, for example:
+  /// `flutter run --dart-define=CLOUDFLARE_API_TOKEN=your_token`
+  @override
+  String get cloudflareApiToken => const String.fromEnvironment(
+        'CLOUDFLARE_API_TOKEN',
+      );
+
+  @override
+  String get cloudflareAccountId => const String.fromEnvironment(
+        'CLOUDFLARE_ACCOUNT_ID',
+        defaultValue: '82f79f2db37322491b27f7e8b0c0275d',
+      );
 }
 
 class ProdEnv implements Env {
@@ -72,6 +99,21 @@ class ProdEnv implements Env {
 
   @override
   String get clerkDeepLinkUrl => 'artisanpassport://auth/callback';
+
+  @override
+  String get cloudflareEmail => const String.fromEnvironment(
+        'CLOUDFLARE_EMAIL',
+      );
+
+  @override
+  String get cloudflareApiToken => const String.fromEnvironment(
+        'CLOUDFLARE_API_TOKEN',
+      );
+
+  @override
+  String get cloudflareAccountId => const String.fromEnvironment(
+        'CLOUDFLARE_ACCOUNT_ID',
+      );
 }
 
 

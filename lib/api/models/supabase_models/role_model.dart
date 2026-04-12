@@ -12,6 +12,20 @@ class RoleModel {
   final String? description;
   final DateTime? createdAt;
 
+  /// Human-readable name for UI (e.g. `super_admin` → "Super Admin").
+  String get displayLabel {
+    final parts = name.split('_').where((s) => s.isNotEmpty).toList();
+    if (parts.isEmpty) return name;
+    return parts
+        .map((word) {
+          final lower = word.toLowerCase();
+          if (lower.isEmpty) return word;
+          return '${lower[0].toUpperCase()}'
+              '${lower.length > 1 ? lower.substring(1) : ''}';
+        })
+        .join(' ');
+  }
+
   factory RoleModel.fromJson(Map<String, dynamic> json) {
     return RoleModel(
       id: _asString(json['id']),

@@ -1,6 +1,6 @@
 import 'package:realm/realm.dart';
 
-import '../models/state_model.dart';
+import '../api/models/supabase_models/state_model.dart';
 import 'models/state_realm.dart';
 import 'realm_service.dart';
 

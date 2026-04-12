@@ -1,6 +1,6 @@
 import 'package:realm/realm.dart';
 
-import '../models/admin_profile_model.dart';
+import '../api/models/supabase_models/admin_profile_model.dart';
 import 'models/admin_profile_realm.dart';
 import 'realm_service.dart';
 

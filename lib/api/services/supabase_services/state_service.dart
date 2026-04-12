@@ -2,7 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../database/models/state_realm.dart';
 import '../../../database/state_realm_service.dart';
-import '../../../models/state_model.dart';
+import '../../models/supabase_models/state_model.dart';
 
 /// Supabase + Realm cache-first conductor for `public.states` (Pattern 1).
 class StateService {
