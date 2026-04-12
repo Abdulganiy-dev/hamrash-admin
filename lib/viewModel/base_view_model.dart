@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/services/navigation_service.dart';
+import 'package:hamrash_admin/widgets/error_modal.dart';
 
 import '../resources/error_messages.dart';
 import '../resources/utils/view_util.dart';
@@ -22,7 +24,8 @@ abstract class BaseViewModel extends ChangeNotifier {
     StackTrace? stackTrace,
     String? context,
     String? userMessage,
-    bool showSnackBar = true,
+    bool showSnackBar = false,
+    bool showErrorModal = true,
     bool fatal = false,
     Map<String, dynamic>? customParams,
   }) async {
@@ -39,6 +42,18 @@ abstract class BaseViewModel extends ChangeNotifier {
     if (showSnackBar) {
       ViewUtil.showSnackBar(
         userMessage ?? ErrorMessages.somethingWentWrong,
+      );
+    }
+
+    if (showErrorModal) {
+      ErrorModal.show(
+        ViewUtil.navigatorKey.currentContext!,
+        title: "Error",
+        message: userMessage ?? ErrorMessages.somethingWentWrong,
+        icon: Icons.error,
+        onDismiss: () {
+          NavigationService.popScreen();
+        },
       );
     }
   }

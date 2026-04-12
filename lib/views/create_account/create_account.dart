@@ -56,27 +56,7 @@ class _CreateAccountState extends State<CreateAccount> {
             Expanded(
               child: PageView(
                 controller: model.pageController,
-                physics: SnappyPagePhysics(),
-                 onPageChanged: (index) {
-                    final newStep = CreateAccountStep.values[index];
-                    final currentIndex = model.currentStep.index;
-
-                    // If trying to go forward, validate current step first
-                    if (index > currentIndex) {
-                      if (!model.canSwipeToNextPage) {
-                        // Revert to current page if validation fails
-                        model.pageController.animateToPage(
-                          currentIndex,
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeOut,
-                        );
-                        return;
-                      }
-                    }
-
-                    // Allow navigation (backward or validated forward)
-                    model.goToStep(newStep);
-                  },
+                physics: const NeverScrollableScrollPhysics(),
                 children: [
                   SingleChildScrollView(
                     child: Form(
@@ -218,3 +198,4 @@ class SnappyPagePhysics extends PageScrollPhysics {
     return SnappyPagePhysics(parent: buildParent(ancestor));
   }
 }
+

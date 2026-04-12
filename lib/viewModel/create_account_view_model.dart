@@ -1,13 +1,20 @@
+import 'dart:typed_data';
+
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/api/models/supabase_models/admin_profile_model.dart';
+import 'package:hamrash_admin/api/services/cloudflare_services/image_service.dart';
+import 'package:hamrash_admin/api/services/supabase_services/admin_profile_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/role_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/state_service.dart';
 import 'package:hamrash_admin/api/models/supabase_models/role_model.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
+import 'package:hamrash_admin/views/home/home.dart';
 import 'package:hamrash_admin/widgets/step_indicator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 
 class CreateAccountViewModel extends BaseViewModel {
   String title = 'Create account';
@@ -25,13 +32,15 @@ class CreateAccountViewModel extends BaseViewModel {
   final roleDisplayController = TextEditingController();
   final locationController = TextEditingController();
 
- final ImagePicker _imagePicker = ImagePicker();
+  final ImagePicker _imagePicker = ImagePicker();
   XFile? selectedImage;
   final PageController pageController = PageController();
 
   final StateService stateService = locator<StateService>();
   final RoleService roleService = locator<RoleService>();
-
+  final ImageService imageService = locator<ImageService>();
+  final AdminProfileService adminProfileService =
+      locator<AdminProfileService>();
 
   List<String> availableStates = [];
 
@@ -39,10 +48,7 @@ class CreateAccountViewModel extends BaseViewModel {
 
   bool _rolesFetchAttempted = false;
 
-  List<String> availableGenders = [
-    'Male',
-    'Female',
-  ];
+  List<String> availableGenders = ['Male', 'Female'];
 
   String? _selectedGender;
   String? get selectedGender => _selectedGender;
@@ -55,25 +61,6 @@ class CreateAccountViewModel extends BaseViewModel {
 
   CreateAccountStep _currentStep = CreateAccountStep.name;
   CreateAccountStep get currentStep => _currentStep;
-
-
-  bool get canSwipeToNextPage {
-    switch (_currentStep) {
-      case CreateAccountStep.name:
-        return formKeyName.currentState?.validate() ?? false;
-      case CreateAccountStep.details:
-        return formKeyDetails.currentState?.validate() ?? false;
-      case CreateAccountStep.profileImage:
-        return true;
-    }
-  }
-
-  void goToStep(CreateAccountStep step) {
-    if (_currentStep == step) return;
-    _currentStep = step;
-    notifyListeners();
-  }
-
 
   bool suppressValidationMessages = false;
 
@@ -100,10 +87,7 @@ class CreateAccountViewModel extends BaseViewModel {
   void init(BuildContext context) async {
     this.context = context;
     emailController.text = clerkEmail ?? '';
-    await Future.wait([
-      fetchStates(),
-      fetchRoles(),
-    ]);
+    await Future.wait([fetchStates(), fetchRoles()]);
   }
 
   void selectGender(String? value) {
@@ -144,10 +128,7 @@ class CreateAccountViewModel extends BaseViewModel {
     }
 
     final nextIndex = _currentStep.index + 1;
-    pageController.jumpToPage(
-      nextIndex,
- 
-    );
+    pageController.jumpToPage(nextIndex);
     _currentStep = CreateAccountStep.values[nextIndex];
     notifyListeners();
   }
@@ -161,10 +142,7 @@ class CreateAccountViewModel extends BaseViewModel {
     }
 
     final prevIndex = _currentStep.index - 1;
-    pageController.jumpToPage(
-      prevIndex,
-   
-    );
+    pageController.jumpToPage(prevIndex);
     _currentStep = CreateAccountStep.values[prevIndex];
     notifyListeners();
   }
@@ -186,14 +164,12 @@ class CreateAccountViewModel extends BaseViewModel {
     try {
       final clerkAuth = ClerkAuth.of(context);
       final user = clerkAuth.user;
-    
-      try {
 
+      try {
         final email = user?.emailAddresses?.firstOrNull?.emailAddress;
         if (email != null) return email;
       } catch (_) {
         try {
-
           final email = user?.emailAddresses?.first.emailAddress;
           if (email != null) return email;
         } catch (_) {}
@@ -202,7 +178,7 @@ class CreateAccountViewModel extends BaseViewModel {
     return null;
   }
 
-   Future<void> fetchStates() async {
+  Future<void> fetchStates() async {
     if (availableStates.isNotEmpty) return;
     setBusy(true);
     try {
@@ -273,6 +249,99 @@ class CreateAccountViewModel extends BaseViewModel {
         context: 'CreateAccountViewModel.pickImageFromGallery',
         userMessage: 'Failed to pick image. Please try again.',
       );
+    }
+  }
+
+  String? get clerkId {
+    try {
+      final clerkAuth = ClerkAuth.of(context);
+      return clerkAuth.user?.id;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> submitAccount() async {
+    if (!(formKeyName.currentState?.validate() ?? false) ||
+        !(formKeyDetails.currentState?.validate() ?? false))
+      return;
+
+    setBusy(true);
+    String? uploadedImageId;
+    String? uploadedImageUrl;
+
+    try {
+      if (selectedImage != null) {
+        final Uint8List imageBytes = await selectedImage!.readAsBytes();
+
+        final filename = 'profile_${const Uuid().v4()}';
+
+        final imageResponse = await imageService.uploadImage(
+          imageBytes,
+          filename,
+          metadata: {'Type': 'artisan_profile'},
+        );
+
+        uploadedImageId = imageResponse.id;
+        if (imageResponse.variants != null &&
+            imageResponse.variants!.isNotEmpty) {
+          uploadedImageUrl = imageResponse.variants!.first;
+        }
+
+        if (uploadedImageId == null || uploadedImageUrl == null) {
+          throw Exception(
+            'Failed to get image ID or URL from Cloudflare response',
+          );
+        }
+      }
+
+      final adminProfile = AdminProfileModel(
+        id: const Uuid().v4(),
+        isActive: true,
+        clerkId: clerkId,
+        fullName: fullNameController.text,
+        email: emailController.text,
+        phoneNumber: phoneController.text,
+        gender: selectedGender,
+        state: selectedState,
+        role: selectedRole,
+        avatarUrl: uploadedImageUrl,
+        avatarUrlId: uploadedImageId,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      try {
+        await adminProfileService.insertAdminProfile(adminProfile.toJson());
+      } catch (e, stackTrace) {
+        if (uploadedImageId != null) {
+          try {
+            await imageService.deleteImage(uploadedImageId);
+          } catch (deleteError) {
+            await handleError(
+              deleteError,
+              stackTrace: stackTrace,
+              context:
+                  'CreateAccountViewModel.submitAccount - Cloudflare delete cleanup',
+              userMessage: null,
+            );
+          }
+        }
+        rethrow;
+      }
+
+      if (context.mounted) {
+        Navigator.of(context).pushReplacementNamed(Home.routeName);
+      }
+    } catch (e, stackTrace) {
+      await handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'CreateAccountViewModel.submitAccount',
+        userMessage: 'Failed to create account. Please try again.',
+      );
+    } finally {
+      setBusy(false);
     }
   }
 }
