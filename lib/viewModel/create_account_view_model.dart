@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/supabase_models/admin_profile_model.dart';
@@ -8,6 +6,8 @@ import 'package:hamrash_admin/api/services/supabase_services/admin_profile_servi
 import 'package:hamrash_admin/api/services/supabase_services/role_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/state_service.dart';
 import 'package:hamrash_admin/api/models/supabase_models/role_model.dart';
+import 'package:hamrash_admin/resources/error_messages.dart';
+import 'package:hamrash_admin/resources/utils/view_util.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
@@ -262,41 +262,45 @@ class CreateAccountViewModel extends BaseViewModel {
   }
 
   Future<void> submitAccount() async {
-    if (!(formKeyName.currentState?.validate() ?? false) ||
-        !(formKeyDetails.currentState?.validate() ?? false))
-      return;
+    // if (!(formKeyName.currentState?.validate() ?? false) ||
+    //     !(formKeyDetails.currentState?.validate() ?? false)) {
+    //   return;
+    // }
 
     setBusy(true);
     String? uploadedImageId;
     String? uploadedImageUrl;
 
     try {
-      if (selectedImage != null) {
-        final Uint8List imageBytes = await selectedImage!.readAsBytes();
+      if (selectedImage == null) {
+        ViewUtil.showErrorSnackBar("Please select an image");
+        return;
+      }
 
-        final filename = 'profile_${const Uuid().v4()}';
+      if (clerkId == null) {
+        ViewUtil.showErrorSnackBar(ErrorMessages.somethingWentWrong);
+        return;
+      }
 
-        final imageResponse = await imageService.uploadImage(
-          imageBytes,
-          filename,
-          metadata: {'Type': 'artisan_profile'},
+      final imageBytes = await selectedImage!.readAsBytes();
+      final filename = 'profile_${const Uuid().v4()}';
+
+      final imageResponse = await imageService.uploadImage(
+        imageBytes,
+        filename,
+        metadata: {'Type': 'artisan_profile'},
+      );
+
+      uploadedImageId = imageResponse.id;
+      uploadedImageUrl = imageResponse.variants?.firstOrNull;
+
+      if (uploadedImageId == null || uploadedImageUrl == null) {
+        throw Exception(
+          'Failed to get image ID or URL from Cloudflare response',
         );
-
-        uploadedImageId = imageResponse.id;
-        if (imageResponse.variants != null &&
-            imageResponse.variants!.isNotEmpty) {
-          uploadedImageUrl = imageResponse.variants!.first;
-        }
-
-        if (uploadedImageId == null || uploadedImageUrl == null) {
-          throw Exception(
-            'Failed to get image ID or URL from Cloudflare response',
-          );
-        }
       }
 
       final adminProfile = AdminProfileModel(
-        id: const Uuid().v4(),
         isActive: true,
         clerkId: clerkId,
         fullName: fullNameController.text,
@@ -309,31 +313,18 @@ class CreateAccountViewModel extends BaseViewModel {
         avatarUrlId: uploadedImageId,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        lastLoginAt: DateTime.now(),
       );
 
-      try {
-        await adminProfileService.insertAdminProfile(adminProfile.toJson());
-      } catch (e, stackTrace) {
-        if (uploadedImageId != null) {
-          try {
-            await imageService.deleteImage(uploadedImageId);
-          } catch (deleteError) {
-            await handleError(
-              deleteError,
-              stackTrace: stackTrace,
-              context:
-                  'CreateAccountViewModel.submitAccount - Cloudflare delete cleanup',
-              userMessage: null,
-            );
-          }
-        }
-        rethrow;
-      }
+      await adminProfileService.insertAdminProfile(adminProfile.toJson());
 
       if (context.mounted) {
         Navigator.of(context).pushReplacementNamed(Home.routeName);
       }
     } catch (e, stackTrace) {
+      if (uploadedImageId != null) {
+        await imageService.deleteImage(uploadedImageId).catchError((_) {});
+      }
       await handleError(
         e,
         stackTrace: stackTrace,

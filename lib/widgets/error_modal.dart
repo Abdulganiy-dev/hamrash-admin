@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/assets_util.dart';
 import 'package:hamrash_admin/helpers/haptic_helper.dart';
 import 'package:hamrash_admin/resources/app_colors.dart';
+import 'package:hamrash_admin/resources/spacing_constants.dart';
+import 'package:hamrash_admin/resources/utils/view_util.dart';
+import 'package:hamrash_admin/services/navigation_service.dart';
+import 'package:hamrash_admin/widgets/app_text.dart';
+import 'package:hamrash_admin/widgets/button/app_button_types.dart';
+import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
 
 
 /// A reusable error modal that slides up from the bottom with a nice rounded rectangle design.
@@ -26,7 +35,7 @@ import 'package:hamrash_admin/resources/app_colors.dart';
 ///   context,
 ///   message: 'Failed to save data',
 ///   title: 'Save Error',
-///   icon: Icons.warning_rounded,
+///   icon: HugeIcons.strokeRoundedAlertCircle,
 ///   onDismiss: () {
 ///     print('Modal dismissed');
 ///   },
@@ -39,8 +48,8 @@ class ErrorModal extends StatelessWidget {
   /// Optional title for the error
   final String? title;
 
-  /// Optional icon to display (defaults to error icon)
-  final IconData? icon;
+  /// Optional HugeIcon to display (defaults to alert circle)
+  final List<List<dynamic>>? icon;
 
   /// Duration before auto-dismissing (null = no auto-dismiss)
   final Duration? autoDismissDuration;
@@ -62,29 +71,28 @@ class ErrorModal extends StatelessWidget {
     BuildContext context, {
     required String message,
     String? title,
-    IconData? icon,
+    List<List<dynamic>>? icon,
     Duration? autoDismissDuration,
     VoidCallback? onDismiss,
   }) async {
-    // Haptic feedback
     HapticHelpers.vibrate(VibrationType.medium);
 
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      isDismissible: true,
-      enableDrag: true,
-      builder: (context) => ErrorModal(
-        message: message,
-        title: title,
-        icon: icon,
-        autoDismissDuration: autoDismissDuration,
-        onDismiss: onDismiss,
+    await Navigator.of(context).push<void>(
+      StupidSimpleGlassSheetRoute<void>(
+        snappingConfig: const SheetSnappingConfig([0.4]),
+        child: Material(
+          type: MaterialType.transparency,
+          child: ErrorModal(
+            message: message,
+            title: title,
+            icon: icon,
+            autoDismissDuration: autoDismissDuration,
+            onDismiss: onDismiss,
+          ),
+        ),
       ),
     );
 
-    // Call onDismiss callback after modal is closed
     onDismiss?.call();
   }
 
@@ -93,133 +101,71 @@ class ErrorModal extends StatelessWidget {
     final isLight = Theme.of(context).brightness == Brightness.light;
     final errorColor = isLight ? LightColors.errorErrorDefault : DarkColors.errorErrorDefault;
     final errorMuteColor = isLight ? LightColors.errorErrorMute : DarkColors.errorErrorMute;
-    final backgroundColor = isLight ? LightColors.backgroundSurfacePrimaryBG : DarkColors.backgroundSurfacePrimaryBG;
     final textColor = isLight ? LightColors.textTextPrimary : DarkColors.textTextPrimary;
-    final iconColor = isLight ? LightColors.iconIconPrimary : DarkColors.iconIconPrimary;
 
-    // Auto-dismiss if duration is provided
     if (autoDismissDuration != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Future.delayed(autoDismissDuration!, () {
           if (context.mounted) {
-            Navigator.of(context).pop();
+            NavigationService.popScreen();
           }
         });
       });
     }
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.25,
-      minChildSize: 0.2,
-      maxChildSize: 0.5,
-      builder: (context, scrollController) => Container(
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
+    return Column(
+     
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Padding(
+         padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.lg,
+            AppSpacing.lg,
+            0,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Drag handle
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ViewUtil.svgPictureAsset(assetName: AssetsUtil.errorSvg),
+              const SizedBox(height: AppSpacing.md),
+              if (title != null) ...[
+                AppText(
+                  title!,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  colorType: AppTextColor.textInverted,
+                ),
+              ],
+              const SizedBox(height: AppSpacing.sm),
 
-            // Content
-            Flexible(
-              child: SingleChildScrollView(
-                controller: scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header row with icon and close button
-                    Row(
-                      children: [
-                        // Error icon
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: errorMuteColor,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            icon ?? Icons.error_outline_rounded,
-                            color: errorColor,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        // Title
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (title != null) ...[
-                                Text(
-                                  title!,
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        color: textColor,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                ),
-                                const SizedBox(height: 4),
-                              ],
-                              Text(
-                                message,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: textColor,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Close button
-                        IconButton(
-                          icon: Icon(
-                            Icons.close_rounded,
-                            color: iconColor,
-                            size: 20,
-                          ),
-                          onPressed: () {
-                            HapticHelpers.vibrate(VibrationType.light);
-                            Navigator.of(context).pop();
-                          },
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 32,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              AppText(
+                message,
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                colorType: AppTextColor.textMute,
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+
+              AppTertiaryButton(
+                width: double.infinity,
+                onPressed: () => NavigationService.popScreen(),
+                child: AppText(
+                  'Try Again',
+                  fontSize: 16,
+      fontWeight: FontWeight.w800,
+            
                 ),
               ),
-            ),
-
-            // Bottom safe area padding
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
+              
+            ],
+          ),
         ),
-      ),
+
+      ],
     );
   }
 }

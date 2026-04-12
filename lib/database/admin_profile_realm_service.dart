@@ -14,7 +14,7 @@ class AdminProfileRealmService {
 
   AdminProfileRealm _toRealm(AdminProfileModel m, DateTime now) {
     return AdminProfileRealm(
-      m.id,
+      m.id ?? '',
       m.fullName,
       m.email,
       m.isActive,

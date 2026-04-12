@@ -50,10 +50,7 @@ abstract class BaseViewModel extends ChangeNotifier {
         ViewUtil.navigatorKey.currentContext!,
         title: "Error",
         message: userMessage ?? ErrorMessages.somethingWentWrong,
-        icon: Icons.error,
-        onDismiss: () {
-          NavigationService.popScreen();
-        },
+     
       );
     }
   }

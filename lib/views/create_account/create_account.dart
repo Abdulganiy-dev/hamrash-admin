@@ -25,12 +25,16 @@ class CreateAccount extends StatefulWidget {
 }
 
 class _CreateAccountState extends State<CreateAccount> {
+  late CreateAccountViewModel model;
   @override
   Widget build(BuildContext context) {
     return ViewModelBuilder<CreateAccountViewModel>.reactive(
       viewModelBuilder: () => CreateAccountViewModel(),
-      onViewModelReady: (model) => model.init(context),
-      builder: (context, model, _) => DefaultScaffold(
+      onViewModelReady: (model) {
+        this.model = model;
+        this.model.init(context);
+      },
+      builder: (context, _, _) => DefaultScaffold(
         title: null,
         busy: model.busy,
         body: ScaffoldColumn(
@@ -73,7 +77,8 @@ class _CreateAccountState extends State<CreateAccount> {
                             title: 'Gender',
                             backgroundSnapshotMode: RouteSnapshotMode.animating,
                             snappingConfig: SheetSnappingConfig([0.35]),
-                            headerImage: HugeIcon(icon: HugeIcons.strokeRoundedManWoman,color: Colors.red,),
+                            headerImage: HugeIcon(icon: HugeIcons.strokeRoundedManWoman,color: Colors.blue, size: 30,
+                              strokeWidth: 2,),
                             items: model.availableGenders,
                             itemBuilder: (context, item, index) {
                               return ListTile(
@@ -106,7 +111,9 @@ class _CreateAccountState extends State<CreateAccount> {
                        
                             headerImage: HugeIcon(
                               icon: HugeIcons.strokeRoundedLocation01,
-                              color: Colors.red,
+                               size: 30,
+                              strokeWidth: 2,
+                              color: Colors.green,
                             ),
                             items: model.availableStates,
                             itemBuilder: (context, item, index) {
@@ -130,6 +137,8 @@ class _CreateAccountState extends State<CreateAccount> {
                             snappingConfig: SheetSnappingConfig([0.45]),
                             headerImage: HugeIcon(
                               icon: HugeIcons.strokeRoundedBriefcase01,
+                              size: 30,
+                              strokeWidth: 2,
                               color: Colors.red,
                             ),
                             items: model.availableRoles,
@@ -166,7 +175,8 @@ class _CreateAccountState extends State<CreateAccount> {
             ),
             AppPrimaryButton(
               width: double.infinity,
-              onPressed: () => model.goNext(context),
+              isLoading: model.busy,
+              onPressed: () => model.currentStep == CreateAccountStep.profileImage ? model.submitAccount() : model.goNext(context),
               child: AppText(
                 model.currentStep == CreateAccountStep.profileImage
                     ? 'Done'

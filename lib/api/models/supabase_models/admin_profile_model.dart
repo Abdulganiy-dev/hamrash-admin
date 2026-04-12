@@ -1,7 +1,7 @@
 /// App model for `public.admin_profiles`.
 class AdminProfileModel {
   const AdminProfileModel({
-    required this.id,
+   this.id,
     this.clerkId,
     required this.fullName,
     required this.email,
@@ -19,7 +19,7 @@ class AdminProfileModel {
     this.updatedAt,
   });
 
-  final String id;
+  final String? id;
   final String? clerkId;
   final String fullName;
   final String email;
