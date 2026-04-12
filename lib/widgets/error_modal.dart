@@ -66,7 +66,7 @@ class ErrorModal extends StatelessWidget {
     this.onDismiss,
   });
 
-  /// Show the error modal
+
   static Future<void> show(
     BuildContext context, {
     required String message,
@@ -99,9 +99,7 @@ class ErrorModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
-    final errorColor = isLight ? LightColors.errorErrorDefault : DarkColors.errorErrorDefault;
-    final errorMuteColor = isLight ? LightColors.errorErrorMute : DarkColors.errorErrorMute;
-    final textColor = isLight ? LightColors.textTextPrimary : DarkColors.textTextPrimary;
+  
 
     if (autoDismissDuration != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -578,11 +578,14 @@ class _AppButtonState extends State<AppButton> {
 
   Widget _buildLeadingGraphic(Color fgColor, double outerSize) {
     if (widget.hugeIcon != null) {
-      return HugeIcon(
-        icon: widget.hugeIcon!,
-        size: widget.hugeIconRasterSize ?? 24,
-        color: fgColor,
-        strokeWidth: widget.hugeIconStrokeWidth,
+      return Padding(
+        padding: EdgeInsets.zero,
+        child: HugeIcon(
+          icon: widget.hugeIcon!,
+          size: widget.hugeIconRasterSize ?? 24,
+          color: fgColor,
+          strokeWidth: widget.hugeIconStrokeWidth,
+        ),
       );
     }
     return Icon(widget.icon, size: outerSize, color: fgColor);
@@ -723,7 +726,7 @@ class _AppButtonState extends State<AppButton> {
         button = GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: isEnabled ? () {} : null,
-          child: Center(child: buttonContent),
+          child: buttonContent,
         );
         break;
     }

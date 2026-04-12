@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:hamrash_admin/api/models/supabase_models/admin_profile_model.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/image_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/admin_profile_service.dart';
@@ -149,6 +153,13 @@ class CreateAccountViewModel extends BaseViewModel {
 
   @override
   void dispose() {
+    final path = selectedImage?.path;
+    if (path != null) {
+      try {
+        final file = File(path);
+        if (file.existsSync()) file.deleteSync();
+      } catch (_) {}
+    }
     fullNameController.dispose();
     emailController.dispose();
     phoneController.dispose();
@@ -227,8 +238,31 @@ class CreateAccountViewModel extends BaseViewModel {
     }
   }
 
+  Future<void> _deletePersistedPickIfAny() async {
+    final path = selectedImage?.path;
+    if (path == null || path.isEmpty) return;
+    try {
+      final file = File(path);
+      if (await file.exists()) await file.delete();
+    } catch (_) {}
+  }
+
+  /// Gallery picks often point at OS cache paths that are removed before upload.
+  /// Copy bytes into app-private storage so [readAsBytes] at submit time is reliable.
+  Future<XFile> _persistPickedImage(XFile picked) async {
+    final bytes = await picked.readAsBytes();
+    final dir = await getApplicationSupportDirectory();
+    final ext = p.extension(picked.path);
+    final suffix = ext.isNotEmpty && ext.length <= 6 ? ext : '.jpg';
+    final destPath = p.join(dir.path, 'profile_pick_${const Uuid().v4()}$suffix');
+    final file = File(destPath);
+    await file.writeAsBytes(bytes, flush: true);
+    return XFile(destPath);
+  }
+
   Future<void> pickImageFromGallery() async {
     if (selectedImage != null) {
+      await _deletePersistedPickIfAny();
       selectedImage = null;
       notifyListeners();
       return;
@@ -239,7 +273,7 @@ class CreateAccountViewModel extends BaseViewModel {
         imageQuality: 100,
       );
       if (image != null) {
-        selectedImage = image;
+        selectedImage = await _persistPickedImage(image);
         notifyListeners();
       }
     } catch (e, stackTrace) {
@@ -317,6 +351,9 @@ class CreateAccountViewModel extends BaseViewModel {
       );
 
       await adminProfileService.insertAdminProfile(adminProfile.toJson());
+
+      await _deletePersistedPickIfAny();
+      selectedImage = null;
 
       if (context.mounted) {
         Navigator.of(context).pushReplacementNamed(Home.routeName);

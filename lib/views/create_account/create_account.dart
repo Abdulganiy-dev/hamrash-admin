@@ -43,12 +43,15 @@ class _CreateAccountState extends State<CreateAccount> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                AppHugeIconButton(
-                  hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
-                  hugeIconStrokeWidth: 2,
-                  hugeIconRasterSize: 35,
-                  foregroundColorType: AppButtonForegroundColor.textInverted,
-                  onPressed: () => model.goBack(context),
+                Transform.translate(
+                  offset: const Offset(-AppSpacing.md, 0),
+                  child: AppHugeIconButton(
+                    hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
+                    hugeIconStrokeWidth: 2,
+                    hugeIconRasterSize: 35,
+                    foregroundColorType: AppButtonForegroundColor.textInverted,
+                    onPressed: () => model.goBack(context),
+                  ),
                 ),
                 Expanded(
                   child: CreateAccountStepIndicator(
@@ -77,13 +80,20 @@ class _CreateAccountState extends State<CreateAccount> {
                             title: 'Gender',
                             backgroundSnapshotMode: RouteSnapshotMode.animating,
                             snappingConfig: SheetSnappingConfig([0.35]),
-                            headerImage: HugeIcon(icon: HugeIcons.strokeRoundedManWoman,color: Colors.blue, size: 30,
-                              strokeWidth: 2,),
+                            headerImage: HugeIcon(
+                              icon: HugeIcons.strokeRoundedManWoman,
+                              color: Colors.blue,
+                              size: 30,
+                              strokeWidth: 2,
+                            ),
                             items: model.availableGenders,
                             itemBuilder: (context, item, index) {
                               return ListTile(
-                                title: AppText(item,colorType: AppTextColor.textInverted,),
-                                onTap:() =>  model.selectGender(item),
+                                title: AppText(
+                                  item,
+                                  colorType: AppTextColor.textInverted,
+                                ),
+                                onTap: () => model.selectGender(item),
                               );
                             },
                           );
@@ -102,16 +112,14 @@ class _CreateAccountState extends State<CreateAccount> {
                         roleDisplayController: model.roleDisplayController,
                         locationController: model.locationController,
                         onStateFieldTap: () async {
-                    
                           await ListBottomSheet.show<void, String>(
                             context: context,
                             title: 'State',
-                            backgroundSnapshotMode:
-                                RouteSnapshotMode.animating,
-                       
+                            backgroundSnapshotMode: RouteSnapshotMode.animating,
+
                             headerImage: HugeIcon(
                               icon: HugeIcons.strokeRoundedLocation01,
-                               size: 30,
+                              size: 30,
                               strokeWidth: 2,
                               color: Colors.green,
                             ),
@@ -128,12 +136,10 @@ class _CreateAccountState extends State<CreateAccount> {
                           );
                         },
                         onRoleFieldTap: () async {
-                       
                           await ListBottomSheet.show<void, RoleModel>(
                             context: context,
                             title: 'Role',
-                            backgroundSnapshotMode:
-                                RouteSnapshotMode.animating,
+                            backgroundSnapshotMode: RouteSnapshotMode.animating,
                             snappingConfig: SheetSnappingConfig([0.45]),
                             headerImage: HugeIcon(
                               icon: HugeIcons.strokeRoundedBriefcase01,
@@ -149,7 +155,8 @@ class _CreateAccountState extends State<CreateAccount> {
                                   item.displayLabel,
                                   colorType: AppTextColor.textInverted,
                                 ),
-                                subtitle: subtitle != null && subtitle.isNotEmpty
+                                subtitle:
+                                    subtitle != null && subtitle.isNotEmpty
                                     ? AppText(
                                         subtitle,
                                         colorType: AppTextColor.textMute,
@@ -176,7 +183,10 @@ class _CreateAccountState extends State<CreateAccount> {
             AppPrimaryButton(
               width: double.infinity,
               isLoading: model.busy,
-              onPressed: () => model.currentStep == CreateAccountStep.profileImage ? model.submitAccount() : model.goNext(context),
+              onPressed: () =>
+                  model.currentStep == CreateAccountStep.profileImage
+                  ? model.submitAccount()
+                  : model.goNext(context),
               child: AppText(
                 model.currentStep == CreateAccountStep.profileImage
                     ? 'Done'
@@ -208,4 +218,3 @@ class SnappyPagePhysics extends PageScrollPhysics {
     return SnappyPagePhysics(parent: buildParent(ancestor));
   }
 }
-
