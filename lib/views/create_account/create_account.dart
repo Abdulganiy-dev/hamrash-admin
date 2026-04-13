@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
@@ -28,6 +26,7 @@ class CreateAccount extends StatefulWidget {
 
 class _CreateAccountState extends State<CreateAccount> {
   late CreateAccountViewModel model;
+
   @override
   Widget build(BuildContext context) {
     return ViewModelBuilder<CreateAccountViewModel>.reactive(
@@ -39,172 +38,194 @@ class _CreateAccountState extends State<CreateAccount> {
       builder: (context, _, _) => DefaultScaffold(
         title: null,
         busy: model.busy,
-        body: ScaffoldColumn(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Transform.translate(
-                  offset: const Offset(-AppSpacing.md, 0),
-                  child: AppHugeIconButton(
-                    hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
-                    hugeIconStrokeWidth: 2,
-                    hugeIconRasterSize: 35,
-                    foregroundColorType: AppButtonForegroundColor.textInverted,
-                    onPressed: () => model.goBack(context),
-                  ),
-                ),
-                Expanded(
-                  child: CreateAccountStepIndicator(
-                    currentStep: model.currentStep,
-                  ),
-                ),
-              ],
-            ).padding(bottom: AppSpacing.lg),
-            Expanded(
-              child: PageView(
-                controller: model.pageController,
-                physics: const NeverScrollableScrollPhysics(),
+        body: GestureDetector(
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          behavior: HitTestBehavior.translucent,
+          child: ScaffoldColumn(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  SingleChildScrollView(
-                    child: Form(
-                      key: model.formKeyName,
-                      autovalidateMode: AutovalidateMode.disabled,
-                      child: CreateAccountStepName(
-                        viewModel: model,
-                        fullNameController: model.fullNameController,
-                        emailController: model.emailController,
-                        genderDisplayController: model.genderDisplayController,
-                        onGenderFieldTap: () async {
-                          await ListBottomSheet.show<void, String>(
-                            context: context,
-                            title: 'Gender',
-                            backgroundSnapshotMode: RouteSnapshotMode.animating,
-                            snappingConfig: SheetSnappingConfig([0.35]),
-                            headerImage: HugeIcon(
-                              icon: HugeIcons.strokeRoundedManWoman,
-                              color: Colors.blue,
-                              size: 30,
-                              strokeWidth: 2,
-                            ),
-                            items: model.availableGenders,
-                            itemBuilder: (context, item, index) {
-                              return ListTile(
-                                title: AppText(
-                                  item,
-                                  colorType: AppTextColor.textInverted,
-                                ),
-                                onTap: () => model.selectGender(item),
-                              );
-                            },
-                          );
-                        },
-                        phoneController: model.phoneController,
-                      ),
+                  Transform.translate(
+                    offset: const Offset(-AppSpacing.md, 0),
+                    child: AppHugeIconButton(
+                      hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
+                      hugeIconStrokeWidth: 2,
+                      hugeIconRasterSize: 35,
+                      foregroundColorType:
+                          AppButtonForegroundColor.textInverted,
+                      onPressed: () => model.goBack(context),
                     ),
                   ),
-                  SingleChildScrollView(
-                    child: Form(
-                      key: model.formKeyDetails,
-                      autovalidateMode: AutovalidateMode.disabled,
-                      child: CreateAccountStepDetails(
-                        viewModel: model,
-                        stateDisplayController: model.stateDisplayController,
-                        roleDisplayController: model.roleDisplayController,
-                        locationController: model.locationController,
-                        onStateFieldTap: () async {
-                          
-                          await model.fetchStates();
-                          await ListBottomSheet.show<void, String>(
-                            context: context,
-                            title: 'State',
-                            backgroundSnapshotMode: RouteSnapshotMode.animating,
-
-                            headerImage: HugeIcon(
-                              icon: HugeIcons.strokeRoundedLocation01,
-                              size: 30,
-                              strokeWidth: 2,
-                              color: Colors.green,
-                            ),
-                            items: model.availableStates,
-                            itemBuilder: (context, item, index) {
-                              return ListTile(
-                                title: AppText(
-                                  item,
-                                  colorType: AppTextColor.textInverted,
-                                ),
-                                onTap: () => model.selectState(item),
-                              );
-                            },
-                          );
-                        },
-                        onRoleFieldTap: () async {
-                          await model.fetchRoles();
-                 
-                          await ListBottomSheet.show<void, RoleModel>(
-                            context: context,
-                            title: 'Role',
-                            backgroundSnapshotMode: RouteSnapshotMode.animating,
-                            snappingConfig: SheetSnappingConfig([0.45]),
-                            headerImage: HugeIcon(
-                              icon: HugeIcons.strokeRoundedBriefcase01,
-                              size: 30,
-                              strokeWidth: 2,
-                              color: Colors.red,
-                            ),
-                            items: model.availableRoles,
-                            itemBuilder: (context, item, index) {
-                              final subtitle = item.description?.trim();
-                              return ListTile(
-                                title: AppText(
-                                  item.displayLabel,
-                                  colorType: AppTextColor.textInverted,
-                                ),
-                                subtitle:
-                                    subtitle != null && subtitle.isNotEmpty
-                                    ? AppText(
-                                        subtitle,
-                                        colorType: AppTextColor.textMute,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      )
-                                    : null,
-                                onTap: () => model.selectRole(item),
-                              );
-                            },
-                          );
-                        },
-                      ),
+                  Expanded(
+                    child: CreateAccountStepIndicator(
+                      currentStep: model.currentStep,
                     ),
-                  ),
-
-                  CreateAccountStepProfileImage(
-                    onPickImagePressed: () => model.pickImageFromGallery(),
-                    selectedImage: model.selectedImage,
                   ),
                 ],
-              ),
-            ),
-            AppPrimaryButton(
-              width: double.infinity,
-              isLoading: model.busy,
-              onPressed: () =>
-                  model.currentStep == CreateAccountStep.profileImage
-                  ? model.submitAccount()
-                  : model.goNext(context),
-              child: AppText(
-                model.currentStep == CreateAccountStep.profileImage
-                    ? 'Done'
-                    : 'Continue',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+              ).padding(bottom: AppSpacing.lg),
+              Expanded(
+                child: PageView(
+                  controller: model.pageController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    SingleChildScrollView(
+                      child: Form(
+                        key: model.formKeyName,
+                        autovalidateMode: AutovalidateMode.disabled,
+                        child: CreateAccountStepName(
+                          viewModel: model,
+                          fullNameController: model.fullNameController,
+                          emailController: model.emailController,
+                          genderDisplayController:
+                              model.genderDisplayController,
+                          onGenderFieldTap: () async {
+                            FocusScope.of(context).unfocus();
+                            await ListBottomSheet.show<void, String>(
+                              context: context,
+                              title: 'Gender',
+                              backgroundSnapshotMode:
+                                  RouteSnapshotMode.animating,
+                              snappingConfig: SheetSnappingConfig([0.35]),
+                              headerImage: HugeIcon(
+                                icon: HugeIcons.strokeRoundedManWoman,
+                                color: Colors.blue,
+                                size: 30,
+                                strokeWidth: 2,
+                              ),
+                              items: model.availableGenders,
+                              itemBuilder: (context, item, index) {
+                                return ListTile(
+                                  title: AppText(
+                                    item,
+                                    colorType: AppTextColor.textInverted,
+                                  ),
+                                  onTap: () => model.selectGender(item),
+                                );
+                              },
+                            );
+                          },
+                          phoneController: model.phoneController,
+                        ),
+                      ),
+                    ),
+                    SingleChildScrollView(
+                      child: Form(
+                        key: model.formKeyDetails,
+                        autovalidateMode: AutovalidateMode.disabled,
+                        child: CreateAccountStepDetails(
+                          viewModel: model,
+                          stateDisplayController: model.stateDisplayController,
+                          roleDisplayController: model.roleDisplayController,
+                          locationController: model.locationController,
+                          onStateFieldTap: () async {
+                            FocusScope.of(context).unfocus();
+                            await model.fetchStates();
+                            await ListBottomSheet.show<void, String>(
+                              context: context,
+                              title: 'State',
+                              backgroundSnapshotMode:
+                                  RouteSnapshotMode.animating,
+
+                              headerImage: HugeIcon(
+                                icon: HugeIcons.strokeRoundedLocation01,
+                                size: 30,
+                                strokeWidth: 2,
+                                color: Colors.green,
+                              ),
+                              items: model.availableStates,
+                              itemBuilder: (context, item, index) {
+                                return ListTile(
+                                  title: AppText(
+                                    item,
+                                    colorType: AppTextColor.textInverted,
+                                  ),
+                                  onTap: () => model.selectState(item),
+                                );
+                              },
+                            );
+                          },
+                          onRoleFieldTap: () async {
+                            FocusScope.of(context).unfocus();
+                            await model.fetchRoles();
+
+                            await ListBottomSheet.show<void, RoleModel>(
+                              context: context,
+                              title: 'Role',
+                              backgroundSnapshotMode:
+                                  RouteSnapshotMode.animating,
+                              snappingConfig: SheetSnappingConfig([0.45]),
+                              headerImage: HugeIcon(
+                                icon: HugeIcons.strokeRoundedBriefcase01,
+                                size: 30,
+                                strokeWidth: 2,
+                                color: Colors.red,
+                              ),
+                              items: model.availableRoles,
+                              itemBuilder: (context, item, index) {
+                                final subtitle = item.description?.trim();
+                                return ListTile(
+                                  title: AppText(
+                                    item.displayLabel,
+                                    colorType: AppTextColor.textInverted,
+                                  ),
+                                  subtitle:
+                                      subtitle != null && subtitle.isNotEmpty
+                                      ? AppText(
+                                          subtitle,
+                                          colorType: AppTextColor.textMute,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        )
+                                      : null,
+                                  onTap: () => model.selectRole(item),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+
+                    CreateAccountStepProfileImage(
+                      onPickImagePressed: () => model.pickImageFromGallery(),
+                      selectedImage: model.selectedImage,
+                    ),
+                  ],
                 ),
               ),
-            ),
-            SizedBox(height: AppSpacing.lg),
-          ],
+              Builder(
+                builder: (ctx) {
+                  final keyboardOpen =
+                      MediaQuery.viewInsetsOf(ctx).bottom > 0;
+                  return keyboardOpen
+                      ? const SizedBox.shrink()
+                      : AppPrimaryButton(
+                          width: double.infinity,
+                          isLoading: model.busy,
+                          onPressed: () =>
+                              model.currentStep ==
+                                  CreateAccountStep.profileImage
+                              ? model.submitAccount()
+                              : model.goNext(context),
+                          child: AppText(
+                            model.currentStep == CreateAccountStep.profileImage
+                                ? 'Done'
+                                : 'Continue',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        );
+                },
+              ),
+
+              SizedBox(height: AppSpacing.lg),
+            ],
+          ),
         ),
       ),
     );
