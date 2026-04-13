@@ -1,76 +1,38 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/helpers/haptic_helper.dart';
-import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/widgets/app_button.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
-import 'package:hamrash_admin/widgets/button/app_button.dart';
-import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hugeicons/hugeicons.dart';
 
-/// A modern, premium default scaffold widget with customizable app bar
-/// and optional back navigation button.
-///
-/// Features:
-/// - No app bar shadow for a clean, modern look
-/// - Optional back arrow button with customizable action
-/// - Premium, minimalist design
-/// - Flexible configuration options
+enum DefaultScaffoldAppBarType { standard, custom, none }
+
 class DefaultScaffold extends StatelessWidget {
-  /// The main content of the scaffold
   final Widget body;
-
-  /// Optional title to display in the app bar
   final String? title;
-
-  /// Whether to show the back arrow button
   final bool showBackButton;
-
-  /// Custom function to execute when back button is pressed.
-  /// If null, defaults to Navigator.pop()
   final VoidCallback? onBackPressed;
-
-  /// Optional leading widget (replaces back button if provided)
   final Widget? leading;
-
-  /// Optional list of action widgets to display in the app bar
   final List<Widget>? actions;
-
-  /// Background color of the scaffold
   final Color? backgroundColor;
-
-  /// Background color of the app bar
-  final Color? appBarBackgroundColor;
-
-  /// Whether to extend the body behind the app bar
-  final bool extendBodyBehindAppBar;
-
-  /// Optional floating action button
   final Widget? floatingActionButton;
-
-  /// Optional bottom navigation bar
   final Widget? bottomNavigationBar;
-
-  /// Optional drawer
   final Widget? drawer;
-
-  /// Optional end drawer
   final Widget? endDrawer;
-
-  /// Whether the app bar should automatically imply leading widget
   final bool automaticallyImplyLeading;
-
-  /// Custom app bar height
-  final double? appBarHeight;
-
-  /// Padding for the body content
+  final double appBarHeight;
+  final double appBarFadeHeight;
+  final Widget? customAppBar;
+  final DefaultScaffoldAppBarType? appBarType;
   final EdgeInsetsGeometry? bodyPadding;
-
-  /// Whether to show a loading overlay on the body
   final bool busy;
 
+  @Deprecated('Safe area top is always handled internally for consistency.')
   final bool showSafeAreaTop;
+  @Deprecated('Scaffold now uses an internal gradient app bar.')
+  final Color? appBarBackgroundColor;
+  @Deprecated('Body is always laid out beneath a custom app bar layer.')
+  final bool extendBodyBehindAppBar;
 
   const DefaultScaffold({
     super.key,
@@ -83,13 +45,16 @@ class DefaultScaffold extends StatelessWidget {
     this.actions,
     this.backgroundColor,
     this.appBarBackgroundColor,
-    this.extendBodyBehindAppBar = false,
+    this.extendBodyBehindAppBar = true,
     this.floatingActionButton,
     this.bottomNavigationBar,
     this.drawer,
     this.endDrawer,
     this.automaticallyImplyLeading = true,
-    this.appBarHeight,
+    this.appBarHeight = kToolbarHeight,
+    this.appBarFadeHeight = 20,
+    this.customAppBar,
+    this.appBarType,
     this.bodyPadding,
     this.busy = false,
   });
@@ -102,89 +67,172 @@ class DefaultScaffold extends StatelessWidget {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+  Widget _buildDefaultLeading(BuildContext context) {
+    return AppHugeIconButton(
+      hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
+      hugeIconStrokeWidth: 2,
+      hugeIconRasterSize: 35,
+      foregroundColorType: AppButtonForegroundColor.textInverted,
+      onPressed: onBackPressed ?? () => _defaultPop(context),
+    );
+  }
 
-    final isLightMode = theme.brightness == Brightness.light;
-    final Color appBarBackgroundColor = isLightMode
-        ? LightColors.backgroundSurfacePrimaryBG
-        : DarkColors.backgroundSurfacePrimaryBG;
+  DefaultScaffoldAppBarType _resolveAppBarType() {
+    if (appBarType != null) return appBarType!;
+    if (customAppBar != null) return DefaultScaffoldAppBarType.custom;
+    final hasStandardConfig =
+        title != null ||
+        showBackButton ||
+        leading != null ||
+        (actions?.isNotEmpty ?? false);
+    return hasStandardConfig
+        ? DefaultScaffoldAppBarType.standard
+        : DefaultScaffoldAppBarType.none;
+  }
 
-    // Determine if we should show the back button
-    final shouldShowBackButton =
+  Widget _buildStandardAppBar(BuildContext context) {
+    final showDefaultBackButton =
         showBackButton &&
-        (leading == null) &&
+        leading == null &&
         (Navigator.of(context).canPop() || onBackPressed != null);
 
-    // Build the leading widget
-    Widget? leadingWidget;
-    if (leading != null) {
-      leadingWidget = leading;
-    } else if (shouldShowBackButton) {
-      final backIconColor = isLightMode
-          ? LightColors.textTextInverted
-          : DarkColors.textTextInverted;
-      leadingWidget = AppHugeIconButton(
-        hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
-        hugeIconStrokeWidth: 2,
-        hugeIconRasterSize: 35,
-        foregroundColor: backIconColor,
-        onPressed: onBackPressed ?? () => _defaultPop(context),
-      );
+    final leadingWidget =
+        leading ??
+        (automaticallyImplyLeading && showDefaultBackButton
+            ? _buildDefaultLeading(context)
+            : null);
+
+    return SizedBox(
+      height: appBarHeight,
+      child: Stack(
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 72,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: leadingWidget,
+                ),
+              ),
+              const Spacer(),
+              if (actions != null && actions!.isNotEmpty)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: actions!,
+                ).padding(right: 8)
+              else
+                const SizedBox(width: 72),
+            ],
+          ),
+          Positioned.fill(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 72),
+                child: title != null
+                    ? AppText(
+                        title!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.5,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppBarLayer(
+    BuildContext context, {
+    required double topInset,
+    required Color surface,
+    required Widget appBarContent,
+  }) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: IgnorePointer(
+        ignoring: false,
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                surface.withValues(alpha: 0.96),
+                surface.withValues(alpha: 0.76),
+                surface.withValues(alpha: 0),
+              ],
+              stops: const [0.0, 0.62, 1.0],
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: topInset),
+              appBarContent,
+              IgnorePointer(child: SizedBox(height: appBarFadeHeight)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final topInset = MediaQuery.viewPaddingOf(context).top;
+    final resolvedAppBarType = _resolveAppBarType();
+
+    final Widget? appBarContent;
+    switch (resolvedAppBarType) {
+      case DefaultScaffoldAppBarType.standard:
+        appBarContent = _buildStandardAppBar(context);
+        break;
+      case DefaultScaffoldAppBarType.custom:
+        appBarContent = customAppBar != null
+            ? SizedBox(height: appBarHeight, child: customAppBar!)
+            : null;
+        break;
+      case DefaultScaffoldAppBarType.none:
+        appBarContent = null;
+        break;
     }
-    
-    final hasAppBar =
-        title != null ||
-        shouldShowBackButton ||
-        leading != null ||
-        actions != null;
+
+    final hasAppBarLayer = appBarContent != null;
+    final bodyTopInset =
+        topInset + (hasAppBarLayer ? appBarHeight + appBarFadeHeight : 0);
 
     return Scaffold(
-      backgroundColor: backgroundColor ?? colorScheme.surface,
-      extendBodyBehindAppBar: extendBodyBehindAppBar,
-      appBar: hasAppBar
-          ? AppBar(
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              backgroundColor:
-                  appBarBackgroundColor, // Match scaffold background
-              surfaceTintColor: Colors.transparent, // Remove tint effect
-              leading: leadingWidget,
-              automaticallyImplyLeading:
-                  automaticallyImplyLeading &&
-                  (leadingWidget != null || shouldShowBackButton),
-              title: title != null
-                  ? AppText(
-                      title!,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.5,
-                      ),
-                    )
-                  : null,
-              actions: actions,
-              toolbarHeight: appBarHeight,
-              centerTitle: false,
-            )
-          : null,
-      body: SafeArea(
-        bottom: false,
-        top: showSafeAreaTop,
-
-        child: Stack(
-          children: [
-            SizedBox.expand(child: body),
-
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.3),
-                child: const Center(child: CircularProgressIndicator()),
-              ),
-            ).hideIf(!busy),
-          ],
-        ),
+      backgroundColor: colorScheme.surface,
+      body: Stack(
+        children: [
+          body,
+          if (hasAppBarLayer)
+            _buildAppBarLayer(
+              context,
+              topInset: topInset,
+              surface: colorScheme.surface,
+              appBarContent: appBarContent,
+            ),
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.3),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+          ).hideIf(!busy),
+        ],
       ),
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: bottomNavigationBar,
@@ -214,6 +262,6 @@ class ScaffoldColumn extends StatelessWidget {
       mainAxisAlignment: mainAxisAlignment,
       mainAxisSize: mainAxisSize,
       children: children,
-    ).paddingSymmetric(horizontal: 16, vertical: 24);
+    ).padding(bottom: 10, left: 16, right: 16);
   }
 }
