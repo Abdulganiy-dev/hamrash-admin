@@ -152,7 +152,7 @@ class ErrorModal extends StatelessWidget {
                 width: double.infinity,
                 onPressed: () => NavigationService.popScreen(),
                 child: AppText(
-                  'Try Again',
+                  'Okay',
                   fontSize: 16,
       fontWeight: FontWeight.w800,
             

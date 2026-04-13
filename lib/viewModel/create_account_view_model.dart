@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/widgets/success_modal.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:hamrash_admin/api/models/supabase_models/admin_profile_model.dart';
@@ -202,7 +203,7 @@ class CreateAccountViewModel extends BaseViewModel {
         e,
         stackTrace: stackTrace,
         context: 'CreateAccountViewModel.fetchStates',
-        userMessage: 'Failed to load states. Using default list.',
+        userMessage: 'Failed to load states.',
       );
     } finally {
       setBusy(false);
@@ -214,7 +215,7 @@ class CreateAccountViewModel extends BaseViewModel {
   }
 
   Future<void> fetchRoles() async {
-    if (_rolesFetchAttempted) return;
+    if (availableRoles.isNotEmpty) return;
     setBusy(true);
     try {
       final roles = await roleService.fetchRoles();
@@ -226,14 +227,13 @@ class CreateAccountViewModel extends BaseViewModel {
         e,
         stackTrace: stackTrace,
         context: 'CreateAccountViewModel.fetchRoles',
-        userMessage: 'Failed to load roles. Using default list.',
+        userMessage: 'Failed to load roles',
       );
     } finally {
       setBusy(false);
       if (availableRoles.isEmpty) {
         availableRoles = [];
       }
-      _rolesFetchAttempted = true;
       notifyListeners();
     }
   }
@@ -322,7 +322,7 @@ class CreateAccountViewModel extends BaseViewModel {
       final imageResponse = await imageService.uploadImage(
         imageBytes,
         filename,
-        metadata: {'Type': 'artisan_profile'},
+        metadata: {'Type': 'admin_profile'},
       );
 
       uploadedImageId = imageResponse.id;
@@ -356,8 +356,12 @@ class CreateAccountViewModel extends BaseViewModel {
       selectedImage = null;
 
       if (context.mounted) {
-        Navigator.of(context).pushReplacementNamed(Home.routeName);
+        SuccessModal.show(context, title: 'Account Created', message: 'Account created successfully',onDismiss: () {
+          NavigationService.popScreen();
+          Navigator.of(context).pushReplacementNamed(Home.routeName);
+        });
       }
+
     } catch (e, stackTrace) {
       if (uploadedImageId != null) {
         await imageService.deleteImage(uploadedImageId).catchError((_) {});

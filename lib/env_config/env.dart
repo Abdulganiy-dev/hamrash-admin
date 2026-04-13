@@ -63,6 +63,7 @@ class DevEnv implements Env {
   @override
   String get cloudflareApiToken => const String.fromEnvironment(
         'CLOUDFLARE_API_TOKEN',
+        defaultValue: "cfut_HwGFbW1IIX41N2rcTlj6Hak040ECbWf57dgCnaWX92a69884",
       );
 
   @override

@@ -1,3 +1,5 @@
+
+
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
@@ -112,6 +114,8 @@ class _CreateAccountState extends State<CreateAccount> {
                         roleDisplayController: model.roleDisplayController,
                         locationController: model.locationController,
                         onStateFieldTap: () async {
+                          
+                          await model.fetchStates();
                           await ListBottomSheet.show<void, String>(
                             context: context,
                             title: 'State',
@@ -136,6 +140,8 @@ class _CreateAccountState extends State<CreateAccount> {
                           );
                         },
                         onRoleFieldTap: () async {
+                          await model.fetchRoles();
+                 
                           await ListBottomSheet.show<void, RoleModel>(
                             context: context,
                             title: 'Role',

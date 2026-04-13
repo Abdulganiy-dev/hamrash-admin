@@ -150,7 +150,6 @@
 				C52F838D038C6EADCB3871C7 /* Pods-Runner.release-dev.xcconfig */,
 				27D81C8779D6A14E0EAA67AE /* Pods-Runner.profile-dev.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -318,9 +317,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -444,7 +447,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.hamrashAdmin;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ladulghanneey.hamrashAdmin;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -467,7 +470,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.hamrashAdmin.dev;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ladulghanneey.hamrashAdmin.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -521,6 +524,48 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
 			};
 			name = Profile;
+		};
+		76AD5B022F8D3AFA001FC914 /* Debug-prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = RunnerTests;
+			};
+			name = "Debug-prod";
+		};
+		76AD5B032F8D3AFA001FC914 /* Release-prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = RunnerTests;
+			};
+			name = "Release-prod";
+		};
+		76AD5B042F8D3AFA001FC914 /* Profile-prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = RunnerTests;
+			};
+			name = "Profile-prod";
+		};
+		76AD5B052F8D3AFA001FC914 /* Debug-dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = RunnerTests;
+			};
+			name = "Debug-dev";
+		};
+		76AD5B062F8D3AFA001FC914 /* Release-dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = RunnerTests;
+			};
+			name = "Release-dev";
+		};
+		76AD5B072F8D3AFA001FC914 /* Profile-dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = RunnerTests;
+			};
+			name = "Profile-dev";
 		};
 		97C147031CF9000F007C117D /* Debug-prod */ = {
 			isa = XCBuildConfiguration;
@@ -648,7 +693,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.hamrashAdmin;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ladulghanneey.hamrashAdmin;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -672,7 +717,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.hamrashAdmin;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ladulghanneey.hamrashAdmin;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -858,7 +903,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.hamrashAdmin.dev;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ladulghanneey.hamrashAdmin.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -882,7 +927,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.hamrashAdmin.dev;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ladulghanneey.hamrashAdmin.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -899,6 +944,12 @@
 				331C8088294A63A400263BE5 /* Debug */,
 				331C8089294A63A400263BE5 /* Release */,
 				331C808A294A63A400263BE5 /* Profile */,
+				76AD5B022F8D3AFA001FC914 /* Debug-prod */,
+				76AD5B032F8D3AFA001FC914 /* Release-prod */,
+				76AD5B042F8D3AFA001FC914 /* Profile-prod */,
+				76AD5B052F8D3AFA001FC914 /* Debug-dev */,
+				76AD5B062F8D3AFA001FC914 /* Release-dev */,
+				76AD5B072F8D3AFA001FC914 /* Profile-dev */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

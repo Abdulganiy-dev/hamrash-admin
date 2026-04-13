@@ -58,7 +58,7 @@ class AdminProfileModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
+        
         'clerk_id': clerkId,
         'full_name': fullName,
         'email': email,
