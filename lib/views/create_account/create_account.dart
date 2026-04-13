@@ -41,189 +41,236 @@ class _CreateAccountState extends State<CreateAccount> {
         body: GestureDetector(
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
           behavior: HitTestBehavior.translucent,
-          child: ScaffoldColumn(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              ScaffoldColumn(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Transform.translate(
-                    offset: const Offset(-AppSpacing.md, 0),
-                    child: AppHugeIconButton(
-                      hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
-                      hugeIconStrokeWidth: 2,
-                      hugeIconRasterSize: 35,
-                      foregroundColorType:
-                          AppButtonForegroundColor.textInverted,
-                      onPressed: () => model.goBack(context),
-                    ),
-                  ),
                   Expanded(
-                    child: CreateAccountStepIndicator(
-                      currentStep: model.currentStep,
+                    child: PageView(
+                      controller: model.pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        SingleChildScrollView(
+                          child: Form(
+                            key: model.formKeyName,
+                            autovalidateMode: AutovalidateMode.disabled,
+                            child: CreateAccountStepName(
+                              viewModel: model,
+                              fullNameController: model.fullNameController,
+                              emailController: model.emailController,
+                              genderDisplayController:
+                                  model.genderDisplayController,
+                              onGenderFieldTap: () async {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                await ListBottomSheet.show<void, String>(
+                                  context: context,
+                                  title: 'Gender',
+                                  backgroundSnapshotMode:
+                                      RouteSnapshotMode.animating,
+                                  snappingConfig: SheetSnappingConfig([0.35]),
+                                  headerImage: HugeIcon(
+                                    icon: HugeIcons.strokeRoundedManWoman,
+                                    color: Colors.blue,
+                                    size: 30,
+                                    strokeWidth: 2,
+                                  ),
+                                  items: model.availableGenders,
+                                  itemBuilder: (context, item, index) {
+                                    return ListTile(
+                                      title: AppText(
+                                        item,
+                                        colorType: AppTextColor.textInverted,
+                                      ),
+                                      onTap: () => model.selectGender(item),
+                                    );
+                                  },
+                                );
+                              },
+                              phoneController: model.phoneController,
+                            ).padding(top: AppSpacing.xl),
+                          ),
+                        ),
+                        SingleChildScrollView(
+                          child: Form(
+                            key: model.formKeyDetails,
+                            autovalidateMode: AutovalidateMode.disabled,
+                            child: CreateAccountStepDetails(
+                              viewModel: model,
+                              stateDisplayController:
+                                  model.stateDisplayController,
+                              roleDisplayController:
+                                  model.roleDisplayController,
+                              locationController: model.locationController,
+                              onStateFieldTap: () async {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                await model.fetchStates();
+                                await ListBottomSheet.show<void, String>(
+                                  context: context,
+                                  title: 'State',
+                                  backgroundSnapshotMode:
+                                      RouteSnapshotMode.animating,
+
+                                  headerImage: HugeIcon(
+                                    icon: HugeIcons.strokeRoundedLocation01,
+                                    size: 30,
+                                    strokeWidth: 2,
+                                    color: Colors.green,
+                                  ),
+                                  items: model.availableStates,
+                                  itemBuilder: (context, item, index) {
+                                    return ListTile(
+                                      title: AppText(
+                                        item,
+                                        colorType: AppTextColor.textInverted,
+                                      ),
+                                      onTap: () => model.selectState(item),
+                                    );
+                                  },
+                                );
+                              },
+                              onRoleFieldTap: () async {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                await model.fetchRoles();
+
+                                await ListBottomSheet.show<void, RoleModel>(
+                                  context: context,
+                                  title: 'Role',
+                                  backgroundSnapshotMode:
+                                      RouteSnapshotMode.animating,
+                                  snappingConfig: SheetSnappingConfig([0.45]),
+                                  headerImage: HugeIcon(
+                                    icon: HugeIcons.strokeRoundedBriefcase01,
+                                    size: 30,
+                                    strokeWidth: 2,
+                                    color: Colors.red,
+                                  ),
+                                  items: model.availableRoles,
+                                  itemBuilder: (context, item, index) {
+                                    final subtitle = item.description?.trim();
+                                    return ListTile(
+                                      title: AppText(
+                                        item.displayLabel,
+                                        colorType: AppTextColor.textInverted,
+                                      ),
+                                      subtitle:
+                                          subtitle != null &&
+                                              subtitle.isNotEmpty
+                                          ? AppText(
+                                              subtitle,
+                                              colorType: AppTextColor.textMute,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            )
+                                          : null,
+                                      onTap: () => model.selectRole(item),
+                                    );
+                                  },
+                                );
+                              },
+                            ).padding(top: AppSpacing.lg),
+                          ),
+                        ),
+
+                        CreateAccountStepProfileImage(
+                          onPickImagePressed: () =>
+                              model.pickImageFromGallery(),
+                          selectedImage: model.selectedImage,
+                        ).padding(top: AppSpacing.lg),
+                      ],
                     ),
                   ),
+                  Builder(
+                    builder: (ctx) {
+                      final keyboardOpen =
+                          MediaQuery.viewInsetsOf(ctx).bottom > 0;
+                      return keyboardOpen
+                          ? const SizedBox.shrink()
+                          : AppPrimaryButton(
+                              width: double.infinity,
+                              isLoading: model.busy,
+                              onPressed: () =>
+                                  model.currentStep ==
+                                      CreateAccountStep.profileImage
+                                  ? model.submitAccount()
+                                  : model.goNext(context),
+                              child: AppText(
+                                model.currentStep ==
+                                        CreateAccountStep.profileImage
+                                    ? 'Done'
+                                    : 'Continue',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            );
+                    },
+                  ),
+
+                  SizedBox(height: AppSpacing.lg),
                 ],
-              ).padding(bottom: AppSpacing.lg),
-              Expanded(
-                child: PageView(
-                  controller: model.pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    SingleChildScrollView(
-                      child: Form(
-                        key: model.formKeyName,
-                        autovalidateMode: AutovalidateMode.disabled,
-                        child: CreateAccountStepName(
-                          viewModel: model,
-                          fullNameController: model.fullNameController,
-                          emailController: model.emailController,
-                          genderDisplayController:
-                              model.genderDisplayController,
-                          onGenderFieldTap: () async {
-                            FocusScope.of(context).unfocus();
-                            await ListBottomSheet.show<void, String>(
-                              context: context,
-                              title: 'Gender',
-                              backgroundSnapshotMode:
-                                  RouteSnapshotMode.animating,
-                              snappingConfig: SheetSnappingConfig([0.35]),
-                              headerImage: HugeIcon(
-                                icon: HugeIcons.strokeRoundedManWoman,
-                                color: Colors.blue,
-                                size: 30,
-                                strokeWidth: 2,
-                              ),
-                              items: model.availableGenders,
-                              itemBuilder: (context, item, index) {
-                                return ListTile(
-                                  title: AppText(
-                                    item,
-                                    colorType: AppTextColor.textInverted,
-                                  ),
-                                  onTap: () => model.selectGender(item),
-                                );
-                              },
-                            );
-                          },
-                          phoneController: model.phoneController,
+              ),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Builder(
+                  builder: (context) {
+                    final surface =
+                        Theme.of(context).colorScheme.surface;
+                    return Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            surface,
+                            surface,
+                            surface.withValues(alpha: 0),
+                          ],
+                          stops: const [0.0, 0.72, 1.0],
                         ),
                       ),
-                    ),
-                    SingleChildScrollView(
-                      child: Form(
-                        key: model.formKeyDetails,
-                        autovalidateMode: AutovalidateMode.disabled,
-                        child: CreateAccountStepDetails(
-                          viewModel: model,
-                          stateDisplayController: model.stateDisplayController,
-                          roleDisplayController: model.roleDisplayController,
-                          locationController: model.locationController,
-                          onStateFieldTap: () async {
-                            FocusScope.of(context).unfocus();
-                            await model.fetchStates();
-                            await ListBottomSheet.show<void, String>(
-                              context: context,
-                              title: 'State',
-                              backgroundSnapshotMode:
-                                  RouteSnapshotMode.animating,
-
-                              headerImage: HugeIcon(
-                                icon: HugeIcons.strokeRoundedLocation01,
-                                size: 30,
-                                strokeWidth: 2,
-                                color: Colors.green,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Transform.translate(
+                                offset: const Offset(-AppSpacing.md, 0),
+                                child: AppHugeIconButton(
+                                  hugeIcon:
+                                      HugeIcons.strokeRoundedArrowLeft01,
+                                  hugeIconStrokeWidth: 2,
+                                  hugeIconRasterSize: 35,
+                                  foregroundColorType:
+                                      AppButtonForegroundColor.textInverted,
+                                  onPressed: () => model.goBack(context),
+                                ),
+                              ).padding(left: AppSpacing.md),
+                              Expanded(
+                                child: CreateAccountStepIndicator(
+                                  currentStep: model.currentStep,
+                                ),
                               ),
-                              items: model.availableStates,
-                              itemBuilder: (context, item, index) {
-                                return ListTile(
-                                  title: AppText(
-                                    item,
-                                    colorType: AppTextColor.textInverted,
-                                  ),
-                                  onTap: () => model.selectState(item),
-                                );
-                              },
-                            );
-                          },
-                          onRoleFieldTap: () async {
-                            FocusScope.of(context).unfocus();
-                            await model.fetchRoles();
-
-                            await ListBottomSheet.show<void, RoleModel>(
-                              context: context,
-                              title: 'Role',
-                              backgroundSnapshotMode:
-                                  RouteSnapshotMode.animating,
-                              snappingConfig: SheetSnappingConfig([0.45]),
-                              headerImage: HugeIcon(
-                                icon: HugeIcons.strokeRoundedBriefcase01,
-                                size: 30,
-                                strokeWidth: 2,
-                                color: Colors.red,
-                              ),
-                              items: model.availableRoles,
-                              itemBuilder: (context, item, index) {
-                                final subtitle = item.description?.trim();
-                                return ListTile(
-                                  title: AppText(
-                                    item.displayLabel,
-                                    colorType: AppTextColor.textInverted,
-                                  ),
-                                  subtitle:
-                                      subtitle != null && subtitle.isNotEmpty
-                                      ? AppText(
-                                          subtitle,
-                                          colorType: AppTextColor.textMute,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        )
-                                      : null,
-                                  onTap: () => model.selectRole(item),
-                                );
-                              },
-                            );
-                          },
-                        ),
+                              SizedBox(width: AppSpacing.md),
+                            ],
+                          ).paddingSymmetric(vertical: AppSpacing.sm),
+                          const IgnorePointer(
+                            child: SizedBox(height: 20),
+                          ),
+                        ],
                       ),
-                    ),
-
-                    CreateAccountStepProfileImage(
-                      onPickImagePressed: () => model.pickImageFromGallery(),
-                      selectedImage: model.selectedImage,
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
-              Builder(
-                builder: (ctx) {
-                  final keyboardOpen =
-                      MediaQuery.viewInsetsOf(ctx).bottom > 0;
-                  return keyboardOpen
-                      ? const SizedBox.shrink()
-                      : AppPrimaryButton(
-                          width: double.infinity,
-                          isLoading: model.busy,
-                          onPressed: () =>
-                              model.currentStep ==
-                                  CreateAccountStep.profileImage
-                              ? model.submitAccount()
-                              : model.goNext(context),
-                          child: AppText(
-                            model.currentStep == CreateAccountStep.profileImage
-                                ? 'Done'
-                                : 'Continue',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        );
-                },
-              ),
-
-              SizedBox(height: AppSpacing.lg),
             ],
           ),
         ),
