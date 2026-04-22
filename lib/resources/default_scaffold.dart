@@ -7,6 +7,82 @@ import 'package:hugeicons/hugeicons.dart';
 
 enum DefaultScaffoldAppBarType { standard, custom, none }
 
+/// Publishes the layout metrics of the enclosing [DefaultScaffold] so any
+/// descendant widget can read the top inset it needs to clear (safe area +
+/// app bar + fade region) without the scaffold having to push the body down
+/// globally.
+///
+/// Usage from any view inside a [DefaultScaffold]:
+///
+/// ```dart
+/// final top = ScaffoldInsets.bodyTopInsetOf(context);
+/// // or access the full metrics:
+/// final insets = ScaffoldInsets.of(context);
+/// ```
+class ScaffoldInsets extends InheritedWidget {
+  const ScaffoldInsets({
+    super.key,
+    required this.topInset,
+    required this.appBarHeight,
+    required this.appBarFadeHeight,
+    required this.hasAppBar,
+    required super.child,
+  });
+
+  /// System status bar inset (safe area top).
+  final double topInset;
+
+  /// Height of the app bar content area.
+  final double appBarHeight;
+
+  /// Height of the fade region beneath the app bar content.
+  final double appBarFadeHeight;
+
+  /// Whether the enclosing scaffold is actually rendering an app bar layer.
+  final bool hasAppBar;
+
+  /// Total top space a body child should leave clear so it is not covered by
+  /// the translucent app bar overlay. The safe area is always included; the
+  /// app bar and its fade region are only included when an app bar exists.
+  double get bodyTopInset =>
+      topInset + (hasAppBar ? appBarHeight + appBarFadeHeight : 0);
+
+  /// Returns the nearest [ScaffoldInsets], or `null` if no [DefaultScaffold]
+  /// is an ancestor of [context].
+  static ScaffoldInsets? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<ScaffoldInsets>();
+  }
+
+  /// Returns the nearest [ScaffoldInsets]. Throws if called outside of a
+  /// [DefaultScaffold].
+  static ScaffoldInsets of(BuildContext context) {
+    final insets = maybeOf(context);
+    assert(
+      insets != null,
+      'ScaffoldInsets.of() called outside of a DefaultScaffold. '
+      'Use ScaffoldInsets.maybeOf(context) if the widget can also be used '
+      'outside a DefaultScaffold.',
+    );
+    return insets!;
+  }
+
+  /// Convenience accessor for [bodyTopInset]. Falls back to the safe area
+  /// top when no [DefaultScaffold] is in the tree.
+  static double bodyTopInsetOf(BuildContext context) {
+    final insets = maybeOf(context);
+    if (insets != null) return insets.bodyTopInset;
+    return MediaQuery.viewPaddingOf(context).top;
+  }
+
+  @override
+  bool updateShouldNotify(ScaffoldInsets oldWidget) {
+    return topInset != oldWidget.topInset ||
+        appBarHeight != oldWidget.appBarHeight ||
+        appBarFadeHeight != oldWidget.appBarFadeHeight ||
+        hasAppBar != oldWidget.hasAppBar;
+  }
+}
+
 class DefaultScaffold extends StatelessWidget {
   final Widget body;
   final String? title;
@@ -58,6 +134,7 @@ class DefaultScaffold extends StatelessWidget {
     this.bodyPadding,
     this.busy = false,
   });
+
 
   /// Default function to pop the current route
   void _defaultPop(BuildContext context) {
@@ -209,29 +286,32 @@ class DefaultScaffold extends StatelessWidget {
     }
 
     final hasAppBarLayer = appBarContent != null;
-    final bodyTopInset =
-        topInset + (hasAppBarLayer ? appBarHeight + appBarFadeHeight : 0);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      body: Stack(
-        children: [
-       
-          body,
-          if (hasAppBarLayer)
-            _buildAppBarLayer(
-              context,
-              topInset: topInset,
-              surface: colorScheme.surface,
-              appBarContent: appBarContent,
-            ),
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.3),
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-          ).hideIf(!busy),
-        ],
+      body: ScaffoldInsets(
+        topInset: topInset,
+        appBarHeight: appBarHeight,
+        appBarFadeHeight: appBarFadeHeight,
+        hasAppBar: hasAppBarLayer,
+        child: Stack(
+          children: [
+            body,
+            if (hasAppBarLayer)
+              _buildAppBarLayer(
+                context,
+                topInset: topInset,
+                surface: colorScheme.surface,
+                appBarContent: appBarContent,
+              ),
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.3),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+            ).hideIf(!busy),
+          ],
+        ),
       ),
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: bottomNavigationBar,
@@ -256,7 +336,6 @@ class ScaffoldColumn extends StatelessWidget {
   final CrossAxisAlignment crossAxisAlignment; // = CrossAxisAlignment.center
   @override
   Widget build(BuildContext context) {
-    final topInset = MediaQuery.paddingOf(context).top;
     return Column(
       crossAxisAlignment: crossAxisAlignment,
       mainAxisAlignment: mainAxisAlignment,
