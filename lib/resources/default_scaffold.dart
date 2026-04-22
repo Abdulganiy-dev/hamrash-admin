@@ -201,9 +201,7 @@ class DefaultScaffold extends StatelessWidget {
         appBarContent = _buildStandardAppBar(context);
         break;
       case DefaultScaffoldAppBarType.custom:
-        appBarContent = customAppBar != null
-            ? SizedBox(height: appBarHeight, child: customAppBar!)
-            : null;
+        appBarContent = customAppBar;
         break;
       case DefaultScaffoldAppBarType.none:
         appBarContent = null;
@@ -218,6 +216,7 @@ class DefaultScaffold extends StatelessWidget {
       backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
+       
           body,
           if (hasAppBarLayer)
             _buildAppBarLayer(
@@ -257,11 +256,12 @@ class ScaffoldColumn extends StatelessWidget {
   final CrossAxisAlignment crossAxisAlignment; // = CrossAxisAlignment.center
   @override
   Widget build(BuildContext context) {
+    final topInset = MediaQuery.paddingOf(context).top;
     return Column(
       crossAxisAlignment: crossAxisAlignment,
       mainAxisAlignment: mainAxisAlignment,
       mainAxisSize: mainAxisSize,
       children: children,
-    ).padding(bottom: 10, left: 16, right: 16);
+    ).padding(bottom: 10, left: 16, right: 16, top: 0);
   }
 }

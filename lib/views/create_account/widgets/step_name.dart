@@ -32,6 +32,7 @@ class CreateAccountStepName extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+       
         AppText(
           'Welcome, let\'s set up your profile',
           style: theme.textTheme.titleLarge?.copyWith(

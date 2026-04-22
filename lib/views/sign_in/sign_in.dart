@@ -36,35 +36,37 @@ class _SignInState extends State<SignIn> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Spacer(),
-            SizedBox(
-              width: 300,
-              child: AppSecondaryButton(
+            Center(
+              child: SizedBox(
                 width: 300,
-                isLoading: viewModel.busy,
-                onPressed: viewModel.busy ? null : viewModel.signInWithGoogle,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(
-                      AssetsUtil.googleLogo,
-                      width: 20,
-                      height: 20,
-                      errorBuilder: (context, error, stackTrace) {
-                        return HugeIcon(
-                          icon: HugeIcons.strokeRoundedLogout03,
-                          size: 20,
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    AppText(
-                     viewModel.busy ? 'Signing in...' : 'Continue with Google',
-                      colorType: AppTextColor.textInverted,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
-                  ],
+                child: AppSecondaryButton(
+                  width: 300,
+                  isLoading: viewModel.busy,
+                  onPressed: viewModel.busy ? null : viewModel.signInWithGoogle,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        AssetsUtil.googleLogo,
+                        width: 20,
+                        height: 20,
+                        errorBuilder: (context, error, stackTrace) {
+                          return HugeIcon(
+                            icon: HugeIcons.strokeRoundedLogout03,
+                            size: 20,
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      AppText(
+                       viewModel.busy ? 'Signing in...' : 'Continue with Google',
+                        colorType: AppTextColor.textInverted,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

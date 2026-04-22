@@ -40,6 +40,7 @@ class _CreateAccountState extends State<CreateAccount> {
         busy: model.busy,
         appBarType: DefaultScaffoldAppBarType.custom,
         appBarHeight: kToolbarHeight,
+       
         customAppBar: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           mainAxisSize: MainAxisSize.min,
@@ -60,14 +61,13 @@ class _CreateAccountState extends State<CreateAccount> {
             ),
             const SizedBox(width: AppSpacing.md),
           ],
-        ).paddingSymmetric(vertical: AppSpacing.sm),
+        ),
         body: GestureDetector(
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
           behavior: HitTestBehavior.translucent,
           child: ScaffoldColumn(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-           
               Expanded(
                 child: PageView(
                   controller: model.pageController,
@@ -151,7 +151,7 @@ class _CreateAccountState extends State<CreateAccount> {
                           onRoleFieldTap: () async {
                             FocusManager.instance.primaryFocus?.unfocus();
                             await model.fetchRoles();
-
+        
                             await ListBottomSheet.show<void, RoleModel>(
                               context: context,
                               title: 'Role',
@@ -226,6 +226,8 @@ class _CreateAccountState extends State<CreateAccount> {
             ],
           ),
         ),
+      
+      
       ),
     );
   }
