@@ -43,7 +43,7 @@ class _HomeState extends State<Home> {
             child: ScaffoldColumn(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: ScaffoldInsets.of(context).bodyTopInset + 50),
+                SizedBox(height: ScaffoldInsets.of(context).bodyTopInset + 15),
                 CachedNetworkImageWidget(
                   imageUrl: viewModel.profileImageUrl ?? '',
                   width: 100,
@@ -132,7 +132,7 @@ class _HomeState extends State<Home> {
             padding: EdgeInsets.only(
               bottom: index == viewModel.recentActivities.length - 1
                   ? 0
-                  : AppSpacing.md,
+                  : AppSpacing.sm,
             ),
             child: AppElevatedCard(
               child: Row(
@@ -178,30 +178,32 @@ class _HomeState extends State<Home> {
   }
 
   Widget _attendanceReportCard() {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: _attendanceStats(
-              attended: 50,
-              total: 100,
-              label: 'students',
-              accentColor: Colors.orange,
-              icon: HugeIcons.strokeRoundedBackpack02,
+    return AppSurfaceCard(
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: _attendanceStats(
+                attended: 50,
+                total: 100,
+                label: 'students',
+                accentColor: Colors.orange,
+                icon: HugeIcons.strokeRoundedBackpack02,
+              ),
             ),
-          ),
-          const SizedBox(width: 5),
-          Expanded(
-            child: _attendanceStats(
-              attended: 30,
-              total: 60,
-              label: 'staff',
-              accentColor: Colors.purple,
-              icon: HugeIcons.strokeRoundedUserGroup,
+            const SizedBox(width: 5),
+            Expanded(
+              child: _attendanceStats(
+                attended: 30,
+                total: 60,
+                label: 'staff',
+                accentColor: Colors.purple,
+                icon: HugeIcons.strokeRoundedUserGroup,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -215,50 +217,43 @@ class _HomeState extends State<Home> {
   }) {
     final isLight = Theme.of(context).brightness == Brightness.light;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        color: accentColor.withOpacity(isLight ? 0.16 : 0.24),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            HugeIcon(icon: icon, size: 30, strokeWidth: 2, color: accentColor),
-            SizedBox(height: AppSpacing.md),
-            AppText(
-              _capitalize(label),
-              colorType: AppTextColor.textMute,
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              overflow: TextOverflow.ellipsis,
-            ),
-            SizedBox(height: AppSpacing.xs),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                AppText(
-                  '$attended',
-                  colorType: AppTextColor.textInverted,
+    return AppElevatedCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          HugeIcon(icon: icon, size: 30, strokeWidth: 2, color: accentColor),
+          SizedBox(height: AppSpacing.xs),
+          AppText(
+            _capitalize(label),
+            colorType: AppTextColor.textMute,
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: AppSpacing.xs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              AppText(
+                '$attended',
+                colorType: AppTextColor.textInverted,
+                fontWeight: FontWeight.w600,
+                fontSize: 20,
+                height: 1.0,
+              ),
+              const SizedBox(width: 4),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: AppText(
+                  'of $total',
+                  colorType: AppTextColor.textMute,
                   fontWeight: FontWeight.w600,
-                  fontSize: 20,
-                  height: 1.0,
+                  fontSize: 13,
                 ),
-                const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: AppText(
-                    'of $total',
-                    colorType: AppTextColor.textMute,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

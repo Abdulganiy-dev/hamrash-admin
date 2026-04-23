@@ -72,7 +72,6 @@ class _MainTabViewState extends State<MainTabView> {
           height: 45,
           currentIndex: model.currentIndex,
           onTap: model.setIndex,
-          activeIconColor: Colors.blue,
           inactiveIconColor: _inactiveIconColor(context),
         ),
       ),
