@@ -25,8 +25,8 @@ class _MainTabViewState extends State<MainTabView> {
 
   static const List<HamrashTabItem> _tabItems = [
     HamrashTabItem(icon: HugeIcon(icon: HugeIcons.strokeRoundedHome04, strokeWidth: 2,)),
-    HamrashTabItem(icon: HugeIcon(icon: HugeIcons.strokeRoundedUser, strokeWidth: 2,)),
-    HamrashTabItem(icon: HugeIcon(icon: HugeIcons.strokeRoundedUserMultiple02, strokeWidth: 2,)),
+    HamrashTabItem(icon: HugeIcon(icon: HugeIcons.strokeRoundedBackpack02, strokeWidth: 2,)),
+    HamrashTabItem(icon: HugeIcon(icon: HugeIcons.strokeRoundedUserGroup, strokeWidth: 2,)),
     HamrashTabItem(icon: HugeIcon(icon: HugeIcons.strokeRoundedMore, strokeWidth: 2,)),
   ];
 
