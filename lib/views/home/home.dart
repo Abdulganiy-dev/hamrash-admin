@@ -36,7 +36,7 @@ class _HomeState extends State<Home> {
       builder: (context, model, _) => DefaultScaffold(
         title: null,
         busy: viewModel.busy,
-        
+
         appBarType: DefaultScaffoldAppBarType.standard,
         body: Builder(
           builder: (context) => SingleChildScrollView(
@@ -55,39 +55,65 @@ class _HomeState extends State<Home> {
                   fullName: viewModel.fullName ?? '',
                 ).padding(bottom: AppSpacing.md),
 
-                _attendanceReportCard().padding(bottom: AppSpacing.md),
+                _attendanceReportCard().padding(bottom: AppSpacing.lg),
 
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    HugeIcon(
+                      icon: HugeIcons.strokeRoundedClock01,
+                      size: 20,
+                      strokeWidth: 2,
+                      color: LightColors.textTextInverted,
+                    ),
+                    SizedBox(width: AppSpacing.sm),
                     AppText(
                       "Recent Activities",
-                      colorType: AppTextColor.textPrimary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
+                      colorType: AppTextColor.textInverted,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
                     ),
+                    Spacer(),
 
-                    AppButton(
-                      padding: EdgeInsets.zero,
-                      type: AppButtonType.text,
-                      text: "View All",
-                      onPressed: () {},
+                    GestureDetector(
+                      onTap: () {},
+                      child: Row(
+                        children: [
+                          AppText(
+                            "View All",
+                            colorType: AppTextColor.textPrimary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
                       
-                      textStyle: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: LightColors.textTextBrand,
+                          HugeIcon(
+                            icon: HugeIcons.strokeRoundedArrowRight01,
+                            size: 20,
+                            strokeWidth: 2,
+                            color: LightColors.textTextPrimary,
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ),
+                ).padding(bottom: AppSpacing.md),
                 _recentActivitiesCard().padding(bottom: AppSpacing.md),
 
-                AppText(
-                  "Quick Actions",
-                  colorType: AppTextColor.textPrimary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                Row(
+                  children: [
+                       HugeIcon(
+                      icon: HugeIcons.strokeRoundedDashboardCircleSettings,
+                      size: 20,
+                      strokeWidth: 2,
+                      color: LightColors.textTextInverted,
+                    ),
+                    SizedBox(width: AppSpacing.sm),
+                    AppText(
+                      "Quick Actions",
+                      colorType: AppTextColor.textPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    )
+                  ],
                 ).padding(bottom: AppSpacing.md),
               ],
             ),
@@ -104,10 +130,9 @@ class _HomeState extends State<Home> {
         children: List.generate(viewModel.recentActivities.length, (index) {
           return Padding(
             padding: EdgeInsets.only(
-              bottom:
-                  index == viewModel.recentActivities.length - 1
-                      ? 0
-                      : AppSpacing.md,
+              bottom: index == viewModel.recentActivities.length - 1
+                  ? 0
+                  : AppSpacing.md,
             ),
             child: AppElevatedCard(
               child: Row(
@@ -153,36 +178,30 @@ class _HomeState extends State<Home> {
   }
 
   Widget _attendanceReportCard() {
-    return AppSurfaceCard(
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: AppElevatedCard(
-                child: _attendanceStats(
-                  attended: 50,
-                  total: 100,
-                  label: 'students',
-                  accentColor: Colors.blueAccent,
-                  icon: HugeIcons.strokeRoundedBackpack02
-                ),
-              ),
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _attendanceStats(
+              attended: 50,
+              total: 100,
+              label: 'students',
+              accentColor: Colors.orange,
+              icon: HugeIcons.strokeRoundedBackpack02,
             ),
-            const SizedBox(width: 5),
-            Expanded(
-              child: AppElevatedCard(
-                child: _attendanceStats(
-                  attended: 30,
-                  total: 60,
-                  label: 'staff',
-                  accentColor: Colors.deepOrange,
-                  icon:  HugeIcons.strokeRoundedUserGroup
-                ),
-              ),
+          ),
+          const SizedBox(width: 5),
+          Expanded(
+            child: _attendanceStats(
+              attended: 30,
+              total: 60,
+              label: 'staff',
+              accentColor: Colors.purple,
+              icon: HugeIcons.strokeRoundedUserGroup,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -194,59 +213,53 @@ class _HomeState extends State<Home> {
     required Color accentColor,
     required List<List<dynamic>> icon,
   }) {
-    final percent = total == 0 ? 0.0 : (attended / total).clamp(0.0, 1.0);
+    final isLight = Theme.of(context).brightness == Brightness.light;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        HugeIcon(
-          icon: icon,
-          size: 30,
-          strokeWidth: 2,
-          color: accentColor,
-        ),
-        SizedBox(height: AppSpacing.md),
-        AppText(
-          _capitalize(label),
-          colorType: AppTextColor.textInverted,
-          fontWeight: FontWeight.w600,
-          fontSize: 16,
-          overflow: TextOverflow.ellipsis,
-        ),
-        SizedBox(height: AppSpacing.xs),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        color: accentColor.withOpacity(isLight ? 0.16 : 0.24),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            HugeIcon(icon: icon, size: 30, strokeWidth: 2, color: accentColor),
+            SizedBox(height: AppSpacing.md),
             AppText(
-              '$attended',
-              colorType: AppTextColor.textInverted,
+              _capitalize(label),
+              colorType: AppTextColor.textMute,
               fontWeight: FontWeight.w600,
-              fontSize: 20,
-              height: 1.0,
+              fontSize: 16,
+              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(width: 4),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: AppText(
-                'of $total',
-                colorType: AppTextColor.textMute,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
+            SizedBox(height: AppSpacing.xs),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                AppText(
+                  '$attended',
+                  colorType: AppTextColor.textInverted,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 20,
+                  height: 1.0,
+                ),
+                const SizedBox(width: 4),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: AppText(
+                    'of $total',
+                    colorType: AppTextColor.textMute,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-        // SizedBox(height: AppSpacing.sm),
-        // ClipRRect(
-        //   borderRadius: BorderRadius.circular(999),
-        //   child: LinearProgressIndicator(
-        //     value: percent,
-        //     minHeight: 10,
-        //     backgroundColor: accentColor.withOpacity(0.12),
-        //     valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-        //   ),
-        // ),
-      ],
+      ),
     );
   }
 
