@@ -5,6 +5,7 @@ import 'package:hamrash_admin/resources/utils/view_util.dart';
 import 'package:hamrash_admin/services/error_logger_service.dart';
 import 'package:hamrash_admin/views/create_account/create_account.dart';
 import 'package:hamrash_admin/views/home/home.dart';
+import 'package:hamrash_admin/views/main_tab/main_tab_view.dart';
 import 'package:hamrash_admin/views/sign_in/auth_router.dart';
 import 'package:hamrash_admin/views/sign_in/sign_in.dart';
 
@@ -38,6 +39,7 @@ class MyApp extends StatelessWidget {
             SignIn.routeName: (_) => const SignIn(),
             Home.routeName: (_) => const Home(),
             CreateAccount.routeName: (_) => const CreateAccount(),
+            MainTabView.routeName: (_) => const MainTabView(),
           },
           home: Scaffold(
             body: Scaffold(

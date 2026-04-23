@@ -6,7 +6,7 @@ import 'package:hamrash_admin/database/realm_service.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/create_account/create_account.dart';
-import 'package:hamrash_admin/views/home/home.dart';
+import 'package:hamrash_admin/views/main_tab/main_tab_view.dart';
 
 class AuthRouter extends StatefulWidget {
   const AuthRouter({super.key});
@@ -51,7 +51,7 @@ class _AuthRouterState extends State<AuthRouter> {
   void _navigateTo({required bool hasAccount}) {
     if (!mounted) return;
 
-    final route = hasAccount ? Home.routeName : CreateAccount.routeName;
+    final route = hasAccount ? MainTabView.routeName : CreateAccount.routeName; 
     Navigator.of(context).pushReplacementNamed(route);
   }
 
