@@ -4,7 +4,10 @@ import '../api/models/supabase_models/admin_profile_model.dart';
 import 'models/admin_profile_realm.dart';
 import 'realm_service.dart';
 
-/// Realm-only storage for `public.admin_profiles`.
+/// Realm-only storage for the signed-in admin's `public.admin_profiles` row.
+///
+/// Only a single profile is cached at a time; saving a new profile replaces
+/// any previously stored one.
 class AdminProfileRealmService {
   AdminProfileRealmService(this._realmService);
 
@@ -34,51 +37,33 @@ class AdminProfileRealmService {
     );
   }
 
-  Future<void> saveAdminProfiles(List<AdminProfileModel> items) async {
-    _realm.write(() {
-      final now = DateTime.now();
-      for (final item in items) {
-        _realm.add(_toRealm(item, now), update: true);
-      }
-    });
-  }
-
-  /// Replace local cache with a fresh list (e.g. after online fetch).
-  Future<void> replaceAllAdminProfiles(List<AdminProfileModel> items) async {
+  /// Saves the given profile, replacing any previously cached profile so
+  /// that Realm always holds at most one admin profile.
+  Future<void> saveAdminProfile(AdminProfileModel item) async {
     _realm.write(() {
       _realm.deleteAll<AdminProfileRealm>();
-      final now = DateTime.now();
-      for (final item in items) {
-        _realm.add(_toRealm(item, now), update: true);
-      }
+      _realm.add(_toRealm(item, DateTime.now()));
     });
   }
 
-  List<AdminProfileRealm> getAdminProfilesFromRealm() {
-    final list = _realm.all<AdminProfileRealm>().toList();
-    list.sort((a, b) {
-      final ac = a.createdAt;
-      final bc = b.createdAt;
-      if (ac == null && bc == null) return a.fullName.compareTo(b.fullName);
-      if (ac == null) return 1;
-      if (bc == null) return -1;
-      return bc.compareTo(ac);
-    });
-    return list;
+  AdminProfileRealm? getAdminProfile() {
+    final all = _realm.all<AdminProfileRealm>();
+    if (all.isEmpty) return null;
+    return all.first;
   }
 
   AdminProfileRealm? getAdminProfileByClerkId(String clerkId) {
-    final matches =
-        _realm.query<AdminProfileRealm>('clerkId == \$0', [clerkId]).toList();
-    if (matches.isEmpty) return null;
-    return matches.first;
+    final profile = getAdminProfile();
+    if (profile == null) return null;
+    if (profile.clerkId != clerkId) return null;
+    return profile;
   }
 
-  bool hasAdminProfilesInRealm() {
+  bool hasAdminProfile() {
     return _realm.all<AdminProfileRealm>().isNotEmpty;
   }
 
-  Future<void> deleteAllAdminProfiles() async {
+  Future<void> deleteAdminProfile() async {
     _realm.write(() {
       _realm.deleteAll<AdminProfileRealm>();
     });

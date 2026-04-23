@@ -34,19 +34,11 @@ class AdminProfileService {
           )
           .toList();
 
-      if (list.isNotEmpty) {
-        await _realmService.replaceAllAdminProfiles(list);
-      } else {
-        await _realmService.deleteAllAdminProfiles();
-      }
-
       return list;
     } catch (_) {
-      if (_realmService.hasAdminProfilesInRealm()) {
-        return _realmService
-            .getAdminProfilesFromRealm()
-            .map(_fromRealm)
-            .toList();
+      final cached = _realmService.getAdminProfile();
+      if (cached != null) {
+        return [_fromRealm(cached)];
       }
       rethrow;
     }
@@ -66,7 +58,7 @@ class AdminProfileService {
 
       final model =
           AdminProfileModel.fromJson(Map<String, dynamic>.from(row));
-      await _realmService.saveAdminProfiles([model]);
+      await _realmService.saveAdminProfile(model);
       return model;
     } catch (_) {
       final cached = _realmService.getAdminProfileByClerkId(clerkId);
@@ -89,7 +81,7 @@ class AdminProfileService {
 
     final model =
         AdminProfileModel.fromJson(Map<String, dynamic>.from(row));
-    await _realmService.saveAdminProfiles([model]);
+    await _realmService.saveAdminProfile(model);
     return model;
   }
 
@@ -105,7 +97,7 @@ class AdminProfileService {
 
     final model =
         AdminProfileModel.fromJson(Map<String, dynamic>.from(inserted));
-    await _realmService.saveAdminProfiles([model]);
+    await _realmService.saveAdminProfile(model);
     return model;
   }
 

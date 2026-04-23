@@ -19,6 +19,10 @@ class HomeViewModel extends BaseViewModel {
     return adminProfile.fullName;
   }
 
+  String? get profileImageUrl{
+    return adminProfile.avatarUrl;
+  }
+
   String? get clerkId {
     try {
       final clerkAuth = ClerkAuth.of(context);
