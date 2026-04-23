@@ -109,9 +109,9 @@ class _HomeState extends State<Home> {
                     SizedBox(width: AppSpacing.sm),
                     AppText(
                       "Quick Actions",
-                      colorType: AppTextColor.textPrimary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
+                      colorType: AppTextColor.textInverted,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
                     )
                   ],
                 ).padding(bottom: AppSpacing.md),
