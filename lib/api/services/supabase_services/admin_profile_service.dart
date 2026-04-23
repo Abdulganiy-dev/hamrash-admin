@@ -109,6 +109,12 @@ class AdminProfileService {
     return model;
   }
 
+  AdminProfileModel? getAdminProfileByClerkId(String clerkId) {
+    final cached = _realmService.getAdminProfileByClerkId(clerkId);
+    if (cached != null) return _fromRealm(cached);
+    return null;
+  }
+
   AdminProfileModel _fromRealm(AdminProfileRealm r) {
     return AdminProfileModel(
       id: r.id,

@@ -61,7 +61,7 @@ class SuccessModal extends StatelessWidget {
 
     await Navigator.of(context).push<void>(
       StupidSimpleGlassSheetRoute<void>(
-        snappingConfig: const SheetSnappingConfig([0.4]),
+        snappingConfig: const SheetSnappingConfig([0.43]),
         child: Material(
           type: MaterialType.transparency,
           child: SuccessModal(

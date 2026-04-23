@@ -353,13 +353,19 @@ class CreateAccountViewModel extends BaseViewModel {
       await adminProfileService.insertAdminProfile(adminProfile.toJson());
 
       await _deletePersistedPickIfAny();
-      selectedImage = null;
+      // selectedImage = null;
 
       if (context.mounted) {
-        SuccessModal.show(context, title: 'Account Created', message: 'Account created successfully',onDismiss: () {
-          NavigationService.popScreen();
-          Navigator.of(context).pushReplacementNamed(Home.routeName);
-        });
+        await SuccessModal.show(
+          context,
+          title: 'Account Created',
+          message: 'Account created successfully',
+        );
+        if (!context.mounted) return;
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          Home.routeName,
+          (route) => false,
+        );
       }
 
     } catch (e, stackTrace) {

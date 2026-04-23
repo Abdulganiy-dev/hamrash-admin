@@ -17,7 +17,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   late HomeViewModel viewModel;
-
+  
   @override
   Widget build(BuildContext context) {
     return ViewModelBuilder<HomeViewModel>.reactive(
@@ -27,11 +27,17 @@ class _HomeState extends State<Home> {
         viewModel.init(context);
       },
       builder: (context, model, _) => DefaultScaffold(
-          title: viewModel.title,
-          busy: viewModel.busy,
-          body: ScaffoldColumn(
-            children: [],
-          )),
+        title: null,
+        busy: viewModel.busy,
+        appBarType: DefaultScaffoldAppBarType.none,
+        body: Builder(
+          builder: (context) => ScaffoldColumn(
+            children: [
+              SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

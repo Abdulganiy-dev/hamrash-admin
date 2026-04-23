@@ -11,6 +11,7 @@ import 'package:hamrash_admin/views/create_account/widgets/step_profile_image.da
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
+import 'package:hamrash_admin/widgets/haptic_list_tile.dart';
 import 'package:hamrash_admin/widgets/step_indicator.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
@@ -29,6 +30,7 @@ class _CreateAccountState extends State<CreateAccount> {
 
   @override
   Widget build(BuildContext context) {
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     return ViewModelBuilder<CreateAccountViewModel>.reactive(
       viewModelBuilder: () => CreateAccountViewModel(),
       onViewModelReady: (model) {
@@ -99,7 +101,7 @@ class _CreateAccountState extends State<CreateAccount> {
                               ),
                               items: model.availableGenders,
                               itemBuilder: (context, item, index) {
-                                return ListTile(
+                                return HapticListTile(
                                   title: AppText(
                                     item,
                                     colorType: AppTextColor.textInverted,
@@ -138,7 +140,7 @@ class _CreateAccountState extends State<CreateAccount> {
                               ),
                               items: model.availableStates,
                               itemBuilder: (context, item, index) {
-                                return ListTile(
+                                return HapticListTile(
                                   title: AppText(
                                     item,
                                     colorType: AppTextColor.textInverted,
@@ -167,7 +169,7 @@ class _CreateAccountState extends State<CreateAccount> {
                               items: model.availableRoles,
                               itemBuilder: (context, item, index) {
                                 final subtitle = item.description?.trim();
-                                return ListTile(
+                                return HapticListTile(
                                   title: AppText(
                                     item.displayLabel,
                                     colorType: AppTextColor.textInverted,
@@ -196,33 +198,34 @@ class _CreateAccountState extends State<CreateAccount> {
                   ],
                 ),
               ),
-              Builder(
-                builder: (ctx) {
-                  final keyboardOpen = MediaQuery.viewInsetsOf(ctx).bottom > 0;
-                  return keyboardOpen
-                      ? const SizedBox.shrink()
-                      : AppPrimaryButton(
-                          width: double.infinity,
-                          isLoading: model.busy,
-                          onPressed: () =>
-                              model.currentStep ==
-                                  CreateAccountStep.profileImage
-                              ? model.submitAccount()
-                              : model.goNext(context),
-                          child: AppText(
-                            model.currentStep == CreateAccountStep.profileImage
-                                ? 'Done'
-                                : 'Continue',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        );
-                },
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 220),
+                curve: MotionCurve(motion: Motion.cupertino()),
+                opacity: keyboardOpen ? 0 : 1,
+                child: IgnorePointer(
+                  ignoring: keyboardOpen,
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: AppSpacing.xl),
+                    child: AppPrimaryButton(
+                      width: double.infinity,
+                      onPressed: () =>
+                          model.currentStep == CreateAccountStep.profileImage
+                          ? model.submitAccount()
+                          : model.goNext(context),
+                      child: AppText(
+                        model.currentStep == CreateAccountStep.profileImage
+                            ? 'Done'
+                            : 'Continue',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
-              SizedBox(height: AppSpacing.lg),
             ],
           ),
         ),

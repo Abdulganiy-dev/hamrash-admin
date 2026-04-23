@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/resources/utils/validation_util.dart';
@@ -28,11 +29,11 @@ class CreateAccountStepName extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+    final top = ScaffoldInsets.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-       
+       SizedBox(height: top.bodyTopInset),
         AppText(
           'Welcome, let\'s set up your profile',
           style: theme.textTheme.titleLarge?.copyWith(
@@ -89,7 +90,7 @@ class CreateAccountStepName extends StatelessWidget {
               suffixIcon: const Icon(CupertinoIcons.chevron_down, size: 16),
             ).padding(bottom: AppSpacing.md),
           ),
-        ),
+        ).hapticFeedback(),
         AppTextField(
           controller: emailController,
           readOnly: emailController.text.isNotEmpty,

@@ -24,7 +24,7 @@ abstract final class ListBottomSheet {
     required ListBottomSheetItemBuilder<I> itemBuilder,
     required Widget headerImage,
     required String title,
-    SheetSnappingConfig snappingConfig = const SheetSnappingConfig([0.45, 1.0]),
+    SheetSnappingConfig snappingConfig = const SheetSnappingConfig([0.5, 1.0]),
     bool originateAboveBottomViewInset = true,
     RouteSnapshotMode backgroundSnapshotMode = RouteSnapshotMode.always,
   }) {
@@ -112,9 +112,8 @@ class _ListBottomSheetBody<I> extends StatelessWidget {
         Flexible(
           child: ListView.builder(
             padding: EdgeInsets.only(
-             
               top: AppSpacing.sm,
-              bottom: MediaQuery.paddingOf(context).bottom + AppSpacing.md,
+              bottom: MediaQuery.paddingOf(context).bottom + AppSpacing.lgXl,
             ),
             itemCount: items.length,
             itemBuilder: (context, index) {

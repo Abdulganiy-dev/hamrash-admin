@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/helpers/haptic_helper.dart';
 import 'package:hamrash_admin/resources/app_colors.dart';
+import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
@@ -24,10 +25,11 @@ class CreateAccountStepProfileImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+    final top = ScaffoldInsets.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        SizedBox(height: top.bodyTopInset),
         AppText(
           'Add a friendly profile photo',
           style: theme.textTheme.titleLarge?.copyWith(

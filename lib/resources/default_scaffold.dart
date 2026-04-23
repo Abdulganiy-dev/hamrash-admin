@@ -45,7 +45,7 @@ class ScaffoldInsets extends InheritedWidget {
   /// the translucent app bar overlay. The safe area is always included; the
   /// app bar and its fade region are only included when an app bar exists.
   double get bodyTopInset =>
-      topInset + (hasAppBar ? appBarHeight + appBarFadeHeight : 0);
+      topInset + (hasAppBar ? appBarHeight - 15  : 0);
 
   /// Returns the nearest [ScaffoldInsets], or `null` if no [DefaultScaffold]
   /// is an ancestor of [context].
