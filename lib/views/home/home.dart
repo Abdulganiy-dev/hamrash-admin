@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
@@ -6,7 +7,11 @@ import 'package:hamrash_admin/viewModel/home_view_model.dart';
 import 'package:hamrash_admin/views/home/widgets/home_attendance_greeting.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
+import 'package:hamrash_admin/widgets/button/app_button.dart';
+import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/cached_network_image_widget.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:intl/intl.dart';
 import 'package:stacked/stacked.dart';
 
 class Home extends StatefulWidget {
@@ -31,7 +36,8 @@ class _HomeState extends State<Home> {
       builder: (context, model, _) => DefaultScaffold(
         title: null,
         busy: viewModel.busy,
-        appBarType: DefaultScaffoldAppBarType.none,
+        
+        appBarType: DefaultScaffoldAppBarType.standard,
         body: Builder(
           builder: (context) => SingleChildScrollView(
             child: ScaffoldColumn(
@@ -51,12 +57,30 @@ class _HomeState extends State<Home> {
 
                 _attendanceReportCard().padding(bottom: AppSpacing.md),
 
-                AppText(
-                  "Recent Activities",
-                  colorType: AppTextColor.textPrimary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ).padding(bottom: AppSpacing.md),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AppText(
+                      "Recent Activities",
+                      colorType: AppTextColor.textPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+
+                    AppButton(
+                      padding: EdgeInsets.zero,
+                      type: AppButtonType.text,
+                      text: "View All",
+                      onPressed: () {},
+                      
+                      textStyle: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: LightColors.textTextBrand,
+                      ),
+                    ),
+                  ],
+                ),
                 _recentActivitiesCard().padding(bottom: AppSpacing.md),
 
                 AppText(
@@ -76,23 +100,54 @@ class _HomeState extends State<Home> {
   Widget _recentActivitiesCard() {
     return AppSurfaceCard(
       padding: EdgeInsets.all(5),
-      child: ListView.builder(
-        itemCount: viewModel.recentActivities.length,
-        physics: const NeverScrollableScrollPhysics(),
-        shrinkWrap: true,
-        itemBuilder: (context, index) => AppElevatedCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppText(
-                viewModel.recentActivities[index].title,
-                colorType: AppTextColor.textPrimary,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
+      child: Column(
+        children: List.generate(viewModel.recentActivities.length, (index) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom:
+                  index == viewModel.recentActivities.length - 1
+                      ? 0
+                      : AppSpacing.md,
+            ),
+            child: AppElevatedCard(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AppText(
+                          viewModel.recentActivities[index].title,
+                          colorType: AppTextColor.textInverted,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: AppSpacing.xs),
+                        AppText(
+                          _formatRecentActivityDate(
+                            viewModel.recentActivities[index].date,
+                          ),
+                          colorType: AppTextColor.textMute,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ],
+                    ),
+                  ),
+                  HugeIcon(
+                    icon: HugeIcons.strokeRoundedArrowRight01,
+                    size: 18,
+                    strokeWidth: 2,
+                    color: LightColors.textTextMute,
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        }),
       ),
     );
   }
@@ -110,6 +165,7 @@ class _HomeState extends State<Home> {
                   total: 100,
                   label: 'students',
                   accentColor: Colors.blueAccent,
+                  icon: HugeIcons.strokeRoundedBackpack02
                 ),
               ),
             ),
@@ -121,6 +177,7 @@ class _HomeState extends State<Home> {
                   total: 60,
                   label: 'staff',
                   accentColor: Colors.deepOrange,
+                  icon:  HugeIcons.strokeRoundedUserGroup
                 ),
               ),
             ),
@@ -135,15 +192,23 @@ class _HomeState extends State<Home> {
     required int total,
     required String label,
     required Color accentColor,
+    required List<List<dynamic>> icon,
   }) {
     final percent = total == 0 ? 0.0 : (attended / total).clamp(0.0, 1.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        HugeIcon(
+          icon: icon,
+          size: 30,
+          strokeWidth: 2,
+          color: accentColor,
+        ),
+        SizedBox(height: AppSpacing.md),
         AppText(
           _capitalize(label),
-          colorType: AppTextColor.textMute,
+          colorType: AppTextColor.textInverted,
           fontWeight: FontWeight.w600,
           fontSize: 16,
           overflow: TextOverflow.ellipsis,
@@ -171,22 +236,33 @@ class _HomeState extends State<Home> {
             ),
           ],
         ),
-        SizedBox(height: AppSpacing.sm),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: LinearProgressIndicator(
-            value: percent,
-            minHeight: 10,
-            backgroundColor: accentColor.withOpacity(0.12),
-            valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-          ),
-        ),
+        // SizedBox(height: AppSpacing.sm),
+        // ClipRRect(
+        //   borderRadius: BorderRadius.circular(999),
+        //   child: LinearProgressIndicator(
+        //     value: percent,
+        //     minHeight: 10,
+        //     backgroundColor: accentColor.withOpacity(0.12),
+        //     valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+        //   ),
+        // ),
       ],
     );
   }
 
   String _capitalize(String value) =>
       value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
+
+  String _formatRecentActivityDate(DateTime date) {
+    final now = DateTime.now();
+    final normalizedNow = DateTime(now.year, now.month, now.day);
+    final normalizedDate = DateTime(date.year, date.month, date.day);
+    final dayDifference = normalizedNow.difference(normalizedDate).inDays;
+
+    if (dayDifference == 0) return 'Today';
+    if (dayDifference == 1) return 'Yesterday';
+    return DateFormat('d MMM yyyy').format(date);
+  }
 
   String getGreeting() {
     final hour = DateTime.now().hour;

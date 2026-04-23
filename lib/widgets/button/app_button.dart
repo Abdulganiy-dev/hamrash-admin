@@ -709,14 +709,6 @@ class _AppButtonState extends State<AppButton> {
               ? () {}
               : null, // Empty callback to keep button enabled, actual logic in GestureDetector
           style: TextButton.styleFrom(
-            foregroundColor: fgColor,
-            padding: defaultPadding,
-            shape: shape,
-            minimumSize: Size(widget.width ?? 0, widget.height ?? 0),
-            fixedSize: widget.width != null || widget.height != null
-                ? Size(widget.width ?? double.infinity, widget.height ?? 48)
-                : null,
-            // Remove splash effect
             splashFactory: NoSplash.splashFactory,
           ),
           child: buttonContent,
