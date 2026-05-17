@@ -7,7 +7,6 @@ import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/viewModel/classes_view_model.dart';
 import 'package:hamrash_admin/views/classes/add_arm_sheet.dart';
-import 'package:hamrash_admin/views/classes/add_class_sheet.dart';
 import 'package:hamrash_admin/views/classes/create_edit_class_view.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
@@ -49,15 +48,20 @@ class _ClassesViewState extends State<ClassesView> {
                 children: [
                   SizedBox(height: ScaffoldInsets.of(context).bodyTopInset + 15),
                   _SectionHeader(
-                    title: 'Arms',
+                    title: 'Sections',
                     onAdd: () => AddArmSheet.openSheet(context, viewModel: model),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  _armsRow(context, model),
+                  _sectionsRow(context, model),
                   const SizedBox(height: AppSpacing.xl),
                   _SectionHeader(
                     title: 'Classrooms',
-                    onAdd: () => AddClassSheet.openSheet(context, viewModel: model),
+                    onAdd: () => CreateEditClassView.openSheet(
+                      context,
+                      availableSubjects: model.subjects,
+                      availableSections: model.arms,
+                      viewModel: model,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   _classroomsSection(context, model),
@@ -71,10 +75,10 @@ class _ClassesViewState extends State<ClassesView> {
     );
   }
 
-  Widget _armsRow(BuildContext context, ClassesViewModel model) {
+  Widget _sectionsRow(BuildContext context, ClassesViewModel model) {
     if (model.arms.isEmpty && !model.busy) {
       return AppText(
-        'No arms yet. Tap + to add one.',
+        'No sections yet. Tap + to add one.',
         colorType: AppTextColor.textMute,
         fontSize: 13,
       );
@@ -82,12 +86,12 @@ class _ClassesViewState extends State<ClassesView> {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: model.arms.map((arm) {
+        children: model.arms.map((section) {
           return Padding(
             padding: const EdgeInsets.only(right: AppSpacing.xs),
-            child: _ArmChip(
-              arm: arm,
-              onDelete: () => _confirmDeleteArm(context, model, arm),
+            child: _SectionChip(
+              section: section,
+              onDelete: () => _confirmDeleteSection(context, model, section),
             ),
           );
         }).toList(),
@@ -182,7 +186,7 @@ class _ClassesViewState extends State<ClassesView> {
         context,
         existing: cls,
         availableSubjects: model.subjects,
-        availableArms: model.arms,
+        availableSections: model.arms,
         viewModel: model,
       ),
       child: AppElevatedCard(
@@ -223,24 +227,24 @@ class _ClassesViewState extends State<ClassesView> {
     );
   }
 
-  Future<void> _confirmDeleteArm(
+  Future<void> _confirmDeleteSection(
     BuildContext context,
     ClassesViewModel model,
-    SectionModel arm,
+    SectionModel section,
   ) async {
-    if (model.armIsUsed(arm.name)) {
+    if (model.armIsUsed(section.name)) {
       await WarningModal.show(
         context,
         snappingConfig: [0.48],
-        title: 'Cannot Delete Arm',
+        title: 'Cannot Delete Section',
         message:
-            'Remove all classrooms using arm "${arm.name}" before deleting it.',
+            'Remove all classrooms using section "${section.name}" before deleting it.',
       );
       return;
     }
     final confirmed = await WarningModal.show<bool>(
       context,
-      message: 'Delete arm "${arm.name}"?',
+      message: 'Delete section "${section.name}"?',
       subtitle: 'This cannot be undone.',
       bottomBody: Row(
         children: [
@@ -263,7 +267,7 @@ class _ClassesViewState extends State<ClassesView> {
       ),
     );
     if (confirmed == true) {
-      await model.deleteArm(arm);
+      await model.deleteArm(section);
     }
   }
 
@@ -344,10 +348,10 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _ArmChip extends StatelessWidget {
-  const _ArmChip({required this.arm, required this.onDelete});
+class _SectionChip extends StatelessWidget {
+  const _SectionChip({required this.section, required this.onDelete});
 
-  final SectionModel arm;
+  final SectionModel section;
   final VoidCallback onDelete;
 
   @override
@@ -367,7 +371,7 @@ class _ArmChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           AppText(
-            arm.name,
+            section.name,
             colorType: AppTextColor.textPrimary,
             fontWeight: FontWeight.w600,
             fontSize: 13,

@@ -21,7 +21,7 @@ class AddArmSheet extends StatefulWidget {
   }) {
     return GlassSheet.show<bool>(
       context: context,
-      title: 'New Arm',
+      title: 'New Section',
       snappingConfig: const SheetSnappingConfig([0.45, 0.65]),
       body: AddArmSheet(viewModel: viewModel),
     );
@@ -72,7 +72,7 @@ class _AddArmSheetState extends State<AddArmSheet> {
           children: [
             AppTextField(
               controller: _controller,
-              label: 'Arm Name',
+              label: 'Section Name',
               hintText: 'e.g. A, B, Gold',
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => canSubmit ? _submit() : null,
@@ -80,7 +80,7 @@ class _AddArmSheetState extends State<AddArmSheet> {
             if (isDuplicate && trimmed.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.xs),
               AppText(
-                'Arm "$trimmed" already exists.',
+                'Section "$trimmed" already exists.',
                 color: LightColors.errorErrorDefault,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -89,7 +89,7 @@ class _AddArmSheetState extends State<AddArmSheet> {
             const SizedBox(height: AppSpacing.lg),
             AppButton(
               type: AppButtonType.primary,
-              text: 'Create Arm',
+              text: 'Create Section',
               isDisabled: !canSubmit,
               onPressed: _submit,
               width: double.infinity,

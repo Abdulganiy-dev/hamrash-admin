@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/supabase_models/class_model.dart';
 import 'package:hamrash_admin/api/models/supabase_models/section_model.dart';
+import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
@@ -18,20 +19,24 @@ class CreateEditClassView extends StatefulWidget {
     super.key,
     this.existing,
     required this.availableSubjects,
-    required this.availableArms,
+    required this.availableSections,
     required this.viewModel,
+    this.existingClassNames = const [],
   });
 
   final ClassModel? existing;
   final List<SubjectModel> availableSubjects;
-  final List<SectionModel> availableArms;
+  final List<SectionModel> availableSections;
   final ClassesViewModel viewModel;
+
+  /// Quick-pick class name chips shown only in create mode.
+  final List<String> existingClassNames;
 
   static Future<bool?> openSheet(
     BuildContext context, {
     ClassModel? existing,
     required List<SubjectModel> availableSubjects,
-    required List<SectionModel> availableArms,
+    required List<SectionModel> availableSections,
     required ClassesViewModel viewModel,
   }) {
     final isEdit = existing != null;
@@ -42,8 +47,10 @@ class CreateEditClassView extends StatefulWidget {
       body: CreateEditClassView(
         existing: existing,
         availableSubjects: availableSubjects,
-        availableArms: availableArms,
+        availableSections: availableSections,
         viewModel: viewModel,
+        existingClassNames:
+            isEdit ? const [] : viewModel.existingClassNames,
       ),
     );
   }
@@ -55,29 +62,38 @@ class CreateEditClassView extends StatefulWidget {
 class _CreateEditClassViewState extends State<CreateEditClassView> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
-  String? _selectedArmName;
+  String? _selectedSectionName;
   late Set<String> _selectedSubjectIds;
   bool _submitting = false;
 
   bool get _isEdit => widget.existing != null;
 
+  /// True if the current name + section combo already exists in another classroom.
+  bool get _isDuplicate {
+    final name = _nameController.text.trim().toLowerCase();
+    final section = _selectedSectionName?.toLowerCase();
+    if (name.isEmpty || section == null) return false;
+    return widget.viewModel.classes.any(
+      (c) =>
+          c.id != widget.existing?.id &&
+          c.name.toLowerCase() == name &&
+          c.section?.toLowerCase() == section,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.existing?.name ?? '');
-    _selectedArmName = widget.existing?.section;
+    _selectedSectionName = widget.existing?.section;
     _selectedSubjectIds = {};
-    if (_isEdit) {
-      _loadExistingSubjects();
-    }
+    if (_isEdit) _loadExistingSubjects();
   }
 
   Future<void> _loadExistingSubjects() async {
     final ids =
         await widget.viewModel.getSubjectIdsForClass(widget.existing!.id!);
-    if (mounted) {
-      setState(() => _selectedSubjectIds = ids.toSet());
-    }
+    if (mounted) setState(() => _selectedSubjectIds = ids.toSet());
   }
 
   @override
@@ -86,21 +102,21 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
     super.dispose();
   }
 
-  Widget _armPickerSection(BuildContext context) {
+  Widget _sectionPickerSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppText(
-          'Arm (optional)',
+          'Section (optional)',
           colorType: AppTextColor.textInverted,
           fontWeight: FontWeight.w700,
           fontSize: 14,
         ).padding(bottom: AppSpacing.sm),
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-          child: widget.availableArms.isEmpty
+          child: widget.availableSections.isEmpty
               ? AppText(
-                  'No arms configured yet.',
+                  'No sections configured yet.',
                   colorType: AppTextColor.textMute,
                   fontSize: 13,
                 )
@@ -108,20 +124,23 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _ArmChipOption(
+                      _SectionChipOption(
                         label: 'None',
-                        selected: _selectedArmName == null,
-                        onTap: () => setState(() => _selectedArmName = null),
+                        selected: _selectedSectionName == null,
+                        onTap: () =>
+                            setState(() => _selectedSectionName = null),
                       ),
-                      ...widget.availableArms.map((arm) {
-                        final selected = _selectedArmName == arm.name;
+                      ...widget.availableSections.map((s) {
+                        final selected = _selectedSectionName == s.name;
                         return Padding(
-                          padding: const EdgeInsets.only(left: AppSpacing.xs),
-                          child: _ArmChipOption(
-                            label: arm.name,
+                          padding:
+                              const EdgeInsets.only(left: AppSpacing.xs),
+                          child: _SectionChipOption(
+                            label: s.name,
                             selected: selected,
-                            onTap: () =>
-                                setState(() => _selectedArmName = arm.name),
+                            onTap: () => setState(
+                              () => _selectedSectionName = s.name,
+                            ),
                           ),
                         );
                       }),
@@ -135,7 +154,6 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
 
   List<Widget> _assignSubjectsSection(BuildContext context) {
     if (widget.availableSubjects.isEmpty) return const [];
-
     return [
       AppText(
         'Assign Subjects',
@@ -148,61 +166,56 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
         child: AppSurfaceCard(
           padding: const EdgeInsets.all(5),
           child: Column(
-            children: List.generate(
-              widget.availableSubjects.length,
-              (i) {
-                final subject = widget.availableSubjects[i];
-                final selected = _selectedSubjectIds.contains(subject.id);
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: i == widget.availableSubjects.length - 1
-                        ? 0
-                        : AppSpacing.xs,
-                  ),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if (selected) {
-                          _selectedSubjectIds.remove(subject.id);
-                        } else {
-                          _selectedSubjectIds.add(subject.id!);
-                        }
-                      });
-                    },
-                    child: AppElevatedCard(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: AppText(
-                              subject.name,
-                              colorType: AppTextColor.textInverted,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                            ),
+            children: List.generate(widget.availableSubjects.length, (i) {
+              final subject = widget.availableSubjects[i];
+              final selected = _selectedSubjectIds.contains(subject.id);
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: i == widget.availableSubjects.length - 1
+                      ? 0
+                      : AppSpacing.xs,
+                ),
+                child: GestureDetector(
+                  onTap: () => setState(() {
+                    if (selected) {
+                      _selectedSubjectIds.remove(subject.id);
+                    } else {
+                      _selectedSubjectIds.add(subject.id!);
+                    }
+                  }),
+                  child: AppElevatedCard(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: AppText(
+                            subject.name,
+                            colorType: AppTextColor.textInverted,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
                           ),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: Icon(
-                              selected
-                                  ? Icons.check_circle_rounded
-                                  : Icons.radio_button_unchecked_rounded,
-                              key: ValueKey(selected),
-                              color: selected
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .onSurface
-                                      .withValues(alpha: 0.3),
-                              size: 22,
-                            ),
+                        ),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            selected
+                                ? Icons.check_circle_rounded
+                                : Icons.radio_button_unchecked_rounded,
+                            key: ValueKey(selected),
+                            color: selected
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.3),
+                            size: 22,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                );
-              },
-            ),
+                ).hapticFeedback(),
+              );
+            }),
           ),
         ),
       ),
@@ -211,20 +224,21 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_isDuplicate) return;
     setState(() => _submitting = true);
 
-    bool success;
+    final bool success;
     if (_isEdit) {
       success = await widget.viewModel.updateClass(
         existing: widget.existing!,
         name: _nameController.text.trim(),
-        section: _selectedArmName,
+        section: _selectedSectionName,
         subjectIds: _selectedSubjectIds.toList(),
       );
     } else {
       success = await widget.viewModel.createClass(
         name: _nameController.text.trim(),
-        section: _selectedArmName,
+        section: _selectedSectionName,
         subjectIds: _selectedSubjectIds.toList(),
       );
     }
@@ -237,6 +251,7 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
 
   @override
   Widget build(BuildContext context) {
+    final isDuplicate = _isDuplicate;
     return Form(
       key: _formKey,
       child: SingleChildScrollView(
@@ -247,15 +262,54 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
               controller: _nameController,
               label: 'Class Name',
               hintText: 'e.g. JSS 1, SS 2, Primary 3',
+              onChanged: (_) => setState(() {}),
               validator: (v) =>
                   v == null || v.trim().isEmpty ? 'Enter a class name' : null,
-            ).padding(bottom: AppSpacing.md),
-            _armPickerSection(context),
+            ).padding(bottom: AppSpacing.sm),
+            // Quick-pick chips: only shown in create mode when names exist
+            if (!_isEdit && widget.existingClassNames.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: widget.existingClassNames.map((name) {
+                      final selected = _nameController.text.trim() == name;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: AppSpacing.xs),
+                        child: GestureDetector(
+                          onTap: () => setState(() {
+                            _nameController.text = name;
+                            _nameController.selection =
+                                TextSelection.collapsed(offset: name.length);
+                          }),
+                          child: _SectionChipOption(
+                            label: name,
+                            selected: selected,
+                            onTap: () {},
+                          ),
+                        ).hapticFeedback(),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              )
+            else
+              const SizedBox(height: AppSpacing.md),
+            _sectionPickerSection(context),
+            if (isDuplicate) ...[
+              AppText(
+                '"${_nameController.text.trim()}${_selectedSectionName != null ? ' $_selectedSectionName' : ''}" already exists.',
+                color: LightColors.errorErrorDefault,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ).padding(bottom: AppSpacing.md),
+            ],
             ..._assignSubjectsSection(context),
             AppButton(
               type: AppButtonType.primary,
               text: _isEdit ? 'Save Changes' : 'Create Classroom',
-              isDisabled: _submitting,
+              isDisabled: _submitting || isDuplicate,
               onPressed: _submit,
               width: double.infinity,
             ),
@@ -266,8 +320,8 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
   }
 }
 
-class _ArmChipOption extends StatelessWidget {
-  const _ArmChipOption({
+class _SectionChipOption extends StatelessWidget {
+  const _SectionChipOption({
     required this.label,
     required this.selected,
     required this.onTap,
@@ -279,7 +333,8 @@ class _ArmChipOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
+    final border = LightColors.strokeColourStrokeMild;
+    final selectedColor = LightColors.backgroundBackdropWarm;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -289,15 +344,14 @@ class _ArmChipOption extends StatelessWidget {
           vertical: AppSpacing.xsSm,
         ),
         decoration: BoxDecoration(
-          color: selected ? primary : primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? primary : primary.withValues(alpha: 0.3),
+            color: selected ? selectedColor : border,
           ),
         ),
         child: AppText(
           label,
-          color: selected ? Colors.white : primary,
+          colorType: selected ? AppTextColor.textBrand : AppTextColor.textInverted,
           fontWeight: FontWeight.w600,
           fontSize: 13,
         ),
