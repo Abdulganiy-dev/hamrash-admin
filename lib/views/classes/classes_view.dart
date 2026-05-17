@@ -198,19 +198,13 @@ class _ClassesViewState extends State<ClassesView> {
     BuildContext context,
     ClassesViewModel model, {
     ClassModel? existing,
-  }) async {
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => CreateEditClassView(
-          existing: existing,
-          availableSubjects: model.subjects,
-          viewModel: model,
-        ),
-      ),
+  }) {
+    return CreateEditClassView.openSheet(
+      context,
+      existing: existing,
+      availableSubjects: model.subjects,
+      viewModel: model,
     );
-    if (result == true) {
-      model.loadData();
-    }
   }
 
   Future<void> _confirmDelete(

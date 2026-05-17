@@ -4,7 +4,6 @@ import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
-import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/viewModel/subjects_view_model.dart';
 import 'package:hamrash_admin/views/subjects/create_edit_subject_view.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
@@ -55,25 +54,22 @@ class _SubjectsViewState extends State<SubjectsView> {
             return SingleChildScrollView(
               child: ScaffoldColumn(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   SizedBox(
                     height: ScaffoldInsets.of(context).bodyTopInset + 15,
                   ),
-                  AppSurfaceCard(
-                    padding: const EdgeInsets.all(5),
-                    child: Column(
-                      children: List.generate(model.subjects.length, (i) {
-                        final subject = model.subjects[i];
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            bottom: i == model.subjects.length - 1
-                                ? 0
-                                : AppSpacing.xs,
-                          ),
-                          child: _subjectItem(context, model, subject),
-                        );
-                      }),
-                    ),
+                  ListView.separated(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: model.subjects.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: AppSpacing.md),
+                    itemBuilder: (context, index) {
+                      final subject = model.subjects[index];
+                      return AppSurfaceCard(padding: const EdgeInsets.all(5), child: _subjectItem(context, model, subject));
+                    },
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                 ],
@@ -200,11 +196,11 @@ class _SubjectsViewState extends State<SubjectsView> {
     BuildContext context,
     SubjectsViewModel model, {
     SubjectModel? existing,
-  }) async {
-    await NavigationService.animatedNavigation(screen: CreateEditSubjectView(
-        existing: existing,
-        viewModel: model,
-      ),
+  }) {
+    return CreateEditSubjectView.openSheet(
+      context,
+      existing: existing,
+      viewModel: model,
     );
   }
 

@@ -32,7 +32,7 @@ AS $$
     SELECT 1
     FROM public.admin_profiles
     WHERE clerk_id  = (auth.jwt() ->> 'sub')
-      AND role      IN ('admin', 'super_admin')
+      AND role      IN ('admin', 'super_admin','vice_principal','principal')
       AND is_active = true
   );
 $$;
