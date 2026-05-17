@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/assets_util.dart';
 import 'package:hamrash_admin/helpers/haptic_helper.dart';
@@ -58,6 +60,8 @@ class WarningModal extends StatelessWidget {
   /// Callback when the sheet route completes (after pop)
   final VoidCallback? onDismiss;
 
+  final List<double>? snappingConfig;
+
   const WarningModal({
     super.key,
     required this.message,
@@ -67,6 +71,8 @@ class WarningModal extends StatelessWidget {
     this.icon,
     this.autoDismissDuration,
     this.onDismiss,
+    this.snappingConfig,
+   
   });
 
   static Future<R?> show<R>(
@@ -78,12 +84,13 @@ class WarningModal extends StatelessWidget {
     List<List<dynamic>>? icon,
     Duration? autoDismissDuration,
     VoidCallback? onDismiss,
+    List<double>? snappingConfig,
   }) async {
     HapticHelpers.vibrate(VibrationType.selection);
 
    final result = await Navigator.of(context).push<R>(
       StupidSimpleGlassSheetRoute<R>(
-        snappingConfig: const SheetSnappingConfig([0.4]),
+        snappingConfig: snappingConfig != null ? SheetSnappingConfig(snappingConfig) : const SheetSnappingConfig([0.4]),
         child: Material(
           type: MaterialType.transparency,
           child: WarningModal(

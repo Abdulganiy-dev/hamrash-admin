@@ -231,6 +231,7 @@ class _ClassesViewState extends State<ClassesView> {
     if (model.armIsUsed(arm.name)) {
       await WarningModal.show(
         context,
+        snappingConfig: [0.48],
         title: 'Cannot Delete Arm',
         message:
             'Remove all classrooms using arm "${arm.name}" before deleting it.',

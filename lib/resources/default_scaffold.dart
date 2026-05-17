@@ -236,32 +236,41 @@ class DefaultScaffold extends StatelessWidget {
       top: 0,
       left: 0,
       right: 0,
-      child: IgnorePointer(
-        ignoring: false,
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                surface.withValues(alpha: 0.96),
-                surface.withValues(alpha: 0.76),
-                surface.withValues(alpha: 0),
-              ],
-              stops: const [0.0, 0.62, 1.0],
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Gradient is visual only — must not steal taps from body content.
+          IgnorePointer(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    surface.withValues(alpha: 0.96),
+                    surface.withValues(alpha: 0.76),
+                    surface.withValues(alpha: 0),
+                  ],
+                  stops: const [0.0, 0.62, 1.0],
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(height: topInset),
+                  SizedBox(height: appBarHeight),
+                  SizedBox(height: appBarFadeHeight),
+                ],
+              ),
             ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(height: topInset),
-              appBarContent,
-              IgnorePointer(child: SizedBox(height: appBarFadeHeight)),
-            ],
+          Padding(
+            padding: EdgeInsets.only(top: topInset),
+            child: appBarContent,
           ),
-        ),
+        ],
       ),
     );
   }

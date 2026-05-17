@@ -741,13 +741,10 @@ class _AppButtonState extends State<AppButton> {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: isEnabled ? (_) => handlePressDown() : null,
-      onTapUp: isEnabled
-          ? (_) {
-              handlePressUp();
-              handlePress();
-            }
-          : null,
+      onTapUp: isEnabled ? (_) => handlePressUp() : null,
       onTapCancel: isEnabled ? handlePressCancel : null,
+      // onTap (not only onTapUp) so taps work inside scroll views.
+      onTap: isEnabled ? handlePress : null,
       child: SingleMotionBuilder(
         motion: _scaleMotion,
         value: _scaleTarget,
