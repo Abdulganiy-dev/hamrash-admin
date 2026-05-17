@@ -15,21 +15,38 @@ import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
 
-class StaffView extends StatefulWidget {
-  const StaffView({super.key});
-  static const String routeName = '/staff';
+class TeachersView extends StatefulWidget {
+  const TeachersView({super.key});
+  static const String routeName = '/teachers';
 
   @override
-  State<StaffView> createState() => _StaffViewState();
+  State<TeachersView> createState() => _TeachersViewState();
 }
 
-class _StaffViewState extends State<StaffView> {
+class _TeachersViewState extends State<TeachersView> {
   final _searchController = TextEditingController();
+  final _searchFocus = FocusNode();
+  bool _isSearching = false;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocus.dispose();
     super.dispose();
+  }
+
+  void _openSearch() {
+    setState(() => _isSearching = true);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _searchFocus.requestFocus(),
+    );
+  }
+
+  void _closeSearch(TeachersViewModel model) {
+    setState(() => _isSearching = false);
+    _searchController.clear();
+    model.setSearchQuery('');
+    _searchFocus.unfocus();
   }
 
   @override
@@ -40,15 +57,16 @@ class _StaffViewState extends State<StaffView> {
       builder: (context, model, _) => DefaultScaffold(
         title: null,
         busy: model.busy,
-        appBarType: DefaultScaffoldAppBarType.none,
+
+        appBarType: DefaultScaffoldAppBarType.custom,
+        customAppBar: _buildHeader(context, model),
         body: Builder(
           builder: (context) {
             final topInset = ScaffoldInsets.of(context).topInset;
             return Column(
               children: [
-                SizedBox(height: topInset + 16),
-                _buildHeader(context, model),
-                const SizedBox(height: AppSpacing.md),
+                SizedBox(height: topInset + 15),
+
                 Expanded(child: _buildGrid(context, model)),
               ],
             );
@@ -61,23 +79,42 @@ class _StaffViewState extends State<StaffView> {
   Widget _buildHeader(BuildContext context, TeachersViewModel model) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      child: Row(
-        children: [
-          Expanded(
-            child: _SearchBar(
-              controller: _searchController,
-              onChanged: model.setSearchQuery,
-            ),
+      child: ClipRect(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 280),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, animation) {
+            final isSearchRow = child.key == const ValueKey('search');
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: Offset(isSearchRow ? 0.08 : -0.04, 0),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            );
+          },
+          layoutBuilder: (currentChild, previousChildren) => Stack(
+            alignment: Alignment.centerLeft,
+            children: [...previousChildren, ?currentChild],
           ),
-          const SizedBox(width: AppSpacing.xs),
-          AppHugeIconButton(
-            hugeIcon: HugeIcons.strokeRoundedAdd01,
-            hugeIconStrokeWidth: 2,
-            hugeIconRasterSize: 24,
-            foregroundColorType: AppButtonForegroundColor.textInverted,
-            onPressed: () => _openCreate(context, model),
-          ),
-        ],
+          child: _isSearching
+              ? _SearchActiveRow(
+                  key: const ValueKey('search'),
+                  controller: _searchController,
+                  focusNode: _searchFocus,
+                  onChanged: model.setSearchQuery,
+                  onClose: () => _closeSearch(model),
+                )
+              : _IdleHeaderRow(
+                  key: const ValueKey('idle'),
+                  onSearchTap: _openSearch,
+                  onAddTap: () => _openCreate(context, model),
+                ),
+        ),
       ),
     );
   }
@@ -111,11 +148,8 @@ class _StaffViewState extends State<StaffView> {
   }
 
   void _openCreate(BuildContext context, TeachersViewModel model) {
-    Navigator.push<void>(
-      context,
-      NavigationService.generalPageRouteBuilder(
-        screen: CreateTeacherView(teachersViewModel: model),
-      ),
+    NavigationService.animatedNavigation(
+      screen: CreateTeacherView(teachersViewModel: model),
     );
   }
 
@@ -127,52 +161,123 @@ class _StaffViewState extends State<StaffView> {
     Navigator.push<void>(
       context,
       NavigationService.generalPageRouteBuilder(
-        screen: TeacherDetailView(
-          teacher: teacher,
-          teachersViewModel: model,
-        ),
+        screen: TeacherDetailView(teacher: teacher, teachersViewModel: model),
       ),
     );
   }
 }
 
-// ─── Search Bar ──────────────────────────────────────────────────────────────
+// ─── Idle Header Row ─────────────────────────────────────────────────────────
 
-class _SearchBar extends StatelessWidget {
-  const _SearchBar({required this.controller, required this.onChanged});
+class _IdleHeaderRow extends StatelessWidget {
+  const _IdleHeaderRow({
+    super.key,
+    required this.onSearchTap,
+    required this.onAddTap,
+  });
 
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
+  final VoidCallback onSearchTap;
+  final VoidCallback onAddTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 44,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: LightColors.strokeColourStrokeMild.withValues(alpha: 0.5),
+    return Row(
+      children: [
+        AppHugeIconButton(
+          hugeIcon: HugeIcons.strokeRoundedSearch01,
+          hugeIconStrokeWidth: 2,
+          hugeIconRasterSize: 30,
+          foregroundColorType: AppButtonForegroundColor.textInverted,
+          onPressed: onSearchTap,
         ),
-      ),
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        style: Theme.of(context).textTheme.bodyMedium,
-        decoration: InputDecoration(
-          hintText: 'Search teachers…',
-          hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: LightColors.textTextMute,
-              ),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            size: 20,
-            color: LightColors.textTextMute,
+        Spacer(),
+        AppText(
+          'Teachers',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.5,
           ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
-      ),
+        Spacer(),
+        AppHugeIconButton(
+          hugeIcon: HugeIcons.strokeRoundedAdd01,
+          hugeIconStrokeWidth: 2,
+          hugeIconRasterSize: 30,
+          foregroundColorType: AppButtonForegroundColor.textInverted,
+          onPressed: onAddTap,
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Search Active Row ────────────────────────────────────────────────────────
+
+class _SearchActiveRow extends StatelessWidget {
+  const _SearchActiveRow({
+    super.key,
+    required this.controller,
+    required this.focusNode,
+    required this.onChanged,
+    required this.onClose,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        AppHugeIconButton(
+          hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
+          hugeIconStrokeWidth: 2,
+          hugeIconRasterSize: 28,
+          foregroundColorType: AppButtonForegroundColor.textInverted,
+          onPressed: onClose,
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: Container(
+            height: 44,
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: LightColors.strokeColourStrokeMild.withValues(
+                  alpha: 0.5,
+                ),
+              ),
+            ),
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              onChanged: onChanged,
+              style: Theme.of(context).textTheme.bodyMedium,
+              decoration: InputDecoration(
+                hintText: 'Search teachers…',
+                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: LightColors.textTextMute,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  size: 20,
+                  color: LightColors.textTextMute,
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

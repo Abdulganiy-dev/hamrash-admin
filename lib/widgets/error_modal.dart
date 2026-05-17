@@ -79,7 +79,7 @@ class ErrorModal extends StatelessWidget {
 
     await Navigator.of(context).push<void>(
       StupidSimpleGlassSheetRoute<void>(
-        snappingConfig: const SheetSnappingConfig([0.4]),
+        snappingConfig: const SheetSnappingConfig([0.45]),
         child: Material(
           type: MaterialType.transparency,
           child: ErrorModal(

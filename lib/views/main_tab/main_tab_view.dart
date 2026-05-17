@@ -33,7 +33,7 @@ class _MainTabViewState extends State<MainTabView> {
   static const List<Widget> _pages = [
     Home(),
     StudentView(),
-    StaffView(),
+    TeachersView(),
     MoreView(),
   ];
 

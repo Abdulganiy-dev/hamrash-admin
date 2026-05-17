@@ -287,7 +287,7 @@ class DefaultScaffold extends StatelessWidget {
         appBarContent = _buildStandardAppBar(context);
         break;
       case DefaultScaffoldAppBarType.custom:
-        appBarContent = customAppBar;
+        appBarContent =customAppBar != null ? SizedBox(height: appBarHeight, child: customAppBar) : null;
         break;
       case DefaultScaffoldAppBarType.none:
         appBarContent = null;
