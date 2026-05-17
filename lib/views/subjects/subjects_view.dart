@@ -217,7 +217,7 @@ class _SubjectsViewState extends State<SubjectsView> {
       subtitle: 'This cannot be undone.',
       bottomBody: Row(
         children: [
-          Expanded(child: AppTertiaryButton(onPressed: () => Navigator.of(context).pop(false), child: Text('Cancel'))),
+          Expanded(child: AppTertiaryButton(backgroundColorType: AppButtonBackgroundColor.error,foregroundColor:Colors.white,onPressed: () => Navigator.of(context).pop(false), child: Text('Cancel'))),
           const SizedBox(width: AppSpacing.md),
           Expanded(child: AppPrimaryButton(onPressed: () => Navigator.of(context).pop(true), child: Text('Delete'))),
         ],
