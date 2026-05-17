@@ -1,11 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(claude mcp:*)"
+      "Bash(claude mcp:*)",
+      "Bash(flutter analyze *)",
+      "Bash(awk 'NR>=104 && NR<=112' \"/Users/abdulganiylawal/Documents/Programming/Personal Apps/Hamrash/hamrash admin/lib/views/classes/create_edit_class_view.dart\")"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "supabase"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

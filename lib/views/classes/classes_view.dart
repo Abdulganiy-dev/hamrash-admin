@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/supabase_models/class_model.dart';
+import 'package:hamrash_admin/api/models/supabase_models/section_model.dart';
 import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/viewModel/classes_view_model.dart';
+import 'package:hamrash_admin/views/classes/add_arm_sheet.dart';
+import 'package:hamrash_admin/views/classes/add_class_sheet.dart';
 import 'package:hamrash_admin/views/classes/create_edit_class_view.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
@@ -37,110 +40,165 @@ class _ClassesViewState extends State<ClassesView> {
         title: 'Classes',
         showBackButton: true,
         busy: model.busy,
-        actions: [
-          AppHugeIconButton(
-            hugeIcon: HugeIcons.strokeRoundedAdd01,
-            hugeIconStrokeWidth: 2,
-            hugeIconRasterSize: 30,
-            foregroundColorType: AppButtonForegroundColor.textInverted,
-            onPressed: () => _openCreateEdit(context, model),
-          ),
-        ],
         appBarType: DefaultScaffoldAppBarType.standard,
-
         body: Builder(
           builder: (context) {
-            if (model.classes.isEmpty && !model.busy) {
-              return _emptyState(context);
-            }
             return SingleChildScrollView(
               child: ScaffoldColumn(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    height: ScaffoldInsets.of(context).bodyTopInset + 15,
+                  SizedBox(height: ScaffoldInsets.of(context).bodyTopInset + 15),
+                  _SectionHeader(
+                    title: 'Arms',
+                    onAdd: () => AddArmSheet.openSheet(context, viewModel: model),
                   ),
-                  AppSurfaceCard(
-                    padding: const EdgeInsets.all(5),
-                    child: Column(
-                      children: List.generate(model.classes.length, (i) {
-                        final cls = model.classes[i];
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            bottom: i == model.classes.length - 1
-                                ? 0
-                                : AppSpacing.xs,
-                          ),
-                          child: _classItem(context, model, cls),
-                        );
-                      }),
-                    ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _armsRow(context, model),
+                  const SizedBox(height: AppSpacing.xl),
+                  _SectionHeader(
+                    title: 'Classrooms',
+                    onAdd: () => AddClassSheet.openSheet(context, viewModel: model),
                   ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _classroomsSection(context, model),
                   const SizedBox(height: AppSpacing.xxl),
                 ],
               ),
             );
-          },
+          }
         ),
       ),
     );
   }
 
-  Widget _classItem(
+  Widget _armsRow(BuildContext context, ClassesViewModel model) {
+    if (model.arms.isEmpty && !model.busy) {
+      return AppText(
+        'No arms yet. Tap + to add one.',
+        colorType: AppTextColor.textMute,
+        fontSize: 13,
+      );
+    }
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: model.arms.map((arm) {
+          return Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.xs),
+            child: _ArmChip(
+              arm: arm,
+              onDelete: () => _confirmDeleteArm(context, model, arm),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _classroomsSection(BuildContext context, ClassesViewModel model) {
+    final grouped = model.groupedClasses;
+    if (grouped.isEmpty && !model.busy) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        child: Center(
+          child: Column(
+            children: [
+              HugeIcon(
+                icon: HugeIcons.strokeRoundedSchool,
+                size: 48,
+                strokeWidth: 1.5,
+                color: LightColors.textTextMute,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              AppText(
+                'No classrooms yet',
+                colorType: AppTextColor.textInverted,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              AppText(
+                'Tap + to add your first classroom',
+                colorType: AppTextColor.textMute,
+                fontSize: 13,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: grouped.entries.map((entry) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: _classGroup(context, model, entry.key, entry.value),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _classGroup(
+    BuildContext context,
+    ClassesViewModel model,
+    String groupName,
+    List<ClassModel> classes,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppText(
+          groupName,
+          colorType: AppTextColor.textMute,
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ).padding(bottom: AppSpacing.xs),
+        AppSurfaceCard(
+          padding: const EdgeInsets.all(5),
+          child: Column(
+            children: List.generate(classes.length, (i) {
+              final cls = classes[i];
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: i == classes.length - 1 ? 0 : AppSpacing.xs,
+                ),
+                child: _classroomItem(context, model, cls),
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _classroomItem(
     BuildContext context,
     ClassesViewModel model,
     ClassModel cls,
   ) {
     return GestureDetector(
-      onTap: () => _openCreateEdit(context, model, existing: cls),
+      onTap: () => CreateEditClassView.openSheet(
+        context,
+        existing: cls,
+        availableSubjects: model.subjects,
+        availableArms: model.arms,
+        viewModel: model,
+      ),
       child: AppElevatedCard(
         child: Row(
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: Theme.of(
-                  context,
-                ).colorScheme.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: HugeIcon(
-                  icon: HugeIcons.strokeRoundedSchool,
-                  size: 22,
-                  strokeWidth: 2,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppText(
-                    cls.displayName,
-                    colorType: AppTextColor.textInverted,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  AppText(
-                    cls.isActive ? 'Active' : 'Inactive',
-                    colorType: cls.isActive
-                        ? AppTextColor.textPrimary
-                        : AppTextColor.textMute,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12,
-                  ),
-                ],
+              child: AppText(
+                cls.displayName,
+                colorType: AppTextColor.textInverted,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             GestureDetector(
-              onTap: () => _confirmDelete(context, model, cls),
+              onTap: () => _confirmDeleteClass(context, model, cls),
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xs),
                 child: HugeIcon(
@@ -164,52 +222,50 @@ class _ClassesViewState extends State<ClassesView> {
     );
   }
 
-  Widget _emptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+  Future<void> _confirmDeleteArm(
+    BuildContext context,
+    ClassesViewModel model,
+    SectionModel arm,
+  ) async {
+    if (model.armIsUsed(arm.name)) {
+      await WarningModal.show(
+        context,
+        title: 'Cannot Delete Arm',
+        message:
+            'Remove all classrooms using arm "${arm.name}" before deleting it.',
+      );
+      return;
+    }
+    final confirmed = await WarningModal.show<bool>(
+      context,
+      message: 'Delete arm "${arm.name}"?',
+      subtitle: 'This cannot be undone.',
+      bottomBody: Row(
         children: [
-          HugeIcon(
-            icon: HugeIcons.strokeRoundedSchool,
-            size: 64,
-            strokeWidth: 1.5,
-            color: LightColors.textTextMute,
+          Expanded(
+            child: AppTertiaryButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
           ),
-          const SizedBox(height: AppSpacing.md),
-          AppText(
-            'No classes yet',
-            colorType: AppTextColor.textInverted,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: AppPrimaryButton(
+              backgroundColorType: AppButtonBackgroundColor.error,
+              foregroundColor: Colors.white,
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          AppText(
-            'Tap the + button to add your first class',
-            colorType: AppTextColor.textMute,
-            fontWeight: FontWeight.w400,
-            fontSize: 14,
-            textAlign: TextAlign.center,
-          ).padding(left: AppSpacing.xl, right: AppSpacing.xl),
         ],
       ),
     );
+    if (confirmed == true) {
+      await model.deleteArm(arm);
+    }
   }
 
-  Future<void> _openCreateEdit(
-    BuildContext context,
-    ClassesViewModel model, {
-    ClassModel? existing,
-  }) {
-    return CreateEditClassView.openSheet(
-      context,
-      existing: existing,
-      availableSubjects: model.subjects,
-      viewModel: model,
-    );
-  }
-
-
-  Future<void> _confirmDelete(
+  Future<void> _confirmDeleteClass(
     BuildContext context,
     ClassesViewModel model,
     ClassModel cls,
@@ -220,7 +276,7 @@ class _ClassesViewState extends State<ClassesView> {
     if (hasSubjects) {
       await WarningModal.show(
         context,
-        title: 'Cannot Delete Class',
+        title: 'Cannot Delete Classroom',
         message:
             'Remove all subject assignments from "${cls.displayName}" before deleting it.',
       );
@@ -229,18 +285,102 @@ class _ClassesViewState extends State<ClassesView> {
 
     final confirmed = await WarningModal.show<bool>(
       context,
-      message: 'Delete "${cls.displayName}"? This cannot be undone.',
+      message: 'Delete "${cls.displayName}"?',
       subtitle: 'This cannot be undone.',
       bottomBody: Row(
         children: [
-          Expanded(child: AppTertiaryButton(onPressed: () => Navigator.of(context).pop(false), child: Text('Cancel'))),
+          Expanded(
+            child: AppTertiaryButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+          ),
           const SizedBox(width: AppSpacing.md),
-          Expanded(child: AppPrimaryButton(backgroundColorType: AppButtonBackgroundColor.error,foregroundColor:Colors.white,onPressed: () => Navigator.of(context).pop(true), child: Text('Delete'))),
+          Expanded(
+            child: AppPrimaryButton(
+              backgroundColorType: AppButtonBackgroundColor.error,
+              foregroundColor: Colors.white,
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ),
         ],
       ),
     );
     if (confirmed == true) {
       await model.deleteClass(cls);
     }
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, required this.onAdd});
+
+  final String title;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        AppText(
+          title,
+          colorType: AppTextColor.textInverted,
+          fontWeight: FontWeight.w700,
+          fontSize: 17,
+        ),
+        const Spacer(),
+        AppHugeIconButton(
+            hugeIcon: HugeIcons.strokeRoundedAdd01,
+            hugeIconStrokeWidth: 2,
+            hugeIconRasterSize: 25,
+            foregroundColorType: AppButtonForegroundColor.textInverted,
+            onPressed: onAdd,
+          ),
+      ],
+    );
+  }
+}
+
+class _ArmChip extends StatelessWidget {
+  const _ArmChip({required this.arm, required this.onDelete});
+
+  final SectionModel arm;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.smMd2,
+        vertical: AppSpacing.xsSm,
+      ),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: primary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppText(
+            arm.name,
+            colorType: AppTextColor.textPrimary,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          GestureDetector(
+            onTap: onDelete,
+            child: Icon(
+              Icons.close_rounded,
+              size: 14,
+              color: LightColors.textTextMute,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

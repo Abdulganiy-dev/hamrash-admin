@@ -18,7 +18,7 @@ class ClassModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  String get displayName => section != null ? '$name ($section)' : name;
+  String get displayName => section != null ? '$name $section' : name;
 
   factory ClassModel.fromJson(Map<String, dynamic> json) {
     final rawSubjects = json['subjects'] as List<dynamic>?;
