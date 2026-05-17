@@ -92,6 +92,14 @@ class SubjectsViewModel extends BaseViewModel {
     }
   }
 
+  Future<int> subjectClassCount(String subjectId) async {
+    try {
+      return await _classService.subjectClassCount(subjectId);
+    } catch (_) {
+      return 0;
+    }
+  }
+
   Future<bool> deleteSubject(SubjectModel subject) async {
     setBusy(true);
     try {

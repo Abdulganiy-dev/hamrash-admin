@@ -8,6 +8,7 @@ import 'package:hamrash_admin/viewModel/subjects_view_model.dart';
 import 'package:hamrash_admin/views/subjects/create_edit_subject_view.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
+import 'package:hamrash_admin/widgets/warning_modal.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
 
@@ -211,6 +212,20 @@ class _SubjectsViewState extends State<SubjectsView> {
     SubjectsViewModel model,
     SubjectModel subject,
   ) async {
+    final classCount = await model.subjectClassCount(subject.id!);
+    if (!context.mounted) return;
+
+    if (classCount > 0) {
+      final noun = classCount == 1 ? 'class' : 'classes';
+      await WarningModal.show(
+        context,
+        title: 'Cannot Delete Subject',
+        message:
+            '"${subject.name}" is assigned to $classCount $noun. Remove it from all classes before deleting.',
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

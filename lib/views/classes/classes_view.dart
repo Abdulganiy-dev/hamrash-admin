@@ -8,6 +8,7 @@ import 'package:hamrash_admin/viewModel/classes_view_model.dart';
 import 'package:hamrash_admin/views/classes/create_edit_class_view.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
+import 'package:hamrash_admin/widgets/warning_modal.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
 
@@ -211,6 +212,19 @@ class _ClassesViewState extends State<ClassesView> {
     ClassesViewModel model,
     ClassModel cls,
   ) async {
+    final hasSubjects = await model.classHasSubjects(cls.id!);
+    if (!context.mounted) return;
+
+    if (hasSubjects) {
+      await WarningModal.show(
+        context,
+        title: 'Cannot Delete Class',
+        message:
+            'Remove all subject assignments from "${cls.displayName}" before deleting it.',
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
