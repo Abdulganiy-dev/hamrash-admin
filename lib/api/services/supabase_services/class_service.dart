@@ -1,22 +1,27 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../api/models/supabase_models/class_model.dart';
+import '../../../api/models/supabase_models/section_model.dart';
 import '../../../database/class_realm_service.dart';
+import '../../../database/section_realm_service.dart';
 import '../../../database/subject_realm_service.dart';
 
-/// Supabase + Realm for `public.classes` and `public.subjects`.
+/// Supabase + Realm for `public.classes`, `public.sections`, and `public.subjects`.
 ///
 /// List fetch: Pattern 2 (online-first, Realm fallback).
 /// Mutations: Pattern 3 (write-through — cache mirrors server response).
 class ClassService {
   ClassService({
     required ClassRealmService classRealmService,
+    required SectionRealmService sectionRealmService,
     required SubjectRealmService subjectRealmService,
   })  : _classRealm = classRealmService,
+        _sectionRealm = sectionRealmService,
         _subjectRealm = subjectRealmService;
 
   final SupabaseClient _supabase = Supabase.instance.client;
   final ClassRealmService _classRealm;
+  final SectionRealmService _sectionRealm;
   final SubjectRealmService _subjectRealm;
 
   static const Duration _timeout = Duration(seconds: 15);
@@ -85,6 +90,75 @@ class ClassService {
   Future<void> deleteClass(String id) async {
     await _supabase.from('classes').delete().eq('id', id).timeout(_timeout);
     await _classRealm.deleteClass(id);
+  }
+
+  // ──────────────────────────── Sections ───────────────────────────
+
+  Future<List<SectionModel>> fetchSections() async {
+    try {
+      final response = await _supabase
+          .from('sections')
+          .select()
+          .order('name', ascending: true)
+          .timeout(_timeout);
+
+      final list = (response as List<dynamic>)
+          .map(
+            (e) =>
+                SectionModel.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList();
+
+      await _sectionRealm.saveSections(list);
+      return list;
+    } catch (_) {
+      final cached = _sectionRealm.getAllSections();
+      if (cached.isNotEmpty) {
+        return cached
+            .map(
+              (r) => SectionModel(
+                id: r.id,
+                name: r.name,
+                createdAt: r.createdAt,
+                updatedAt: r.updatedAt,
+              ),
+            )
+            .toList();
+      }
+      rethrow;
+    }
+  }
+
+  Future<SectionModel> insertSection(SectionModel model) async {
+    final inserted = await _supabase
+        .from('sections')
+        .insert(model.toInsertJson())
+        .select()
+        .single();
+
+    final result =
+        SectionModel.fromJson(Map<String, dynamic>.from(inserted));
+    await _sectionRealm.saveSection(result);
+    return result;
+  }
+
+  Future<SectionModel> updateSection(String id, SectionModel model) async {
+    final updated = await _supabase
+        .from('sections')
+        .update(model.toUpdateJson())
+        .eq('id', id)
+        .select()
+        .single();
+
+    final result =
+        SectionModel.fromJson(Map<String, dynamic>.from(updated));
+    await _sectionRealm.saveSection(result);
+    return result;
+  }
+
+  Future<void> deleteSection(String id) async {
+    await _supabase.from('sections').delete().eq('id', id).timeout(_timeout);
+    await _sectionRealm.deleteSection(id);
   }
 
   // ──────────────────── Class–Subject assignments ───────────────────

@@ -13,6 +13,7 @@ import 'package:hamrash_admin/database/class_realm_service.dart';
 import 'package:hamrash_admin/database/realm_service.dart';
 import 'package:hamrash_admin/database/role_realm_service.dart';
 import 'package:hamrash_admin/database/state_realm_service.dart';
+import 'package:hamrash_admin/database/section_realm_service.dart';
 import 'package:hamrash_admin/database/subject_realm_service.dart';
 import 'package:hamrash_admin/env_config/flavor_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -79,6 +80,10 @@ void setupLocator() {
     () => ClassRealmService(locator<RealmService>()),
   );
 
+  locator.registerLazySingleton<SectionRealmService>(
+    () => SectionRealmService(locator<RealmService>()),
+  );
+
   locator.registerLazySingleton<SubjectRealmService>(
     () => SubjectRealmService(locator<RealmService>()),
   );
@@ -86,6 +91,7 @@ void setupLocator() {
   locator.registerLazySingleton<ClassService>(
     () => ClassService(
       classRealmService: locator<ClassRealmService>(),
+      sectionRealmService: locator<SectionRealmService>(),
       subjectRealmService: locator<SubjectRealmService>(),
     ),
   );

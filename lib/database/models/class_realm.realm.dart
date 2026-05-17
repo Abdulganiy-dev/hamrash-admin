@@ -22,8 +22,8 @@ class ClassRealm extends _ClassRealm
   }) {
     RealmObjectBase.set(this, 'id', id);
     RealmObjectBase.set(this, 'name', name);
-    RealmObjectBase.set(this, 'isActive', isActive);
     RealmObjectBase.set(this, 'section', section);
+    RealmObjectBase.set(this, 'isActive', isActive);
     RealmObjectBase.set(this, 'createdAt', createdAt);
     RealmObjectBase.set(this, 'updatedAt', updatedAt);
     RealmObjectBase.set(this, 'lastUpdated', lastUpdated);
@@ -42,15 +42,15 @@ class ClassRealm extends _ClassRealm
   set name(String value) => RealmObjectBase.set(this, 'name', value);
 
   @override
-  bool get isActive => RealmObjectBase.get<bool>(this, 'isActive') as bool;
-  @override
-  set isActive(bool value) => RealmObjectBase.set(this, 'isActive', value);
-
-  @override
   String? get section =>
       RealmObjectBase.get<String>(this, 'section') as String?;
   @override
   set section(String? value) => RealmObjectBase.set(this, 'section', value);
+
+  @override
+  bool get isActive => RealmObjectBase.get<bool>(this, 'isActive') as bool;
+  @override
+  set isActive(bool value) => RealmObjectBase.set(this, 'isActive', value);
 
   @override
   DateTime? get createdAt =>
@@ -88,8 +88,8 @@ class ClassRealm extends _ClassRealm
     return <String, dynamic>{
       'id': id.toEJson(),
       'name': name.toEJson(),
-      'isActive': isActive.toEJson(),
       'section': section.toEJson(),
+      'isActive': isActive.toEJson(),
       'createdAt': createdAt.toEJson(),
       'updatedAt': updatedAt.toEJson(),
       'lastUpdated': lastUpdated.toEJson(),
@@ -128,10 +128,18 @@ class ClassRealm extends _ClassRealm
       [
         SchemaProperty('id', RealmPropertyType.string, primaryKey: true),
         SchemaProperty('name', RealmPropertyType.string),
-        SchemaProperty('isActive', RealmPropertyType.bool),
         SchemaProperty('section', RealmPropertyType.string, optional: true),
-        SchemaProperty('createdAt', RealmPropertyType.timestamp, optional: true),
-        SchemaProperty('updatedAt', RealmPropertyType.timestamp, optional: true),
+        SchemaProperty('isActive', RealmPropertyType.bool),
+        SchemaProperty(
+          'createdAt',
+          RealmPropertyType.timestamp,
+          optional: true,
+        ),
+        SchemaProperty(
+          'updatedAt',
+          RealmPropertyType.timestamp,
+          optional: true,
+        ),
         SchemaProperty(
           'lastUpdated',
           RealmPropertyType.timestamp,
