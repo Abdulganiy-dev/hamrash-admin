@@ -65,8 +65,17 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
   String? _selectedSectionName;
   late Set<String> _selectedSubjectIds;
   bool _submitting = false;
+  String? _sectionError;
+  String? _subjectsError;
+
+  static const _minSubjects = 2;
 
   bool get _isEdit => widget.existing != null;
+
+  bool get _hasValidSection => _selectedSectionName != null;
+
+  bool get _hasEnoughSubjects =>
+      _selectedSubjectIds.length >= _minSubjects;
 
   /// True if the current name + section combo already exists in another classroom.
   bool get _isDuplicate {
@@ -107,7 +116,7 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppText(
-          'Section (optional)',
+          'Section',
           colorType: AppTextColor.textInverted,
           fontWeight: FontWeight.w700,
           fontSize: 14,
@@ -124,12 +133,12 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _SectionChipOption(
-                        label: 'None',
-                        selected: _selectedSectionName == null,
-                        onTap: () =>
-                            setState(() => _selectedSectionName = null),
-                      ),
+                      // _SectionChipOption(
+                      //   label: 'None',
+                      //   selected: _selectedSectionName == null,
+                      //   onTap: () =>
+                      //       setState(() => _selectedSectionName = null),
+                      // ),
                       ...widget.availableSections.map((s) {
                         final selected = _selectedSectionName == s.name;
                         return Padding(
@@ -138,9 +147,10 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
                           child: _SectionChipOption(
                             label: s.name,
                             selected: selected,
-                            onTap: () => setState(
-                              () => _selectedSectionName = s.name,
-                            ),
+                            onTap: () => setState(() {
+                              _selectedSectionName = s.name;
+                              _sectionError = null;
+                            }),
                           ),
                         );
                       }),
@@ -148,19 +158,43 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
                   ),
                 ),
         ),
+        if (_sectionError != null)
+          AppText(
+            _sectionError!,
+            color: LightColors.errorErrorDefault,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ).padding(bottom: AppSpacing.md),
       ],
     );
   }
 
   List<Widget> _assignSubjectsSection(BuildContext context) {
-    if (widget.availableSubjects.isEmpty) return const [];
     return [
       AppText(
         'Assign Subjects',
         colorType: AppTextColor.textInverted,
         fontWeight: FontWeight.w700,
         fontSize: 14,
+      ).padding(bottom: AppSpacing.xs),
+      AppText(
+        'Select at least $_minSubjects subjects',
+        colorType:_subjectsError != null ? AppTextColor.error : AppTextColor.textMute,
+        fontSize: 12,
       ).padding(bottom: AppSpacing.sm),
+      if (widget.availableSubjects.isEmpty)
+        AppText(
+          'No subjects configured yet.',
+          colorType: AppTextColor.textMute,
+          fontSize: 13,
+        ).padding(bottom: AppSpacing.lg)
+      else if (widget.availableSubjects.length < _minSubjects)
+        AppText(
+          'Add at least $_minSubjects subjects in settings before creating a classroom.',
+          colorType: AppTextColor.textMute,
+          fontSize: 13,
+        ).padding(bottom: AppSpacing.lg)
+      else ...[
       Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.lg),
         child: AppSurfaceCard(
@@ -181,6 +215,9 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
                       _selectedSubjectIds.remove(subject.id);
                     } else {
                       _selectedSubjectIds.add(subject.id!);
+                    }
+                    if (_selectedSubjectIds.length >= _minSubjects) {
+                      _subjectsError = null;
                     }
                   }),
                   child: AppElevatedCard(
@@ -219,27 +256,46 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
           ),
         ),
       ),
+      
+      ],
     ];
+  }
+
+  bool _validateRequiredFields() {
+    final sectionError =
+        _hasValidSection ? null : 'Select a section';
+    final subjectsError = _hasEnoughSubjects
+        ? null
+        : 'Select at least $_minSubjects subjects';
+    setState(() {
+      _sectionError = sectionError;
+      _subjectsError = subjectsError;
+    });
+    return sectionError == null && subjectsError == null;
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!_validateRequiredFields()) return;
     if (_isDuplicate) return;
     setState(() => _submitting = true);
+
+    final subjectIds = _selectedSubjectIds.toList();
+    final section = _selectedSectionName!;
 
     final bool success;
     if (_isEdit) {
       success = await widget.viewModel.updateClass(
         existing: widget.existing!,
         name: _nameController.text.trim(),
-        section: _selectedSectionName,
-        subjectIds: _selectedSubjectIds.toList(),
+        section: section,
+        subjectIds: subjectIds,
       );
     } else {
       success = await widget.viewModel.createClass(
         name: _nameController.text.trim(),
-        section: _selectedSectionName,
-        subjectIds: _selectedSubjectIds.toList(),
+        section: section,
+        subjectIds: subjectIds,
       );
     }
 
@@ -283,10 +339,12 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
                             _nameController.selection =
                                 TextSelection.collapsed(offset: name.length);
                           }),
-                          child: _SectionChipOption(
-                            label: name,
-                            selected: selected,
-                            onTap: () {},
+                          child: AbsorbPointer(
+                            child: _SectionChipOption(
+                              label: name,
+                              selected: selected,
+                              onTap: () {},
+                            ),
                           ),
                         ).hapticFeedback(),
                       );
@@ -356,6 +414,6 @@ class _SectionChipOption extends StatelessWidget {
           fontSize: 13,
         ),
       ),
-    );
+    ).hapticFeedback();
   }
 }

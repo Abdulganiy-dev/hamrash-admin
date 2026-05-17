@@ -101,23 +101,27 @@ class ClassesViewModel extends BaseViewModel {
     }
   }
 
+  static const minClassSubjects = 2;
+
   Future<bool> createClass({
     required String name,
-    String? section,
-    List<String> subjectIds = const [],
+    required String section,
+    required List<String> subjectIds,
   }) async {
+    final trimmedSection = section.trim();
+    if (trimmedSection.isEmpty || subjectIds.length < minClassSubjects) {
+      return false;
+    }
     setBusy(true);
     try {
       final created = await _classService.insertClass(
         ClassModel(
           name: name,
-          section: section?.trim().isEmpty == true ? null : section?.trim(),
+          section: trimmedSection,
           isActive: true,
         ),
       );
-      if (subjectIds.isNotEmpty) {
-        await _classService.setSubjectsForClass(created.id!, subjectIds);
-      }
+      await _classService.setSubjectsForClass(created.id!, subjectIds);
       await loadData();
       return true;
     } catch (e, st) {
@@ -136,16 +140,20 @@ class ClassesViewModel extends BaseViewModel {
   Future<bool> updateClass({
     required ClassModel existing,
     required String name,
-    String? section,
-    List<String> subjectIds = const [],
+    required String section,
+    required List<String> subjectIds,
   }) async {
+    final trimmedSection = section.trim();
+    if (trimmedSection.isEmpty || subjectIds.length < minClassSubjects) {
+      return false;
+    }
     setBusy(true);
     try {
       await _classService.updateClass(
         existing.id!,
         existing.copyWith(
           name: name,
-          section: section?.trim().isEmpty == true ? null : section?.trim(),
+          section: trimmedSection,
         ),
       );
       await _classService.setSubjectsForClass(existing.id!, subjectIds);
