@@ -214,6 +214,18 @@ class _ClassesViewState extends State<ClassesView> {
     ClassesViewModel model,
     ClassModel cls,
   ) async {
+    final hasSubjects = await model.classHasSubjects(cls.id!);
+    if (!context.mounted) return;
+
+    if (hasSubjects) {
+      await WarningModal.show(
+        context,
+        title: 'Cannot Delete Class',
+        message:
+            'Remove all subject assignments from "${cls.displayName}" before deleting it.',
+      );
+      return;
+    }
 
     final confirmed = await WarningModal.show<bool>(
       context,

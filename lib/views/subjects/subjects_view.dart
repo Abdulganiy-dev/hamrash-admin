@@ -210,6 +210,19 @@ class _SubjectsViewState extends State<SubjectsView> {
     SubjectsViewModel model,
     SubjectModel subject,
   ) async {
+    final classCount = await model.subjectClassCount(subject.id!);
+    if (!context.mounted) return;
+
+    if (classCount > 0) {
+      final noun = classCount == 1 ? 'class' : 'classes';
+      await WarningModal.show(
+        context,
+        title: 'Cannot Delete Subject',
+        message:
+            '"${subject.name}" is assigned to $classCount $noun. Remove it from all classes before deleting.',
+      );
+      return;
+    }
 
     final confirmed = await WarningModal.show<bool>(
       context,

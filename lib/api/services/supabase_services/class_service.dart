@@ -102,6 +102,27 @@ class ClassService {
         .toList();
   }
 
+  /// Returns true if [classId] has at least one subject assignment.
+  Future<bool> classHasSubjects(String classId) async {
+    final response = await _supabase
+        .from('class_subjects')
+        .select('id')
+        .eq('class_id', classId)
+        .limit(1)
+        .timeout(_timeout);
+    return (response as List).isNotEmpty;
+  }
+
+  /// Returns how many classes [subjectId] is currently assigned to.
+  Future<int> subjectClassCount(String subjectId) async {
+    final response = await _supabase
+        .from('class_subjects')
+        .select('id')
+        .eq('subject_id', subjectId)
+        .timeout(_timeout);
+    return (response as List).length;
+  }
+
   /// Replaces the subject assignment for [classId] with [subjectIds].
   Future<void> setSubjectsForClass(
     String classId,

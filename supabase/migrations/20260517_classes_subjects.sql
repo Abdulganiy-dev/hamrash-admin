@@ -169,8 +169,8 @@ CREATE TRIGGER subjects_set_updated_at
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.class_subjects (
   id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  class_id   uuid        NOT NULL REFERENCES public.classes(id)  ON DELETE CASCADE,
-  subject_id uuid        NOT NULL REFERENCES public.subjects(id) ON DELETE CASCADE,
+  class_id   uuid        NOT NULL REFERENCES public.classes(id)  ON DELETE RESTRICT,
+  subject_id uuid        NOT NULL REFERENCES public.subjects(id) ON DELETE RESTRICT,
   created_at timestamptz NOT NULL DEFAULT now(),
 
   UNIQUE (class_id, subject_id)
