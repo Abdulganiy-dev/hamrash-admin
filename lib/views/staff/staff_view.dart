@@ -62,13 +62,14 @@ class _TeachersViewState extends State<TeachersView> {
         customAppBar: _buildHeader(context, model),
         body: Builder(
           builder: (context) {
-            final topInset = ScaffoldInsets.of(context).topInset;
-            return Column(
-              children: [
-                SizedBox(height: topInset + 15),
 
-                Expanded(child: _buildGrid(context, model)),
-              ],
+            return SingleChildScrollView(
+              child: ScaffoldColumn(
+                children: [
+                  SizedBox(height: ScaffoldInsets.of(context).bodyTopInset + 15),
+                  _buildGrid(context, model),
+                ],
+              ),
             );
           },
         ),
@@ -127,21 +128,18 @@ class _TeachersViewState extends State<TeachersView> {
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.xs,
-        AppSpacing.md,
-        AppSpacing.xxl,
-      ),
+      padding: EdgeInsets.zero,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: AppSpacing.sm,
         mainAxisSpacing: AppSpacing.md,
-        childAspectRatio: 0.78,
+        childAspectRatio: 1,
       ),
-      itemCount: teachers.length,
+      itemCount: 30,
       itemBuilder: (context, i) => _TeacherGridItem(
-        teacher: teachers[i],
+        teacher: teachers[0],
         onTap: () => _openDetail(context, teachers[i], model),
       ),
     );
@@ -158,11 +156,8 @@ class _TeachersViewState extends State<TeachersView> {
     TeacherModel teacher,
     TeachersViewModel model,
   ) {
-    Navigator.push<void>(
-      context,
-      NavigationService.generalPageRouteBuilder(
-        screen: TeacherDetailView(teacher: teacher, teachersViewModel: model),
-      ),
+    NavigationService.animatedNavigation(
+      screen: TeacherDetailView(teacher: teacher, teachersViewModel: model),
     );
   }
 }
@@ -332,29 +327,32 @@ class _TeacherGridItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final size = constraints.maxWidth * 0.72;
-              return TeacherAvatar(teacher: teacher, size: size);
-            },
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          AppText(
-            teacher.fullName,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            colorType: AppTextColor.textInverted,
-          ),
-        ],
-      ),
-    ).hapticFeedback();
+    return Padding(
+      padding: EdgeInsets.zero,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final size = constraints.maxWidth * 0.72;
+                return TeacherAvatar(teacher: teacher, size: size);
+              },
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            AppText(
+              teacher.fullName,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              colorType: AppTextColor.textInverted,
+            ),
+          ],
+        ),
+      ).hapticFeedback(),
+    );
   }
 }

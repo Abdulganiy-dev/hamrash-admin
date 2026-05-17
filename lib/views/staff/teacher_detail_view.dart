@@ -56,38 +56,24 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
   @override
   Widget build(BuildContext context) {
     return DefaultScaffold(
-      title: null,
-      appBarType: DefaultScaffoldAppBarType.custom,
-      appBarHeight: kToolbarHeight,
-      customAppBar: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Transform.translate(
-            offset: const Offset(-AppSpacing.md, 0),
-            child: AppHugeIconButton(
-              hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
-              hugeIconStrokeWidth: 2,
-              hugeIconRasterSize: 35,
-              foregroundColorType: AppButtonForegroundColor.textInverted,
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ).padding(left: AppSpacing.md),
-          AppHugeIconButton(
-            hugeIcon: HugeIcons.strokeRoundedPencilEdit01,
-            hugeIconStrokeWidth: 2,
-            hugeIconRasterSize: 22,
-            foregroundColorType: AppButtonForegroundColor.textInverted,
-            onPressed: _openEdit,
-          ),
-        ],
-      ),
+      title: "Teacher Details",
+      showBackButton: true,
+      actions: [
+        AppHugeIconButton(
+          hugeIcon: HugeIcons.strokeRoundedPencilEdit01,
+          hugeIconStrokeWidth: 2,
+          hugeIconRasterSize: 30,
+          foregroundColorType: AppButtonForegroundColor.textInverted,
+          onPressed: _openEdit,
+        ),
+      ],
+      appBarType: DefaultScaffoldAppBarType.standard,
       body: Builder(
         builder: (context) => SingleChildScrollView(
           child: ScaffoldColumn(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: ScaffoldInsets.of(context).bodyTopInset + 8),
+              SizedBox(height: ScaffoldInsets.of(context).bodyTopInset + 15),
               _AvatarSection(teacher: _teacher),
               const SizedBox(height: AppSpacing.xl),
               if (_hasContact) ...[
