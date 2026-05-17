@@ -47,6 +47,14 @@ class SubjectsViewModel extends BaseViewModel {
       _subjects.sort((a, b) => a.name.compareTo(b.name));
       notifyListeners();
       return true;
+    } on DuplicateSubjectNameException catch (e, st) {
+      await handleError(
+        e,
+        stackTrace: st,
+        context: 'SubjectsViewModel.createSubject',
+        userMessage: e.toString(),
+      );
+      return false;
     } catch (e, st) {
       await handleError(
         e,

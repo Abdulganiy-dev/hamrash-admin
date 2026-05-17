@@ -182,9 +182,14 @@ class ClassService {
   }
 
   Future<SubjectModel> insertSubject(SubjectModel model) async {
+    final name = model.name.trim();
+    if (await _subjectNameExists(name)) {
+      throw DuplicateSubjectNameException(name);
+    }
+
     final inserted = await _supabase
         .from('subjects')
-        .insert(model.toInsertJson())
+        .insert(model.copyWith(name: name).toInsertJson())
         .select()
         .single();
 
@@ -195,9 +200,11 @@ class ClassService {
   }
 
   Future<SubjectModel> updateSubject(String id, SubjectModel model) async {
+    final name = model.name.trim();
+
     final updated = await _supabase
         .from('subjects')
-        .update(model.toUpdateJson())
+        .update(model.copyWith(name: name).toUpdateJson())
         .eq('id', id)
         .select()
         .single();
@@ -212,4 +219,29 @@ class ClassService {
     await _supabase.from('subjects').delete().eq('id', id).timeout(_timeout);
     await _subjectRealm.deleteSubject(id);
   }
+
+
+  Future<bool> _subjectNameExists(String name, {String? excludeId}) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return false;
+
+    var query =
+        _supabase.from('subjects').select('id').ilike('name', trimmed);
+    if (excludeId != null) {
+      query = query.neq('id', excludeId);
+    }
+
+    final row = await query.maybeSingle().timeout(_timeout);
+    return row != null;
+  }
+}
+
+class DuplicateSubjectNameException implements Exception {
+  DuplicateSubjectNameException(this.name);
+
+  final String name;
+
+  @override
+  String toString() =>
+      'A subject named "$name" already exists.';
 }

@@ -20,8 +20,20 @@ import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
 /// WarningModal.show(
 ///   context,
 ///   title: 'Heads up',
+///   subtitle: 'Unsaved changes',
 ///   message: 'You are about to leave without saving.',
 ///   autoDismissDuration: Duration(seconds: 4),
+/// );
+///
+/// WarningModal.show(
+///   context,
+///   message: 'Delete this class?',
+///   bottomBody: Row(
+///     children: [
+///       Expanded(child: AppTertiaryButton(onPressed: pop, child: Text('Cancel'))),
+///       Expanded(child: AppPrimaryButton(onPressed: delete, child: Text('Delete'))),
+///     ],
+///   ),
 /// );
 /// ```
 class WarningModal extends StatelessWidget {
@@ -30,6 +42,12 @@ class WarningModal extends StatelessWidget {
 
   /// Optional title
   final String? title;
+
+  /// Optional secondary line shown below [title] and above [message]
+  final String? subtitle;
+
+  /// Optional widget below [message] (e.g. custom actions). Falls back to the default "Got it" button when null.
+  final Widget? bottomBody;
 
   /// Optional HugeIcon-style data (reserved for parity with [ErrorModal]; sheet uses [AssetsUtil.warningSvg])
   final List<List<dynamic>>? icon;
@@ -44,29 +62,35 @@ class WarningModal extends StatelessWidget {
     super.key,
     required this.message,
     this.title,
+    this.subtitle,
+    this.bottomBody,
     this.icon,
     this.autoDismissDuration,
     this.onDismiss,
   });
 
-  static Future<void> show(
+  static Future<R?> show<R>(
     BuildContext context, {
     required String message,
     String? title,
+    String? subtitle,
+    Widget? bottomBody,
     List<List<dynamic>>? icon,
     Duration? autoDismissDuration,
     VoidCallback? onDismiss,
   }) async {
     HapticHelpers.vibrate(VibrationType.selection);
 
-    await Navigator.of(context).push<void>(
-      StupidSimpleGlassSheetRoute<void>(
+   final result = await Navigator.of(context).push<R>(
+      StupidSimpleGlassSheetRoute<R>(
         snappingConfig: const SheetSnappingConfig([0.4]),
         child: Material(
           type: MaterialType.transparency,
           child: WarningModal(
             message: message,
             title: title,
+            subtitle: subtitle,
+            bottomBody: bottomBody,
             icon: icon,
             autoDismissDuration: autoDismissDuration,
             onDismiss: onDismiss,
@@ -76,6 +100,7 @@ class WarningModal extends StatelessWidget {
     );
 
     onDismiss?.call();
+    return result;
   }
 
   @override
@@ -112,8 +137,19 @@ class WarningModal extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                   colorType: AppTextColor.textInverted,
                 ),
+                const SizedBox(height: AppSpacing.sm),
               ],
-              const SizedBox(height: AppSpacing.sm),
+              if (subtitle != null) ...[
+                AppText(
+                  subtitle!,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  colorType: AppTextColor.textInverted,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
               AppText(
                 message,
                 textAlign: TextAlign.center,
@@ -123,19 +159,23 @@ class WarningModal extends StatelessWidget {
                 colorType: AppTextColor.textMute,
               ),
               const SizedBox(height: AppSpacing.lg),
-              AppTertiaryButton(
-                width: double.infinity,
-                onPressed: () => NavigationService.popScreen(),
-                child: AppText(
-                  'Got it',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+              bottomBody ?? _defaultBottomButton(),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _defaultBottomButton() {
+    return AppTertiaryButton(
+      width: double.infinity,
+      onPressed: () => NavigationService.popScreen(),
+      child: AppText(
+        'Got it',
+        fontSize: 16,
+        fontWeight: FontWeight.w800,
+      ),
     );
   }
 }

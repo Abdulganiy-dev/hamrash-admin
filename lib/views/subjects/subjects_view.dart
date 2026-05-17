@@ -8,6 +8,8 @@ import 'package:hamrash_admin/viewModel/subjects_view_model.dart';
 import 'package:hamrash_admin/views/subjects/create_edit_subject_view.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
+import 'package:hamrash_admin/widgets/button/app_button_types.dart';
+import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/widgets/warning_modal.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
@@ -35,14 +37,16 @@ class _SubjectsViewState extends State<SubjectsView> {
         title: 'Subjects',
         showBackButton: true,
         busy: model.busy,
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _openCreateEdit(context, model),
-          child: const HugeIcon(
-            icon: HugeIcons.strokeRoundedAdd01,
-            strokeWidth: 2,
-            size: 24,
+        actions: [
+          AppHugeIconButton(
+            hugeIcon: HugeIcons.strokeRoundedAdd01,
+            hugeIconStrokeWidth: 2,
+            hugeIconRasterSize: 30,
+            foregroundColorType: AppButtonForegroundColor.textInverted,
+            onPressed: () => _openCreateEdit(context, model),
           ),
-        ),
+        ],
+        appBarType: DefaultScaffoldAppBarType.standard,
         body: Builder(
           builder: (context) {
             if (model.subjects.isEmpty && !model.busy) {
@@ -51,25 +55,22 @@ class _SubjectsViewState extends State<SubjectsView> {
             return SingleChildScrollView(
               child: ScaffoldColumn(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   SizedBox(
                     height: ScaffoldInsets.of(context).bodyTopInset + 15,
                   ),
-                  AppSurfaceCard(
-                    padding: const EdgeInsets.all(5),
-                    child: Column(
-                      children: List.generate(model.subjects.length, (i) {
-                        final subject = model.subjects[i];
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            bottom: i == model.subjects.length - 1
-                                ? 0
-                                : AppSpacing.xs,
-                          ),
-                          child: _subjectItem(context, model, subject),
-                        );
-                      }),
-                    ),
+                  ListView.separated(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: model.subjects.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: AppSpacing.md),
+                    itemBuilder: (context, index) {
+                      final subject = model.subjects[index];
+                      return AppSurfaceCard(padding: const EdgeInsets.all(5), child: _subjectItem(context, model, subject));
+                    },
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                 ],
@@ -196,14 +197,11 @@ class _SubjectsViewState extends State<SubjectsView> {
     BuildContext context,
     SubjectsViewModel model, {
     SubjectModel? existing,
-  }) async {
-    await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => CreateEditSubjectView(
-          existing: existing,
-          viewModel: model,
-        ),
-      ),
+  }) {
+    return CreateEditSubjectView.openSheet(
+      context,
+      existing: existing,
+      viewModel: model,
     );
   }
 
@@ -226,25 +224,15 @@ class _SubjectsViewState extends State<SubjectsView> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Subject'),
-        content: Text(
-          'Delete "${subject.name}"? This cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
+    final confirmed = await WarningModal.show<bool>(
+      context,
+      message: 'Delete "${subject.name}"? This cannot be undone.',
+      subtitle: 'This cannot be undone.',
+      bottomBody: Row(
+        children: [
+          Expanded(child: AppTertiaryButton(backgroundColorType: AppButtonBackgroundColor.error,foregroundColor:Colors.white,onPressed: () => Navigator.of(context).pop(false), child: Text('Cancel'))),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(child: AppPrimaryButton(onPressed: () => Navigator.of(context).pop(true), child: Text('Delete'))),
         ],
       ),
     );
@@ -252,4 +240,6 @@ class _SubjectsViewState extends State<SubjectsView> {
       await model.deleteSubject(subject);
     }
   }
+   
+  
 }
