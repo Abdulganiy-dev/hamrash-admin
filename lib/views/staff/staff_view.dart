@@ -9,6 +9,7 @@ import 'package:hamrash_admin/viewModel/teachers_view_model.dart';
 import 'package:hamrash_admin/views/staff/create_teacher_view.dart';
 import 'package:hamrash_admin/views/staff/teacher_detail_view.dart';
 import 'package:hamrash_admin/views/staff/widgets/teacher_avatar.dart';
+import 'package:hamrash_admin/widgets/app_search_field.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
@@ -65,8 +66,12 @@ class _TeachersViewState extends State<TeachersView> {
             return SingleChildScrollView(
               child: ScaffoldColumn(
                 children: [
-                  SizedBox(
-                    height: ScaffoldInsets.of(context).bodyTopInset + 15,
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    height:
+                        ScaffoldInsets.of(context).bodyTopInset +
+                        (_isSearching ? 70 : 15),
                   ),
                   _buildGrid(context, model),
                 ],
@@ -81,7 +86,7 @@ class _TeachersViewState extends State<TeachersView> {
   Widget _buildHeader(BuildContext context, TeachersViewModel model) {
     return ClipRect(
       child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 280),
+        duration: const Duration(milliseconds: 180),
         switchInCurve: Curves.easeOutCubic,
         switchOutCurve: Curves.easeInCubic,
         transitionBuilder: (child, animation) {
@@ -231,57 +236,24 @@ class _SearchActiveRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Transform.translate(
-          offset: const Offset(-AppSpacing.md, 0),
-          child: AppHugeIconButton(
-            hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
-            hugeIconStrokeWidth: 2,
-            hugeIconRasterSize: 30,
-            foregroundColorType: AppButtonForegroundColor.textInverted,
-            onPressed: onClose,
-          ),
-        ).padding(left: AppSpacing.md),
-    
-    
+        AppHugeIconButton(
+          hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
+          hugeIconStrokeWidth: 2,
+          hugeIconRasterSize: 28,
+          foregroundColorType: AppButtonForegroundColor.textInverted,
+          onPressed: onClose,
+        ),
+        const SizedBox(width: AppSpacing.xs),
         Expanded(
-          child: Container(
-            height: 44,
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: LightColors.strokeColourStrokeMild.withValues(
-                  alpha: 0.5,
-                ),
-              ),
-            ),
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              onChanged: onChanged,
-              style: Theme.of(context).textTheme.bodyMedium,
-              decoration: InputDecoration(
-                hintText: 'Search teachers…',
-                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: LightColors.textTextMute,
-                ),
-                prefixIcon: Icon(
-                  Icons.search_rounded,
-                  size: 20,
-                  color: LightColors.textTextMute,
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
+          child: AppSearchField(
+            controller: controller,
+            focusNode: focusNode,
+            hintText: 'Search teachers…',
+            onChanged: onChanged,
           ),
         ),
-          const SizedBox(width: AppSpacing.md),
+        const SizedBox(width: AppSpacing.md),
       ],
     );
   }
