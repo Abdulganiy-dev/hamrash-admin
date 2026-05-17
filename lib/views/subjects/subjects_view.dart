@@ -10,6 +10,7 @@ import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
+import 'package:hamrash_admin/widgets/warning_modal.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
 
@@ -209,25 +210,16 @@ class _SubjectsViewState extends State<SubjectsView> {
     SubjectsViewModel model,
     SubjectModel subject,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Subject'),
-        content: Text(
-          'Delete "${subject.name}"? This cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
+
+    final confirmed = await WarningModal.show<bool>(
+      context,
+      message: 'Delete "${subject.name}"? This cannot be undone.',
+      subtitle: 'This cannot be undone.',
+      bottomBody: Row(
+        children: [
+          Expanded(child: AppTertiaryButton(onPressed: () => Navigator.of(context).pop(false), child: Text('Cancel'))),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(child: AppPrimaryButton(onPressed: () => Navigator.of(context).pop(true), child: Text('Delete'))),
         ],
       ),
     );
@@ -235,4 +227,6 @@ class _SubjectsViewState extends State<SubjectsView> {
       await model.deleteSubject(subject);
     }
   }
+   
+  
 }
