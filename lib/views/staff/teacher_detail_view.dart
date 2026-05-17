@@ -90,7 +90,7 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
                           value: _teacher.email!,
                         ),
                       if (_teacher.email != null && _teacher.phone != null)
-                        const _RowDivider(),
+                        const SizedBox(height: AppSpacing.sm),
                       if (_teacher.phone != null)
                         _InfoRow(
                           icon: HugeIcons.strokeRoundedSmartPhone01,
@@ -116,7 +116,7 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
                           value: _capitalize(_teacher.gender!),
                         ),
                       if (_teacher.gender != null && _teacher.state != null)
-                        const _RowDivider(),
+                        const SizedBox(height: AppSpacing.sm),
                       if (_teacher.state != null)
                         _InfoRow(
                           icon: HugeIcons.strokeRoundedLocation01,
@@ -124,7 +124,7 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
                           value: _teacher.state!,
                         ),
                       if (_teacher.state != null && _teacher.address != null)
-                        const _RowDivider(),
+                        const SizedBox(height: AppSpacing.sm),
                       if (_teacher.address != null)
                         _InfoRow(
                           icon: HugeIcons.strokeRoundedHome01,
@@ -147,7 +147,7 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
                   label: 'Account',
                   value: _teacher.isActive ? 'Active' : 'Inactive',
                   valueColor: _teacher.isActive
-                      ? const Color(0xFF26A69A)
+                      ? Colors.green
                       : LightColors.errorErrorDefault,
                 ),
               ),
@@ -217,9 +217,9 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppText(
       label,
-      colorType: AppTextColor.textMute,
-      fontWeight: FontWeight.w800,
-      fontSize: 12,
+      colorType: AppTextColor.textInverted,
+      fontWeight: FontWeight.w700,
+      fontSize: 17,
     );
   }
 }
@@ -243,16 +243,22 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppElevatedCard(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          HugeIcon(
-            icon: icon,
-            size: 18,
-            strokeWidth: 1.8,
-            color: LightColors.textTextMute,
+          Row(
+            children: [
+              HugeIcon(
+                icon: icon,
+                size: 18,
+                strokeWidth: 1.8,
+                color: LightColors.textTextMute,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              AppText(label, colorType: AppTextColor.textMute, fontSize: 13),
+            ],
           ),
-          const SizedBox(width: AppSpacing.sm),
-          AppText(label, colorType: AppTextColor.textMute, fontSize: 13),
-          const Spacer(),
+
           Flexible(
             child: valueColor != null
                 ? AppText(

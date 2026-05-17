@@ -165,7 +165,7 @@ class _ClassesViewState extends State<ClassesView> {
               final cls = classes[i];
               return Padding(
                 padding: EdgeInsets.only(
-                  bottom: i == classes.length - 1 ? 0 : AppSpacing.xs,
+                  bottom: i == classes.length - 1 ? 0 : AppSpacing.sm,
                 ),
                 child: _classroomItem(context, model, cls),
               );

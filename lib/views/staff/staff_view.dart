@@ -137,9 +137,9 @@ class _TeachersViewState extends State<TeachersView> {
         mainAxisSpacing: AppSpacing.md,
         childAspectRatio: 1,
       ),
-      itemCount: 30,
+      itemCount: teachers.length,
       itemBuilder: (context, i) => _TeacherGridItem(
-        teacher: teachers[0],
+        teacher: teachers[i],
         onTap: () => _openDetail(context, teachers[i], model),
       ),
     );
@@ -340,14 +340,14 @@ class _TeacherGridItem extends StatelessWidget {
                 return TeacherAvatar(teacher: teacher, size: size);
               },
             ),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: AppSpacing.sm),
             AppText(
               teacher.fullName,
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
               colorType: AppTextColor.textInverted,
             ),
           ],

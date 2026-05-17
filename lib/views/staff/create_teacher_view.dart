@@ -164,16 +164,13 @@ class _CreateTeacherViewState extends State<CreateTeacherView> {
 
     if (m.isEdit) {
       widget.teachersViewModel.replaceTeacher(result);
-      Navigator.of(context).pop(result);
+      NavigationService.popScreen(result);
     } else {
       widget.teachersViewModel.addTeacher(result);
-      await Navigator.pushReplacement(
-        context,
-        NavigationService.generalPageRouteBuilder(
-          screen: TeacherDetailView(
-            teacher: result,
-            teachersViewModel: widget.teachersViewModel,
-          ),
+      await NavigationService.animatedNavigation(
+        screen: TeacherDetailView(
+          teacher: result,
+          teachersViewModel: widget.teachersViewModel,
         ),
       );
     }
