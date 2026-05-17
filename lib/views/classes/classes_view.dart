@@ -147,11 +147,12 @@ class _ClassesViewState extends State<ClassesView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        
         AppText(
           groupName,
           colorType: AppTextColor.textMute,
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          fontSize: 14,
         ).padding(bottom: AppSpacing.xs),
         AppSurfaceCard(
           padding: const EdgeInsets.all(5),
@@ -350,14 +351,14 @@ class _ArmChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
+    final primary = LightColors.strokeColourStrokeMild;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.smMd2,
         vertical: AppSpacing.xsSm,
       ),
       decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.1),
+
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: primary.withValues(alpha: 0.3)),
       ),

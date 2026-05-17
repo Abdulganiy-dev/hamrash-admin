@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/api/models/supabase_models/class_model.dart';
 import 'package:hamrash_admin/api/models/supabase_models/section_model.dart';
+import 'package:hamrash_admin/resources/app_colors.dart';
+import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/viewModel/classes_view_model.dart';
+import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/app_text_field.dart';
 import 'package:hamrash_admin/widgets/button/app_button.dart';
@@ -16,11 +20,13 @@ class AddClassSheet extends StatefulWidget {
     required this.viewModel,
     required this.arms,
     required this.existingClassNames,
+    required this.availableSubjects,
   });
 
   final ClassesViewModel viewModel;
   final List<SectionModel> arms;
   final List<String> existingClassNames;
+  final List<SubjectModel> availableSubjects;
 
   static Future<bool?> openSheet(
     BuildContext context, {
@@ -34,6 +40,7 @@ class AddClassSheet extends StatefulWidget {
         viewModel: viewModel,
         arms: viewModel.arms,
         existingClassNames: viewModel.existingClassNames,
+        availableSubjects: viewModel.subjects,
       ),
     );
   }
@@ -45,11 +52,24 @@ class AddClassSheet extends StatefulWidget {
 class _AddClassSheetState extends State<AddClassSheet> {
   final _nameController = TextEditingController();
   SectionModel? _selectedArm;
+  final Set<String> _selectedSubjectIds = {};
   bool _submitting = false;
+
+  bool get _isDuplicate {
+    final name = _nameController.text.trim().toLowerCase();
+    final armName = _selectedArm?.name.toLowerCase();
+    if (name.isEmpty || armName == null) return false;
+    return widget.viewModel.classes.any(
+      (c) =>
+          c.name.toLowerCase() == name &&
+          c.section?.toLowerCase() == armName,
+    );
+  }
 
   bool get _canSubmit =>
       _nameController.text.trim().isNotEmpty &&
       _selectedArm != null &&
+      !_isDuplicate &&
       !_submitting;
 
   @override
@@ -64,6 +84,7 @@ class _AddClassSheetState extends State<AddClassSheet> {
     final success = await widget.viewModel.createClass(
       name: _nameController.text.trim(),
       section: _selectedArm!.name,
+      subjectIds: _selectedSubjectIds.toList(),
     );
     if (mounted) {
       setState(() => _submitting = false);
@@ -73,6 +94,7 @@ class _AddClassSheetState extends State<AddClassSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDuplicate = _isDuplicate;
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +123,7 @@ class _AddClassSheetState extends State<AddClassSheet> {
                         );
                       }),
                       child: _Chip(label: name, selected: selected),
-                    ),
+                    ).hapticFeedback(),
                   );
                 }).toList(),
               ),
@@ -132,11 +154,85 @@ class _AddClassSheetState extends State<AddClassSheet> {
                     child: GestureDetector(
                       onTap: () => setState(() => _selectedArm = arm),
                       child: _Chip(label: arm.name, selected: selected),
-                    ),
+                    ).hapticFeedback(),
                   );
                 }).toList(),
               ),
             ),
+          if (isDuplicate) ...[
+            const SizedBox(height: AppSpacing.xs),
+            AppText(
+              '"${_nameController.text.trim()} ${_selectedArm!.name}" already exists.',
+              color: LightColors.errorErrorDefault,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ],
+          if (widget.availableSubjects.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.lg),
+            AppText(
+              'Assign Subjects',
+              colorType: AppTextColor.textInverted,
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            AppSurfaceCard(
+              padding: const EdgeInsets.all(5),
+              child: Column(
+                children: List.generate(widget.availableSubjects.length, (i) {
+                  final subject = widget.availableSubjects[i];
+                  final selected = _selectedSubjectIds.contains(subject.id);
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      bottom: i == widget.availableSubjects.length - 1
+                          ? 0
+                          : AppSpacing.xs,
+                    ),
+                    child: GestureDetector(
+                      onTap: () => setState(() {
+                        if (selected) {
+                          _selectedSubjectIds.remove(subject.id);
+                        } else {
+                          _selectedSubjectIds.add(subject.id!);
+                        }
+                      }),
+                      child: AppElevatedCard(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: AppText(
+                                subject.name,
+                                colorType: AppTextColor.textInverted,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
+                            ),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: Icon(
+                                selected
+                                    ? Icons.check_circle_rounded
+                                    : Icons.radio_button_unchecked_rounded,
+                                key: ValueKey(selected),
+                                color: selected
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.3),
+                                size: 22,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ).hapticFeedback(),
+                  );
+                }),
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.lg),
           AppButton(
             type: AppButtonType.primary,
@@ -159,7 +255,8 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
+    final primary = LightColors.strokeColourStrokeMild;
+    final selectedColor = LightColors.backgroundBackdropWarm;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       padding: const EdgeInsets.symmetric(
@@ -167,15 +264,15 @@ class _Chip extends StatelessWidget {
         vertical: AppSpacing.xsSm,
       ),
       decoration: BoxDecoration(
-        color: selected ? primary : primary.withValues(alpha: 0.1),
+
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: selected ? primary : primary.withValues(alpha: 0.3),
+          color: selected ? selectedColor : primary,
         ),
       ),
       child: AppText(
         label,
-        color: selected ? Colors.white : primary,
+        colorType:selected ? .textBrand : .textInverted,
         fontWeight: FontWeight.w600,
         fontSize: 13,
       ),

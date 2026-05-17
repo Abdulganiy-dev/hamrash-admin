@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/viewModel/classes_view_model.dart';
+import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/app_text_field.dart';
 import 'package:hamrash_admin/widgets/button/app_button.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
@@ -33,6 +35,12 @@ class _AddArmSheetState extends State<AddArmSheet> {
   final _controller = TextEditingController();
   bool _submitting = false;
 
+  bool get _isDuplicate => widget.viewModel.arms.any(
+        (a) =>
+            a.name.trim().toLowerCase() ==
+            _controller.text.trim().toLowerCase(),
+      );
+
   @override
   void dispose() {
     _controller.dispose();
@@ -41,7 +49,7 @@ class _AddArmSheetState extends State<AddArmSheet> {
 
   Future<void> _submit() async {
     final name = _controller.text.trim();
-    if (name.isEmpty || _submitting) return;
+    if (name.isEmpty || _isDuplicate || _submitting) return;
     setState(() => _submitting = true);
     final success = await widget.viewModel.createArm(name);
     if (mounted) {
@@ -55,7 +63,9 @@ class _AddArmSheetState extends State<AddArmSheet> {
     return ValueListenableBuilder<TextEditingValue>(
       valueListenable: _controller,
       builder: (context, value, _) {
-        final canSubmit = value.text.trim().isNotEmpty && !_submitting;
+        final trimmed = value.text.trim();
+        final isDuplicate = _isDuplicate;
+        final canSubmit = trimmed.isNotEmpty && !isDuplicate && !_submitting;
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -67,6 +77,15 @@ class _AddArmSheetState extends State<AddArmSheet> {
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => canSubmit ? _submit() : null,
             ),
+            if (isDuplicate && trimmed.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.xs),
+              AppText(
+                'Arm "$trimmed" already exists.',
+                color: LightColors.errorErrorDefault,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ],
             const SizedBox(height: AppSpacing.lg),
             AppButton(
               type: AppButtonType.primary,
