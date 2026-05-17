@@ -136,7 +136,7 @@ class _HomeState extends State<Home> {
         Expanded(
           child: _quickActionCard(
             icon: HugeIcons.strokeRoundedSchool,
-            label: 'Classes',
+            label: 'View Classes',
             accentColor: Colors.indigo,
             onTap: () => NavigationService.animatedNavigation(screen: const ClassesView()),
           ),
@@ -145,7 +145,7 @@ class _HomeState extends State<Home> {
         Expanded(
           child: _quickActionCard(
             icon: HugeIcons.strokeRoundedBook02,
-            label: 'Subjects',
+            label: 'View Subjects',
             accentColor: Colors.teal,
             onTap: () => NavigationService.animatedNavigation(screen: const SubjectsView()),
           ),
@@ -163,24 +163,17 @@ class _HomeState extends State<Home> {
     return GestureDetector(
       onTap: onTap,
       child: AppSurfaceCard(
-        child: AppElevatedCard(
+        child: Padding(
+          padding: const EdgeInsets.all(15.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: HugeIcon(
-                    icon: icon,
-                    size: 22,
-                    strokeWidth: 2,
-                    color: accentColor,
-                  ),
+              Center(
+                child: HugeIcon(
+                  icon: icon,
+                  size: 22,
+                  strokeWidth: 2,
+                  color: accentColor,
                 ),
               ),
               SizedBox(height: AppSpacing.sm),
@@ -191,17 +184,17 @@ class _HomeState extends State<Home> {
                 fontSize: 14,
               ),
               SizedBox(height: 2),
-              AppText(
-                'Manage',
-                colorType: AppTextColor.textMute,
-                fontWeight: FontWeight.w400,
-                fontSize: 12,
-              ),
+              // AppText(
+              //   'Manage',
+              //   colorType: AppTextColor.textMute,
+              //   fontWeight: FontWeight.w400,
+              //   fontSize: 12,
+              // ),
             ],
           ),
         ),
       ),
-    );
+    ).hapticFeedback();
   }
 
   Widget _recentActivitiesCard() {
@@ -259,12 +252,12 @@ class _HomeState extends State<Home> {
   }
 
   Widget _attendanceReportCard() {
-    return AppSurfaceCard(
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: AppSurfaceCard(
               child: _attendanceStats(
                 attended: 50,
                 total: 100,
@@ -273,8 +266,10 @@ class _HomeState extends State<Home> {
                 icon: HugeIcons.strokeRoundedBackpack02,
               ),
             ),
-            const SizedBox(width: 5),
-            Expanded(
+          ),
+          const SizedBox(width: 5),
+          Expanded(
+            child: AppSurfaceCard(
               child: _attendanceStats(
                 attended: 30,
                 total: 60,
@@ -283,8 +278,8 @@ class _HomeState extends State<Home> {
                 icon: HugeIcons.strokeRoundedUserGroup,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

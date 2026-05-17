@@ -6,7 +6,6 @@ import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/viewModel/subjects_view_model.dart';
 import 'package:hamrash_admin/views/subjects/create_edit_subject_view.dart';
-import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
@@ -66,10 +65,10 @@ class _SubjectsViewState extends State<SubjectsView> {
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: model.subjects.length,
                     separatorBuilder: (_, __) =>
-                        const SizedBox(height: AppSpacing.md),
+                        const SizedBox(height: AppSpacing.sm),
                     itemBuilder: (context, index) {
                       final subject = model.subjects[index];
-                      return AppSurfaceCard(padding: const EdgeInsets.all(5), child: _subjectItem(context, model, subject));
+                      return _subjectItem(context, model, subject);
                     },
                   ),
                   const SizedBox(height: AppSpacing.xxl),
@@ -87,32 +86,32 @@ class _SubjectsViewState extends State<SubjectsView> {
     SubjectsViewModel model,
     SubjectModel subject,
   ) {
-    return GestureDetector(
-      onTap: () => _openCreateEdit(context, model, existing: subject),
-      child: AppElevatedCard(
-        child: Row(
+    return Dismissible(
+      key: Key(subject.id!),
+      direction: DismissDirection.endToStart,
+      background: _deleteSwipeBackground(),
+      confirmDismiss: (_) => _confirmDelete(context, model, subject),
+      child: GestureDetector(
+        onTap: () => _openCreateEdit(context, model, existing: subject),
+        child: SizedBox(
+          height: 50,
+          child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color:
-                  Colors.teal.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Center(
-              child: HugeIcon(
-                icon: HugeIcons.strokeRoundedBook02,
-                size: 22,
-                strokeWidth: 2,
-                color: Colors.teal,
-              ),
+          const Center(
+            child: HugeIcon(
+              icon: HugeIcons.strokeRoundedBook02,
+              size: 22,
+              strokeWidth: 2,
+              color: Colors.teal,
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 AppText(
                   subject.name,
@@ -122,31 +121,8 @@ class _SubjectsViewState extends State<SubjectsView> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (subject.description != null &&
-                    subject.description!.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  AppText(
-                    subject.description!,
-                    colorType: AppTextColor.textMute,
-                    fontWeight: FontWeight.w400,
-                    fontSize: 12,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                
               ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () => _confirmDelete(context, model, subject),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xs),
-              child: HugeIcon(
-                icon: HugeIcons.strokeRoundedDelete02,
-                size: 18,
-                strokeWidth: 2,
-                color: LightColors.textTextMute,
-              ),
             ),
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -157,7 +133,25 @@ class _SubjectsViewState extends State<SubjectsView> {
             color: LightColors.textTextMute,
           ),
         ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _deleteSwipeBackground() {
+    return Container(
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: AppSpacing.md),
+      decoration: BoxDecoration(
+        color: LightColors.errorErrorDefault,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const HugeIcon(
+        icon: HugeIcons.strokeRoundedDelete02,
+        size: 22,
+        strokeWidth: 2,
+        color: Colors.white,
       ),
     );
   }
@@ -205,13 +199,13 @@ class _SubjectsViewState extends State<SubjectsView> {
     );
   }
 
-  Future<void> _confirmDelete(
+  Future<bool> _confirmDelete(
     BuildContext context,
     SubjectsViewModel model,
     SubjectModel subject,
   ) async {
     final classCount = await model.subjectClassCount(subject.id!);
-    if (!context.mounted) return;
+    if (!context.mounted) return false;
 
     if (classCount > 0) {
       final noun = classCount == 1 ? 'class' : 'classes';
@@ -221,7 +215,7 @@ class _SubjectsViewState extends State<SubjectsView> {
         message:
             '"${subject.name}" is assigned to $classCount $noun. Remove it from all classes before deleting.',
       );
-      return;
+      return false;
     }
 
     final confirmed = await WarningModal.show<bool>(
@@ -230,15 +224,26 @@ class _SubjectsViewState extends State<SubjectsView> {
       subtitle: 'This cannot be undone.',
       bottomBody: Row(
         children: [
-          Expanded(child: AppTertiaryButton(onPressed: () => Navigator.of(context).pop(false), child: Text('Cancel'))),
+          Expanded(
+            child: AppTertiaryButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+          ),
           const SizedBox(width: AppSpacing.md),
-          Expanded(child: AppPrimaryButton(backgroundColorType: AppButtonBackgroundColor.error,foregroundColor:Colors.white,onPressed: () => Navigator.of(context).pop(true), child: Text('Delete'))),
+          Expanded(
+            child: AppPrimaryButton(
+              backgroundColorType: AppButtonBackgroundColor.error,
+              foregroundColor: Colors.white,
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ),
         ],
       ),
     );
-    if (confirmed == true) {
-      await model.deleteSubject(subject);
-    }
+    if (confirmed != true) return false;
+    return model.deleteSubject(subject);
   }
    
   
