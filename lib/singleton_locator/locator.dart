@@ -8,6 +8,7 @@ import 'package:hamrash_admin/api/services/supabase_services/admin_profile_servi
 import 'package:hamrash_admin/api/services/supabase_services/class_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/role_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/state_service.dart';
+import 'package:hamrash_admin/api/services/supabase_services/teacher_service.dart';
 import 'package:hamrash_admin/database/admin_profile_realm_service.dart';
 import 'package:hamrash_admin/database/class_realm_service.dart';
 import 'package:hamrash_admin/database/realm_service.dart';
@@ -15,6 +16,7 @@ import 'package:hamrash_admin/database/role_realm_service.dart';
 import 'package:hamrash_admin/database/state_realm_service.dart';
 import 'package:hamrash_admin/database/section_realm_service.dart';
 import 'package:hamrash_admin/database/subject_realm_service.dart';
+import 'package:hamrash_admin/database/teacher_realm_service.dart';
 import 'package:hamrash_admin/env_config/flavor_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -94,6 +96,14 @@ void setupLocator() {
       sectionRealmService: locator<SectionRealmService>(),
       subjectRealmService: locator<SubjectRealmService>(),
     ),
+  );
+
+  locator.registerLazySingleton<TeacherRealmService>(
+    () => TeacherRealmService(locator<RealmService>()),
+  );
+
+  locator.registerLazySingleton<TeacherService>(
+    () => TeacherService(teacherRealmService: locator<TeacherRealmService>()),
   );
 
   locator.registerLazySingleton<CloudflareDioClient>(
