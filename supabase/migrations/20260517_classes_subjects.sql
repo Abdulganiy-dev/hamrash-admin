@@ -1,20 +1,25 @@
 -- ============================================================
 -- Migration: Classes, Subjects, Class-Subject assignments
 -- ============================================================
--- RLS summary:
---   SELECT  → any authenticated user (admin, teacher, student)
---   INSERT / UPDATE / DELETE → admin or super_admin only
+-- RLS strategy:
 --
--- "Admin" is resolved by looking up the caller's Clerk sub
--- (auth.uid()::text) in public.admin_profiles.role.
+--   SELECT  → caller must have a valid Clerk JWT sub claim
+--             USING ((auth.jwt() ->> 'sub') IS NOT NULL)
+--
+--   INSERT / UPDATE / DELETE → caller must have a valid JWT sub
+--             AND must be an admin/super_admin in admin_profiles
+--
+-- The is_admin() helper matches the JWT 'sub' claim (Clerk user
+-- ID) against admin_profiles.clerk_id.
 -- ============================================================
 
 
 -- ------------------------------------------------------------
 -- Helper: is the calling user an admin?
 -- ------------------------------------------------------------
--- Reusable security-definer function so the check never
--- touches the caller's row-level permissions on admin_profiles.
+-- Uses auth.jwt() ->> 'sub' (the Clerk user ID) to look up the
+-- caller in admin_profiles. SECURITY DEFINER lets this function
+-- bypass admin_profiles' own RLS.
 -- ------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
@@ -26,10 +31,24 @@ AS $$
   SELECT EXISTS (
     SELECT 1
     FROM public.admin_profiles
-    WHERE clerk_id  = auth.uid()::text
+    WHERE clerk_id  = (auth.jwt() ->> 'sub')
       AND role      IN ('admin', 'super_admin')
       AND is_active = true
   );
+$$;
+
+
+-- ------------------------------------------------------------
+-- Trigger helper: keep updated_at current
+-- ------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
 $$;
 
 
@@ -47,45 +66,42 @@ CREATE TABLE IF NOT EXISTS public.classes (
 
 ALTER TABLE public.classes ENABLE ROW LEVEL SECURITY;
 
--- Any authenticated user can view classes
-CREATE POLICY "classes_select_authenticated"
+-- SELECT: any user with a valid Clerk JWT (admin, teacher, student)
+CREATE POLICY "classes_select"
   ON public.classes
   FOR SELECT
-  TO authenticated
-  USING (true);
+  USING ((auth.jwt() ->> 'sub') IS NOT NULL);
 
--- Only admins can create classes
-CREATE POLICY "classes_insert_admin"
+-- INSERT: valid JWT AND must be an admin
+CREATE POLICY "classes_insert"
   ON public.classes
   FOR INSERT
-  TO authenticated
-  WITH CHECK (public.is_admin());
+  WITH CHECK (
+    (auth.jwt() ->> 'sub') IS NOT NULL
+    AND public.is_admin()
+  );
 
--- Only admins can update classes
-CREATE POLICY "classes_update_admin"
+-- UPDATE: valid JWT AND must be an admin (on both sides)
+CREATE POLICY "classes_update"
   ON public.classes
   FOR UPDATE
-  TO authenticated
-  USING  (public.is_admin())
-  WITH CHECK (public.is_admin());
+  USING (
+    (auth.jwt() ->> 'sub') IS NOT NULL
+    AND public.is_admin()
+  )
+  WITH CHECK (
+    (auth.jwt() ->> 'sub') IS NOT NULL
+    AND public.is_admin()
+  );
 
--- Only admins can delete classes
-CREATE POLICY "classes_delete_admin"
+-- DELETE: valid JWT AND must be an admin
+CREATE POLICY "classes_delete"
   ON public.classes
   FOR DELETE
-  TO authenticated
-  USING (public.is_admin());
-
--- Auto-update updated_at on row change
-CREATE OR REPLACE FUNCTION public.set_updated_at()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
-END;
-$$;
+  USING (
+    (auth.jwt() ->> 'sub') IS NOT NULL
+    AND public.is_admin()
+  );
 
 CREATE TRIGGER classes_set_updated_at
   BEFORE UPDATE ON public.classes
@@ -106,34 +122,42 @@ CREATE TABLE IF NOT EXISTS public.subjects (
 
 ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
 
--- Any authenticated user can view subjects
-CREATE POLICY "subjects_select_authenticated"
+-- SELECT: any user with a valid Clerk JWT (admin, teacher, student)
+CREATE POLICY "subjects_select"
   ON public.subjects
   FOR SELECT
-  TO authenticated
-  USING (true);
+  USING ((auth.jwt() ->> 'sub') IS NOT NULL);
 
--- Only admins can create subjects
-CREATE POLICY "subjects_insert_admin"
+-- INSERT: valid JWT AND must be an admin
+CREATE POLICY "subjects_insert"
   ON public.subjects
   FOR INSERT
-  TO authenticated
-  WITH CHECK (public.is_admin());
+  WITH CHECK (
+    (auth.jwt() ->> 'sub') IS NOT NULL
+    AND public.is_admin()
+  );
 
--- Only admins can update subjects
-CREATE POLICY "subjects_update_admin"
+-- UPDATE: valid JWT AND must be an admin (on both sides)
+CREATE POLICY "subjects_update"
   ON public.subjects
   FOR UPDATE
-  TO authenticated
-  USING  (public.is_admin())
-  WITH CHECK (public.is_admin());
+  USING (
+    (auth.jwt() ->> 'sub') IS NOT NULL
+    AND public.is_admin()
+  )
+  WITH CHECK (
+    (auth.jwt() ->> 'sub') IS NOT NULL
+    AND public.is_admin()
+  );
 
--- Only admins can delete subjects
-CREATE POLICY "subjects_delete_admin"
+-- DELETE: valid JWT AND must be an admin
+CREATE POLICY "subjects_delete"
   ON public.subjects
   FOR DELETE
-  TO authenticated
-  USING (public.is_admin());
+  USING (
+    (auth.jwt() ->> 'sub') IS NOT NULL
+    AND public.is_admin()
+  );
 
 CREATE TRIGGER subjects_set_updated_at
   BEFORE UPDATE ON public.subjects
@@ -154,23 +178,27 @@ CREATE TABLE IF NOT EXISTS public.class_subjects (
 
 ALTER TABLE public.class_subjects ENABLE ROW LEVEL SECURITY;
 
--- Any authenticated user can view class-subject links
-CREATE POLICY "class_subjects_select_authenticated"
+-- SELECT: any user with a valid Clerk JWT
+CREATE POLICY "class_subjects_select"
   ON public.class_subjects
   FOR SELECT
-  TO authenticated
-  USING (true);
+  USING ((auth.jwt() ->> 'sub') IS NOT NULL);
 
--- Only admins can assign subjects to classes
-CREATE POLICY "class_subjects_insert_admin"
+-- INSERT: valid JWT AND must be an admin
+CREATE POLICY "class_subjects_insert"
   ON public.class_subjects
   FOR INSERT
-  TO authenticated
-  WITH CHECK (public.is_admin());
+  WITH CHECK (
+    (auth.jwt() ->> 'sub') IS NOT NULL
+    AND public.is_admin()
+  );
 
--- Only admins can remove subject assignments
-CREATE POLICY "class_subjects_delete_admin"
+-- DELETE: valid JWT AND must be an admin
+--   (assignments are replaced wholesale: delete + re-insert)
+CREATE POLICY "class_subjects_delete"
   ON public.class_subjects
   FOR DELETE
-  TO authenticated
-  USING (public.is_admin());
+  USING (
+    (auth.jwt() ->> 'sub') IS NOT NULL
+    AND public.is_admin()
+  );
