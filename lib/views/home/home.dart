@@ -136,7 +136,7 @@ class _HomeState extends State<Home> {
         Expanded(
           child: _quickActionCard(
             icon: HugeIcons.strokeRoundedSchool,
-            label: 'View Classes',
+            label: 'Manage Classes',
             accentColor: Colors.indigo,
             onTap: () => NavigationService.animatedNavigation(screen: const ClassesView()),
           ),
@@ -145,7 +145,7 @@ class _HomeState extends State<Home> {
         Expanded(
           child: _quickActionCard(
             icon: HugeIcons.strokeRoundedBook02,
-            label: 'View Subjects',
+            label: 'Manage Subjects',
             accentColor: Colors.teal,
             onTap: () => NavigationService.animatedNavigation(screen: const SubjectsView()),
           ),
