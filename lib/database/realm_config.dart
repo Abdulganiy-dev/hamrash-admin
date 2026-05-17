@@ -3,11 +3,13 @@ import 'package:realm/realm.dart';
 
 import 'models/admin_profile_realm.dart';
 import 'models/app_role_realm.dart';
+import 'models/class_realm.dart';
 import 'models/state_realm.dart';
+import 'models/subject_realm.dart';
 
 class RealmConfig {
   /// Bump when adding or changing Realm models (see Supabase_Realm_Architecture_Guide.md).
-  static const int _currentSchemaVersion = 2;
+  static const int _currentSchemaVersion = 3;
   static const String _databaseName = 'hamrash_admin.realm';
 
   static Configuration getConfiguration() {
@@ -18,6 +20,8 @@ class RealmConfig {
         StateRealm.schema,
         AppRoleRealm.schema,
         AdminProfileRealm.schema,
+        ClassRealm.schema,
+        SubjectRealm.schema,
       ],
       schemaVersion: _currentSchemaVersion,
       migrationCallback: _migrationCallback,
@@ -35,6 +39,10 @@ class RealmConfig {
 
     if (oldSchemaVersion < 2) {
       AppLogger.info('Schema 2: AppRoleRealm + AdminProfileRealm added');
+    }
+
+    if (oldSchemaVersion < 3) {
+      AppLogger.info('Schema 3: ClassRealm + SubjectRealm added');
     }
   }
 

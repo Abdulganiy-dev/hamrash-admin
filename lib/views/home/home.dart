@@ -4,7 +4,9 @@ import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/viewModel/home_view_model.dart';
+import 'package:hamrash_admin/views/classes/classes_view.dart';
 import 'package:hamrash_admin/views/home/widgets/home_attendance_greeting.dart';
+import 'package:hamrash_admin/views/subjects/subjects_view.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button.dart';
@@ -100,7 +102,7 @@ class _HomeState extends State<Home> {
 
                 Row(
                   children: [
-                       HugeIcon(
+                    HugeIcon(
                       icon: HugeIcons.strokeRoundedDashboardCircleSettings,
                       size: 20,
                       strokeWidth: 2,
@@ -112,11 +114,93 @@ class _HomeState extends State<Home> {
                       colorType: AppTextColor.textInverted,
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
-                    )
+                    ),
                   ],
                 ).padding(bottom: AppSpacing.md),
+
+                _quickActionsGrid(),
+
+                SizedBox(height: AppSpacing.xl),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _quickActionsGrid() {
+    return Row(
+      children: [
+        Expanded(
+          child: _quickActionCard(
+            icon: HugeIcons.strokeRoundedSchool,
+            label: 'Classes',
+            accentColor: Colors.indigo,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ClassesView()),
+            ),
+          ),
+        ),
+        SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: _quickActionCard(
+            icon: HugeIcons.strokeRoundedBook02,
+            label: 'Subjects',
+            accentColor: Colors.teal,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SubjectsView()),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _quickActionCard({
+    required List<List<dynamic>> icon,
+    required String label,
+    required Color accentColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AppSurfaceCard(
+        child: AppElevatedCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: HugeIcon(
+                    icon: icon,
+                    size: 22,
+                    strokeWidth: 2,
+                    color: accentColor,
+                  ),
+                ),
+              ),
+              SizedBox(height: AppSpacing.sm),
+              AppText(
+                label,
+                colorType: AppTextColor.textInverted,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+              SizedBox(height: 2),
+              AppText(
+                'Manage',
+                colorType: AppTextColor.textMute,
+                fontWeight: FontWeight.w400,
+                fontSize: 12,
+              ),
+            ],
           ),
         ),
       ),
