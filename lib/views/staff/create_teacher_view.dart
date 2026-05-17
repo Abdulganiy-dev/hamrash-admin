@@ -51,7 +51,7 @@ class _CreateTeacherViewState extends State<CreateTeacherView> {
         title: null,
         busy: m.busy,
         appBarType: DefaultScaffoldAppBarType.custom,
-        appBarHeight: kToolbarHeight,
+     
         customAppBar: Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -61,7 +61,7 @@ class _CreateTeacherViewState extends State<CreateTeacherView> {
               child: AppHugeIconButton(
                 hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
                 hugeIconStrokeWidth: 2,
-                hugeIconRasterSize: 35,
+                hugeIconRasterSize: 30,
                 foregroundColorType: AppButtonForegroundColor.textInverted,
                 onPressed: () => _handleBack(context, m),
               ),

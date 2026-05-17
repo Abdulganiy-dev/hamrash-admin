@@ -62,11 +62,12 @@ class _TeachersViewState extends State<TeachersView> {
         customAppBar: _buildHeader(context, model),
         body: Builder(
           builder: (context) {
-
             return SingleChildScrollView(
               child: ScaffoldColumn(
                 children: [
-                  SizedBox(height: ScaffoldInsets.of(context).bodyTopInset + 15),
+                  SizedBox(
+                    height: ScaffoldInsets.of(context).bodyTopInset + 15,
+                  ),
                   _buildGrid(context, model),
                 ],
               ),
@@ -78,44 +79,41 @@ class _TeachersViewState extends State<TeachersView> {
   }
 
   Widget _buildHeader(BuildContext context, TeachersViewModel model) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      child: ClipRect(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 280),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (child, animation) {
-            final isSearchRow = child.key == const ValueKey('search');
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: Offset(isSearchRow ? 0.08 : -0.04, 0),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
-              ),
-            );
-          },
-          layoutBuilder: (currentChild, previousChildren) => Stack(
-            alignment: Alignment.centerLeft,
-            children: [...previousChildren, ?currentChild],
-          ),
-          child: _isSearching
-              ? _SearchActiveRow(
-                  key: const ValueKey('search'),
-                  controller: _searchController,
-                  focusNode: _searchFocus,
-                  onChanged: model.setSearchQuery,
-                  onClose: () => _closeSearch(model),
-                )
-              : _IdleHeaderRow(
-                  key: const ValueKey('idle'),
-                  onSearchTap: _openSearch,
-                  onAddTap: () => _openCreate(context, model),
-                ),
+    return ClipRect(
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 280),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) {
+          final isSearchRow = child.key == const ValueKey('search');
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: Offset(isSearchRow ? 0.08 : -0.04, 0),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          );
+        },
+        layoutBuilder: (currentChild, previousChildren) => Stack(
+          alignment: Alignment.centerLeft,
+          children: [...previousChildren, ?currentChild],
         ),
+        child: _isSearching
+            ? _SearchActiveRow(
+                key: const ValueKey('search'),
+                controller: _searchController,
+                focusNode: _searchFocus,
+                onChanged: model.setSearchQuery,
+                onClose: () => _closeSearch(model),
+              )
+            : _IdleHeaderRow(
+                key: const ValueKey('idle'),
+                onSearchTap: _openSearch,
+                onAddTap: () => _openCreate(context, model),
+              ),
       ),
     );
   }
@@ -135,7 +133,7 @@ class _TeachersViewState extends State<TeachersView> {
         crossAxisCount: 3,
         crossAxisSpacing: AppSpacing.sm,
         mainAxisSpacing: AppSpacing.md,
-        childAspectRatio: 1,
+        childAspectRatio: 0.82,
       ),
       itemCount: teachers.length,
       itemBuilder: (context, i) => _TeacherGridItem(
@@ -176,35 +174,40 @@ class _IdleHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        AppHugeIconButton(
-          hugeIcon: HugeIcons.strokeRoundedSearch01,
-          hugeIconStrokeWidth: 2,
-          hugeIconRasterSize: 30,
-          foregroundColorType: AppButtonForegroundColor.textInverted,
-          onPressed: onSearchTap,
-        ),
-        Spacer(),
-        AppText(
-          'Teachers',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.5,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          AppHugeIconButton(
+            hugeIcon: HugeIcons.strokeRoundedSearch01,
+            hugeIconStrokeWidth: 2,
+            hugeIconRasterSize: 30,
+            foregroundColorType: AppButtonForegroundColor.textInverted,
+            onPressed: onSearchTap,
           ),
-        ),
-        Spacer(),
-        AppHugeIconButton(
-          hugeIcon: HugeIcons.strokeRoundedAdd01,
-          hugeIconStrokeWidth: 2,
-          hugeIconRasterSize: 30,
-          foregroundColorType: AppButtonForegroundColor.textInverted,
-          onPressed: onAddTap,
-        ),
-      ],
+          Spacer(),
+          AppText(
+            'Teachers',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.5,
+            ),
+          ),
+          Spacer(),
+          AppHugeIconButton(
+            hugeIcon: HugeIcons.strokeRoundedAdd01,
+            hugeIconStrokeWidth: 2,
+            hugeIconRasterSize: 30,
+            foregroundColorType: AppButtonForegroundColor.textInverted,
+            onPressed: onAddTap,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -228,15 +231,21 @@ class _SearchActiveRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        AppHugeIconButton(
-          hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
-          hugeIconStrokeWidth: 2,
-          hugeIconRasterSize: 28,
-          foregroundColorType: AppButtonForegroundColor.textInverted,
-          onPressed: onClose,
-        ),
-        const SizedBox(width: AppSpacing.xs),
+        Transform.translate(
+          offset: const Offset(-AppSpacing.md, 0),
+          child: AppHugeIconButton(
+            hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
+            hugeIconStrokeWidth: 2,
+            hugeIconRasterSize: 30,
+            foregroundColorType: AppButtonForegroundColor.textInverted,
+            onPressed: onClose,
+          ),
+        ).padding(left: AppSpacing.md),
+    
+    
         Expanded(
           child: Container(
             height: 44,
@@ -272,6 +281,7 @@ class _SearchActiveRow extends StatelessWidget {
             ),
           ),
         ),
+          const SizedBox(width: AppSpacing.md),
       ],
     );
   }
@@ -327,32 +337,39 @@ class _TeacherGridItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.zero,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final size = constraints.maxWidth * 0.72;
-                return TeacherAvatar(teacher: teacher, size: size);
-              },
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            AppText(
-              teacher.fullName,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              colorType: AppTextColor.textInverted,
-            ),
-          ],
-        ),
-      ).hapticFeedback(),
-    );
+    return GestureDetector(
+      onTap: onTap,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const nameLineHeight = 17.0;
+          const nameLines = 2;
+          const gap = AppSpacing.sm;
+          final maxW = constraints.maxWidth;
+          final maxH = constraints.maxHeight;
+          final nameBlockHeight = nameLineHeight * nameLines;
+          final avatarSize = (maxH - gap - nameBlockHeight).clamp(
+            0.0,
+            maxW * 0.72,
+          );
+
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TeacherAvatar(teacher: teacher, size: avatarSize),
+              const SizedBox(height: gap),
+              AppText(
+                teacher.fullName,
+                textAlign: TextAlign.center,
+                maxLines: nameLines,
+                overflow: TextOverflow.ellipsis,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                colorType: AppTextColor.textInverted,
+              ),
+            ],
+          );
+        },
+      ),
+    ).hapticFeedback();
   }
 }
