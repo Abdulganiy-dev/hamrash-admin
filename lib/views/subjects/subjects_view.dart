@@ -4,10 +4,13 @@ import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
+import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/viewModel/subjects_view_model.dart';
 import 'package:hamrash_admin/views/subjects/create_edit_subject_view.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
+import 'package:hamrash_admin/widgets/button/app_button_types.dart';
+import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
 
@@ -34,14 +37,16 @@ class _SubjectsViewState extends State<SubjectsView> {
         title: 'Subjects',
         showBackButton: true,
         busy: model.busy,
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _openCreateEdit(context, model),
-          child: const HugeIcon(
-            icon: HugeIcons.strokeRoundedAdd01,
-            strokeWidth: 2,
-            size: 24,
+        actions: [
+          AppHugeIconButton(
+            hugeIcon: HugeIcons.strokeRoundedAdd01,
+            hugeIconStrokeWidth: 2,
+            hugeIconRasterSize: 30,
+            foregroundColorType: AppButtonForegroundColor.textInverted,
+            onPressed: () => _openCreateEdit(context, model),
           ),
-        ),
+        ],
+        appBarType: DefaultScaffoldAppBarType.standard,
         body: Builder(
           builder: (context) {
             if (model.subjects.isEmpty && !model.busy) {
@@ -196,12 +201,9 @@ class _SubjectsViewState extends State<SubjectsView> {
     SubjectsViewModel model, {
     SubjectModel? existing,
   }) async {
-    await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => CreateEditSubjectView(
-          existing: existing,
-          viewModel: model,
-        ),
+    await NavigationService.animatedNavigation(screen: CreateEditSubjectView(
+        existing: existing,
+        viewModel: model,
       ),
     );
   }

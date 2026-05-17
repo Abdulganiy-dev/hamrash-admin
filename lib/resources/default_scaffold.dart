@@ -148,7 +148,7 @@ class DefaultScaffold extends StatelessWidget {
     return AppHugeIconButton(
       hugeIcon: HugeIcons.strokeRoundedArrowLeft01,
       hugeIconStrokeWidth: 2,
-      hugeIconRasterSize: 35,
+      hugeIconRasterSize: 30,
       foregroundColorType: AppButtonForegroundColor.textInverted,
       onPressed: onBackPressed ?? () => _defaultPop(context),
     );
@@ -296,7 +296,7 @@ class DefaultScaffold extends StatelessWidget {
         hasAppBar: hasAppBarLayer,
         child: Stack(
           children: [
-            body,
+            SizedBox(height: MediaQuery.of(context).size.height, width: MediaQuery.of(context).size.width, child: body),
             if (hasAppBarLayer)
               _buildAppBarLayer(
                 context,

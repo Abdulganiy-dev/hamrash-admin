@@ -8,6 +8,8 @@ import 'package:hamrash_admin/viewModel/classes_view_model.dart';
 import 'package:hamrash_admin/views/classes/create_edit_class_view.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
+import 'package:hamrash_admin/widgets/button/app_button_types.dart';
+import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
 
@@ -34,14 +36,17 @@ class _ClassesViewState extends State<ClassesView> {
         title: 'Classes',
         showBackButton: true,
         busy: model.busy,
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _openCreateEdit(context, model),
-          child: const HugeIcon(
-            icon: HugeIcons.strokeRoundedAdd01,
-            strokeWidth: 2,
-            size: 24,
+        actions: [
+          AppHugeIconButton(
+            hugeIcon: HugeIcons.strokeRoundedAdd01,
+            hugeIconStrokeWidth: 2,
+            hugeIconRasterSize: 30,
+            foregroundColorType: AppButtonForegroundColor.textInverted,
+            onPressed: () => _openCreateEdit(context, model),
           ),
-        ),
+        ],
+        appBarType: DefaultScaffoldAppBarType.standard,
+
         body: Builder(
           builder: (context) {
             if (model.classes.isEmpty && !model.busy) {
@@ -89,68 +94,70 @@ class _ClassesViewState extends State<ClassesView> {
       onTap: () => _openCreateEdit(context, model, existing: cls),
       child: AppElevatedCard(
         child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: HugeIcon(
-                icon: HugeIcons.strokeRoundedSchool,
-                size: 22,
-                strokeWidth: 2,
-                color: Theme.of(context).colorScheme.primary,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: HugeIcon(
+                  icon: HugeIcons.strokeRoundedSchool,
+                  size: 22,
+                  strokeWidth: 2,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppText(
-                  cls.displayName,
-                  colorType: AppTextColor.textInverted,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                AppText(
-                  cls.isActive ? 'Active' : 'Inactive',
-                  colorType: cls.isActive
-                      ? AppTextColor.textPrimary
-                      : AppTextColor.textMute,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 12,
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () => _confirmDelete(context, model, cls),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xs),
-              child: HugeIcon(
-                icon: HugeIcons.strokeRoundedDelete02,
-                size: 18,
-                strokeWidth: 2,
-                color: LightColors.textTextMute,
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText(
+                    cls.displayName,
+                    colorType: AppTextColor.textInverted,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  AppText(
+                    cls.isActive ? 'Active' : 'Inactive',
+                    colorType: cls.isActive
+                        ? AppTextColor.textPrimary
+                        : AppTextColor.textMute,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          HugeIcon(
-            icon: HugeIcons.strokeRoundedArrowRight01,
-            size: 18,
-            strokeWidth: 2,
-            color: LightColors.textTextMute,
-          ),
-        ],
+            GestureDetector(
+              onTap: () => _confirmDelete(context, model, cls),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xs),
+                child: HugeIcon(
+                  icon: HugeIcons.strokeRoundedDelete02,
+                  size: 18,
+                  strokeWidth: 2,
+                  color: LightColors.textTextMute,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedArrowRight01,
+              size: 18,
+              strokeWidth: 2,
+              color: LightColors.textTextMute,
+            ),
+          ],
         ),
       ),
     );
@@ -215,9 +222,7 @@ class _ClassesViewState extends State<ClassesView> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Class'),
-        content: Text(
-          'Delete "${cls.displayName}"? This cannot be undone.',
-        ),
+        content: Text('Delete "${cls.displayName}"? This cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -225,10 +230,7 @@ class _ClassesViewState extends State<ClassesView> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

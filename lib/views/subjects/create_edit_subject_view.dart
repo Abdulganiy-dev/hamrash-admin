@@ -3,6 +3,7 @@ import 'package:hamrash_admin/api/models/supabase_models/class_model.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
+import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/viewModel/subjects_view_model.dart';
 import 'package:hamrash_admin/widgets/app_text_field.dart';
 import 'package:hamrash_admin/widgets/button/app_button.dart';
@@ -66,7 +67,7 @@ class _CreateEditSubjectViewState extends State<CreateEditSubjectView> {
 
     if (mounted) {
       setState(() => _submitting = false);
-      if (success) Navigator.of(context).pop(true);
+      if (success) NavigationService.popScreen(true);
     }
   }
 

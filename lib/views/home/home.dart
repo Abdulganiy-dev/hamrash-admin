@@ -3,6 +3,7 @@ import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
+import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/viewModel/home_view_model.dart';
 import 'package:hamrash_admin/views/classes/classes_view.dart';
 import 'package:hamrash_admin/views/home/widgets/home_attendance_greeting.dart';
@@ -137,9 +138,7 @@ class _HomeState extends State<Home> {
             icon: HugeIcons.strokeRoundedSchool,
             label: 'Classes',
             accentColor: Colors.indigo,
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ClassesView()),
-            ),
+            onTap: () => NavigationService.animatedNavigation(screen: const ClassesView()),
           ),
         ),
         SizedBox(width: AppSpacing.sm),
@@ -148,9 +147,7 @@ class _HomeState extends State<Home> {
             icon: HugeIcons.strokeRoundedBook02,
             label: 'Subjects',
             accentColor: Colors.teal,
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SubjectsView()),
-            ),
+            onTap: () => NavigationService.animatedNavigation(screen: const SubjectsView()),
           ),
         ),
       ],
