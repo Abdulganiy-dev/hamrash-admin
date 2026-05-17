@@ -127,9 +127,12 @@ class ClassesViewModel extends BaseViewModel {
 
   Future<bool> classHasSubjects(String classId) async {
     try {
+      setBusy(true);
       return await _classService.classHasSubjects(classId);
     } catch (_) {
       return false;
+    } finally {
+      setBusy(false);
     }
   }
 }
