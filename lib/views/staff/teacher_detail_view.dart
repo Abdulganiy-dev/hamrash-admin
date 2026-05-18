@@ -196,7 +196,7 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// HOMEROOM SECTION
+// Classroom SECTION
 // ═══════════════════════════════════════════════════════════════════════
 
 class _HomeroomSection extends StatelessWidget {
@@ -209,7 +209,7 @@ class _HomeroomSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionLabel(label: 'Homeroom'),
+        const _SectionLabel(label: 'Classroom'),
         const SizedBox(height: AppSpacing.sm),
         AnimatedSize(
           duration: const Duration(milliseconds: 220),
@@ -243,7 +243,7 @@ class _HomeroomSection extends StatelessWidget {
   Future<void> _showOptions(BuildContext context) async {
     final action = await ListBottomSheet.show<_HomeroomAction, _HomeroomAction>(
       context: context,
-      title: 'Homeroom options',
+      title: 'Classroom options',
       headerImage: const HugeIcon(
         icon: HugeIcons.strokeRoundedSchool,
         size: 30,
@@ -273,7 +273,7 @@ class _HomeroomSection extends StatelessWidget {
           color: item.isDestructive ? LightColors.errorErrorDefault : null,
           fontWeight: FontWeight.w500,
         ),
-        onTap: () => Navigator.of(ctx).pop(item),
+        onTap: () => NavigationService.popScreen(item),
       ),
     );
     if (action == null || !context.mounted) return;
@@ -320,20 +320,12 @@ class _EmptyHomeroomCard extends StatelessWidget {
         child: AppElevatedCard(
           child: Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.blueAccent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Center(
-                  child: HugeIcon(
-                    icon: HugeIcons.strokeRoundedSchool,
-                    size: 22,
-                    strokeWidth: 1.8,
-                    color: Colors.blueAccent,
-                  ),
+              const Center(
+                child: HugeIcon(
+                  icon: HugeIcons.strokeRoundedSchool,
+                  size: 20,
+                  strokeWidth: 2,
+                  color: Colors.blueAccent,
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
@@ -342,7 +334,7 @@ class _EmptyHomeroomCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AppText(
-                      'Not a homeroom teacher',
+                      'Not a classroom teacher',
                       colorType: AppTextColor.textInverted,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -358,8 +350,8 @@ class _EmptyHomeroomCard extends StatelessWidget {
               ),
               const HugeIcon(
                 icon: HugeIcons.strokeRoundedArrowRight01,
-                size: 18,
-                strokeWidth: 1.8,
+                size: 20,
+                strokeWidth: 2,
                 color: LightColors.textTextMute,
               ),
             ],
@@ -386,58 +378,56 @@ class _AssignedHomeroomCard extends StatelessWidget {
     final role = vm.homeroomRoleDisplay ?? '—';
     return AppSurfaceCard(
       padding: const EdgeInsets.all(5),
-      child: AppElevatedCard(
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.blueAccent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Center(
-                child: HugeIcon(
-                  icon: HugeIcons.strokeRoundedSchool,
-                  size: 24,
-                  strokeWidth: 1.8,
-                  color: Colors.blueAccent,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AbsorbPointer(
+          child: AppElevatedCard(
+            child: Row(
+              children: [
+                const Center(
+                  child: HugeIcon(
+                    icon: HugeIcons.strokeRoundedSchool,
+                    size: 20,
+                    strokeWidth: 2,
+                    color: Colors.blueAccent,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppText(
-                    cls?.displayName ?? 'Unknown class',
-                    colorType: AppTextColor.textInverted,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppText(
+                        cls?.displayName ?? 'Unknown class',
+                        colorType: AppTextColor.textInverted,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      AppText(
+                        role,
+                        colorType: AppTextColor.textMute,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  AppText(
-                    role,
-                    colorType: AppTextColor.textMute,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ],
-              ),
+                ),
+                AppHugeIconButton(
+                  hugeIcon: HugeIcons.strokeRoundedMoreHorizontal,
+                  hugeIconStrokeWidth: 2,
+                  hugeIconRasterSize: 20,
+                  foregroundColorType: AppButtonForegroundColor.textInverted,
+                  onPressed: null,
+                ),
+              ],
             ),
-            AppHugeIconButton(
-              hugeIcon: HugeIcons.strokeRoundedMoreHorizontal,
-              hugeIconStrokeWidth: 2,
-              hugeIconRasterSize: 22,
-              foregroundColorType: AppButtonForegroundColor.textInverted,
-              onPressed: onTap,
-            ),
-          ],
+          ),
         ),
-      ),
+      ).hapticFeedback(),
     );
   }
 }
@@ -454,7 +444,7 @@ enum _HomeroomAction {
     isDestructive: false,
   ),
   remove(
-    'Remove homeroom',
+    'Remove classroom',
     HugeIcons.strokeRoundedDelete02,
     isDestructive: true,
   );
@@ -489,7 +479,7 @@ class _TeachesSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.xs),
+        const SizedBox(height: AppSpacing.sm),
         AnimatedSize(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
@@ -639,7 +629,7 @@ class _GroupedAssignmentsCard extends StatelessWidget {
           onRemove: () => onRemove(assignment),
         ));
       }
-      if (i < groups.length - 1) tiles.add(const _GroupSeparator());
+      if (i < groups.length - 1) tiles.add(const SizedBox(height: AppSpacing.sm));
     }
     return AppSurfaceCard(
       padding: const EdgeInsets.symmetric(
@@ -697,26 +687,15 @@ class _AssignmentRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: AppElevatedCard(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
+
         child: Row(
           children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: Colors.deepPurpleAccent.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Center(
-                child: HugeIcon(
-                  icon: HugeIcons.strokeRoundedBookOpen01,
-                  size: 16,
-                  strokeWidth: 1.8,
-                  color: Colors.deepPurpleAccent,
-                ),
+            const Center(
+              child: HugeIcon(
+                icon: HugeIcons.strokeRoundedBookOpen01,
+                size: 18,
+                strokeWidth: 2,
+                color: Colors.deepPurpleAccent,
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -816,7 +795,7 @@ Future<String?> _pickRole(BuildContext context) {
         colorType: AppTextColor.textMute,
         fontSize: 12,
       ),
-      onTap: () => Navigator.of(ctx).pop(value),
+      onTap: () => NavigationService.popScreen(HomeroomRole.apiName(value)),
     ),
   );
 }
@@ -970,8 +949,8 @@ class _InfoRow extends StatelessWidget {
             children: [
               HugeIcon(
                 icon: icon,
-                size: 18,
-                strokeWidth: 1.8,
+                size: 20,
+                strokeWidth: 2,
                 color: LightColors.textTextMute,
               ),
               const SizedBox(width: AppSpacing.sm),

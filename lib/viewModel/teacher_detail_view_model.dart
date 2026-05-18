@@ -8,8 +8,8 @@ import 'package:hamrash_admin/viewModel/teachers_view_model.dart';
 
 /// Canonical homeroom role values (stored lowercase in DB).
 abstract class HomeroomRole {
-  static const String main = 'main';
-  static const String assistant = 'assistant';
+  static const String main = 'class_teacher';
+  static const String assistant = 'assistant_class_teacher';
   static const List<String> all = [main, assistant];
 
   static String display(String value) {
@@ -22,11 +22,20 @@ abstract class HomeroomRole {
         return value;
     }
   }
+
+  static String apiName(String value) {
+    switch (value) {
+      case main:
+        return 'class_teacher';
+      case assistant:
+        return 'assistant_class_teacher';
+      default:
+        return value;
+    }
+  }
 }
 
-/// Drives the [TeacherDetailView]: holds the teacher, classes, subjects,
-/// and the teaching assignments. Loads everything in [init], then exposes
-/// granular mutators for homeroom + teaching changes.
+
 class TeacherDetailViewModel extends BaseViewModel {
   TeacherDetailViewModel({
     required TeacherModel initial,
@@ -65,6 +74,7 @@ class TeacherDetailViewModel extends BaseViewModel {
     final r = _teacher.homeroomRole;
     return r == null ? null : HomeroomRole.display(r);
   }
+
 
   ClassModel? classById(String? id) {
     if (id == null) return null;
@@ -250,6 +260,7 @@ class TeacherDetailViewModel extends BaseViewModel {
   Future<bool> _runSave(Future<bool> Function() op) async {
     if (_saving) return false;
     _saving = true;
+    setBusy(true);
     notifyListeners();
     try {
       final ok = await op();
@@ -265,6 +276,7 @@ class TeacherDetailViewModel extends BaseViewModel {
       return false;
     } finally {
       _saving = false;
+      setBusy(false);
       notifyListeners();
     }
   }
