@@ -43,7 +43,7 @@ class CreateEditClassView extends StatefulWidget {
     return GlassSheet.show<bool>(
       context: context,
       title: isEdit ? 'Edit Classroom' : 'New Classroom',
-      snappingConfig: const SheetSnappingConfig([0.55, 0.92]),
+      snappingConfig: const SheetSnappingConfig([1]),
       body: CreateEditClassView(
         existing: existing,
         availableSubjects: availableSubjects,

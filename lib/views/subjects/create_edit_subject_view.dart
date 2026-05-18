@@ -29,7 +29,7 @@ class CreateEditSubjectView extends StatefulWidget {
     return GlassSheet.show<bool>(
       context: context,
       title: isEdit ? 'Edit Subject' : 'New Subject',
-      snappingConfig: const SheetSnappingConfig([0.45, 0.65]),
+      snappingConfig: const SheetSnappingConfig([1]),
       body: CreateEditSubjectView(
         existing: existing,
         viewModel: viewModel,

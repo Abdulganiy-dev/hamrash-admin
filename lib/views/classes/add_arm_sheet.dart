@@ -22,7 +22,7 @@ class AddArmSheet extends StatefulWidget {
     return GlassSheet.show<bool>(
       context: context,
       title: 'New Section',
-      snappingConfig: const SheetSnappingConfig([0.45, 0.65]),
+      snappingConfig: const SheetSnappingConfig([1]),
       body: AddArmSheet(viewModel: viewModel),
     );
   }
