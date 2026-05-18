@@ -144,6 +144,7 @@ class TeacherDetailViewModel extends BaseViewModel {
   /// Subjects that are (a) assigned to [classId] and (b) not yet taught by
   /// this teacher in that class.
   Future<List<SubjectModel>> availableSubjectsForClass(String classId) async {
+    setBusy(true);
     try {
       final classSubjectIds = await _classService.fetchSubjectIdsForClass(
         classId,
@@ -162,6 +163,8 @@ class TeacherDetailViewModel extends BaseViewModel {
           .toList();
     } catch (_) {
       return const [];
+    } finally {
+      setBusy(false);
     }
   }
 
