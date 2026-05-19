@@ -8,6 +8,7 @@ import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/resources/utils/list_bottom_sheet_util.dart';
+import 'package:hamrash_admin/resources/utils/view_util.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/viewModel/teacher_detail_view_model.dart';
 import 'package:hamrash_admin/viewModel/teachers_view_model.dart';
@@ -958,6 +959,7 @@ class _InfoRow extends StatelessWidget {
       onTap: canCopyValue ? () {
         HapticHelpers.vibrate(VibrationType.light);
         Clipboard.setData(ClipboardData(text: value));
+        ViewUtil.showSuccessSnackBar('Copied to clipboard');
       } : null,
       child: AppElevatedCard(
         child: Row(

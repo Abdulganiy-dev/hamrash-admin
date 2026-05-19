@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hamrash_admin/resources/extensions.dart';
 
 class ViewUtil {
 
@@ -36,7 +37,7 @@ class ViewUtil {
             onTap: () {
               ScaffoldMessenger.of(navContext).hideCurrentMaterialBanner();
             },
-          ),
+          ).hapticFeedback(),
         ],
       ),
     );
