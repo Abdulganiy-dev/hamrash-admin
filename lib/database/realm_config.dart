@@ -6,12 +6,13 @@ import 'models/app_role_realm.dart';
 import 'models/class_realm.dart';
 import 'models/state_realm.dart';
 import 'models/section_realm.dart';
+import 'models/student_realm.dart';
 import 'models/subject_realm.dart';
 import 'models/teacher_realm.dart';
 
 class RealmConfig {
   /// Bump when adding or changing Realm models (see Supabase_Realm_Architecture_Guide.md).
-  static const int _currentSchemaVersion = 5;
+  static const int _currentSchemaVersion = 6;
   static const String _databaseName = 'hamrash_admin.realm';
 
   static Configuration getConfiguration() {
@@ -26,6 +27,9 @@ class RealmConfig {
         SectionRealm.schema,
         SubjectRealm.schema,
         TeacherRealm.schema,
+        StudentRealm.schema,
+        ParentRealm.schema,
+        StudentParentLinkRealm.schema,
       ],
       schemaVersion: _currentSchemaVersion,
       migrationCallback: _migrationCallback,
@@ -55,6 +59,12 @@ class RealmConfig {
 
     if (oldSchemaVersion < 5) {
       AppLogger.info('Schema 5: TeacherRealm added');
+    }
+
+    if (oldSchemaVersion < 6) {
+      AppLogger.info(
+        'Schema 6: StudentRealm + ParentRealm + StudentParentLinkRealm added',
+      );
     }
   }
 

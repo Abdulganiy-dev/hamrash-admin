@@ -5,12 +5,16 @@ import 'package:hamrash_admin/api/services/cloudflare_services/cloudflare_dio_cl
 import 'package:hamrash_admin/api/services/cloudflare_services/image_service.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/secret_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/admin_profile_service.dart';
+import 'package:hamrash_admin/api/services/supabase_services/binding_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/class_service.dart';
+import 'package:hamrash_admin/api/services/supabase_services/parent_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/role_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/state_service.dart';
+import 'package:hamrash_admin/api/services/supabase_services/student_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/teacher_service.dart';
 import 'package:hamrash_admin/database/admin_profile_realm_service.dart';
 import 'package:hamrash_admin/database/class_realm_service.dart';
+import 'package:hamrash_admin/database/family_realm_service.dart';
 import 'package:hamrash_admin/database/realm_service.dart';
 import 'package:hamrash_admin/database/role_realm_service.dart';
 import 'package:hamrash_admin/database/state_realm_service.dart';
@@ -105,6 +109,22 @@ void setupLocator() {
   locator.registerLazySingleton<TeacherService>(
     () => TeacherService(teacherRealmService: locator<TeacherRealmService>()),
   );
+
+  // Students + parents share one Realm cache so we can walk family graphs
+  // offline.
+  locator.registerLazySingleton<FamilyRealmService>(
+    () => FamilyRealmService(locator<RealmService>()),
+  );
+
+  locator.registerLazySingleton<StudentService>(
+    () => StudentService(familyRealmService: locator<FamilyRealmService>()),
+  );
+
+  locator.registerLazySingleton<ParentService>(
+    () => ParentService(familyRealmService: locator<FamilyRealmService>()),
+  );
+
+  locator.registerLazySingleton<BindingService>(() => BindingService());
 
   locator.registerLazySingleton<CloudflareDioClient>(
     () => CloudflareDioClient(),
