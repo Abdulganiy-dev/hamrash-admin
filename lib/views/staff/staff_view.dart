@@ -94,7 +94,7 @@ class _TeachersViewState extends State<TeachersView> {
                     curve: Curves.easeInOut,
                     height:
                         ScaffoldInsets.of(context).bodyTopInset +
-                        (_isSearching ? 70 : 15),
+                        (_isSearching ? 50 : 15),
                   ),
                   _buildGrid(context, model),
                   if (model.loadingMore)
