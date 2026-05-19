@@ -92,7 +92,7 @@ class TeacherDetailViewModel extends BaseViewModel {
     return null;
   }
 
-  /// Active assignments grouped by class id, sorted by class displayName.
+
   List<MapEntry<ClassModel, List<TeacherClassSubject>>> groupedAssignments() {
     final Map<String, List<TeacherClassSubject>> map = {};
     for (final a in _assignments) {
@@ -229,23 +229,50 @@ class TeacherDetailViewModel extends BaseViewModel {
   Future<bool> addTeachingAssignment({
     required String classId,
     required String subjectId,
-  }) {
-    return _runSave(() async {
-      final id = _teacher.id;
-      if (id == null) return false;
-      if (_assignments.any(
-        (a) => a.classId == classId && a.subjectId == subjectId,
-      )) {
-        return true; // idempotent
-      }
+  }) async {
+    if (_saving) return false;
+    final id = _teacher.id;
+    if (id == null) return false;
+    if (_assignments.any(
+      (a) => a.classId == classId && a.subjectId == subjectId,
+    )) {
+      return true; // idempotent
+    }
+
+    _saving = true;
+    setBusy(true);
+    notifyListeners();
+    try {
       final added = await _teacherService.addClassSubjectForTeacher(
         teacherId: id,
         classId: classId,
         subjectId: subjectId,
       );
       _assignments = [..._assignments, added];
+      notifyListeners();
       return true;
-    });
+    } on TeacherAssignmentConflict catch (e, st) {
+      
+      await handleError(
+        e,
+        stackTrace: st,
+        context: 'TeacherDetailViewModel.addTeachingAssignment',
+        userMessage: e.message,
+      );
+      return false;
+    } catch (e, st) {
+      await handleError(
+        e,
+        stackTrace: st,
+        context: 'TeacherDetailViewModel.addTeachingAssignment',
+        userMessage: 'Could not assign the subject. Please try again.',
+      );
+      return false;
+    } finally {
+      _saving = false;
+      setBusy(false);
+      notifyListeners();
+    }
   }
 
   Future<bool> removeTeachingAssignment(String assignmentId) {

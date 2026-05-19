@@ -4,6 +4,15 @@ import '../../../api/models/supabase_models/teacher_model.dart';
 import '../../../database/models/teacher_realm.dart';
 import '../../../database/teacher_realm_service.dart';
 
+/// Thrown when assigning a (class, subject) pair that is already owned by
+/// another teacher. Message is the human-readable explanation from the DB.
+class TeacherAssignmentConflict implements Exception {
+  TeacherAssignmentConflict(this.message);
+  final String message;
+  @override
+  String toString() => message;
+}
+
 /// Supabase + Realm for `public.teachers` and related join tables.
 ///
 /// List fetch: Pattern 2 (online-first, Realm fallback).
@@ -128,25 +137,34 @@ class TeacherService {
         .timeout(_timeout);
   }
 
-  /// Adds a single class-subject assignment for [teacherId].
+  
   Future<TeacherClassSubject> addClassSubjectForTeacher({
     required String teacherId,
     required String classId,
     required String subjectId,
   }) async {
-    final inserted = await _supabase
-        .from('teacher_class_subjects')
-        .insert({
-          'teacher_id': teacherId,
-          'class_id': classId,
-          'subject_id': subjectId,
-        })
-        .select()
-        .single();
+    try {
+      final response = await _supabase
+          .rpc(
+            'assign_teacher_class_subject',
+            params: {
+              'p_teacher_id': teacherId,
+              'p_class_id': classId,
+              'p_subject_id': subjectId,
+            },
+          )
+          .timeout(_timeout);
 
-    return TeacherClassSubject.fromJson(
-      Map<String, dynamic>.from(inserted),
-    );
+      return TeacherClassSubject.fromJson(
+        Map<String, dynamic>.from(response as Map),
+      );
+    } on PostgrestException catch (e) {
+     
+      if (e.code == 'P0001') {
+        throw TeacherAssignmentConflict(e.message);
+      }
+      rethrow;
+    }
   }
 
   /// Removes a single assignment row by its [id].
