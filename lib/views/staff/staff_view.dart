@@ -27,13 +27,32 @@ class TeachersView extends StatefulWidget {
 class _TeachersViewState extends State<TeachersView> {
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode();
+  final _scrollController = ScrollController();
+  TeachersViewModel? _model;
   bool _isSearching = false;
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
     _searchFocus.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    final m = _model;
+    if (m == null || !_scrollController.hasClients) return;
+    final pos = _scrollController.position;
+    if (pos.pixels >= pos.maxScrollExtent - 300) {
+      m.loadMore();
+    }
   }
 
   void _openSearch() {
@@ -54,7 +73,10 @@ class _TeachersViewState extends State<TeachersView> {
   Widget build(BuildContext context) {
     return ViewModelBuilder<TeachersViewModel>.reactive(
       viewModelBuilder: () => TeachersViewModel(),
-      onViewModelReady: (model) => model.init(context),
+      onViewModelReady: (model) {
+        _model = model;
+        model.init(context);
+      },
       builder: (context, model, _) => DefaultScaffold(
         title: null,
         busy: model.busy,
@@ -64,6 +86,7 @@ class _TeachersViewState extends State<TeachersView> {
         body: Builder(
           builder: (context) {
             return SingleChildScrollView(
+              controller: _scrollController,
               child: ScaffoldColumn(
                 children: [
                   AnimatedContainer(
@@ -74,6 +97,17 @@ class _TeachersViewState extends State<TeachersView> {
                         (_isSearching ? 70 : 15),
                   ),
                   _buildGrid(context, model),
+                  if (model.loadingMore)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                      child: Center(
+                        child: SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             );

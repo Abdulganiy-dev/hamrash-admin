@@ -19,6 +19,22 @@ class TeacherHomeroomConflict implements Exception {
   const TeacherHomeroomConflict();
 }
 
+/// Opaque keyset cursor for paginating teachers. Holds the (last_name, id)
+/// of the last row already seen — the next page starts strictly after it.
+class TeacherCursor {
+  const TeacherCursor({required this.lastName, required this.id});
+  final String lastName;
+  final String id;
+}
+
+/// One page of teachers + a flag the caller uses to decide whether to keep
+/// scrolling.
+class TeacherPage {
+  const TeacherPage({required this.teachers, required this.hasMore});
+  final List<TeacherModel> teachers;
+  final bool hasMore;
+}
+
 /// Supabase + Realm for `public.teachers` and related join tables.
 ///
 /// List fetch: Pattern 2 (online-first, Realm fallback).
@@ -34,12 +50,25 @@ class TeacherService {
 
   // ──────────────────────────── Teachers ────────────────────────────
 
-  Future<List<TeacherModel>> fetchTeachers() async {
+  Future<TeacherPage> fetchTeachersPage({
+    TeacherCursor? after,
+    int limit = 20,
+    String? search,
+  }) async {
+    final trimmed = search?.trim();
+    final hasSearch = trimmed != null && trimmed.isNotEmpty;
+    final isFirstPage = after == null;
     try {
       final response = await _supabase
-          .from('teachers')
-          .select()
-          .order('last_name', ascending: true)
+          .rpc(
+            'fetch_teachers_page',
+            params: {
+              'p_after_last_name': after?.lastName,
+              'p_after_id': after?.id,
+              'p_limit': limit,
+              'p_search': hasSearch ? trimmed : null,
+            },
+          )
           .timeout(_timeout);
 
       final list = (response as List<dynamic>)
@@ -49,12 +78,20 @@ class TeacherService {
           )
           .toList();
 
-      await _teacherRealm.saveTeachers(list);
-      return list;
+      if (isFirstPage && !hasSearch) {
+        await _teacherRealm.saveTeachers(list);
+      }
+
+      return TeacherPage(teachers: list, hasMore: list.length == limit);
     } catch (_) {
-      final cached = _teacherRealm.getAllTeachers();
-      if (cached.isNotEmpty) {
-        return cached.map(_fromRealm).toList();
+      if (isFirstPage && !hasSearch) {
+        final cached = _teacherRealm.getAllTeachers();
+        if (cached.isNotEmpty) {
+          return TeacherPage(
+            teachers: cached.map(_fromRealm).toList(),
+            hasMore: false,
+          );
+        }
       }
       rethrow;
     }
