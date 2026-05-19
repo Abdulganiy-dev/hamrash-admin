@@ -13,6 +13,12 @@ class TeacherAssignmentConflict implements Exception {
   String toString() => message;
 }
 
+/// Thrown when assigning a homeroom role that another teacher already holds
+/// for the same class ([uq_teacher_class_role]).
+class TeacherHomeroomConflict implements Exception {
+  const TeacherHomeroomConflict();
+}
+
 /// Supabase + Realm for `public.teachers` and related join tables.
 ///
 /// List fetch: Pattern 2 (online-first, Realm fallback).
@@ -68,17 +74,25 @@ class TeacherService {
   }
 
   Future<TeacherModel> updateTeacher(String id, TeacherModel model) async {
-    final updated = await _supabase
-        .from('teachers')
-        .update(model.toUpdateJson())
-        .eq('id', id)
-        .select()
-        .single();
+    try {
+      final updated = await _supabase
+          .from('teachers')
+          .update(model.toUpdateJson())
+          .eq('id', id)
+          .select()
+          .single();
 
-    final result =
-        TeacherModel.fromJson(Map<String, dynamic>.from(updated));
-    await _teacherRealm.saveTeacher(result);
-    return result;
+      final result =
+          TeacherModel.fromJson(Map<String, dynamic>.from(updated));
+      await _teacherRealm.saveTeacher(result);
+      return result;
+    } on PostgrestException catch (e) {
+      if (e.code == '23505' &&
+          e.message.contains('uq_teacher_class_role')) {
+        throw const TeacherHomeroomConflict();
+      }
+      rethrow;
+    }
   }
 
   Future<void> deleteTeacher(String id) async {

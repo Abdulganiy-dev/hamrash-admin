@@ -185,10 +185,15 @@ class TeacherDetailViewModel extends BaseViewModel {
 
   // ─── Homeroom mutations ──────────────────────────────────────────────
 
-  Future<bool> setHomeroom({required String classId, required String role}) {
-    return _runSave(() async {
-      final id = _teacher.id;
-      if (id == null) return false;
+  Future<bool> setHomeroom({
+    required String classId,
+    required String role,
+  }) async {
+    final id = _teacher.id;
+    if (id == null) return false;
+
+    setBusy(true);
+    try {
       final updated = _teacher.copyWith(
         homeroomClassId: classId,
         homeroomRole: role,
@@ -196,8 +201,33 @@ class TeacherDetailViewModel extends BaseViewModel {
       final saved = await _teacherService.updateTeacher(id, updated);
       _teacher = saved;
       parent?.replaceTeacher(saved);
+      notifyListeners();
       return true;
-    });
+    } on TeacherHomeroomConflict catch (e, st) {
+      final className = classById(classId)?.displayName ?? 'this class';
+      final roleLabel = HomeroomRole.display(role);
+      await handleError(
+        e,
+        stackTrace: st,
+        context: 'TeacherDetailViewModel.setHomeroom',
+        userMessage:
+            'Another teacher is already the $roleLabel for $className. '
+            'Each class can only have one $roleLabel.',
+        snappingConfig: const SheetSnappingConfig([0.4]),
+      );
+      return false;
+    } catch (e, st) {
+      await handleError(
+        e,
+        stackTrace: st,
+        context: 'TeacherDetailViewModel.setHomeroom',
+        userMessage: 'Could not set homeroom. Please try again.',
+        snappingConfig: const SheetSnappingConfig([0.4]),
+      );
+      return false;
+    } finally {
+      setBusy(false);
+    }
   }
 
   Future<bool> setHomeroomRole(String role) {
@@ -206,10 +236,12 @@ class TeacherDetailViewModel extends BaseViewModel {
     return setHomeroom(classId: classId, role: role);
   }
 
-  Future<bool> clearHomeroom() {
-    return _runSave(() async {
-      final id = _teacher.id;
-      if (id == null) return false;
+  Future<bool> clearHomeroom() async {
+    final id = _teacher.id;
+    if (id == null) return false;
+
+    setBusy(true);
+    try {
       // copyWith can't set null — construct directly.
       final cleared = TeacherModel(
         id: _teacher.id,
@@ -232,8 +264,20 @@ class TeacherDetailViewModel extends BaseViewModel {
       final saved = await _teacherService.updateTeacher(id, cleared);
       _teacher = saved;
       parent?.replaceTeacher(saved);
+      notifyListeners();
       return true;
-    });
+    } catch (e, st) {
+      await handleError(
+        e,
+        stackTrace: st,
+        context: 'TeacherDetailViewModel.clearHomeroom',
+        userMessage: 'Could not clear classroom. Please try again.',
+        snappingConfig: const SheetSnappingConfig([0.4]),
+      );
+      return false;
+    } finally {
+      setBusy(false);
+    }
   }
 
   // ─── Teaching assignment mutations ───────────────────────────────────
@@ -269,6 +313,7 @@ class TeacherDetailViewModel extends BaseViewModel {
         stackTrace: st,
         context: 'TeacherDetailViewModel.addTeachingAssignment',
         userMessage: e.message,
+        snappingConfig: const SheetSnappingConfig([0.4]),
       );
       return false;
     } catch (e, st) {
@@ -287,12 +332,26 @@ class TeacherDetailViewModel extends BaseViewModel {
     }
   }
 
-  Future<bool> removeTeachingAssignment(String assignmentId) {
-    return _runSave(() async {
+  Future<bool> removeTeachingAssignment(String assignmentId) async {
+    setBusy(true);
+    try {
       await _teacherService.removeClassSubject(assignmentId);
-      _assignments = _assignments.where((a) => a.id != assignmentId).toList();
+      _assignments =
+          _assignments.where((a) => a.id != assignmentId).toList();
+      notifyListeners();
       return true;
-    });
+    } catch (e, st) {
+      await handleError(
+        e,
+        stackTrace: st,
+        context: 'TeacherDetailViewModel.removeTeachingAssignment',
+        userMessage: 'Could not remove the assignment. Please try again.',
+        snappingConfig: const SheetSnappingConfig([0.4]),
+      );
+      return false;
+    } finally {
+      setBusy(false);
+    }
   }
 
   Future<void> getTeachersCode(String teacherId) async {
@@ -312,30 +371,4 @@ class TeacherDetailViewModel extends BaseViewModel {
     }
   }
 
-  // ─── Internal save helper ────────────────────────────────────────────
-
-  Future<bool> _runSave(Future<bool> Function() op) async {
-    if (_saving) return false;
-    _saving = true;
-    setBusy(true);
-    notifyListeners();
-    try {
-      final ok = await op();
-      notifyListeners();
-      return ok;
-    } catch (e, st) {
-      await handleError(
-        e,
-        stackTrace: st,
-        context: 'TeacherDetailViewModel._runSave',
-        userMessage: 'Could not save changes. Please try again.',
-        snappingConfig: const SheetSnappingConfig([0.4]),
-      );
-      return false;
-    } finally {
-      _saving = false;
-      setBusy(false);
-      notifyListeners();
-    }
-  }
 }

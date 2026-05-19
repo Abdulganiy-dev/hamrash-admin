@@ -184,7 +184,7 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
               label: 'Address',
               value: t.address!,
             ),
-          if (t.address != null && t.address!.isNotEmpty && viewModel.teacherCode != null)
+          if (viewModel.teacherCode != null)
             const SizedBox(height: AppSpacing.sm),
           if (viewModel.teacherCode != null)
             _InfoRow(
