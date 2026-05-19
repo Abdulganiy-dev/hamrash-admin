@@ -34,7 +34,7 @@ class SubjectsViewModel extends BaseViewModel {
     required String name,
     String? description,
   }) async {
-    setBusy(true);
+   
     try {
       final created = await _classService.insertSubject(
         SubjectModel(
@@ -63,8 +63,6 @@ class SubjectsViewModel extends BaseViewModel {
         userMessage: 'Failed to create subject. Please try again.',
       );
       return false;
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -73,7 +71,7 @@ class SubjectsViewModel extends BaseViewModel {
     required String name,
     String? description,
   }) async {
-    setBusy(true);
+   
     try {
       final updated = await _classService.updateSubject(
         existing.id!,
@@ -95,9 +93,7 @@ class SubjectsViewModel extends BaseViewModel {
         userMessage: 'Failed to update subject. Please try again.',
       );
       return false;
-    } finally {
-      setBusy(false);
-    }
+    } 
   }
 
   Future<int> subjectClassCount(String subjectId) async {

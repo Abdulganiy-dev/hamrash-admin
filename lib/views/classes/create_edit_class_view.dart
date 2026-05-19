@@ -316,6 +316,7 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
     if (!_validateRequiredFields()) return;
     if (_isDuplicate) return;
     setState(() => _submitting = true);
+    _showLoadingOverlay();
 
     final subjectIds = _selectedSubjectIds.toList();
     final section = _selectedSectionName!;
@@ -338,6 +339,7 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
 
     if (mounted) {
       setState(() => _submitting = false);
+      _hideLoadingOverlay();
       if (success) NavigationService.popScreen(true);
     }
   }

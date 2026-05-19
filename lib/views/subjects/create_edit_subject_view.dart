@@ -46,8 +46,31 @@ class _CreateEditSubjectViewState extends State<CreateEditSubjectView> {
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
   bool _submitting = false;
+  OverlayEntry? _loadingOverlay;
 
   bool get _isEdit => widget.existing != null;
+
+  void _showLoadingOverlay() {
+    if (_loadingOverlay != null || !mounted) return;
+
+    _loadingOverlay = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          ModalBarrier(
+            color: Colors.black.withValues(alpha: 0.3),
+            dismissible: false,
+          ),
+          const Center(child: CircularProgressIndicator()),
+        ],
+      ),
+    );
+    Overlay.of(context, rootOverlay: true).insert(_loadingOverlay!);
+  }
+
+  void _hideLoadingOverlay() {
+    _loadingOverlay?.remove();
+    _loadingOverlay = null;
+  }
 
   @override
   void initState() {
@@ -60,6 +83,7 @@ class _CreateEditSubjectViewState extends State<CreateEditSubjectView> {
 
   @override
   void dispose() {
+    _hideLoadingOverlay();
     _nameController.dispose();
     _descriptionController.dispose();
     super.dispose();
@@ -68,6 +92,7 @@ class _CreateEditSubjectViewState extends State<CreateEditSubjectView> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
+    _showLoadingOverlay();
 
     bool success;
     if (_isEdit) {
@@ -85,6 +110,7 @@ class _CreateEditSubjectViewState extends State<CreateEditSubjectView> {
 
     if (mounted) {
       setState(() => _submitting = false);
+      _hideLoadingOverlay();
       if (success) NavigationService.popScreen(true);
     }
   }
