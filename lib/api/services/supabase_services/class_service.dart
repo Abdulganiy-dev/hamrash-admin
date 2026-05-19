@@ -3,12 +3,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../api/models/supabase_models/class_model.dart';
 import '../../../api/models/supabase_models/section_model.dart';
 import '../../../database/class_realm_service.dart';
+import '../../../database/models/class_realm.dart';
+import '../../../database/models/section_realm.dart';
+import '../../../database/models/subject_realm.dart';
 import '../../../database/section_realm_service.dart';
 import '../../../database/subject_realm_service.dart';
 
 /// Supabase + Realm for `public.classes`, `public.sections`, and `public.subjects`.
 ///
-/// List fetch: Pattern 2 (online-first, Realm fallback).
+/// List fetch: Pattern 1 (Realm first; if empty, fetch from Supabase and persist).
+/// On network failure, returns cached Realm rows when available.
 /// Mutations: Pattern 3 (write-through — cache mirrors server response).
 class ClassService {
   ClassService({
@@ -28,8 +32,13 @@ class ClassService {
 
   // ──────────────────────────── Classes ────────────────────────────
 
+  /// Realm first; if empty, fetch from Supabase, persist, then return.
   Future<List<ClassModel>> fetchClasses() async {
     try {
+      if (_classRealm.hasClasses()) {
+        return _classRealm.getAllClasses().map(_classFromRealm).toList();
+      }
+
       final response = await _supabase
           .from('classes')
           .select()
@@ -40,23 +49,13 @@ class ClassService {
           .map((e) => ClassModel.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
 
-      await _classRealm.saveClasses(list);
+      if (list.isNotEmpty) {
+        await _classRealm.saveClasses(list);
+      }
       return list;
     } catch (_) {
-      final cached = _classRealm.getAllClasses();
-      if (cached.isNotEmpty) {
-        return cached
-            .map(
-              (r) => ClassModel(
-                id: r.id,
-                name: r.name,
-                section: r.section,
-                isActive: r.isActive,
-                createdAt: r.createdAt,
-                updatedAt: r.updatedAt,
-              ),
-            )
-            .toList();
+      if (_classRealm.hasClasses()) {
+        return _classRealm.getAllClasses().map(_classFromRealm).toList();
       }
       rethrow;
     }
@@ -94,8 +93,13 @@ class ClassService {
 
   // ──────────────────────────── Sections ───────────────────────────
 
+  /// Realm first; if empty, fetch from Supabase, persist, then return.
   Future<List<SectionModel>> fetchSections() async {
     try {
+      if (_sectionRealm.hasSections()) {
+        return _sectionRealm.getAllSections().map(_sectionFromRealm).toList();
+      }
+
       final response = await _supabase
           .from('sections')
           .select()
@@ -109,21 +113,13 @@ class ClassService {
           )
           .toList();
 
-      await _sectionRealm.saveSections(list);
+      if (list.isNotEmpty) {
+        await _sectionRealm.saveSections(list);
+      }
       return list;
     } catch (_) {
-      final cached = _sectionRealm.getAllSections();
-      if (cached.isNotEmpty) {
-        return cached
-            .map(
-              (r) => SectionModel(
-                id: r.id,
-                name: r.name,
-                createdAt: r.createdAt,
-                updatedAt: r.updatedAt,
-              ),
-            )
-            .toList();
+      if (_sectionRealm.hasSections()) {
+        return _sectionRealm.getAllSections().map(_sectionFromRealm).toList();
       }
       rethrow;
     }
@@ -219,8 +215,13 @@ class ClassService {
 
   // ──────────────────────────── Subjects ───────────────────────────
 
+  /// Realm first; if empty, fetch from Supabase, persist, then return.
   Future<List<SubjectModel>> fetchSubjects() async {
     try {
+      if (_subjectRealm.hasSubjects()) {
+        return _subjectRealm.getAllSubjects().map(_subjectFromRealm).toList();
+      }
+
       final response = await _supabase
           .from('subjects')
           .select()
@@ -233,23 +234,13 @@ class ClassService {
           )
           .toList();
 
-      await _subjectRealm.saveSubjects(list);
+      if (list.isNotEmpty) {
+        await _subjectRealm.saveSubjects(list);
+      }
       return list;
     } catch (_) {
-      final cached = _subjectRealm.getAllSubjects();
-      if (cached.isNotEmpty) {
-        return cached
-            .map(
-              (r) => SubjectModel(
-                id: r.id,
-                name: r.name,
-                description: r.description,
-                isActive: r.isActive,
-                createdAt: r.createdAt,
-                updatedAt: r.updatedAt,
-              ),
-            )
-            .toList();
+      if (_subjectRealm.hasSubjects()) {
+        return _subjectRealm.getAllSubjects().map(_subjectFromRealm).toList();
       }
       rethrow;
     }
@@ -294,6 +285,37 @@ class ClassService {
     await _subjectRealm.deleteSubject(id);
   }
 
+
+  ClassModel _classFromRealm(ClassRealm r) {
+    return ClassModel(
+      id: r.id,
+      name: r.name,
+      section: r.section,
+      isActive: r.isActive,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    );
+  }
+
+  SectionModel _sectionFromRealm(SectionRealm r) {
+    return SectionModel(
+      id: r.id,
+      name: r.name,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    );
+  }
+
+  SubjectModel _subjectFromRealm(SubjectRealm r) {
+    return SubjectModel(
+      id: r.id,
+      name: r.name,
+      description: r.description,
+      isActive: r.isActive,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    );
+  }
 
   Future<bool> _subjectNameExists(String name, {String? excludeId}) async {
     final trimmed = name.trim();

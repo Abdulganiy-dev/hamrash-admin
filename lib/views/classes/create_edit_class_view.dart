@@ -65,6 +65,8 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
   String? _selectedSectionName;
   late Set<String> _selectedSubjectIds;
   bool _submitting = false;
+  bool _loadingExistingSubjects = false;
+  OverlayEntry? _loadingOverlay;
   String? _sectionError;
   String? _subjectsError;
 
@@ -96,17 +98,52 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
     _nameController = TextEditingController(text: widget.existing?.name ?? '');
     _selectedSectionName = widget.existing?.section;
     _selectedSubjectIds = {};
-    if (_isEdit) _loadExistingSubjects();
+    if (_isEdit) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadExistingSubjects();
+      });
+    }
+  }
+
+  void _showLoadingOverlay() {
+    if (_loadingOverlay != null || !mounted) return;
+
+    _loadingOverlay = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          ModalBarrier(
+            color: Colors.black.withValues(alpha: 0.3),
+            dismissible: false,
+          ),
+          const Center(child: CircularProgressIndicator()),
+        ],
+      ),
+    );
+    Overlay.of(context, rootOverlay: true).insert(_loadingOverlay!);
+  }
+
+  void _hideLoadingOverlay() {
+    _loadingOverlay?.remove();
+    _loadingOverlay = null;
   }
 
   Future<void> _loadExistingSubjects() async {
+    setState(() => _loadingExistingSubjects = true);
+    _showLoadingOverlay();
     final ids =
         await widget.viewModel.getSubjectIdsForClass(widget.existing!.id!);
-    if (mounted) setState(() => _selectedSubjectIds = ids.toSet());
+    if (mounted) {
+      setState(() {
+        _selectedSubjectIds = ids.toSet();
+        _loadingExistingSubjects = false;
+      });
+      _hideLoadingOverlay();
+    }
   }
 
   @override
   void dispose() {
+    _hideLoadingOverlay();
     _nameController.dispose();
     super.dispose();
   }
@@ -367,7 +404,8 @@ class _CreateEditClassViewState extends State<CreateEditClassView> {
             AppButton(
               type: AppButtonType.primary,
               text: _isEdit ? 'Save Changes' : 'Create Classroom',
-              isDisabled: _submitting || isDuplicate,
+              isDisabled:
+                  _submitting || isDuplicate || _loadingExistingSubjects,
               onPressed: _submit,
               width: double.infinity,
             ),
