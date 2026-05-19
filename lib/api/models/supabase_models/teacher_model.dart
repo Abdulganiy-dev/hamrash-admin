@@ -213,3 +213,32 @@ class TeacherClassSubject {
     return DateTime.tryParse(v.toString());
   }
 }
+
+
+class TeacherCode {
+  const TeacherCode({
+    required this.code,
+    required this.createdAt,
+
+    this.usedAt,
+  });
+
+  final String code;
+  final DateTime? createdAt;
+
+  final DateTime? usedAt;
+
+  factory TeacherCode.fromJson(Map<String, dynamic> json) {
+    return TeacherCode(
+      code: json['code'] as String,
+      createdAt: _parseDateTime(json['created_at']),
+      usedAt: _parseDateTime(json['used_at']),
+    );
+  }
+
+  static DateTime? _parseDateTime(dynamic v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    return DateTime.tryParse(v.toString());
+  }
+}

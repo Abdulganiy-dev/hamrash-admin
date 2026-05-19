@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/widgets/error_modal.dart';
+import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
 
 import '../resources/error_messages.dart';
 import '../resources/utils/view_util.dart';
@@ -28,6 +29,7 @@ abstract class BaseViewModel extends ChangeNotifier {
     bool showErrorModal = true,
     bool fatal = false,
     Map<String, dynamic>? customParams,
+    SheetSnappingConfig? snappingConfig,
   }) async {
     setBusy(false);
 
@@ -47,6 +49,7 @@ abstract class BaseViewModel extends ChangeNotifier {
 
     if (showErrorModal) {
       ErrorModal.show(
+        snappingConfig: snappingConfig,
         ViewUtil.navigatorKey.currentContext!,
         title: "Error",
         message: userMessage ?? ErrorMessages.somethingWentWrong,

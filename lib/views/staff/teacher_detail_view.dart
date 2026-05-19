@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hamrash_admin/api/models/supabase_models/class_model.dart';
 import 'package:hamrash_admin/api/models/supabase_models/teacher_model.dart';
+import 'package:hamrash_admin/helpers/haptic_helper.dart';
 import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
@@ -181,6 +183,16 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
               icon: HugeIcons.strokeRoundedHome01,
               label: 'Address',
               value: t.address!,
+            ),
+          if (t.address != null && t.address!.isNotEmpty && viewModel.teacherCode != null)
+            const SizedBox(height: AppSpacing.sm),
+          if (viewModel.teacherCode != null)
+            _InfoRow(
+              icon: HugeIcons.strokeRoundedQrCode,
+              label: 'Claim Code',
+              value: viewModel.teacherCode!.code,
+              valueColor: viewModel.teacherCode!.usedAt != null ? LightColors.successSuccessDefault : null,
+              canCopyValue: true,
             ),
         ],
       ),
@@ -931,54 +943,62 @@ class _InfoRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.valueColor,
+    this.canCopyValue = false,
   });
 
   final List<List<dynamic>> icon;
   final String label;
   final String value;
   final Color? valueColor;
+  final bool canCopyValue;
 
   @override
   Widget build(BuildContext context) {
-    return AppElevatedCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              HugeIcon(
-                icon: icon,
-                size: 20,
-                strokeWidth: 2,
-                color: LightColors.textTextMute,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              AppText(label, colorType: AppTextColor.textMute, fontSize: 13),
-            ],
-          ),
-          Flexible(
-            child: valueColor != null
-                ? AppText(
-                    value,
-                    color: valueColor,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                    textAlign: TextAlign.end,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  )
-                : AppText(
-                    value,
-                    colorType: AppTextColor.textInverted,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                    textAlign: TextAlign.end,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-          ),
-        ],
+    return GestureDetector(
+      onTap: canCopyValue ? () {
+        HapticHelpers.vibrate(VibrationType.light);
+        Clipboard.setData(ClipboardData(text: value));
+      } : null,
+      child: AppElevatedCard(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                HugeIcon(
+                  icon: icon,
+                  size: 20,
+                  strokeWidth: 2,
+                  color: LightColors.textTextMute,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                AppText(label, colorType: AppTextColor.textMute, fontSize: 13),
+              ],
+            ),
+            Flexible(
+              child: valueColor != null
+                  ? AppText(
+                      value,
+                      color: valueColor,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                      textAlign: TextAlign.end,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  : AppText(
+                      value,
+                      colorType: AppTextColor.textInverted,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                      textAlign: TextAlign.end,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

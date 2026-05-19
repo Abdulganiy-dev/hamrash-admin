@@ -5,6 +5,7 @@ import 'package:hamrash_admin/api/services/supabase_services/teacher_service.dar
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 import 'package:hamrash_admin/viewModel/teachers_view_model.dart';
+import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
 
 /// Canonical homeroom role values (stored lowercase in DB).
 abstract class HomeroomRole {
@@ -35,12 +36,9 @@ abstract class HomeroomRole {
   }
 }
 
-
 class TeacherDetailViewModel extends BaseViewModel {
-  TeacherDetailViewModel({
-    required TeacherModel initial,
-    this.parent,
-  }) : _teacher = initial;
+  TeacherDetailViewModel({required TeacherModel initial, this.parent})
+    : _teacher = initial;
 
   /// Optional parent list view model — when present, mutations propagate
   /// back so the list stays in sync.
@@ -61,6 +59,9 @@ class TeacherDetailViewModel extends BaseViewModel {
   List<TeacherClassSubject> _assignments = const [];
   List<TeacherClassSubject> get assignments => _assignments;
 
+  TeacherCode? _teacherCode;
+  TeacherCode? get teacherCode => _teacherCode;
+
   bool _saving = false;
   bool get saving => _saving;
 
@@ -74,7 +75,6 @@ class TeacherDetailViewModel extends BaseViewModel {
     final r = _teacher.homeroomRole;
     return r == null ? null : HomeroomRole.display(r);
   }
-
 
   ClassModel? classById(String? id) {
     if (id == null) return null;
@@ -91,7 +91,6 @@ class TeacherDetailViewModel extends BaseViewModel {
     }
     return null;
   }
-
 
   List<MapEntry<ClassModel, List<TeacherClassSubject>>> groupedAssignments() {
     final Map<String, List<TeacherClassSubject>> map = {};
@@ -116,11 +115,25 @@ class TeacherDetailViewModel extends BaseViewModel {
   Future<void> init() async {
     setBusy(true);
     try {
-      _classes = await _classService.fetchClasses();
-      _subjects = await _classService.fetchSubjects();
       final id = _teacher.id;
       if (id != null) {
-        _assignments = await _teacherService.fetchTeacherClassSubjects(id);
+        final results = await Future.wait([
+          _classService.fetchClasses(),
+          _classService.fetchSubjects(),
+          _teacherService.fetchTeacherClassSubjects(id),
+          _teacherService.fetchClaimCode(id),
+        ]);
+        _classes = results[0] as List<ClassModel>;
+        _subjects = results[1] as List<SubjectModel>;
+        _assignments = results[2] as List<TeacherClassSubject>;
+        _teacherCode = results[3] as TeacherCode?;
+      } else {
+        final results = await Future.wait([
+          _classService.fetchClasses(),
+          _classService.fetchSubjects(),
+        ]);
+        _classes = results[0] as List<ClassModel>;
+        _subjects = results[1] as List<SubjectModel>;
       }
     } catch (e, st) {
       await handleError(
@@ -128,9 +141,11 @@ class TeacherDetailViewModel extends BaseViewModel {
         stackTrace: st,
         context: 'TeacherDetailViewModel.init',
         userMessage: 'Could not load teacher details. Please try again.',
+        snappingConfig: const SheetSnappingConfig([0.4]),
       );
     } finally {
       setBusy(false);
+      notifyListeners();
     }
   }
 
@@ -170,10 +185,7 @@ class TeacherDetailViewModel extends BaseViewModel {
 
   // ─── Homeroom mutations ──────────────────────────────────────────────
 
-  Future<bool> setHomeroom({
-    required String classId,
-    required String role,
-  }) {
+  Future<bool> setHomeroom({required String classId, required String role}) {
     return _runSave(() async {
       final id = _teacher.id;
       if (id == null) return false;
@@ -252,7 +264,6 @@ class TeacherDetailViewModel extends BaseViewModel {
       notifyListeners();
       return true;
     } on TeacherAssignmentConflict catch (e, st) {
-      
       await handleError(
         e,
         stackTrace: st,
@@ -266,6 +277,7 @@ class TeacherDetailViewModel extends BaseViewModel {
         stackTrace: st,
         context: 'TeacherDetailViewModel.addTeachingAssignment',
         userMessage: 'Could not assign the subject. Please try again.',
+        snappingConfig: const SheetSnappingConfig([0.4]),
       );
       return false;
     } finally {
@@ -278,11 +290,26 @@ class TeacherDetailViewModel extends BaseViewModel {
   Future<bool> removeTeachingAssignment(String assignmentId) {
     return _runSave(() async {
       await _teacherService.removeClassSubject(assignmentId);
-      _assignments = _assignments
-          .where((a) => a.id != assignmentId)
-          .toList();
+      _assignments = _assignments.where((a) => a.id != assignmentId).toList();
       return true;
     });
+  }
+
+  Future<void> getTeachersCode(String teacherId) async {
+    try {
+      final code = await _teacherService.fetchClaimCode(teacherId);
+      if (code != null) {
+        _teacherCode = code;
+      }
+    } catch (e, st) {
+      await handleError(
+        e,
+        stackTrace: st,
+        context: 'TeacherDetailViewModel.getTeachersCode',
+        userMessage: 'Could not get teacher code. Please try again.',
+        snappingConfig: const SheetSnappingConfig([0.4]),
+      );
+    }
   }
 
   // ─── Internal save helper ────────────────────────────────────────────
@@ -302,6 +329,7 @@ class TeacherDetailViewModel extends BaseViewModel {
         stackTrace: st,
         context: 'TeacherDetailViewModel._runSave',
         userMessage: 'Could not save changes. Please try again.',
+        snappingConfig: const SheetSnappingConfig([0.4]),
       );
       return false;
     } finally {

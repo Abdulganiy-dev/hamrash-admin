@@ -203,7 +203,7 @@ class TeacherService {
   // ──────────────────────── Claim codes ────────────────────────────
 
   /// Returns the claim code row for [teacherId] (admin only).
-  Future<Map<String, dynamic>?> fetchClaimCode(String teacherId) async {
+  Future<TeacherCode?> fetchClaimCode(String teacherId) async {
     final row = await _supabase
         .from('teacher_claim_codes')
         .select('code, used_at, created_at')
@@ -211,7 +211,7 @@ class TeacherService {
         .maybeSingle()
         .timeout(_timeout);
 
-    return row != null ? Map<String, dynamic>.from(row) : null;
+    return row != null ? TeacherCode.fromJson(Map<String, dynamic>.from(row)) : null;
   }
 
   // ──────────────────────────── Helpers ────────────────────────────

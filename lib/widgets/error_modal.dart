@@ -74,12 +74,13 @@ class ErrorModal extends StatelessWidget {
     List<List<dynamic>>? icon,
     Duration? autoDismissDuration,
     VoidCallback? onDismiss,
+    SheetSnappingConfig? snappingConfig,
   }) async {
     HapticHelpers.vibrate(VibrationType.medium);
 
     await Navigator.of(context).push<void>(
       StupidSimpleGlassSheetRoute<void>(
-        snappingConfig: const SheetSnappingConfig([0.45]),
+        snappingConfig: snappingConfig ?? const SheetSnappingConfig([0.45]),
         child: Material(
           type: MaterialType.transparency,
           child: ErrorModal(
