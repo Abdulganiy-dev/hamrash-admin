@@ -9,6 +9,7 @@ import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
+import 'package:hamrash_admin/widgets/cached_network_image_widget.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
 
@@ -136,7 +137,7 @@ class _ClassesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final classes = vm.preflight!.classes;
-    return _SectionShell(
+    return SectionShell(
       icon: HugeIcons.strokeRoundedSchool,
       iconColor: Colors.blueAccent,
       title: 'Classes using this subject',
@@ -244,7 +245,7 @@ class _TeacherAssignmentsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = vm.preflight!.teacherAssignments;
-    return _SectionShell(
+    return SectionShell(
       icon: HugeIcons.strokeRoundedTeacher,
       iconColor: Colors.orange,
       title: 'Teacher assignments',
@@ -269,6 +270,8 @@ class _TeacherAssignmentsSection extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
+                          CachedNetworkImageWidget(imageUrl: r.teacherAvatarUrl ?? '',width: 35,height: 35,borderRadius: 40,),
+                          const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,7 +367,7 @@ class _StudentsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final count = vm.preflight!.enrolledStudentsCount;
-    return _SectionShell(
+    return SectionShell(
       icon: HugeIcons.strokeRoundedStudent,
       iconColor: Colors.deepPurpleAccent,
       title: 'Student enrollments',
@@ -415,10 +418,6 @@ class _StudentsSection extends StatelessWidget {
     await vm.unenrollAllStudents();
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════
-// ALL-CLEAR + FINAL BUTTONS
-// ═══════════════════════════════════════════════════════════════════════
 
 class _AllClearCard extends StatelessWidget {
   @override
@@ -586,8 +585,8 @@ class _DeleteButton extends StatelessWidget {
 // Section shell + dialogs (shared with class delete; small enough to dup)
 // ═══════════════════════════════════════════════════════════════════════
 
-class _SectionShell extends StatelessWidget {
-  const _SectionShell({
+class SectionShell extends StatelessWidget {
+  const SectionShell({
     required this.icon,
     required this.iconColor,
     required this.title,
@@ -608,20 +607,12 @@ class _SectionShell extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: HugeIcon(
-                  icon: icon,
-                  size: 18,
-                  strokeWidth: 1.8,
-                  color: iconColor,
-                ),
+            Center(
+              child: HugeIcon(
+                icon: icon,
+                size: 24,
+                strokeWidth: 2,
+                color: iconColor,
               ),
             ),
             const SizedBox(width: AppSpacing.sm),

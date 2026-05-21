@@ -6,10 +6,12 @@ import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/resources/utils/list_bottom_sheet_util.dart';
 import 'package:hamrash_admin/viewModel/class_delete_resolution_view_model.dart';
+import 'package:hamrash_admin/views/subjects/subject_delete_resolution_view.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
+import 'package:hamrash_admin/widgets/cached_network_image_widget.dart';
 import 'package:hamrash_admin/widgets/haptic_list_tile.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
@@ -179,7 +181,7 @@ class _StudentsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final students = vm.preflight!.students;
-    return _SectionShell(
+    return SectionShell(
       icon: HugeIcons.strokeRoundedStudent,
       iconColor: Colors.blueAccent,
       title: 'Enrolled students',
@@ -187,9 +189,11 @@ class _StudentsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final s in students)
+          AppSurfaceCard(child: Column(
+            children: [
+                for (final s in students)
             Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+              padding: EdgeInsets.only(bottom: students.indexOf(s) == students.length - 1 ? 0 : AppSpacing.sm),
               child: AppElevatedCard(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md,
@@ -197,6 +201,8 @@ class _StudentsSection extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
+                    CachedNetworkImageWidget(imageUrl: s.avatarUrl ?? '',width: 35,height: 35,borderRadius: 40,),
+                    const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,7 +230,11 @@ class _StudentsSection extends StatelessWidget {
                 ),
               ),
             ),
-          const SizedBox(height: AppSpacing.sm),
+          
+            ],
+          )),
+          
+          const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               Expanded(
@@ -329,57 +339,62 @@ class _HomeroomSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final teachers = vm.preflight!.homeroomTeachers;
-    return _SectionShell(
+    return SectionShell(
       icon: HugeIcons.strokeRoundedTeacher,
       iconColor: Colors.orange,
       title: 'Homeroom assignment',
       count: teachers.length,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (final t in teachers)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: AppElevatedCard(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppText(
-                            t.fullName,
-                            colorType: AppTextColor.textInverted,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          AppText(
-                            _roleLabel(t.homeroomRole),
-                            colorType: AppTextColor.textMute,
-                            fontSize: 12,
-                          ),
-                        ],
+      child: AppSurfaceCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final t in teachers)
+              Padding(
+                padding: EdgeInsets.only(bottom: teachers.indexOf(t) == teachers.length - 1 ? 0 : AppSpacing.sm),
+                child: AppElevatedCard(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  child: Row(
+                    children: [
+                      CachedNetworkImageWidget(imageUrl: t.avatarUrl ?? '',width: 35,height: 35,borderRadius: 40,),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppText(
+                              t.fullName,
+                              colorType: AppTextColor.textInverted,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            AppText(
+                              _roleLabel(t.homeroomRole),
+                              colorType: AppTextColor.textMute,
+                              fontSize: 12,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    AppHugeIconButton(
-                      hugeIcon: HugeIcons.strokeRoundedDelete02,
-                      hugeIconStrokeWidth: 2,
-                      hugeIconRasterSize: 18,
-                      foregroundColor: LightColors.errorErrorDefault,
-                      onPressed: () => _confirmClear(context, vm, t),
-                    ),
-                  ],
+                      AppHugeIconButton(
+                        hugeIcon: HugeIcons.strokeRoundedDelete02,
+                        hugeIconStrokeWidth: 2,
+                        hugeIconRasterSize: 18,
+                        foregroundColor: LightColors.errorErrorDefault,
+                        onPressed: () => _confirmClear(context, vm, t),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-        ],
+          
+          ],
+        ),
       ),
     );
   }
@@ -577,82 +592,6 @@ class _DeleteButton extends StatelessWidget {
     if (result == ClassDeleteResolutionResult.deleted) {
       Navigator.of(context).pop(result);
     }
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// SHARED: section shell + dialogs
-// ═══════════════════════════════════════════════════════════════════════
-
-class _SectionShell extends StatelessWidget {
-  const _SectionShell({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.count,
-    required this.child,
-  });
-
-  final List<List<dynamic>> icon;
-  final Color iconColor;
-  final String title;
-  final int count;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: HugeIcon(
-                  icon: icon,
-                  size: 18,
-                  strokeWidth: 1.8,
-                  color: iconColor,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: AppText(
-                title,
-                colorType: AppTextColor.textInverted,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: 2,
-              ),
-              decoration: BoxDecoration(
-                color: LightColors.errorErrorDefault.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: AppText(
-                count.toString(),
-                color: LightColors.errorErrorDefault,
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        child,
-      ],
-    );
   }
 }
 

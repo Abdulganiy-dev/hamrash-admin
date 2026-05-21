@@ -80,6 +80,7 @@ class SubjectDeleteTeacherAssignment {
     required this.teacherFirstName,
     required this.teacherLastName,
     required this.classId,
+    required this.teacherAvatarUrl,
     required this.className,
     this.classSection,
   });
@@ -92,6 +93,7 @@ class SubjectDeleteTeacherAssignment {
   final String classId;
   final String className;
   final String? classSection;
+  final String? teacherAvatarUrl;
 
   String get teacherFullName => '$teacherFirstName $teacherLastName';
   String get classDisplayName =>
@@ -103,9 +105,11 @@ class SubjectDeleteTeacherAssignment {
       teacherId: json['teacher_id'] as String,
       teacherFirstName: json['teacher_first_name'] as String,
       teacherLastName: json['teacher_last_name'] as String,
+      teacherAvatarUrl: json['teacher_avatar_url'] as String?,
       classId: json['class_id'] as String,
       className: json['class_name'] as String,
       classSection: json['class_section'] as String?,
+
     );
   }
 }
