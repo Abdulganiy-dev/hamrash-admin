@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:hamrash_admin/api/models/supabase_models/class_model.dart';
 import 'package:hamrash_admin/api/models/supabase_models/student_model.dart';
 import 'package:hamrash_admin/database/family_realm_service.dart';
-import 'package:hamrash_admin/helpers/haptic_helper.dart';
 import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/resources/utils/list_bottom_sheet_util.dart';
-import 'package:hamrash_admin/resources/utils/view_util.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/viewModel/student_detail_view_model.dart';
 import 'package:hamrash_admin/viewModel/students_view_model.dart';
-import 'package:hamrash_admin/views/staff/teacher_detail_view.dart';
 import 'package:hamrash_admin/views/students/create_parent_view.dart';
 import 'package:hamrash_admin/views/students/create_student_view.dart';
 import 'package:hamrash_admin/views/students/widgets/parent_avatar.dart';
@@ -23,6 +19,12 @@ import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/widgets/haptic_list_tile.dart';
+import 'package:hamrash_admin/widgets/person_detail/detail_dialogs.dart';
+import 'package:hamrash_admin/widgets/person_detail/detail_empty_hint.dart';
+import 'package:hamrash_admin/widgets/person_detail/detail_helpers.dart';
+import 'package:hamrash_admin/widgets/person_detail/detail_info_card.dart';
+import 'package:hamrash_admin/widgets/person_detail/detail_profile_header.dart';
+import 'package:hamrash_admin/widgets/person_detail/detail_section_label.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
@@ -94,21 +96,25 @@ class _StudentDetailViewState extends State<StudentDetailView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: ScaffoldInsets.of(ctx).bodyTopInset + 15),
-                  _AvatarSection(student: s),
+                  DetailProfileHeader(
+                    avatar: StudentAvatar(student: s, size: 100),
+                    name: s.fullName,
+                    subtitle: s.admissionNumber,
+                  ),
                   const SizedBox(height: AppSpacing.xl),
-                  if (_hasContact(s)) ...[
-                    const _SectionLabel(label: 'Contact'),
+                  if (hasContactInfo(email: s.email, phone: s.phone)) ...[
+                    const DetailSectionLabel(label: 'Contact'),
                     const SizedBox(height: AppSpacing.sm),
-                    _contactCard(s),
+                    contactInfoCard(email: s.email, phone: s.phone),
                     const SizedBox(height: AppSpacing.lg),
                   ],
                   if (_hasPersonal(s)) ...[
-                    const _SectionLabel(label: 'Personal'),
+                    const DetailSectionLabel(label: 'Personal'),
                     const SizedBox(height: AppSpacing.sm),
                     _personalCard(s),
                     const SizedBox(height: AppSpacing.lg),
                   ],
-                  const _SectionLabel(label: 'Academic'),
+                  const DetailSectionLabel(label: 'Academic'),
                   const SizedBox(height: AppSpacing.sm),
                   _academicCard(m),
                   const SizedBox(height: AppSpacing.lg),
@@ -116,21 +122,9 @@ class _StudentDetailViewState extends State<StudentDetailView> {
                   const SizedBox(height: AppSpacing.lg),
                   _ParentsSection(vm: m),
                   const SizedBox(height: AppSpacing.lg),
-                  const _SectionLabel(label: 'Status'),
+                  const DetailSectionLabel(label: 'Status'),
                   const SizedBox(height: AppSpacing.sm),
-                  AppSurfaceCard(
-                    padding: const EdgeInsets.all(5),
-                    child: InfoRow(
-                      icon: s.isActive
-                          ? HugeIcons.strokeRoundedCheckmarkCircle01
-                          : HugeIcons.strokeRoundedCancelCircle,
-                      label: 'Account',
-                      value: s.isActive ? 'Active' : 'Inactive',
-                      valueColor: s.isActive
-                          ? Colors.green
-                          : LightColors.errorErrorDefault,
-                    ),
-                  ),
+                  accountStatusCard(isActive: s.isActive),
                   const SizedBox(height: AppSpacing.xxl),
                 ],
               ),
@@ -141,69 +135,34 @@ class _StudentDetailViewState extends State<StudentDetailView> {
     );
   }
 
-  // ─── Static cards (read-only summaries) ──────────────────────────────
-
-  Widget _contactCard(StudentModel s) {
-    return AppSurfaceCard(
-      padding: const EdgeInsets.all(5),
-      child: Column(
-        children: [
-          if (s.email != null)
-            InfoRow(
-              icon: HugeIcons.strokeRoundedMail01,
-              label: 'Email',
-              value: s.email!,
-            ),
-          if (s.email != null && s.phone != null)
-            const SizedBox(height: AppSpacing.sm),
-          if (s.phone != null)
-            InfoRow(
-              icon: HugeIcons.strokeRoundedSmartPhone01,
-              label: 'Phone',
-              value: s.phone!,
-            ),
-        ],
-      ),
-    );
-  }
-
   Widget _personalCard(StudentModel s) {
-    return AppSurfaceCard(
-      padding: const EdgeInsets.all(5),
-      child: Column(
-        children: [
-          if (s.gender != null)
-            InfoRow(
-              icon: HugeIcons.strokeRoundedUser,
-              label: 'Gender',
-              value: _capitalize(s.gender!),
-            ),
-          if (s.gender != null && s.dateOfBirth != null)
-            const SizedBox(height: AppSpacing.sm),
-          if (s.dateOfBirth != null)
-            InfoRow(
-              icon: HugeIcons.strokeRoundedCalendar03,
-              label: 'Date of birth',
-              value: _formatDate(s.dateOfBirth!),
-            ),
-          if (s.dateOfBirth != null && s.state != null)
-            const SizedBox(height: AppSpacing.sm),
-          if (s.state != null)
-            InfoRow(
-              icon: HugeIcons.strokeRoundedLocation01,
-              label: 'State',
-              value: s.state!,
-            ),
-          if (s.state != null && s.address != null)
-            const SizedBox(height: AppSpacing.sm),
-          if (s.address != null)
-            InfoRow(
-              icon: HugeIcons.strokeRoundedHome01,
-              label: 'Address',
-              value: s.address!,
-            ),
-        ],
-      ),
+    return DetailInfoCard(
+      entries: [
+        if (s.gender != null)
+          DetailInfoEntry(
+            icon: HugeIcons.strokeRoundedUser,
+            label: 'Gender',
+            value: detailCapitalize(s.gender!),
+          ),
+        if (s.dateOfBirth != null)
+          DetailInfoEntry(
+            icon: HugeIcons.strokeRoundedCalendar03,
+            label: 'Date of birth',
+            value: detailFormatDate(s.dateOfBirth!),
+          ),
+        if (s.state != null)
+          DetailInfoEntry(
+            icon: HugeIcons.strokeRoundedLocation01,
+            label: 'State',
+            value: s.state!,
+          ),
+        if (s.address != null)
+          DetailInfoEntry(
+            icon: HugeIcons.strokeRoundedHome01,
+            label: 'Address',
+            value: s.address!,
+          ),
+      ],
     );
   }
 
@@ -211,66 +170,46 @@ class _StudentDetailViewState extends State<StudentDetailView> {
     final s = m.student;
     final classDisplay = m.currentClass?.displayName ?? '—';
     final code = m.claimCode;
-    return AppSurfaceCard(
-      padding: const EdgeInsets.all(5),
-      child: Column(
-        children: [
-          InfoRow(
-            icon: HugeIcons.strokeRoundedSchool,
-            label: 'Class',
-            value: classDisplay,
-            valueColor: m.currentClass == null
-                ? LightColors.textTextMute
+    return DetailInfoCard(
+      entries: [
+        DetailInfoEntry(
+          icon: HugeIcons.strokeRoundedSchool,
+          label: 'Class',
+          value: classDisplay,
+          valueColor:
+              m.currentClass == null ? LightColors.textTextMute : null,
+        ),
+        if (s.admissionNumber != null)
+          DetailInfoEntry(
+            icon: HugeIcons.strokeRoundedIdentityCard,
+            label: 'Admission #',
+            value: s.admissionNumber!,
+          ),
+        if (s.admissionDate != null)
+          DetailInfoEntry(
+            icon: HugeIcons.strokeRoundedCalendar03,
+            label: 'Admission date',
+            value: detailFormatDate(s.admissionDate!),
+          ),
+        if (code != null)
+          DetailInfoEntry(
+            icon: HugeIcons.strokeRoundedQrCode,
+            label: 'Claim code',
+            value: code.code,
+            canCopyValue: true,
+            valueColor: code.usedAt != null
+                ? LightColors.successSuccessDefault
                 : null,
           ),
-          if (s.admissionNumber != null) ...[
-            const SizedBox(height: AppSpacing.sm),
-            InfoRow(
-              icon: HugeIcons.strokeRoundedIdentityCard,
-              label: 'Admission #',
-              value: s.admissionNumber!,
-            ),
-          ],
-          if (s.admissionDate != null) ...[
-            const SizedBox(height: AppSpacing.sm),
-            InfoRow(
-              icon: HugeIcons.strokeRoundedCalendar03,
-              label: 'Admission date',
-              value: _formatDate(s.admissionDate!),
-            ),
-          ],
-          if (code != null) ...[
-            const SizedBox(height: AppSpacing.sm),
-            InfoRow(
-              icon: HugeIcons.strokeRoundedQrCode,
-              label: 'Claim code',
-              value: code.code,
-              canCopyValue: true,
-              valueColor: code.usedAt != null
-                  ? LightColors.successSuccessDefault
-                  : null,
-            ),
-          ],
-        ],
-      ),
+      ],
     );
   }
 
-  bool _hasContact(StudentModel s) => s.email != null || s.phone != null;
   bool _hasPersonal(StudentModel s) =>
       s.gender != null ||
       s.state != null ||
       s.address != null ||
       s.dateOfBirth != null;
-
-  String _capitalize(String s) =>
-      s.isNotEmpty ? '${s[0].toUpperCase()}${s.substring(1)}' : s;
-
-  String _formatDate(DateTime d) {
-    final m = d.month.toString().padLeft(2, '0');
-    final day = d.day.toString().padLeft(2, '0');
-    return '${d.year}-$m-$day';
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -291,7 +230,7 @@ class _SubjectsSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const _SectionLabel(label: 'Subjects'),
+            const DetailSectionLabel(label: 'Subjects'),
             const Spacer(),
             AppHugeIconButton(
               hugeIcon: HugeIcons.strokeRoundedAdd01,
@@ -308,7 +247,7 @@ class _SubjectsSection extends StatelessWidget {
           curve: Curves.easeOutCubic,
           alignment: Alignment.topCenter,
           child: !hasClass
-              ? _EmptyHint(
+              ? DetailEmptyHint(
                   key: const ValueKey('no-class'),
                   icon: HugeIcons.strokeRoundedSchool,
                   iconColor: Colors.blueAccent,
@@ -316,7 +255,7 @@ class _SubjectsSection extends StatelessWidget {
                   subtitle: 'Tap the pencil to assign a class',
                 )
               : enrolled.isEmpty
-                  ? _EmptyHint(
+                  ? DetailEmptyHint(
                       key: const ValueKey('no-subjects'),
                       icon: HugeIcons.strokeRoundedBookOpen01,
                       iconColor: Colors.deepPurpleAccent,
@@ -337,7 +276,7 @@ class _SubjectsSection extends StatelessWidget {
     final available = await vm.availableSubjectsForClass();
     if (!context.mounted) return;
     if (available.isEmpty) {
-      await _infoDialog(
+      await detailInfoDialog(
         context,
         title: 'No subjects available',
         message:
@@ -369,7 +308,7 @@ class _SubjectsSection extends StatelessWidget {
   }
 
   Future<void> _confirmRemove(BuildContext context, String enrollmentId) async {
-    final confirmed = await _confirmDialog(
+    final confirmed = await detailConfirmDialog(
       context,
       title: 'Remove subject?',
       message: 'Drop this subject from the student\'s enrollment.',
@@ -472,7 +411,7 @@ class _ParentsSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const _SectionLabel(label: 'Parents & guardians'),
+            const DetailSectionLabel(label: 'Parents & guardians'),
             const Spacer(),
             AppHugeIconButton(
               hugeIcon: HugeIcons.strokeRoundedAdd01,
@@ -489,7 +428,7 @@ class _ParentsSection extends StatelessWidget {
           curve: Curves.easeOutCubic,
           alignment: Alignment.topCenter,
           child: vm.parents.isEmpty
-              ? _EmptyHint(
+              ? DetailEmptyHint(
                   key: const ValueKey('no-parents'),
                   icon: HugeIcons.strokeRoundedUserGroup,
                   iconColor: Colors.teal,
@@ -569,7 +508,7 @@ class _ParentsSection extends StatelessWidget {
   Future<ParentModel?> _pickExistingParent(BuildContext context) async {
     final candidates = vm.unlinkedParents();
     if (candidates.isEmpty) {
-      await _infoDialog(
+      await detailInfoDialog(
         context,
         title: 'No parents to link',
         message:
@@ -694,7 +633,7 @@ class _ParentsSection extends StatelessWidget {
         await vm.updateLink(linkId: rel.link.id, isPrimary: true);
       case _ParentAction.unlink:
         if (!context.mounted) return;
-        final confirmed = await _confirmDialog(
+        final confirmed = await detailConfirmDialog(
           context,
           title: 'Remove parent?',
           message:
@@ -846,173 +785,3 @@ enum _ParentAction {
   final bool isDestructive;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// Shared sub-widgets
-// ═══════════════════════════════════════════════════════════════════════
-
-class _AvatarSection extends StatelessWidget {
-  const _AvatarSection({required this.student});
-
-  final StudentModel student;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        children: [
-          StudentAvatar(student: student, size: 100),
-          const SizedBox(height: AppSpacing.md),
-          AppText(
-            student.fullName,
-            fontWeight: FontWeight.w700,
-            fontSize: 22,
-            colorType: AppTextColor.textInverted,
-            textAlign: TextAlign.center,
-          ),
-          if (student.admissionNumber != null) ...[
-            const SizedBox(height: AppSpacing.xs),
-            AppText(
-              student.admissionNumber!,
-              colorType: AppTextColor.textMute,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({required this.label});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppText(
-      label,
-      colorType: AppTextColor.textInverted,
-      fontWeight: FontWeight.w700,
-      fontSize: 17,
-    );
-  }
-}
-class _EmptyHint extends StatelessWidget {
-  const _EmptyHint({
-    super.key,
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final List<List<dynamic>> icon;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppSurfaceCard(
-      padding: const EdgeInsets.all(5),
-      child: AppElevatedCard(
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: HugeIcon(
-                  icon: icon,
-                  size: 22,
-                  strokeWidth: 1.8,
-                  color: iconColor,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppText(
-                    title,
-                    colorType: AppTextColor.textInverted,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                  const SizedBox(height: 2),
-                  AppText(
-                    subtitle,
-                    colorType: AppTextColor.textMute,
-                    fontSize: 12,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// Dialog helpers (shared by both sections)
-// ═══════════════════════════════════════════════════════════════════════
-
-Future<bool> _confirmDialog(
-  BuildContext context, {
-  required String title,
-  required String message,
-  required String confirmLabel,
-  bool destructive = false,
-}) async {
-  final result = await showAdaptiveDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog.adaptive(
-      title: Text(title),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          style: TextButton.styleFrom(
-            foregroundColor:
-                destructive ? LightColors.errorErrorDefault : null,
-          ),
-          child: Text(confirmLabel),
-        ),
-      ],
-    ),
-  );
-  return result ?? false;
-}
-
-Future<void> _infoDialog(
-  BuildContext context, {
-  required String title,
-  required String message,
-}) {
-  return showAdaptiveDialog<void>(
-    context: context,
-    builder: (ctx) => AlertDialog.adaptive(
-      title: Text(title),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('OK'),
-        ),
-      ],
-    ),
-  );
-}

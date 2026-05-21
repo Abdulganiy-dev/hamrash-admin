@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:hamrash_admin/api/models/supabase_models/class_model.dart';
 import 'package:hamrash_admin/api/models/supabase_models/teacher_model.dart';
-import 'package:hamrash_admin/helpers/haptic_helper.dart';
 import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/resources/utils/list_bottom_sheet_util.dart';
-import 'package:hamrash_admin/resources/utils/view_util.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/viewModel/teacher_detail_view_model.dart';
 import 'package:hamrash_admin/viewModel/teachers_view_model.dart';
@@ -19,6 +16,12 @@ import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/widgets/haptic_list_tile.dart';
+import 'package:hamrash_admin/widgets/person_detail/detail_dialogs.dart';
+import 'package:hamrash_admin/widgets/person_detail/detail_empty_hint.dart';
+import 'package:hamrash_admin/widgets/person_detail/detail_helpers.dart';
+import 'package:hamrash_admin/widgets/person_detail/detail_info_card.dart';
+import 'package:hamrash_admin/widgets/person_detail/detail_profile_header.dart';
+import 'package:hamrash_admin/widgets/person_detail/detail_section_label.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
@@ -89,39 +92,31 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: ScaffoldInsets.of(ctx).bodyTopInset + 15),
-                  _AvatarSection(teacher: teacher),
+                  DetailProfileHeader(
+                    avatar: TeacherAvatar(teacher: teacher, size: 100),
+                    name: teacher.fullName,
+                    subtitle: teacher.email,
+                  ),
                   const SizedBox(height: AppSpacing.xl),
-                  if (_hasContact(teacher)) ...[
-                    const _SectionLabel(label: 'Contact'),
+                  if (hasContactInfo(email: teacher.email, phone: teacher.phone)) ...[
+                    const DetailSectionLabel(label: 'Contact'),
                     const SizedBox(height: AppSpacing.sm),
-                    _contactCard(teacher),
+                    contactInfoCard(email: teacher.email, phone: teacher.phone),
                     const SizedBox(height: AppSpacing.lg),
                   ],
-                  if (_hasPersonal(teacher)) ...[
-                    const _SectionLabel(label: 'Personal'),
+                  if (_hasPersonal(teacher, m)) ...[
+                    const DetailSectionLabel(label: 'Personal'),
                     const SizedBox(height: AppSpacing.sm),
-                    _personalCard(teacher),
+                    _personalCard(teacher, m),
                     const SizedBox(height: AppSpacing.lg),
                   ],
                   _HomeroomSection(vm: m),
                   const SizedBox(height: AppSpacing.lg),
                   _TeachesSection(vm: m),
                   const SizedBox(height: AppSpacing.lg),
-                  const _SectionLabel(label: 'Status'),
+                  const DetailSectionLabel(label: 'Status'),
                   const SizedBox(height: AppSpacing.sm),
-                  AppSurfaceCard(
-                    padding: const EdgeInsets.all(5),
-                    child: InfoRow(
-                      icon: teacher.isActive
-                          ? HugeIcons.strokeRoundedCheckmarkCircle01
-                          : HugeIcons.strokeRoundedCancelCircle,
-                      label: 'Account',
-                      value: teacher.isActive ? 'Active' : 'Inactive',
-                      valueColor: teacher.isActive
-                          ? Colors.green
-                          : LightColors.errorErrorDefault,
-                    ),
-                  ),
+                  accountStatusCard(isActive: teacher.isActive),
                   const SizedBox(height: AppSpacing.xxl),
                 ],
               ),
@@ -132,80 +127,47 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
     );
   }
 
-  // ─── Contact + Personal cards (unchanged behaviour) ────────────────
-
-  Widget _contactCard(TeacherModel t) {
-    return AppSurfaceCard(
-      padding: const EdgeInsets.all(5),
-      child: Column(
-        children: [
-          if (t.email != null)
-            InfoRow(
-              icon: HugeIcons.strokeRoundedMail01,
-              label: 'Email',
-              value: t.email!,
-            ),
-          if (t.email != null && t.phone != null)
-            const SizedBox(height: AppSpacing.sm),
-          if (t.phone != null)
-            InfoRow(
-              icon: HugeIcons.strokeRoundedSmartPhone01,
-              label: 'Phone',
-              value: t.phone!,
-            ),
-        ],
-      ),
+  Widget _personalCard(TeacherModel t, TeacherDetailViewModel m) {
+    final code = m.teacherCode;
+    return DetailInfoCard(
+      entries: [
+        if (t.gender != null)
+          DetailInfoEntry(
+            icon: HugeIcons.strokeRoundedUser,
+            label: 'Gender',
+            value: detailCapitalize(t.gender!),
+          ),
+        if (t.state != null)
+          DetailInfoEntry(
+            icon: HugeIcons.strokeRoundedLocation01,
+            label: 'State',
+            value: t.state!,
+          ),
+        if (t.address != null)
+          DetailInfoEntry(
+            icon: HugeIcons.strokeRoundedHome01,
+            label: 'Address',
+            value: t.address!,
+          ),
+        if (code != null)
+          DetailInfoEntry(
+            icon: HugeIcons.strokeRoundedQrCode,
+            label: 'Claim Code',
+            value: code.code,
+            canCopyValue: true,
+            valueColor: code.usedAt != null
+                ? LightColors.successSuccessDefault
+                : null,
+          ),
+      ],
     );
   }
 
-  Widget _personalCard(TeacherModel t) {
-    return AppSurfaceCard(
-      padding: const EdgeInsets.all(5),
-      child: Column(
-        children: [
-          if (t.gender != null)
-            InfoRow(
-              icon: HugeIcons.strokeRoundedUser,
-              label: 'Gender',
-              value: _capitalize(t.gender!),
-            ),
-          if (t.gender != null && t.state != null)
-            const SizedBox(height: AppSpacing.sm),
-          if (t.state != null)
-            InfoRow(
-              icon: HugeIcons.strokeRoundedLocation01,
-              label: 'State',
-              value: t.state!,
-            ),
-          if (t.state != null && t.address != null)
-            const SizedBox(height: AppSpacing.sm),
-          if (t.address != null)
-            InfoRow(
-              icon: HugeIcons.strokeRoundedHome01,
-              label: 'Address',
-              value: t.address!,
-            ),
-          if (viewModel.teacherCode != null)
-            const SizedBox(height: AppSpacing.sm),
-          if (viewModel.teacherCode != null)
-            InfoRow(
-              icon: HugeIcons.strokeRoundedQrCode,
-              label: 'Claim Code',
-              value: viewModel.teacherCode!.code,
-              valueColor: viewModel.teacherCode!.usedAt != null ? LightColors.successSuccessDefault : null,
-              canCopyValue: true,
-            ),
-        ],
-      ),
-    );
-  }
-
-  bool _hasContact(TeacherModel t) => t.email != null || t.phone != null;
-  bool _hasPersonal(TeacherModel t) =>
-      t.gender != null || t.state != null || t.address != null;
-
-  String _capitalize(String s) =>
-      s.isNotEmpty ? '${s[0].toUpperCase()}${s.substring(1)}' : s;
+  bool _hasPersonal(TeacherModel t, TeacherDetailViewModel m) =>
+      t.gender != null ||
+      t.state != null ||
+      t.address != null ||
+      m.teacherCode != null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -222,7 +184,7 @@ class _HomeroomSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionLabel(label: 'Classroom'),
+        const DetailSectionLabel(label: 'Classroom'),
         const SizedBox(height: AppSpacing.sm),
         AnimatedSize(
           duration: const Duration(milliseconds: 220),
@@ -234,9 +196,15 @@ class _HomeroomSection extends StatelessWidget {
                   vm: vm,
                   onTap: () => _showOptions(context),
                 )
-              : _EmptyHomeroomCard(
+              : DetailEmptyHint(
                   key: const ValueKey('empty'),
+                  icon: HugeIcons.strokeRoundedSchool,
+                  iconColor: Colors.blueAccent,
+                  title: 'Not a classroom teacher',
+                  subtitle: 'Tap to assign a class',
                   onTap: () => _startAssign(context),
+                  showTrailingArrow: true,
+                  iconInBox: false,
                 ),
         ),
       ],
@@ -305,7 +273,7 @@ class _HomeroomSection extends StatelessWidget {
         await vm.setHomeroomRole(role);
       case _HomeroomAction.remove:
         if (!context.mounted) return;
-        final confirmed = await _confirmDialog(
+        final confirmed = await detailConfirmDialog(
           context,
           title: 'Remove homeroom?',
           message:
@@ -315,63 +283,6 @@ class _HomeroomSection extends StatelessWidget {
         );
         if (confirmed) await vm.clearHomeroom();
     }
-  }
-}
-
-class _EmptyHomeroomCard extends StatelessWidget {
-  const _EmptyHomeroomCard({super.key, required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AppSurfaceCard(
-        padding: const EdgeInsets.all(5),
-        child: AppElevatedCard(
-          child: Row(
-            children: [
-              const Center(
-                child: HugeIcon(
-                  icon: HugeIcons.strokeRoundedSchool,
-                  size: 20,
-                  strokeWidth: 2,
-                  color: Colors.blueAccent,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppText(
-                      'Not a classroom teacher',
-                      colorType: AppTextColor.textInverted,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                    const SizedBox(height: 2),
-                    AppText(
-                      'Tap to assign a class',
-                      colorType: AppTextColor.textMute,
-                      fontSize: 12,
-                    ),
-                  ],
-                ),
-              ),
-              const HugeIcon(
-                icon: HugeIcons.strokeRoundedArrowRight01,
-                size: 20,
-                strokeWidth: 2,
-                color: LightColors.textTextMute,
-              ),
-            ],
-          ),
-        ),
-      ),
-    ).hapticFeedback();
   }
 }
 
@@ -481,7 +392,7 @@ class _TeachesSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const _SectionLabel(label: 'Teaches'),
+            const DetailSectionLabel(label: 'Teaches'),
             const Spacer(),
             AppHugeIconButton(
               hugeIcon: HugeIcons.strokeRoundedAdd01,
@@ -498,9 +409,14 @@ class _TeachesSection extends StatelessWidget {
           curve: Curves.easeOutCubic,
           alignment: Alignment.topCenter,
           child: groups.isEmpty
-              ? _EmptyTeachesCard(
+              ? DetailEmptyHint(
                   key: const ValueKey('empty'),
+                  icon: HugeIcons.strokeRoundedBookOpen01,
+                  iconColor: Colors.deepPurpleAccent,
+                  title: 'No subjects yet',
+                  subtitle: 'Tap + to add the first subject',
                   onTap: () => _addAssignment(context),
+                  showTrailingArrow: true,
                 )
               : _GroupedAssignmentsCard(
                   key: const ValueKey('list'),
@@ -519,7 +435,7 @@ class _TeachesSection extends StatelessWidget {
     final available = await vm.availableSubjectsForClass(cls.id!);
     if (!context.mounted) return;
     if (available.isEmpty) {
-      await _infoDialog(
+      await detailInfoDialog(
         context,
         title: 'No subjects available',
         message:
@@ -541,7 +457,7 @@ class _TeachesSection extends StatelessWidget {
   ) async {
     final subject = vm.subjectById(assignment.subjectId)?.name ?? 'this subject';
     final cls = vm.classById(assignment.classId)?.displayName ?? 'this class';
-    final confirmed = await _confirmDialog(
+    final confirmed = await detailConfirmDialog(
       context,
       title: 'Remove subject?',
       message: 'Stop teaching $subject in $cls?',
@@ -549,71 +465,6 @@ class _TeachesSection extends StatelessWidget {
       destructive: true,
     );
     if (confirmed) await vm.removeTeachingAssignment(assignment.id);
-  }
-}
-
-class _EmptyTeachesCard extends StatelessWidget {
-  const _EmptyTeachesCard({super.key, required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AppSurfaceCard(
-        padding: const EdgeInsets.all(5),
-        child: AppElevatedCard(
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.deepPurpleAccent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Center(
-                  child: HugeIcon(
-                    icon: HugeIcons.strokeRoundedBookOpen01,
-                    size: 22,
-                    strokeWidth: 1.8,
-                    color: Colors.deepPurpleAccent,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppText(
-                      'No subjects yet',
-                      colorType: AppTextColor.textInverted,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                    const SizedBox(height: 2),
-                    AppText(
-                      'Tap + to add the first subject',
-                      colorType: AppTextColor.textMute,
-                      fontSize: 12,
-                    ),
-                  ],
-                ),
-              ),
-              const HugeIcon(
-                icon: HugeIcons.strokeRoundedArrowRight01,
-                size: 18,
-                strokeWidth: 1.8,
-                color: LightColors.textTextMute,
-              ),
-            ],
-          ),
-        ),
-      ),
-    ).hapticFeedback();
   }
 }
 
@@ -736,27 +587,12 @@ class _AssignmentRow extends StatelessWidget {
   }
 }
 
-class _GroupSeparator extends StatelessWidget {
-  const _GroupSeparator();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Divider(
-        height: 1,
-        color: LightColors.strokeColourStrokeMild.withValues(alpha: 0.3),
-      ),
-    );
-  }
-}
-
 Future<ClassModel?> _pickClass(
   BuildContext context,
   TeacherDetailViewModel vm,
 ) {
   if (vm.classes.isEmpty) {
-    return _infoDialog(
+    return detailInfoDialog(
       context,
       title: 'No classes available',
       message: 'Create a class first before making assignments.',
@@ -838,170 +674,3 @@ Future<SubjectModel?> _pickSubject(
   );
 }
 
-Future<bool> _confirmDialog(
-  BuildContext context, {
-  required String title,
-  required String message,
-  required String confirmLabel,
-  bool destructive = false,
-}) async {
-  final result = await showAdaptiveDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog.adaptive(
-      title: Text(title),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          style: TextButton.styleFrom(
-            foregroundColor:
-                destructive ? LightColors.errorErrorDefault : null,
-          ),
-          child: Text(confirmLabel),
-        ),
-      ],
-    ),
-  );
-  return result ?? false;
-}
-
-Future<void> _infoDialog(
-  BuildContext context, {
-  required String title,
-  required String message,
-}) {
-  return showAdaptiveDialog<void>(
-    context: context,
-    builder: (ctx) => AlertDialog.adaptive(
-      title: Text(title),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('OK'),
-        ),
-      ],
-    ),
-  );
-}
-
-class _AvatarSection extends StatelessWidget {
-  const _AvatarSection({required this.teacher});
-
-  final TeacherModel teacher;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        children: [
-          TeacherAvatar(teacher: teacher, size: 100),
-          const SizedBox(height: AppSpacing.md),
-          AppText(
-            teacher.fullName,
-            fontWeight: FontWeight.w700,
-            fontSize: 22,
-            colorType: AppTextColor.textInverted,
-            textAlign: TextAlign.center,
-          ),
-          if (teacher.email != null) ...[
-            const SizedBox(height: AppSpacing.xs),
-            AppText(
-              teacher.email!,
-              colorType: AppTextColor.textMute,
-              fontSize: 14,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppText(
-      label,
-      colorType: AppTextColor.textInverted,
-      fontWeight: FontWeight.w700,
-      fontSize: 17,
-    );
-  }
-}
-
-class InfoRow extends StatelessWidget {
-  const InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.valueColor,
-    this.canCopyValue = false,
-  });
-
-  final List<List<dynamic>> icon;
-  final String label;
-  final String value;
-  final Color? valueColor;
-  final bool canCopyValue;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: canCopyValue ? () {
-        HapticHelpers.vibrate(VibrationType.light);
-        Clipboard.setData(ClipboardData(text: value));
-        ViewUtil.showSuccessSnackBar('Copied to clipboard');
-      } : null,
-      child: AppElevatedCard(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                HugeIcon(
-                  icon: icon,
-                  size: 20,
-                  strokeWidth: 2,
-                  color: LightColors.textTextMute,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                AppText(label, colorType: AppTextColor.textMute, fontSize: 13),
-              ],
-            ),
-            Flexible(
-              child: valueColor != null
-                  ? AppText(
-                      value,
-                      color: valueColor,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                      textAlign: TextAlign.end,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                  : AppText(
-                      value,
-                      colorType: AppTextColor.textInverted,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                      textAlign: TextAlign.end,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
