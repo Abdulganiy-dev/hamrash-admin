@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../api/models/supabase_models/class_delete_preflight.dart';
 import '../../../api/models/supabase_models/class_model.dart';
 import '../../../api/models/supabase_models/section_model.dart';
 import '../../../database/class_realm_service.dart';
@@ -89,6 +90,68 @@ class ClassService {
   Future<void> deleteClass(String id) async {
     await _supabase.from('classes').delete().eq('id', id).timeout(_timeout);
     await _classRealm.deleteClass(id);
+  }
+
+  // ─────────────── Class delete: preflight + helpers ───────────────
+
+  /// Returns a snapshot of everything that will block (or be auto-removed
+  /// by) deleting class [id]. Use this to drive the resolution UI before
+  /// attempting the actual delete.
+  Future<ClassDeletePreflight> preflightClassDelete(String id) async {
+    final response = await _supabase
+        .rpc('preflight_class_delete', params: {'p_class_id': id})
+        .timeout(_timeout);
+    return ClassDeletePreflight.fromJson(
+      Map<String, dynamic>.from(response as Map),
+    );
+  }
+
+  /// Bulk-move a set of students into [newClassId]. The
+  /// `students_purge_subjects_on_class_change` DB trigger clears their old
+  /// subject enrollments automatically.
+  Future<void> moveStudentsToClass({
+    required List<String> studentIds,
+    required String newClassId,
+  }) async {
+    if (studentIds.isEmpty) return;
+    await _supabase
+        .from('students')
+        .update({
+          'class_id': newClassId,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .inFilter('id', studentIds)
+        .timeout(_timeout);
+  }
+
+  /// Bulk-unassign students from their class (sets `class_id = null`).
+  Future<void> unassignStudentsFromClass(List<String> studentIds) async {
+    if (studentIds.isEmpty) return;
+    await _supabase
+        .from('students')
+        .update({
+          'class_id': null,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .inFilter('id', studentIds)
+        .timeout(_timeout);
+  }
+
+  /// Soft-delete: mark a class inactive without removing dependencies.
+  /// Recommended over hard delete for classes with history.
+  Future<ClassModel> deactivateClass(String id) async {
+    final updated = await _supabase
+        .from('classes')
+        .update({
+          'is_active': false,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+    final model = ClassModel.fromJson(Map<String, dynamic>.from(updated));
+    await _classRealm.saveClass(model);
+    return model;
   }
 
   // ──────────────────────────── Sections ───────────────────────────

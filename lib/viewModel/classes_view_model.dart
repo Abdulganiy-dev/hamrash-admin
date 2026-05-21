@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/api/models/supabase_models/class_delete_preflight.dart';
 import 'package:hamrash_admin/api/models/supabase_models/class_model.dart';
 import 'package:hamrash_admin/api/models/supabase_models/section_model.dart';
 import 'package:hamrash_admin/api/services/supabase_services/class_service.dart';
@@ -206,6 +207,25 @@ class ClassesViewModel extends BaseViewModel {
       return await _classService.classHasSubjects(classId);
     } catch (_) {
       return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /// One-shot dependency snapshot for the delete-resolution flow.
+  /// Returns null on failure (error already handled).
+  Future<ClassDeletePreflight?> preflightDelete(ClassModel cls) async {
+    setBusy(true);
+    try {
+      return await _classService.preflightClassDelete(cls.id!);
+    } catch (e, st) {
+      await handleError(
+        e,
+        stackTrace: st,
+        context: 'ClassesViewModel.preflightDelete',
+        userMessage: 'Could not check dependencies. Please try again.',
+      );
+      return null;
     } finally {
       setBusy(false);
     }

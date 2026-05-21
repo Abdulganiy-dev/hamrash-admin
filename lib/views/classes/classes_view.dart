@@ -5,8 +5,11 @@ import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
+import 'package:hamrash_admin/services/navigation_service.dart';
+import 'package:hamrash_admin/viewModel/class_delete_resolution_view_model.dart';
 import 'package:hamrash_admin/viewModel/classes_view_model.dart';
 import 'package:hamrash_admin/views/classes/add_arm_sheet.dart';
+import 'package:hamrash_admin/views/classes/class_delete_resolution_view.dart';
 import 'package:hamrash_admin/views/classes/create_edit_class_view.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
@@ -210,7 +213,7 @@ class _ClassesViewState extends State<ClassesView> {
                   icon: HugeIcons.strokeRoundedDelete02,
                   size: 18,
                   strokeWidth: 2,
-                  color: LightColors.textTextMute,
+                  color: LightColors.errorErrorDefault,
                 ),
               ),
             ),
@@ -276,45 +279,52 @@ class _ClassesViewState extends State<ClassesView> {
     ClassesViewModel model,
     ClassModel cls,
   ) async {
-    final hasSubjects = await model.classHasSubjects(cls.id!);
-    if (!context.mounted) return;
+    final preflight = await model.preflightDelete(cls);
+    if (preflight == null || !context.mounted) return;
 
-    if (hasSubjects) {
-      await WarningModal.show(
+    // No blockers: keep the existing fast-path confirm dialog.
+    if (!preflight.hasBlockers) {
+      final confirmed = await WarningModal.show<bool>(
         context,
-        title: 'Cannot Delete Classroom',
-        message:
-            'Remove all subject assignments from "${cls.displayName}" before deleting it.',
+        message: 'Delete "${cls.displayName}"?',
+        subtitle: 'This cannot be undone.',
+        bottomBody: Row(
+          children: [
+            Expanded(
+              child: AppTertiaryButton(
+                onPressed: () => NavigationService.popScreen(false),
+                child: const Text('Cancel'),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: AppPrimaryButton(
+                backgroundColorType: AppButtonBackgroundColor.error,
+                foregroundColor: Colors.white,
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Delete'),
+              ),
+            ),
+          ],
+        ),
       );
+      if (confirmed == true) {
+        await model.deleteClass(cls);
+      }
       return;
     }
 
-    final confirmed = await WarningModal.show<bool>(
-      context,
-      message: 'Delete "${cls.displayName}"?',
-      subtitle: 'This cannot be undone.',
-      bottomBody: Row(
-        children: [
-          Expanded(
-            child: AppTertiaryButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: AppPrimaryButton(
-              backgroundColorType: AppButtonBackgroundColor.error,
-              foregroundColor: Colors.white,
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
-            ),
-          ),
-        ],
+    // Has blockers — push the full-screen resolution flow.
+    final result = await Navigator.of(context).push<ClassDeleteResolutionResult>(
+      NavigationService.generalPageRouteBuilder(
+        screen: ClassDeleteResolutionView(classToDelete: cls),
       ),
     );
-    if (confirmed == true) {
-      await model.deleteClass(cls);
+    if (!context.mounted) return;
+    if (result == ClassDeleteResolutionResult.deleted ||
+        result == ClassDeleteResolutionResult.deactivated) {
+      // Refresh the list to reflect the new state.
+      await model.loadData();
     }
   }
 }
