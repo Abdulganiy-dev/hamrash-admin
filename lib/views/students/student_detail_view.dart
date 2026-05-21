@@ -12,6 +12,7 @@ import 'package:hamrash_admin/resources/utils/view_util.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/viewModel/student_detail_view_model.dart';
 import 'package:hamrash_admin/viewModel/students_view_model.dart';
+import 'package:hamrash_admin/views/staff/teacher_detail_view.dart';
 import 'package:hamrash_admin/views/students/create_parent_view.dart';
 import 'package:hamrash_admin/views/students/create_student_view.dart';
 import 'package:hamrash_admin/views/students/widgets/parent_avatar.dart';
@@ -118,7 +119,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
                   const SizedBox(height: AppSpacing.sm),
                   AppSurfaceCard(
                     padding: const EdgeInsets.all(5),
-                    child: _InfoRow(
+                    child: InfoRow(
                       icon: s.isActive
                           ? HugeIcons.strokeRoundedCheckmarkCircle01
                           : HugeIcons.strokeRoundedCancelCircle,
@@ -147,7 +148,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
       child: Column(
         children: [
           if (s.email != null)
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedMail01,
               label: 'Email',
               value: s.email!,
@@ -155,7 +156,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
           if (s.email != null && s.phone != null)
             const SizedBox(height: AppSpacing.sm),
           if (s.phone != null)
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedSmartPhone01,
               label: 'Phone',
               value: s.phone!,
@@ -171,7 +172,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
       child: Column(
         children: [
           if (s.gender != null)
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedUser,
               label: 'Gender',
               value: _capitalize(s.gender!),
@@ -179,7 +180,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
           if (s.gender != null && s.dateOfBirth != null)
             const SizedBox(height: AppSpacing.sm),
           if (s.dateOfBirth != null)
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedCalendar03,
               label: 'Date of birth',
               value: _formatDate(s.dateOfBirth!),
@@ -187,7 +188,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
           if (s.dateOfBirth != null && s.state != null)
             const SizedBox(height: AppSpacing.sm),
           if (s.state != null)
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedLocation01,
               label: 'State',
               value: s.state!,
@@ -195,7 +196,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
           if (s.state != null && s.address != null)
             const SizedBox(height: AppSpacing.sm),
           if (s.address != null)
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedHome01,
               label: 'Address',
               value: s.address!,
@@ -213,7 +214,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
       padding: const EdgeInsets.all(5),
       child: Column(
         children: [
-          _InfoRow(
+          InfoRow(
             icon: HugeIcons.strokeRoundedSchool,
             label: 'Class',
             value: classDisplay,
@@ -223,7 +224,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
           ),
           if (s.admissionNumber != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedIdentityCard,
               label: 'Admission #',
               value: s.admissionNumber!,
@@ -231,7 +232,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
           ],
           if (s.admissionDate != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedCalendar03,
               label: 'Admission date',
               value: _formatDate(s.admissionDate!),
@@ -239,7 +240,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
           ],
           if (code != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedQrCode,
               label: 'Claim code',
               value: code.code,
@@ -652,7 +653,7 @@ class _ParentsSection extends StatelessWidget {
     final action = await ListBottomSheet.show<_ParentAction, _ParentAction>(
       context: context,
       title: rel.parent.fullName,
-      snappingConfig: SheetSnappingConfig([0.45]),
+      snappingConfig: SheetSnappingConfig([0.3]),
       headerImage: ParentAvatar(parent: rel.parent, size: 30),
       items: [
         _ParentAction.changeRelationship,
@@ -717,73 +718,78 @@ class _ParentsList extends StatelessWidget {
       child: Column(
         children: [
           for (final rel in vm.parents)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: AppElevatedCard(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
-                ),
-                child: Row(
-                  children: [
-                    ParentAvatar(parent: rel.parent, size: 40),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+            GestureDetector(
+              onTap: () => onAction(rel),
+              child: AbsorbPointer(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: AppElevatedCard(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    child: Row(
+                      children: [
+                        ParentAvatar(parent: rel.parent, size: 40),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Flexible(
-                                child: AppText(
-                                  rel.parent.fullName,
-                                  colorType: AppTextColor.textInverted,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: AppText(
+                                      rel.parent.fullName,
+                                      colorType: AppTextColor.textInverted,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (rel.link.isPrimary) ...[
+                                    const SizedBox(width: AppSpacing.xs),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber.withValues(alpha: 0.18),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const AppText(
+                                        'Primary',
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.amber,
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
-                              if (rel.link.isPrimary) ...[
-                                const SizedBox(width: AppSpacing.xs),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.amber.withValues(alpha: 0.18),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: const AppText(
-                                    'Primary',
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.amber,
-                                  ),
-                                ),
-                              ],
+                              const SizedBox(height: 2),
+                              AppText(
+                                StudentParentRelationship.display(
+                                    rel.link.relationship),
+                                colorType: AppTextColor.textMute,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 2),
-                          AppText(
-                            StudentParentRelationship.display(
-                                rel.link.relationship),
-                            colorType: AppTextColor.textMute,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ],
-                      ),
+                        ),
+                        AppHugeIconButton(
+                          hugeIcon: HugeIcons.strokeRoundedMoreHorizontal,
+                          hugeIconStrokeWidth: 2,
+                          hugeIconRasterSize: 22,
+                          foregroundColorType: AppButtonForegroundColor.textInverted,
+                          onPressed: () {},
+                        ),
+                      ],
                     ),
-                    AppHugeIconButton(
-                      hugeIcon: HugeIcons.strokeRoundedMoreHorizontal,
-                      hugeIconStrokeWidth: 2,
-                      hugeIconRasterSize: 22,
-                      foregroundColorType: AppButtonForegroundColor.textInverted,
-                      onPressed: () => onAction(rel),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -886,77 +892,6 @@ class _SectionLabel extends StatelessWidget {
     );
   }
 }
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.valueColor,
-    this.canCopyValue = false,
-  });
-
-  final List<List<dynamic>> icon;
-  final String label;
-  final String value;
-  final Color? valueColor;
-  final bool canCopyValue;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: canCopyValue
-          ? () {
-              HapticHelpers.vibrate(VibrationType.light);
-              Clipboard.setData(ClipboardData(text: value));
-              ViewUtil.showSuccessSnackBar('Copied to clipboard');
-            }
-          : null,
-      child: AppElevatedCard(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                HugeIcon(
-                  icon: icon,
-                  size: 18,
-                  strokeWidth: 1.8,
-                  color: LightColors.textTextMute,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                AppText(label, colorType: AppTextColor.textMute, fontSize: 13),
-              ],
-            ),
-            Flexible(
-              child: valueColor != null
-                  ? AppText(
-                      value,
-                      color: valueColor,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                      textAlign: TextAlign.end,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                  : AppText(
-                      value,
-                      colorType: AppTextColor.textInverted,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                      textAlign: TextAlign.end,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _EmptyHint extends StatelessWidget {
   const _EmptyHint({
     super.key,

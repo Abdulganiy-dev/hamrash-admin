@@ -111,7 +111,7 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
                   const SizedBox(height: AppSpacing.sm),
                   AppSurfaceCard(
                     padding: const EdgeInsets.all(5),
-                    child: _InfoRow(
+                    child: InfoRow(
                       icon: teacher.isActive
                           ? HugeIcons.strokeRoundedCheckmarkCircle01
                           : HugeIcons.strokeRoundedCancelCircle,
@@ -140,7 +140,7 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
       child: Column(
         children: [
           if (t.email != null)
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedMail01,
               label: 'Email',
               value: t.email!,
@@ -148,7 +148,7 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
           if (t.email != null && t.phone != null)
             const SizedBox(height: AppSpacing.sm),
           if (t.phone != null)
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedSmartPhone01,
               label: 'Phone',
               value: t.phone!,
@@ -164,7 +164,7 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
       child: Column(
         children: [
           if (t.gender != null)
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedUser,
               label: 'Gender',
               value: _capitalize(t.gender!),
@@ -172,7 +172,7 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
           if (t.gender != null && t.state != null)
             const SizedBox(height: AppSpacing.sm),
           if (t.state != null)
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedLocation01,
               label: 'State',
               value: t.state!,
@@ -180,7 +180,7 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
           if (t.state != null && t.address != null)
             const SizedBox(height: AppSpacing.sm),
           if (t.address != null)
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedHome01,
               label: 'Address',
               value: t.address!,
@@ -188,7 +188,7 @@ class _TeacherDetailViewState extends State<TeacherDetailView> {
           if (viewModel.teacherCode != null)
             const SizedBox(height: AppSpacing.sm),
           if (viewModel.teacherCode != null)
-            _InfoRow(
+            InfoRow(
               icon: HugeIcons.strokeRoundedQrCode,
               label: 'Claim Code',
               value: viewModel.teacherCode!.code,
@@ -938,8 +938,8 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
+class InfoRow extends StatelessWidget {
+  const InfoRow({
     required this.icon,
     required this.label,
     required this.value,
