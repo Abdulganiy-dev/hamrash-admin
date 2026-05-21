@@ -144,38 +144,48 @@ class _ClassesSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final c in classes)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: AppElevatedCard(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: AppText(
-                        c.displayName,
-                        colorType: AppTextColor.textInverted,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+          AppSurfaceCard(
+            child: Column(
+              children: [
+                for (final c in classes)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: classes.indexOf(c) == classes.length - 1
+                          ? 0
+                          : AppSpacing.sm,
+                    ),
+                    child: AppElevatedCard(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.md,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: AppText(
+                              c.displayName,
+                              colorType: AppTextColor.textInverted,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          AppHugeIconButton(
+                            hugeIcon: HugeIcons.strokeRoundedDelete02,
+                            hugeIconStrokeWidth: 2,
+                            hugeIconRasterSize: 18,
+                            foregroundColor: LightColors.errorErrorDefault,
+                            onPressed: () => _confirmRemoveOne(context, vm, c),
+                          ),
+                        ],
                       ),
                     ),
-                    AppHugeIconButton(
-                      hugeIcon: HugeIcons.strokeRoundedDelete02,
-                      hugeIconStrokeWidth: 2,
-                      hugeIconRasterSize: 18,
-                      foregroundColor: LightColors.errorErrorDefault,
-                      onPressed: () => _confirmRemoveOne(context, vm, c),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+              ],
             ),
-          const SizedBox(height: AppSpacing.sm),
+          ),
+          const SizedBox(height: AppSpacing.md),
           AppSecondaryButton(
             width: double.infinity,
             onPressed: () => _confirmRemoveAll(context, vm, classes.length),
@@ -214,8 +224,7 @@ class _ClassesSection extends StatelessWidget {
     final confirmed = await _confirmDialog(
       context,
       title: 'Remove from $count class${count == 1 ? '' : 'es'}?',
-      message:
-          '${vm.target.name} will be removed from every class curriculum.',
+      message: '${vm.target.name} will be removed from every class curriculum.',
       confirmLabel: 'Remove',
       destructive: true,
     );
@@ -243,49 +252,59 @@ class _TeacherAssignmentsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final r in rows)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: AppElevatedCard(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+          AppSurfaceCard(
+            child: Column(
+              children: [
+                for (final r in rows)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: rows.indexOf(r) == rows.length - 1
+                          ? 0
+                          : AppSpacing.sm,
+                    ),
+                    child: AppElevatedCard(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      ),
+                      child: Row(
                         children: [
-                          AppText(
-                            r.teacherFullName,
-                            colorType: AppTextColor.textInverted,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                AppText(
+                                  r.teacherFullName,
+                                  colorType: AppTextColor.textInverted,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                AppText(
+                                  r.classDisplayName,
+                                  colorType: AppTextColor.textMute,
+                                  fontSize: 12,
+                                ),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 2),
-                          AppText(
-                            r.classDisplayName,
-                            colorType: AppTextColor.textMute,
-                            fontSize: 12,
+                          AppHugeIconButton(
+                            hugeIcon: HugeIcons.strokeRoundedDelete02,
+                            hugeIconStrokeWidth: 2,
+                            hugeIconRasterSize: 18,
+                            foregroundColor: LightColors.errorErrorDefault,
+                            onPressed: () => _confirmRemoveOne(context, vm, r),
                           ),
                         ],
                       ),
                     ),
-                    AppHugeIconButton(
-                      hugeIcon: HugeIcons.strokeRoundedDelete02,
-                      hugeIconStrokeWidth: 2,
-                      hugeIconRasterSize: 18,
-                      foregroundColor: LightColors.errorErrorDefault,
-                      onPressed: () => _confirmRemoveOne(context, vm, r),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+              ],
             ),
-          const SizedBox(height: AppSpacing.sm),
+          ),
+          const SizedBox(height: AppSpacing.md),
           AppSecondaryButton(
             width: double.infinity,
             onPressed: () => _confirmClearAll(context, vm, rows.length),
@@ -353,25 +372,21 @@ class _StudentsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppElevatedCard(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: AppText(
-                    '$count student${count == 1 ? '' : 's'} currently enrolled '
-                    'in ${vm.target.name}.',
-                    colorType: AppTextColor.textMute,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+          AppSurfaceCard(
+            child: AppElevatedCard(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.md,
+              ),
+              child: AppText(
+                '$count student${count == 1 ? '' : 's'} currently enrolled '
+                'in ${vm.target.name}.',
+                colorType: AppTextColor.textMute,
+                fontSize: 13,
+              ),
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.md),
           AppSecondaryButton(
             width: double.infinity,
             onPressed: () => _confirmUnenrollAll(context, vm, count),
@@ -538,9 +553,9 @@ class _DeleteButton extends StatelessWidget {
       child: Text(
         'Delete "${vm.target.name}"',
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -636,7 +651,7 @@ class _SectionShell extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.md),
         child,
       ],
     );
@@ -663,8 +678,7 @@ Future<bool> _confirmDialog(
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(true),
           style: TextButton.styleFrom(
-            foregroundColor:
-                destructive ? LightColors.errorErrorDefault : null,
+            foregroundColor: destructive ? LightColors.errorErrorDefault : null,
           ),
           child: Text(confirmLabel),
         ),
