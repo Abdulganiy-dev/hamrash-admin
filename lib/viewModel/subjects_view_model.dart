@@ -15,8 +15,8 @@ class SubjectsViewModel extends BaseViewModel {
     loadSubjects();
   }
 
-  Future<void> loadSubjects() async {
-    setBusy(true);
+  Future<void> loadSubjects({bool showBusy = true}) async {
+    if (showBusy) setBusy(true);
     try {
       _subjects = await _classService.fetchSubjects();
     } catch (e, st) {
@@ -27,7 +27,7 @@ class SubjectsViewModel extends BaseViewModel {
         userMessage: 'Failed to load subjects. Please try again.',
       );
     } finally {
-      setBusy(false);
+      if (showBusy) setBusy(false);
     }
   }
 

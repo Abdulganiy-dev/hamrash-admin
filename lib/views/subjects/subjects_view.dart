@@ -9,6 +9,7 @@ import 'package:hamrash_admin/viewModel/subject_delete_resolution_view_model.dar
 import 'package:hamrash_admin/viewModel/subjects_view_model.dart';
 import 'package:hamrash_admin/views/subjects/create_edit_subject_view.dart';
 import 'package:hamrash_admin/views/subjects/subject_delete_resolution_view.dart';
+import 'package:hamrash_admin/widgets/app_pull_to_refresh.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
@@ -51,10 +52,8 @@ class _SubjectsViewState extends State<SubjectsView> {
         appBarType: DefaultScaffoldAppBarType.standard,
         body: Builder(
           builder: (context) {
-            if (model.subjects.isEmpty && !model.busy) {
-              return _emptyState(context);
-            }
-            return SingleChildScrollView(
+            return AppPullToRefresh(
+              onRefresh: () => model.loadSubjects(showBusy: false),
               child: ScaffoldColumn(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -62,18 +61,21 @@ class _SubjectsViewState extends State<SubjectsView> {
                   SizedBox(
                     height: ScaffoldInsets.of(context).bodyTopInset + 15,
                   ),
-                  ListView.separated(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: model.subjects.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: AppSpacing.sm),
-                    itemBuilder: (context, index) {
-                      final subject = model.subjects[index];
-                      return _subjectItem(context, model, subject);
-                    },
-                  ),
+                  if (model.subjects.isEmpty && !model.busy)
+                    _emptyState(context)
+                  else
+                    ListView.separated(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: model.subjects.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.sm),
+                      itemBuilder: (context, index) {
+                        final subject = model.subjects[index];
+                        return _subjectItem(context, model, subject);
+                      },
+                    ),
                   const SizedBox(height: AppSpacing.xxl),
                 ],
               ),
@@ -160,10 +162,14 @@ class _SubjectsViewState extends State<SubjectsView> {
   }
 
   Widget _emptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+    final topInset = ScaffoldInsets.of(context).bodyTopInset + 15;
+    final minHeight = MediaQuery.sizeOf(context).height - topInset - 120;
+    return SizedBox(
+      height: minHeight.clamp(240.0, double.infinity),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
           const HugeIcon(
             icon: HugeIcons.strokeRoundedBook02,
             size: 64,
@@ -185,7 +191,8 @@ class _SubjectsViewState extends State<SubjectsView> {
             fontSize: 14,
             textAlign: TextAlign.center,
           ).padding(left: AppSpacing.xl, right: AppSpacing.xl),
-        ],
+          ],
+        ),
       ),
     );
   }

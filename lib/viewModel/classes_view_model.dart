@@ -39,8 +39,8 @@ class ClassesViewModel extends BaseViewModel {
     loadData();
   }
 
-  Future<void> loadData() async {
-    setBusy(true);
+  Future<void> loadData({bool showBusy = true}) async {
+    if (showBusy) setBusy(true);
     try {
       final results = await Future.wait([
         _classService.fetchClasses(),
@@ -58,7 +58,7 @@ class ClassesViewModel extends BaseViewModel {
         userMessage: 'Failed to load classes. Please try again.',
       );
     } finally {
-      setBusy(false);
+      if (showBusy) setBusy(false);
     }
   }
 

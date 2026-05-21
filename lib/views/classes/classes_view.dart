@@ -12,6 +12,7 @@ import 'package:hamrash_admin/views/classes/add_arm_sheet.dart';
 import 'package:hamrash_admin/views/classes/class_delete_resolution_view.dart';
 import 'package:hamrash_admin/views/classes/create_edit_class_view.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
+import 'package:hamrash_admin/widgets/app_pull_to_refresh.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
@@ -45,7 +46,8 @@ class _ClassesViewState extends State<ClassesView> {
         appBarType: DefaultScaffoldAppBarType.standard,
         body: Builder(
           builder: (context) {
-            return SingleChildScrollView(
+            return AppPullToRefresh(
+              onRefresh: () => model.loadData(showBusy: false),
               child: ScaffoldColumn(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -72,7 +74,7 @@ class _ClassesViewState extends State<ClassesView> {
                 ],
               ),
             );
-          }
+          },
         ),
       ),
     );

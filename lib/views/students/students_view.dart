@@ -9,6 +9,7 @@ import 'package:hamrash_admin/viewModel/students_view_model.dart';
 import 'package:hamrash_admin/views/students/create_student_view.dart';
 import 'package:hamrash_admin/views/students/student_detail_view.dart';
 import 'package:hamrash_admin/views/students/widgets/student_avatar.dart';
+import 'package:hamrash_admin/widgets/app_pull_to_refresh.dart';
 import 'package:hamrash_admin/widgets/app_search_field.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
@@ -84,8 +85,9 @@ class _StudentsViewState extends State<StudentsView> {
         customAppBar: _buildHeader(context, model),
         body: Builder(
           builder: (context) {
-            return SingleChildScrollView(
+            return AppPullToRefresh(
               controller: _scrollController,
+              onRefresh: () => model.loadData(showBusy: false),
               child: ScaffoldColumn(
                 children: [
                   AnimatedContainer(
@@ -301,8 +303,10 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+    final topInset = ScaffoldInsets.of(context).bodyTopInset + 15;
+    final minHeight = MediaQuery.sizeOf(context).height - topInset - 120;
+    return SizedBox(
+      height: minHeight.clamp(240.0, double.infinity),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

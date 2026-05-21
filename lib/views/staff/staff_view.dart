@@ -9,6 +9,7 @@ import 'package:hamrash_admin/viewModel/teachers_view_model.dart';
 import 'package:hamrash_admin/views/staff/create_teacher_view.dart';
 import 'package:hamrash_admin/views/staff/teacher_detail_view.dart';
 import 'package:hamrash_admin/views/staff/widgets/teacher_avatar.dart';
+import 'package:hamrash_admin/widgets/app_pull_to_refresh.dart';
 import 'package:hamrash_admin/widgets/app_search_field.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
@@ -85,8 +86,9 @@ class _TeachersViewState extends State<TeachersView> {
         customAppBar: _buildHeader(context, model),
         body: Builder(
           builder: (context) {
-            return SingleChildScrollView(
+            return AppPullToRefresh(
               controller: _scrollController,
+              onRefresh: () => model.loadData(showBusy: false),
               child: ScaffoldColumn(
                 children: [
                   AnimatedContainer(
@@ -326,10 +328,14 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+    final topInset = ScaffoldInsets.of(context).bodyTopInset + 15;
+    final minHeight = MediaQuery.sizeOf(context).height - topInset - 120;
+    return SizedBox(
+      height: minHeight.clamp(240.0, double.infinity),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           HugeIcon(
             icon: HugeIcons.strokeRoundedUserGroup,
             size: 48,
@@ -351,7 +357,8 @@ class _EmptyState extends StatelessWidget {
             colorType: AppTextColor.textMute,
             fontSize: 13,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

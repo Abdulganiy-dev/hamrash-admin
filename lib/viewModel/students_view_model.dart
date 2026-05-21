@@ -106,8 +106,8 @@ class StudentsViewModel extends BaseViewModel {
 
   // ─── Pagination ──────────────────────────────────────────────────────
 
-  Future<void> loadData() async {
-    setBusy(true);
+  Future<void> loadData({bool showBusy = true}) async {
+    if (showBusy) setBusy(true);
     _students = [];
     _cursor = null;
     _hasMore = true;
@@ -121,7 +121,7 @@ class StudentsViewModel extends BaseViewModel {
         userMessage: 'Failed to load students. Please try again.',
       );
     } finally {
-      setBusy(false);
+      if (showBusy) setBusy(false);
     }
   }
 
