@@ -6,12 +6,16 @@ import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/resources/utils/list_bottom_sheet_util.dart';
 import 'package:hamrash_admin/viewModel/class_delete_resolution_view_model.dart';
-import 'package:hamrash_admin/views/subjects/subject_delete_resolution_view.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
-import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
-import 'package:hamrash_admin/widgets/cached_network_image_widget.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_all_clear_card.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_deactivate_card.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_delete_button.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_dialogs.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_headline.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_list_rows.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_section_shell.dart';
 import 'package:hamrash_admin/widgets/haptic_list_tile.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
@@ -57,7 +61,12 @@ class _ClassDeleteResolutionViewState extends State<ClassDeleteResolutionView> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SizedBox(height: ScaffoldInsets.of(ctx).bodyTopInset + 15),
-                    _Headline(target: widget.classToDelete),
+                    DeleteResolutionHeadline(
+                      entityDisplayName: widget.classToDelete.displayName,
+                      clearanceMessage:
+                          'Take care of the items below. The class can be '
+                          'deleted once every section is cleared.',
+                    ),
                     const SizedBox(height: AppSpacing.lg),
                     if (preflight.students.isNotEmpty) ...[
                       _StudentsSection(vm: m),
@@ -68,7 +77,10 @@ class _ClassDeleteResolutionViewState extends State<ClassDeleteResolutionView> {
                       const SizedBox(height: AppSpacing.lg),
                     ],
                     if (!preflight.hasBlockers) ...[
-                      _AllClearCard(),
+                      const DeleteResolutionAllClearCard(
+                        readyMessage:
+                            'No more blockers. The class can be deleted now.',
+                      ),
                       const SizedBox(height: AppSpacing.lg),
                     ],
                     _AutoRemovedFootnote(preflight: preflight),
@@ -88,45 +100,6 @@ class _ClassDeleteResolutionViewState extends State<ClassDeleteResolutionView> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// HEADLINE + AUTO-REMOVED FOOTNOTE
-// ═══════════════════════════════════════════════════════════════════════
-
-class _Headline extends StatelessWidget {
-  const _Headline({required this.target});
-  final ClassModel target;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AppText(
-          'Before you can delete',
-          colorType: AppTextColor.textMute,
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-        ),
-        const SizedBox(height: 2),
-        AppText(
-          '"${target.displayName}"',
-          colorType: AppTextColor.textInverted,
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.5,
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        AppText(
-          'Take care of the items below. The class can be deleted once every '
-          'section is cleared.',
-          colorType: AppTextColor.textMute,
-          fontSize: 13,
-        ),
-      ],
-    );
-  }
-}
-
 class _AutoRemovedFootnote extends StatelessWidget {
   const _AutoRemovedFootnote({required this.preflight});
   final ClassDeletePreflight preflight;
@@ -139,7 +112,8 @@ class _AutoRemovedFootnote extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final parts = <String>[
-      if (curriculum > 0) '$curriculum curriculum link${curriculum == 1 ? '' : 's'}',
+      if (curriculum > 0)
+        '$curriculum curriculum link${curriculum == 1 ? '' : 's'}',
       if (assignments > 0)
         '$assignments teacher assignment${assignments == 1 ? '' : 's'}',
     ];
@@ -170,10 +144,6 @@ class _AutoRemovedFootnote extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// STUDENTS SECTION
-// ═══════════════════════════════════════════════════════════════════════
-
 class _StudentsSection extends StatelessWidget {
   const _StudentsSection({required this.vm});
   final ClassDeleteResolutionViewModel vm;
@@ -181,7 +151,7 @@ class _StudentsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final students = vm.preflight!.students;
-    return SectionShell(
+    return DeleteResolutionSectionShell(
       icon: HugeIcons.strokeRoundedStudent,
       iconColor: Colors.blueAccent,
       title: 'Enrolled students',
@@ -189,51 +159,16 @@ class _StudentsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppSurfaceCard(child: Column(
+          DeleteResolutionItemList(
             children: [
-                for (final s in students)
-            Padding(
-              padding: EdgeInsets.only(bottom: students.indexOf(s) == students.length - 1 ? 0 : AppSpacing.sm),
-              child: AppElevatedCard(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
+              for (final s in students)
+                DeleteResolutionPersonRow(
+                  avatarUrl: s.avatarUrl ?? '',
+                  title: s.fullName,
+                  subtitle: s.admissionNumber,
                 ),
-                child: Row(
-                  children: [
-                    CachedNetworkImageWidget(imageUrl: s.avatarUrl ?? '',width: 35,height: 35,borderRadius: 40,),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppText(
-                            s.fullName,
-                            colorType: AppTextColor.textInverted,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (s.admissionNumber != null) ...[
-                            const SizedBox(height: 2),
-                            AppText(
-                              s.admissionNumber!,
-                              colorType: AppTextColor.textMute,
-                              fontSize: 12,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          
             ],
-          )),
-          
+          ),
           const SizedBox(height: AppSpacing.md),
           Row(
             children: [
@@ -263,7 +198,7 @@ class _StudentsSection extends StatelessWidget {
     List<ClassDeleteStudent> students,
   ) async {
     if (vm.moveTargets.isEmpty) {
-      await _infoDialog(
+      await showDeleteResolutionInfoDialog(
         context,
         title: 'No other classes',
         message:
@@ -274,7 +209,8 @@ class _StudentsSection extends StatelessWidget {
     }
     final target = await ListBottomSheet.show<ClassModel, ClassModel>(
       context: context,
-      title: 'Move ${students.length} student${students.length == 1 ? '' : 's'} to…',
+      title:
+          'Move ${students.length} student${students.length == 1 ? '' : 's'} to…',
       headerImage: const HugeIcon(
         icon: HugeIcons.strokeRoundedSchool,
         size: 30,
@@ -293,7 +229,7 @@ class _StudentsSection extends StatelessWidget {
     );
     if (target == null || target.id == null || !context.mounted) return;
 
-    final confirmed = await _confirmDialog(
+    final confirmed = await showDeleteResolutionConfirmDialog(
       context,
       title: 'Move students?',
       message:
@@ -314,9 +250,10 @@ class _StudentsSection extends StatelessWidget {
     ClassDeleteResolutionViewModel vm,
     List<ClassDeleteStudent> students,
   ) async {
-    final confirmed = await _confirmDialog(
+    final confirmed = await showDeleteResolutionConfirmDialog(
       context,
-      title: 'Unassign ${students.length} student${students.length == 1 ? '' : 's'}?',
+      title:
+          'Unassign ${students.length} student${students.length == 1 ? '' : 's'}?',
       message:
           'They\'ll have no class until you reassign them. Their subject '
           'enrollments will also be cleared.',
@@ -328,10 +265,6 @@ class _StudentsSection extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// HOMEROOM TEACHERS SECTION
-// ═══════════════════════════════════════════════════════════════════════
-
 class _HomeroomSection extends StatelessWidget {
   const _HomeroomSection({required this.vm});
   final ClassDeleteResolutionViewModel vm;
@@ -339,62 +272,21 @@ class _HomeroomSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final teachers = vm.preflight!.homeroomTeachers;
-    return SectionShell(
+    return DeleteResolutionSectionShell(
       icon: HugeIcons.strokeRoundedTeacher,
       iconColor: Colors.orange,
       title: 'Homeroom assignment',
       count: teachers.length,
-      child: AppSurfaceCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final t in teachers)
-              Padding(
-                padding: EdgeInsets.only(bottom: teachers.indexOf(t) == teachers.length - 1 ? 0 : AppSpacing.sm),
-                child: AppElevatedCard(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
-                  ),
-                  child: Row(
-                    children: [
-                      CachedNetworkImageWidget(imageUrl: t.avatarUrl ?? '',width: 35,height: 35,borderRadius: 40,),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AppText(
-                              t.fullName,
-                              colorType: AppTextColor.textInverted,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            AppText(
-                              _roleLabel(t.homeroomRole),
-                              colorType: AppTextColor.textMute,
-                              fontSize: 12,
-                            ),
-                          ],
-                        ),
-                      ),
-                      AppHugeIconButton(
-                        hugeIcon: HugeIcons.strokeRoundedDelete02,
-                        hugeIconStrokeWidth: 2,
-                        hugeIconRasterSize: 18,
-                        foregroundColor: LightColors.errorErrorDefault,
-                        onPressed: () => _confirmClear(context, vm, t),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          
-          ],
-        ),
+      child: DeleteResolutionItemList(
+        children: [
+          for (final t in teachers)
+            DeleteResolutionPersonRow(
+              avatarUrl: t.avatarUrl ?? '',
+              title: t.fullName,
+              subtitle: _roleLabel(t.homeroomRole),
+              onRemove: () => _confirmClear(context, vm, t),
+            ),
+        ],
       ),
     );
   }
@@ -415,7 +307,7 @@ class _HomeroomSection extends StatelessWidget {
     ClassDeleteResolutionViewModel vm,
     ClassDeleteHomeroomTeacher t,
   ) async {
-    final confirmed = await _confirmDialog(
+    final confirmed = await showDeleteResolutionConfirmDialog(
       context,
       title: 'Clear homeroom?',
       message:
@@ -429,102 +321,18 @@ class _HomeroomSection extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// ALL-CLEAR + FINAL BUTTONS
-// ═══════════════════════════════════════════════════════════════════════
-
-class _AllClearCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return AppSurfaceCard(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.md,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Center(
-              child: HugeIcon(
-                icon: HugeIcons.strokeRoundedCheckmarkCircle01,
-                size: 22,
-                strokeWidth: 1.8,
-                color: Colors.green,
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppText(
-                  'All clear',
-                  colorType: AppTextColor.textInverted,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-                const SizedBox(height: 2),
-                AppText(
-                  'No more blockers. The class can be deleted now.',
-                  colorType: AppTextColor.textMute,
-                  fontSize: 12,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _DeactivateCard extends StatelessWidget {
   const _DeactivateCard({required this.vm});
   final ClassDeleteResolutionViewModel vm;
 
   @override
   Widget build(BuildContext context) {
-    return AppSurfaceCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppText(
-            'Recommended alternative',
-            colorType: AppTextColor.textMute,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.4,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          AppText(
-            'Deactivate instead',
-            colorType: AppTextColor.textInverted,
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
-          const SizedBox(height: 4),
-          AppText(
-            'Hides the class from active lists without removing any students, '
-            'teachers, or history.',
-            colorType: AppTextColor.textMute,
-            fontSize: 12,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          AppSecondaryButton(
-            width: double.infinity,
-            onPressed: () => _confirm(context, vm),
-            child: const Text('Deactivate this class'),
-          ),
-        ],
-      ),
+    return DeleteResolutionDeactivateCard(
+      description:
+          'Hides the class from active lists without removing any students, '
+          'teachers, or history.',
+      buttonLabel: 'Deactivate this class',
+      onPressed: () => _confirm(context, vm),
     );
   }
 
@@ -532,7 +340,7 @@ class _DeactivateCard extends StatelessWidget {
     BuildContext context,
     ClassDeleteResolutionViewModel vm,
   ) async {
-    final confirmed = await _confirmDialog(
+    final confirmed = await showDeleteResolutionConfirmDialog(
       context,
       title: 'Deactivate class?',
       message:
@@ -555,21 +363,10 @@ class _DeleteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = vm.canDelete;
-    return AppPrimaryButton(
-      width: double.infinity,
-      backgroundColorType: enabled
-          ? AppButtonBackgroundColor.error
-          : AppButtonBackgroundColor.errorMute,
-      foregroundColor: Colors.white,
-      onPressed: enabled ? () => _confirm(context, vm) : null,
-      child: Text(
-        'Delete "${vm.target.displayName}"',
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-      ),
+    return DeleteResolutionDeleteButton(
+      entityDisplayName: vm.target.displayName,
+      enabled: vm.canDelete,
+      onPressed: () => _confirm(context, vm),
     );
   }
 
@@ -577,7 +374,7 @@ class _DeleteButton extends StatelessWidget {
     BuildContext context,
     ClassDeleteResolutionViewModel vm,
   ) async {
-    final confirmed = await _confirmDialog(
+    final confirmed = await showDeleteResolutionConfirmDialog(
       context,
       title: 'Delete class?',
       message:
@@ -593,55 +390,4 @@ class _DeleteButton extends StatelessWidget {
       Navigator.of(context).pop(result);
     }
   }
-}
-
-Future<bool> _confirmDialog(
-  BuildContext context, {
-  required String title,
-  required String message,
-  required String confirmLabel,
-  bool destructive = false,
-}) async {
-  final result = await showAdaptiveDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog.adaptive(
-      title: Text(title),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          style: TextButton.styleFrom(
-            foregroundColor:
-                destructive ? LightColors.errorErrorDefault : null,
-          ),
-          child: Text(confirmLabel),
-        ),
-      ],
-    ),
-  );
-  return result ?? false;
-}
-
-Future<void> _infoDialog(
-  BuildContext context, {
-  required String title,
-  required String message,
-}) {
-  return showAdaptiveDialog<void>(
-    context: context,
-    builder: (ctx) => AlertDialog.adaptive(
-      title: Text(title),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('OK'),
-        ),
-      ],
-    ),
-  );
 }

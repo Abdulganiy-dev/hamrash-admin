@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/supabase_models/class_model.dart';
 import 'package:hamrash_admin/api/models/supabase_models/subject_delete_preflight.dart';
-import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/viewModel/subject_delete_resolution_view_model.dart';
 import 'package:hamrash_admin/widgets/app_cards.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
-import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
-import 'package:hamrash_admin/widgets/cached_network_image_widget.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_all_clear_card.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_deactivate_card.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_delete_button.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_dialogs.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_headline.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_list_rows.dart';
+import 'package:hamrash_admin/widgets/delete_resolution/delete_resolution_section_shell.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
 
@@ -54,7 +58,12 @@ class _SubjectDeleteResolutionViewState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SizedBox(height: ScaffoldInsets.of(ctx).bodyTopInset + 15),
-                    _Headline(target: widget.subjectToDelete),
+                    DeleteResolutionHeadline(
+                      entityDisplayName: widget.subjectToDelete.name,
+                      clearanceMessage:
+                          'Take care of the items below. The subject can be '
+                          'deleted once every section is cleared.',
+                    ),
                     const SizedBox(height: AppSpacing.lg),
                     if (preflight.classes.isNotEmpty) ...[
                       _ClassesSection(vm: m),
@@ -69,7 +78,10 @@ class _SubjectDeleteResolutionViewState
                       const SizedBox(height: AppSpacing.lg),
                     ],
                     if (!preflight.hasBlockers) ...[
-                      _AllClearCard(),
+                      const DeleteResolutionAllClearCard(
+                        readyMessage:
+                            'No more blockers. The subject can be deleted now.',
+                      ),
                       const SizedBox(height: AppSpacing.lg),
                     ],
                     _DeactivateCard(vm: m),
@@ -87,49 +99,6 @@ class _SubjectDeleteResolutionViewState
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// HEADLINE
-// ═══════════════════════════════════════════════════════════════════════
-
-class _Headline extends StatelessWidget {
-  const _Headline({required this.target});
-  final SubjectModel target;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AppText(
-          'Before you can delete',
-          colorType: AppTextColor.textMute,
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-        ),
-        const SizedBox(height: 2),
-        AppText(
-          '"${target.name}"',
-          colorType: AppTextColor.textInverted,
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.5,
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        AppText(
-          'Take care of the items below. The subject can be deleted once every '
-          'section is cleared.',
-          colorType: AppTextColor.textMute,
-          fontSize: 13,
-        ),
-      ],
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// CLASSES SECTION (curriculum)
-// ═══════════════════════════════════════════════════════════════════════
-
 class _ClassesSection extends StatelessWidget {
   const _ClassesSection({required this.vm});
   final SubjectDeleteResolutionViewModel vm;
@@ -137,7 +106,7 @@ class _ClassesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final classes = vm.preflight!.classes;
-    return SectionShell(
+    return DeleteResolutionSectionShell(
       icon: HugeIcons.strokeRoundedSchool,
       iconColor: Colors.blueAccent,
       title: 'Classes using this subject',
@@ -145,46 +114,14 @@ class _ClassesSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppSurfaceCard(
-            child: Column(
-              children: [
-                for (final c in classes)
-                  Padding(
-                    padding: EdgeInsets.only(
-                      bottom: classes.indexOf(c) == classes.length - 1
-                          ? 0
-                          : AppSpacing.sm,
-                    ),
-                    child: AppElevatedCard(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.md,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: AppText(
-                              c.displayName,
-                              colorType: AppTextColor.textInverted,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          AppHugeIconButton(
-                            hugeIcon: HugeIcons.strokeRoundedDelete02,
-                            hugeIconStrokeWidth: 2,
-                            hugeIconRasterSize: 18,
-                            foregroundColor: LightColors.errorErrorDefault,
-                            onPressed: () => _confirmRemoveOne(context, vm, c),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+          DeleteResolutionItemList(
+            children: [
+              for (final c in classes)
+                DeleteResolutionTextActionRow(
+                  title: c.displayName,
+                  onRemove: () => _confirmRemoveOne(context, vm, c),
+                ),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
           AppSecondaryButton(
@@ -204,7 +141,7 @@ class _ClassesSection extends StatelessWidget {
     SubjectDeleteResolutionViewModel vm,
     SubjectDeleteClass entry,
   ) async {
-    final confirmed = await _confirmDialog(
+    final confirmed = await showDeleteResolutionConfirmDialog(
       context,
       title: 'Remove from curriculum?',
       message:
@@ -222,7 +159,7 @@ class _ClassesSection extends StatelessWidget {
     SubjectDeleteResolutionViewModel vm,
     int count,
   ) async {
-    final confirmed = await _confirmDialog(
+    final confirmed = await showDeleteResolutionConfirmDialog(
       context,
       title: 'Remove from $count class${count == 1 ? '' : 'es'}?',
       message: '${vm.target.name} will be removed from every class curriculum.',
@@ -234,10 +171,6 @@ class _ClassesSection extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// TEACHER ASSIGNMENTS SECTION
-// ═══════════════════════════════════════════════════════════════════════
-
 class _TeacherAssignmentsSection extends StatelessWidget {
   const _TeacherAssignmentsSection({required this.vm});
   final SubjectDeleteResolutionViewModel vm;
@@ -245,7 +178,7 @@ class _TeacherAssignmentsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = vm.preflight!.teacherAssignments;
-    return SectionShell(
+    return DeleteResolutionSectionShell(
       icon: HugeIcons.strokeRoundedTeacher,
       iconColor: Colors.orange,
       title: 'Teacher assignments',
@@ -253,59 +186,16 @@ class _TeacherAssignmentsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppSurfaceCard(
-            child: Column(
-              children: [
-                for (final r in rows)
-                  Padding(
-                    padding: EdgeInsets.only(
-                      bottom: rows.indexOf(r) == rows.length - 1
-                          ? 0
-                          : AppSpacing.sm,
-                    ),
-                    child: AppElevatedCard(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.sm,
-                      ),
-                      child: Row(
-                        children: [
-                          CachedNetworkImageWidget(imageUrl: r.teacherAvatarUrl ?? '',width: 35,height: 35,borderRadius: 40,),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                AppText(
-                                  r.teacherFullName,
-                                  colorType: AppTextColor.textInverted,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 2),
-                                AppText(
-                                  r.classDisplayName,
-                                  colorType: AppTextColor.textMute,
-                                  fontSize: 12,
-                                ),
-                              ],
-                            ),
-                          ),
-                          AppHugeIconButton(
-                            hugeIcon: HugeIcons.strokeRoundedDelete02,
-                            hugeIconStrokeWidth: 2,
-                            hugeIconRasterSize: 18,
-                            foregroundColor: LightColors.errorErrorDefault,
-                            onPressed: () => _confirmRemoveOne(context, vm, r),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+          DeleteResolutionItemList(
+            children: [
+              for (final r in rows)
+                DeleteResolutionPersonRow(
+                  avatarUrl: r.teacherAvatarUrl ?? '',
+                  title: r.teacherFullName,
+                  subtitle: r.classDisplayName,
+                  onRemove: () => _confirmRemoveOne(context, vm, r),
+                ),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
           AppSecondaryButton(
@@ -325,7 +215,7 @@ class _TeacherAssignmentsSection extends StatelessWidget {
     SubjectDeleteResolutionViewModel vm,
     SubjectDeleteTeacherAssignment entry,
   ) async {
-    final confirmed = await _confirmDialog(
+    final confirmed = await showDeleteResolutionConfirmDialog(
       context,
       title: 'Unassign teacher?',
       message:
@@ -343,7 +233,7 @@ class _TeacherAssignmentsSection extends StatelessWidget {
     SubjectDeleteResolutionViewModel vm,
     int count,
   ) async {
-    final confirmed = await _confirmDialog(
+    final confirmed = await showDeleteResolutionConfirmDialog(
       context,
       title: 'Clear $count assignment${count == 1 ? '' : 's'}?',
       message:
@@ -356,10 +246,6 @@ class _TeacherAssignmentsSection extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// STUDENTS SECTION (count-only, bulk action)
-// ═══════════════════════════════════════════════════════════════════════
-
 class _StudentsSection extends StatelessWidget {
   const _StudentsSection({required this.vm});
   final SubjectDeleteResolutionViewModel vm;
@@ -367,7 +253,7 @@ class _StudentsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final count = vm.preflight!.enrolledStudentsCount;
-    return SectionShell(
+    return DeleteResolutionSectionShell(
       icon: HugeIcons.strokeRoundedStudent,
       iconColor: Colors.deepPurpleAccent,
       title: 'Student enrollments',
@@ -405,7 +291,7 @@ class _StudentsSection extends StatelessWidget {
     SubjectDeleteResolutionViewModel vm,
     int count,
   ) async {
-    final confirmed = await _confirmDialog(
+    final confirmed = await showDeleteResolutionConfirmDialog(
       context,
       title: 'Unenroll $count student${count == 1 ? '' : 's'}?',
       message:
@@ -419,98 +305,18 @@ class _StudentsSection extends StatelessWidget {
   }
 }
 
-class _AllClearCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return AppSurfaceCard(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.md,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Center(
-              child: HugeIcon(
-                icon: HugeIcons.strokeRoundedCheckmarkCircle01,
-                size: 22,
-                strokeWidth: 1.8,
-                color: Colors.green,
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppText(
-                  'All clear',
-                  colorType: AppTextColor.textInverted,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-                const SizedBox(height: 2),
-                AppText(
-                  'No more blockers. The subject can be deleted now.',
-                  colorType: AppTextColor.textMute,
-                  fontSize: 12,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _DeactivateCard extends StatelessWidget {
   const _DeactivateCard({required this.vm});
   final SubjectDeleteResolutionViewModel vm;
 
   @override
   Widget build(BuildContext context) {
-    return AppSurfaceCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppText(
-            'Recommended alternative',
-            colorType: AppTextColor.textMute,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.4,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          AppText(
-            'Deactivate instead',
-            colorType: AppTextColor.textInverted,
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
-          const SizedBox(height: 4),
-          AppText(
-            'Hides the subject from active lists without removing it from any '
-            'class, teacher, or student. You keep all history.',
-            colorType: AppTextColor.textMute,
-            fontSize: 12,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          AppSecondaryButton(
-            width: double.infinity,
-            onPressed: () => _confirm(context, vm),
-            child: const Text('Deactivate this subject'),
-          ),
-        ],
-      ),
+    return DeleteResolutionDeactivateCard(
+      description:
+          'Hides the subject from active lists without removing it from any '
+          'class, teacher, or student. You keep all history.',
+      buttonLabel: 'Deactivate this subject',
+      onPressed: () => _confirm(context, vm),
     );
   }
 
@@ -518,7 +324,7 @@ class _DeactivateCard extends StatelessWidget {
     BuildContext context,
     SubjectDeleteResolutionViewModel vm,
   ) async {
-    final confirmed = await _confirmDialog(
+    final confirmed = await showDeleteResolutionConfirmDialog(
       context,
       title: 'Deactivate subject?',
       message:
@@ -541,21 +347,10 @@ class _DeleteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = vm.canDelete;
-    return AppPrimaryButton(
-      width: double.infinity,
-      backgroundColorType: enabled
-          ? AppButtonBackgroundColor.error
-          : AppButtonBackgroundColor.errorMute,
-      foregroundColor: Colors.white,
-      onPressed: enabled ? () => _confirm(context, vm) : null,
-      child: Text(
-        'Delete "${vm.target.name}"',
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+    return DeleteResolutionDeleteButton(
+      entityDisplayName: vm.target.name,
+      enabled: vm.canDelete,
+      onPressed: () => _confirm(context, vm),
     );
   }
 
@@ -563,7 +358,7 @@ class _DeleteButton extends StatelessWidget {
     BuildContext context,
     SubjectDeleteResolutionViewModel vm,
   ) async {
-    final confirmed = await _confirmDialog(
+    final confirmed = await showDeleteResolutionConfirmDialog(
       context,
       title: 'Delete subject?',
       message:
@@ -579,102 +374,4 @@ class _DeleteButton extends StatelessWidget {
       Navigator.of(context).pop(result);
     }
   }
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// Section shell + dialogs (shared with class delete; small enough to dup)
-// ═══════════════════════════════════════════════════════════════════════
-
-class SectionShell extends StatelessWidget {
-  const SectionShell({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.count,
-    required this.child,
-  });
-
-  final List<List<dynamic>> icon;
-  final Color iconColor;
-  final String title;
-  final int count;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Center(
-              child: HugeIcon(
-                icon: icon,
-                size: 24,
-                strokeWidth: 2,
-                color: iconColor,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: AppText(
-                title,
-                colorType: AppTextColor.textInverted,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: 2,
-              ),
-              decoration: BoxDecoration(
-                color: LightColors.errorErrorDefault.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: AppText(
-                count.toString(),
-                color: LightColors.errorErrorDefault,
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        child,
-      ],
-    );
-  }
-}
-
-Future<bool> _confirmDialog(
-  BuildContext context, {
-  required String title,
-  required String message,
-  required String confirmLabel,
-  bool destructive = false,
-}) async {
-  final result = await showAdaptiveDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog.adaptive(
-      title: Text(title),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          style: TextButton.styleFrom(
-            foregroundColor: destructive ? LightColors.errorErrorDefault : null,
-          ),
-          child: Text(confirmLabel),
-        ),
-      ],
-    ),
-  );
-  return result ?? false;
 }
