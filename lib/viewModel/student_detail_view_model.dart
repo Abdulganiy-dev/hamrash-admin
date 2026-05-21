@@ -8,8 +8,7 @@ import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 import 'package:hamrash_admin/viewModel/students_view_model.dart';
 
-/// Drives StudentDetailView: owns the student, their parents, the subjects
-/// they're enrolled in, and the catalog (classes + subjects) for pickers.
+
 class StudentDetailViewModel extends BaseViewModel {
   StudentDetailViewModel({
     required StudentModel initial,
@@ -80,7 +79,7 @@ class StudentDetailViewModel extends BaseViewModel {
     setBusy(true);
     try {
       final id = _student.id;
-      // Run independent fetches concurrently.
+
       final results = await Future.wait([
         _classService.fetchClasses(),
         _classService.fetchSubjects(),
@@ -95,23 +94,14 @@ class StudentDetailViewModel extends BaseViewModel {
         final family = results[2] as StudentFamily?;
         if (family != null) {
           _student = family.student;
-          // Build (link, parent) tuples for display.
           final parentById = {
             for (final p in family.parents)
               if (p.id != null) p.id!: p,
           };
-          _parents = family.links
-              .where((l) => parentById.containsKey(l.parentId))
-              .map((l) => (link: l, parent: parentById[l.parentId]!))
-              .toList();
-          _parents.sort((a, b) {
-            if (a.link.isPrimary != b.link.isPrimary) {
-              return a.link.isPrimary ? -1 : 1;
-            }
-            return a.parent.lastName.toLowerCase().compareTo(
-                  b.parent.lastName.toLowerCase(),
-                );
-          });
+          _parents = [
+            for (final l in family.links) (link: l, parent: parentById[l.parentId]!),
+          ];
+          _sortParents();
         }
         _enrollments = results[3] as List<StudentSubject>;
         _claimCode = results[4] as StudentClaimCode?;

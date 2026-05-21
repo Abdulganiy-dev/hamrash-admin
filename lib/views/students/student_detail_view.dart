@@ -54,7 +54,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
     ).then((updated) {
       if (updated != null && mounted) {
         viewModel.replaceStudent(updated);
-        viewModel.init(); // refresh class/subject/parents since class may have changed
+        viewModel.init(); 
       }
     });
   }
@@ -530,7 +530,7 @@ class _ParentsSection extends StatelessWidget {
           colorType: AppTextColor.textMute,
           fontSize: 12,
         ),
-        onTap: () => Navigator.of(ctx).pop(choice),
+        onTap: () => NavigationService.popScreen(choice),
       ),
     );
     if (choice == null || !context.mounted) return;
@@ -539,11 +539,9 @@ class _ParentsSection extends StatelessWidget {
     if (choice == _AddParentChoice.existing) {
       parent = await _pickExistingParent(context);
     } else {
-      parent = await Navigator.push<ParentModel>(
-        context,
-        NavigationService.generalPageRouteBuilder(
-          screen: const CreateParentView(),
-        ),
+      parent = await NavigationService.animatedNavigation<ParentModel>(
+
+        screen:const CreateParentView(),
       );
     }
     if (parent == null || parent.id == null || !context.mounted) return;
@@ -592,7 +590,7 @@ class _ParentsSection extends StatelessWidget {
         subtitle: p.email != null
             ? AppText(p.email!, colorType: AppTextColor.textMute, fontSize: 12)
             : null,
-        onTap: () => Navigator.of(ctx).pop(p),
+        onTap: () => NavigationService.popScreen(p),
       ),
     );
   }
@@ -676,7 +674,7 @@ class _ParentsSection extends StatelessWidget {
           color: item.isDestructive ? LightColors.errorErrorDefault : null,
           fontWeight: FontWeight.w500,
         ),
-        onTap: () => Navigator.of(ctx).pop(item),
+        onTap: () => NavigationService.popScreen(item),
       ),
     );
     if (action == null || !context.mounted) return;

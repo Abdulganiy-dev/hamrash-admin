@@ -116,9 +116,7 @@ class StudentService {
     }
   }
 
-  /// Returns a [StudentFamily] (student + parents + links). Online: hits
-  /// three tables, writes everything through to the cache. Offline: rebuilt
-  /// from [FamilyRealmService] so navigation still works.
+  
   Future<StudentFamily?> fetchStudentWithFamily(String studentId) async {
     try {
       final results = await Future.wait([
