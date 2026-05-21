@@ -3,7 +3,7 @@ import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/views/home/home.dart';
 import 'package:hamrash_admin/views/more/more_view.dart';
 import 'package:hamrash_admin/views/staff/staff_view.dart';
-import 'package:hamrash_admin/views/student/student_view.dart';
+import 'package:hamrash_admin/views/students/students_view.dart';
 import 'package:hamrash_admin/widgets/hamrash_tab_bar.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:stacked/stacked.dart';
@@ -32,7 +32,7 @@ class _MainTabViewState extends State<MainTabView> {
 
   static const List<Widget> _pages = [
     Home(),
-    StudentView(),
+    StudentsView(),
     TeachersView(),
     MoreView(),
   ];
