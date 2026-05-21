@@ -21,8 +21,10 @@ class TeachersViewModel extends BaseViewModel {
 
   String _searchQuery = '';
   Timer? _searchTimer;
+  bool _searchScheduled = false;
   bool _searchingRemote = false;
   bool get searchingRemote => _searchingRemote;
+  bool get isSearchPending => _searchScheduled || _searchingRemote;
 
   TeacherCursor? _cursor;
   bool _hasMore = true;
@@ -34,13 +36,20 @@ class TeachersViewModel extends BaseViewModel {
   
   List<TeacherModel> get filteredTeachers {
     if (_searchQuery.isEmpty) return _teachers;
-    final q = _searchQuery.toLowerCase();
-    return _teachers.where((t) {
-      return t.firstName.toLowerCase().contains(q) ||
-          t.lastName.toLowerCase().contains(q) ||
-          t.fullName.toLowerCase().contains(q) ||
-          (t.email?.toLowerCase().contains(q) ?? false);
-    }).toList();
+    return _filterLocally(_searchQuery);
+  }
+
+  List<TeacherModel> _filterLocally(String query) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return _teachers;
+    return _teachers.where((t) => _matchesQuery(t, q)).toList();
+  }
+
+  bool _matchesQuery(TeacherModel t, String q) {
+    return t.firstName.toLowerCase().contains(q) ||
+        t.lastName.toLowerCase().contains(q) ||
+        t.fullName.toLowerCase().contains(q) ||
+        (t.email?.toLowerCase().contains(q) ?? false);
   }
 
   void init(BuildContext context) {
@@ -54,12 +63,27 @@ class TeachersViewModel extends BaseViewModel {
     notifyListeners();
 
     _searchTimer?.cancel();
+    _searchScheduled = false;
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
       _searchingRemote = false;
       return;
     }
-    _searchTimer = Timer(_searchDebounce, () => _runRemoteSearch(trimmed));
+
+    // Offline first: only hit the server when nothing matches locally.
+    if (_filterLocally(trimmed).isNotEmpty) {
+      _searchingRemote = false;
+      return;
+    }
+
+    _searchScheduled = true;
+    notifyListeners();
+    _searchTimer = Timer(_searchDebounce, () {
+      _searchScheduled = false;
+      if (_searchQuery.trim() != trimmed) return;
+      if (_filterLocally(trimmed).isNotEmpty) return;
+      _runRemoteSearch(trimmed);
+    });
   }
 
   Future<void> _runRemoteSearch(String query) async {

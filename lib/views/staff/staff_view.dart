@@ -160,9 +160,13 @@ class _TeachersViewState extends State<TeachersView> {
   Widget _buildGrid(BuildContext context, TeachersViewModel model) {
     final teachers = model.filteredTeachers;
 
-    if (teachers.isEmpty && !model.busy) {
+    if (teachers.isEmpty && !model.busy && !model.isSearchPending) {
       return _EmptyState(isSearching: _searchController.text.isNotEmpty);
     }
+
+    // if (teachers.isEmpty && model.isSearchPending) {
+    //   return const _SearchPendingState();
+    // }
 
     return GridView.builder(
       padding: EdgeInsets.zero,
@@ -289,6 +293,26 @@ class _SearchActiveRow extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.md),
       ],
+    );
+  }
+}
+
+// ─── Search pending ───────────────────────────────────────────────────────────
+
+class _SearchPendingState extends StatelessWidget {
+  const _SearchPendingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+      child: Center(
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
     );
   }
 }
