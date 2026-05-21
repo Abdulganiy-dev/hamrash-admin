@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/supabase_models/class_model.dart';
+import 'package:hamrash_admin/api/models/supabase_models/subject_delete_preflight.dart';
 import 'package:hamrash_admin/api/services/supabase_services/class_service.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
@@ -122,6 +123,25 @@ class SubjectsViewModel extends BaseViewModel {
         userMessage: 'Failed to delete subject. Please try again.',
       );
       return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /// One-shot dependency snapshot for the delete-resolution flow.
+  /// Returns null on failure (error already handled).
+  Future<SubjectDeletePreflight?> preflightDelete(SubjectModel subject) async {
+    setBusy(true);
+    try {
+      return await _classService.preflightSubjectDelete(subject.id!);
+    } catch (e, st) {
+      await handleError(
+        e,
+        stackTrace: st,
+        context: 'SubjectsViewModel.preflightDelete',
+        userMessage: 'Could not check dependencies. Please try again.',
+      );
+      return null;
     } finally {
       setBusy(false);
     }

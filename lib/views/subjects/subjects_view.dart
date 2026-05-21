@@ -4,8 +4,11 @@ import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
 import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
+import 'package:hamrash_admin/services/navigation_service.dart';
+import 'package:hamrash_admin/viewModel/subject_delete_resolution_view_model.dart';
 import 'package:hamrash_admin/viewModel/subjects_view_model.dart';
 import 'package:hamrash_admin/views/subjects/create_edit_subject_view.dart';
+import 'package:hamrash_admin/views/subjects/subject_delete_resolution_view.dart';
 import 'package:hamrash_admin/widgets/app_text.dart';
 import 'package:hamrash_admin/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/widgets/button/app_button_variants.dart';
@@ -204,47 +207,52 @@ class _SubjectsViewState extends State<SubjectsView> {
     SubjectsViewModel model,
     SubjectModel subject,
   ) async {
-    final classCount = await model.subjectClassCount(subject.id!);
-    if (!context.mounted) return false;
+    final preflight = await model.preflightDelete(subject);
+    if (preflight == null || !context.mounted) return false;
 
-    if (classCount > 0) {
-      final noun = classCount == 1 ? 'class' : 'classes';
-      await WarningModal.show(
+    // No dependencies — keep the fast-path confirm dialog.
+    if (!preflight.hasBlockers) {
+      final confirmed = await WarningModal.show<bool>(
         context,
-        title: 'Cannot Delete Subject',
-        message:
-            '"${subject.name}" is assigned to $classCount $noun. Remove it from all classes before deleting.',
+        message: 'Delete "${subject.name}"? This cannot be undone.',
+        subtitle: 'This cannot be undone.',
+        bottomBody: Row(
+          children: [
+            Expanded(
+              child: AppTertiaryButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: AppPrimaryButton(
+                backgroundColorType: AppButtonBackgroundColor.error,
+                foregroundColor: Colors.white,
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Delete'),
+              ),
+            ),
+          ],
+        ),
       );
-      return false;
+      if (confirmed != true) return false;
+      return model.deleteSubject(subject);
     }
 
-    final confirmed = await WarningModal.show<bool>(
-      context,
-      message: 'Delete "${subject.name}"? This cannot be undone.',
-      subtitle: 'This cannot be undone.',
-      bottomBody: Row(
-        children: [
-          Expanded(
-            child: AppTertiaryButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: AppPrimaryButton(
-              backgroundColorType: AppButtonBackgroundColor.error,
-              foregroundColor: Colors.white,
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
-            ),
-          ),
-        ],
+    // Has blockers — push the full-screen resolution flow.
+    final result =
+        await Navigator.of(context).push<SubjectDeleteResolutionResult>(
+      NavigationService.generalPageRouteBuilder(
+        screen: SubjectDeleteResolutionView(subjectToDelete: subject),
       ),
     );
-    if (confirmed != true) return false;
-    return model.deleteSubject(subject);
+    if (!context.mounted) return false;
+    if (result == SubjectDeleteResolutionResult.deleted ||
+        result == SubjectDeleteResolutionResult.deactivated) {
+      await model.loadSubjects();
+      return true;
+    }
+    return false;
   }
-   
-  
 }

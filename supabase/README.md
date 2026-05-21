@@ -27,6 +27,7 @@ SQL migrations live in `migrations/`. Supabase applies them in **lexicographic (
 | 09 | `20260519130100_09_create_bind_claim_code_functions.sql` | `bind_student_claim_code`, `bind_parent_claim_code`, `bind_teacher_claim_code` |
 | 10 | `20260521120000_10_fk_hardening_and_primary_parent_guard.sql` | FK `ON DELETE RESTRICT` hardening; `parents_block_primary_delete` trigger |
 | 11 | `20260521130100_11_create_preflight_class_delete.sql` | `preflight_class_delete(uuid)` RPC for admin class-delete UI |
+| 12 | `20260521130200_12_create_preflight_subject_delete.sql` | `preflight_subject_delete(uuid)` RPC for admin subject-delete UI |
 
 **Dependency highlights**
 
@@ -37,6 +38,7 @@ SQL migrations live in `migrations/`. Supabase applies them in **lexicographic (
 - `08` must run before `09` (student/parent bind RPCs reference their tables).
 - `10` must run after `02`–`08` (alters FKs on `students`, `teachers`, `admin_profiles`, `class_subjects`, `teacher_class_subjects`, `student_subjects`; adds trigger on `parents`).
 - `11` must run after `06`–`08` and ideally after `10` (reads `students`, `teachers`, `class_subjects`, `teacher_class_subjects`).
+- `12` must run after `06`–`08` and ideally after `10` (reads `class_subjects`, `teacher_class_subjects`, `student_subjects`, `classes`, `teachers`).
 
 ## Folders
 

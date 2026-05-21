@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../api/models/supabase_models/class_delete_preflight.dart';
 import '../../../api/models/supabase_models/class_model.dart';
 import '../../../api/models/supabase_models/section_model.dart';
+import '../../../api/models/supabase_models/subject_delete_preflight.dart';
 import '../../../database/class_realm_service.dart';
 import '../../../database/models/class_realm.dart';
 import '../../../database/models/section_realm.dart';
@@ -346,6 +347,80 @@ class ClassService {
   Future<void> deleteSubject(String id) async {
     await _supabase.from('subjects').delete().eq('id', id).timeout(_timeout);
     await _subjectRealm.deleteSubject(id);
+  }
+
+  // ─────────────── Subject delete: preflight + helpers ─────────────
+
+  /// Returns a snapshot of every dependency blocking subject [id]'s delete:
+  /// curriculum links, teacher assignments, and student-enrollment count.
+  Future<SubjectDeletePreflight> preflightSubjectDelete(String id) async {
+    final response = await _supabase
+        .rpc('preflight_subject_delete', params: {'p_subject_id': id})
+        .timeout(_timeout);
+    return SubjectDeletePreflight.fromJson(
+      Map<String, dynamic>.from(response as Map),
+    );
+  }
+
+  /// Remove the subject from every class curriculum in one shot.
+  Future<void> removeSubjectFromAllClasses(String subjectId) async {
+    await _supabase
+        .from('class_subjects')
+        .delete()
+        .eq('subject_id', subjectId)
+        .timeout(_timeout);
+  }
+
+  /// Remove a single curriculum link by its `class_subjects.id`.
+  Future<void> removeClassSubjectLink(String classSubjectId) async {
+    await _supabase
+        .from('class_subjects')
+        .delete()
+        .eq('id', classSubjectId)
+        .timeout(_timeout);
+  }
+
+  /// Unassign every teacher from teaching this subject in any class.
+  Future<void> clearAllTeacherAssignmentsForSubject(String subjectId) async {
+    await _supabase
+        .from('teacher_class_subjects')
+        .delete()
+        .eq('subject_id', subjectId)
+        .timeout(_timeout);
+  }
+
+  /// Remove a single teacher assignment by its `teacher_class_subjects.id`.
+  Future<void> removeTeacherAssignment(String assignmentId) async {
+    await _supabase
+        .from('teacher_class_subjects')
+        .delete()
+        .eq('id', assignmentId)
+        .timeout(_timeout);
+  }
+
+  /// Unenroll every student from this subject in one shot.
+  Future<void> unenrollAllStudentsFromSubject(String subjectId) async {
+    await _supabase
+        .from('student_subjects')
+        .delete()
+        .eq('subject_id', subjectId)
+        .timeout(_timeout);
+  }
+
+  /// Soft-delete: mark a subject inactive while keeping all dependencies.
+  Future<SubjectModel> deactivateSubject(String id) async {
+    final updated = await _supabase
+        .from('subjects')
+        .update({
+          'is_active': false,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+    final model = SubjectModel.fromJson(Map<String, dynamic>.from(updated));
+    await _subjectRealm.saveSubject(model);
+    return model;
   }
 
 
