@@ -6,6 +6,7 @@ import 'package:hamrash_admin/database/family_realm_service.dart';
 import 'package:hamrash_admin/helpers/haptic_helper.dart';
 import 'package:hamrash_admin/resources/app_colors.dart';
 import 'package:hamrash_admin/resources/default_scaffold.dart';
+import 'package:hamrash_admin/resources/extensions.dart';
 import 'package:hamrash_admin/resources/spacing_constants.dart';
 import 'package:hamrash_admin/resources/utils/list_bottom_sheet_util.dart';
 import 'package:hamrash_admin/resources/utils/view_util.dart';
@@ -397,53 +398,58 @@ class _EnrolledList extends StatelessWidget {
       child: Column(
         children: [
           for (final e in rows)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: AppElevatedCard(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.deepPurpleAccent.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Center(
-                        child: HugeIcon(
-                          icon: HugeIcons.strokeRoundedBookOpen01,
-                          size: 16,
-                          strokeWidth: 1.8,
-                          color: Colors.deepPurpleAccent,
+            GestureDetector(
+              onTap: () => onRemove(e.id),
+              child: AbsorbPointer(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: AppElevatedCard(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurpleAccent.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Center(
+                            child: HugeIcon(
+                              icon: HugeIcons.strokeRoundedBookOpen01,
+                              size: 16,
+                              strokeWidth: 1.8,
+                              color: Colors.deepPurpleAccent,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: AppText(
+                            vm.subjectById(e.subjectId)?.name ?? 'Unknown subject',
+                            colorType: AppTextColor.textInverted,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        AppHugeIconButton(
+                          hugeIcon: HugeIcons.strokeRoundedDelete02,
+                          hugeIconStrokeWidth: 2,
+                          hugeIconRasterSize: 18,
+                          foregroundColor: LightColors.errorErrorDefault,
+                          onPressed: () {},
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: AppText(
-                        vm.subjectById(e.subjectId)?.name ?? 'Unknown subject',
-                        colorType: AppTextColor.textInverted,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    AppHugeIconButton(
-                      hugeIcon: HugeIcons.strokeRoundedDelete02,
-                      hugeIconStrokeWidth: 2,
-                      hugeIconRasterSize: 18,
-                      foregroundColor: LightColors.errorErrorDefault,
-                      onPressed: () => onRemove(e.id),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ).hapticFeedback(),
         ],
       ),
     );
@@ -792,7 +798,7 @@ class _ParentsList extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
+            ).hapticFeedback(),
         ],
       ),
     );

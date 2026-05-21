@@ -124,13 +124,11 @@ class StudentDetailViewModel extends BaseViewModel {
     notifyListeners();
   }
 
-  // ─── Subject enrollment ──────────────────────────────────────────────
-
-  /// Subjects assigned to the student's current class that they are not
-  /// already enrolled in. Empty list if no class is set.
+ 
   Future<List<SubjectModel>> availableSubjectsForClass() async {
     final classId = _student.classId;
     if (classId == null) return const [];
+    setBusy(true);
     try {
       final classSubjectIds =
           await _classService.fetchSubjectIdsForClass(classId);
@@ -145,6 +143,8 @@ class StudentDetailViewModel extends BaseViewModel {
           .toList();
     } catch (_) {
       return const [];
+    } finally {
+      setBusy(false);
     }
   }
 
