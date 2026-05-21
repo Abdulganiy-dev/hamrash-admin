@@ -58,7 +58,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
     ).then((updated) {
       if (updated != null && mounted) {
         viewModel.replaceStudent(updated);
-        viewModel.init(); 
+        viewModel.init();
       }
     });
   }
@@ -176,8 +176,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
           icon: HugeIcons.strokeRoundedSchool,
           label: 'Class',
           value: classDisplay,
-          valueColor:
-              m.currentClass == null ? LightColors.textTextMute : null,
+          valueColor: m.currentClass == null ? LightColors.textTextMute : null,
         ),
         if (s.admissionNumber != null)
           DetailInfoEntry(
@@ -255,18 +254,18 @@ class _SubjectsSection extends StatelessWidget {
                   subtitle: 'Tap the pencil to assign a class',
                 )
               : enrolled.isEmpty
-                  ? DetailEmptyHint(
-                      key: const ValueKey('no-subjects'),
-                      icon: HugeIcons.strokeRoundedBookOpen01,
-                      iconColor: Colors.deepPurpleAccent,
-                      title: 'No subjects yet',
-                      subtitle: 'Tap + to enroll in a subject',
-                    )
-                  : _EnrolledList(
-                      key: const ValueKey('list'),
-                      vm: vm,
-                      onRemove: (id) => _confirmRemove(context, id),
-                    ),
+              ? DetailEmptyHint(
+                  key: const ValueKey('no-subjects'),
+                  icon: HugeIcons.strokeRoundedBookOpen01,
+                  iconColor: Colors.deepPurpleAccent,
+                  title: 'No subjects yet',
+                  subtitle: 'Tap + to enroll in a subject',
+                )
+              : _EnrolledList(
+                  key: const ValueKey('list'),
+                  vm: vm,
+                  onRemove: (id) => _confirmRemove(context, id),
+                ),
         ),
       ],
     );
@@ -320,11 +319,7 @@ class _SubjectsSection extends StatelessWidget {
 }
 
 class _EnrolledList extends StatelessWidget {
-  const _EnrolledList({
-    super.key,
-    required this.vm,
-    required this.onRemove,
-  });
+  const _EnrolledList({super.key, required this.vm, required this.onRemove});
 
   final StudentDetailViewModel vm;
   final ValueChanged<String> onRemove;
@@ -353,7 +348,9 @@ class _EnrolledList extends StatelessWidget {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: Colors.deepPurpleAccent.withValues(alpha: 0.10),
+                            color: Colors.deepPurpleAccent.withValues(
+                              alpha: 0.10,
+                            ),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Center(
@@ -368,7 +365,8 @@ class _EnrolledList extends StatelessWidget {
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: AppText(
-                            vm.subjectById(e.subjectId)?.name ?? 'Unknown subject',
+                            vm.subjectById(e.subjectId)?.name ??
+                                'Unknown subject',
                             colorType: AppTextColor.textInverted,
                             fontWeight: FontWeight.w500,
                             fontSize: 14,
@@ -448,37 +446,38 @@ class _ParentsSection extends StatelessWidget {
   // ─── Add parent flow ────────────────────────────────────────────────
 
   Future<void> _addParent(BuildContext context) async {
-    final choice = await ListBottomSheet.show<_AddParentChoice, _AddParentChoice>(
-      context: context,
-      title: 'Add a parent',
-      snappingConfig: SheetSnappingConfig([0.3]),
-      headerImage: const HugeIcon(
-        icon: HugeIcons.strokeRoundedUserGroup,
-        size: 30,
-        strokeWidth: 2,
-        color: Colors.teal,
-      ),
-      items: _AddParentChoice.values,
-      itemBuilder: (ctx, choice, _) => HapticListTile(
-        leading: HugeIcon(
-          icon: choice.icon,
-          size: 22,
-          strokeWidth: 1.8,
-          color: LightColors.textTextInverted,
-        ),
-        title: AppText(
-          choice.label,
-          colorType: AppTextColor.textInverted,
-          fontWeight: FontWeight.w500,
-        ),
-        subtitle: AppText(
-          choice.subtitle,
-          colorType: AppTextColor.textMute,
-          fontSize: 12,
-        ),
-        onTap: () => NavigationService.popScreen(choice),
-      ),
-    );
+    final choice =
+        await ListBottomSheet.show<_AddParentChoice, _AddParentChoice>(
+          context: context,
+          title: 'Add a parent',
+          snappingConfig: SheetSnappingConfig([0.3]),
+          headerImage: const HugeIcon(
+            icon: HugeIcons.strokeRoundedUserGroup,
+            size: 30,
+            strokeWidth: 2,
+            color: Colors.teal,
+          ),
+          items: _AddParentChoice.values,
+          itemBuilder: (ctx, choice, _) => HapticListTile(
+            leading: HugeIcon(
+              icon: choice.icon,
+              size: 22,
+              strokeWidth: 1.8,
+              color: LightColors.textTextInverted,
+            ),
+            title: AppText(
+              choice.label,
+              colorType: AppTextColor.textInverted,
+              fontWeight: FontWeight.w500,
+            ),
+            subtitle: AppText(
+              choice.subtitle,
+              colorType: AppTextColor.textMute,
+              fontSize: 12,
+            ),
+            onTap: () => NavigationService.popScreen(choice),
+          ),
+        );
     if (choice == null || !context.mounted) return;
 
     final ParentModel? parent;
@@ -486,8 +485,7 @@ class _ParentsSection extends StatelessWidget {
       parent = await _pickExistingParent(context);
     } else {
       parent = await NavigationService.animatedNavigation<ParentModel>(
-
-        screen:const CreateParentView(),
+        screen: const CreateParentView(),
       );
     }
     if (parent == null || parent.id == null || !context.mounted) return;
@@ -647,11 +645,7 @@ class _ParentsSection extends StatelessWidget {
 }
 
 class _ParentsList extends StatelessWidget {
-  const _ParentsList({
-    super.key,
-    required this.vm,
-    required this.onAction,
-  });
+  const _ParentsList({super.key, required this.vm, required this.onAction});
 
   final StudentDetailViewModel vm;
   final ValueChanged<ParentOfStudent> onAction;
@@ -681,46 +675,43 @@ class _ParentsList extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              AppText(
+                                rel.parent.fullName,
+                                colorType: AppTextColor.textInverted,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+
                               Row(
                                 children: [
-                                  Flexible(
-                                    child: AppText(
-                                      rel.parent.fullName,
-                                      colorType: AppTextColor.textInverted,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                  AppText(
+                                    StudentParentRelationship.display(
+                                      rel.link.relationship,
                                     ),
+                                    colorType: AppTextColor.textMute,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
                                   ),
+
                                   if (rel.link.isPrimary) ...[
-                                    const SizedBox(width: AppSpacing.xs),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.amber.withValues(alpha: 0.18),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: const AppText(
-                                        'Primary',
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.amber,
-                                      ),
+                                    Icon(
+                                      Icons.circle,
+                                      size: 5,
+                                      color: LightColors.textTextMute,
+                                    ).padding(
+                                      left: AppSpacing.xs,
+                                      right: AppSpacing.xs,
+                                    ),
+                                    const AppText(
+                                      'Primary',
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.amber,
                                     ),
                                   ],
                                 ],
-                              ),
-                              const SizedBox(height: 2),
-                              AppText(
-                                StudentParentRelationship.display(
-                                    rel.link.relationship),
-                                colorType: AppTextColor.textMute,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
                               ),
                             ],
                           ),
@@ -729,7 +720,8 @@ class _ParentsList extends StatelessWidget {
                           hugeIcon: HugeIcons.strokeRoundedMoreHorizontal,
                           hugeIconStrokeWidth: 2,
                           hugeIconRasterSize: 22,
-                          foregroundColorType: AppButtonForegroundColor.textInverted,
+                          foregroundColorType:
+                              AppButtonForegroundColor.textInverted,
                           onPressed: () {},
                         ),
                       ],
@@ -784,4 +776,3 @@ enum _ParentAction {
   final List<List<dynamic>> icon;
   final bool isDestructive;
 }
-
