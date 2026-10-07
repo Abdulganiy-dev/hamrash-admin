@@ -1,4 +1,4 @@
-package com.example.hamrash_admin
+package com.everydayworks.hamrash.admin
 
 import io.flutter.embedding.android.FlutterActivity
 

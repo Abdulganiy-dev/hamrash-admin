@@ -9,8 +9,7 @@ abstract class Env {
   String get clerkPublishableKey;
   String get supabaseUrl;
   String get supabaseAnonKey;
-  String get clerkRedirectUrl;
-  String get clerkDeepLinkUrl;
+
 
   /// Cloudflare API (user token or global key). Prefer `--dart-define` for secrets.
   String get cloudflareEmail;
@@ -35,21 +34,16 @@ class DevEnv implements Env {
 
   @override
   String get clerkPublishableKey =>
-      'pk_test_bWVhc3VyZWQtZWdyZXQtNTEuY2xlcmsuYWNjb3VudHMuZGV2JA';
+      'pk_test_c29saWQtc3RpbmdyYXktNzY3Ni5jbGVyay5hY2NvdW50cy5kZXYk';
 
   @override
-  String get supabaseUrl => 'https://zdamkdkebucubgzllwqx.supabase.co';
+  String get supabaseUrl => 'https://ccvyhbyrtobdsecqvhcr.supabase.co';
 
   @override
   String get supabaseAnonKey =>
-      'sb_publishable_yFTws6io4lUcDpogxNe_vA_OWsPtJwS';
+      'sb_publishable_rsWnj5Dj89nS_AOcZk9Yfw_ucYGtrec';
 
-  @override
-  String get clerkRedirectUrl =>
-      'https://frank-dassie-81.clerk.accounts.dev';
 
-  @override
-  String get clerkDeepLinkUrl => '';
 
   /// Optional for user API tokens (`cfut_`); required with a Global API key.
   @override
@@ -94,12 +88,6 @@ class ProdEnv implements Env {
 
   @override
   String get supabaseAnonKey => ''; // TODO: Add production Supabase anon key
-
-  @override
-  String get clerkRedirectUrl => ''; // TODO: Add production Clerk redirect URL
-
-  @override
-  String get clerkDeepLinkUrl => 'artisanpassport://auth/callback';
 
   @override
   String get cloudflareEmail => const String.fromEnvironment(
