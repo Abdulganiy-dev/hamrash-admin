@@ -4,23 +4,7 @@ import 'package:hamrash_admin/api/api_setup/api_client.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/cloudflare_dio_client.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/image_service.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/secret_service.dart';
-import 'package:hamrash_admin/api/services/supabase_services/admin_profile_service.dart';
-import 'package:hamrash_admin/api/services/supabase_services/binding_service.dart';
-import 'package:hamrash_admin/api/services/supabase_services/class_service.dart';
-import 'package:hamrash_admin/api/services/supabase_services/parent_service.dart';
-import 'package:hamrash_admin/api/services/supabase_services/role_service.dart';
-import 'package:hamrash_admin/api/services/supabase_services/state_service.dart';
-import 'package:hamrash_admin/api/services/supabase_services/student_service.dart';
-import 'package:hamrash_admin/api/services/supabase_services/teacher_service.dart';
-import 'package:hamrash_admin/database/admin_profile_realm_service.dart';
-import 'package:hamrash_admin/database/class_realm_service.dart';
-import 'package:hamrash_admin/database/family_realm_service.dart';
 import 'package:hamrash_admin/database/realm_service.dart';
-import 'package:hamrash_admin/database/role_realm_service.dart';
-import 'package:hamrash_admin/database/state_realm_service.dart';
-import 'package:hamrash_admin/database/section_realm_service.dart';
-import 'package:hamrash_admin/database/subject_realm_service.dart';
-import 'package:hamrash_admin/database/teacher_realm_service.dart';
 import 'package:hamrash_admin/env_config/flavor_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -50,81 +34,11 @@ void setupLocator() {
     ),
   );
 
-  // // Register Supabase client as singleton
+  // Register Supabase client as singleton
   locator.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
 
 
   locator.registerLazySingleton<RealmService>(() => RealmService());
-
-  locator.registerLazySingleton<StateRealmService>(
-    () => StateRealmService(locator<RealmService>()),
-  );
-
-  locator.registerLazySingleton<StateService>(
-    () => StateService(stateRealmService: locator<StateRealmService>()),
-  );
-
-  locator.registerLazySingleton<RoleRealmService>(
-    () => RoleRealmService(locator<RealmService>()),
-  );
-
-  locator.registerLazySingleton<RoleService>(
-    () => RoleService(roleRealmService: locator<RoleRealmService>()),
-  );
-
-  locator.registerLazySingleton<AdminProfileRealmService>(
-    () => AdminProfileRealmService(locator<RealmService>()),
-  );
-
-  locator.registerLazySingleton<AdminProfileService>(
-    () => AdminProfileService(
-      adminProfileRealmService: locator<AdminProfileRealmService>(),
-    ),
-  );
-
-  locator.registerLazySingleton<ClassRealmService>(
-    () => ClassRealmService(locator<RealmService>()),
-  );
-
-  locator.registerLazySingleton<SectionRealmService>(
-    () => SectionRealmService(locator<RealmService>()),
-  );
-
-  locator.registerLazySingleton<SubjectRealmService>(
-    () => SubjectRealmService(locator<RealmService>()),
-  );
-
-  locator.registerLazySingleton<ClassService>(
-    () => ClassService(
-      classRealmService: locator<ClassRealmService>(),
-      sectionRealmService: locator<SectionRealmService>(),
-      subjectRealmService: locator<SubjectRealmService>(),
-    ),
-  );
-
-  locator.registerLazySingleton<TeacherRealmService>(
-    () => TeacherRealmService(locator<RealmService>()),
-  );
-
-  locator.registerLazySingleton<TeacherService>(
-    () => TeacherService(teacherRealmService: locator<TeacherRealmService>()),
-  );
-
-  // Students + parents share one Realm cache so we can walk family graphs
-  // offline.
-  locator.registerLazySingleton<FamilyRealmService>(
-    () => FamilyRealmService(locator<RealmService>()),
-  );
-
-  locator.registerLazySingleton<StudentService>(
-    () => StudentService(familyRealmService: locator<FamilyRealmService>()),
-  );
-
-  locator.registerLazySingleton<ParentService>(
-    () => ParentService(familyRealmService: locator<FamilyRealmService>()),
-  );
-
-  locator.registerLazySingleton<BindingService>(() => BindingService());
 
   locator.registerLazySingleton<CloudflareDioClient>(
     () => CloudflareDioClient(),
@@ -133,9 +47,4 @@ void setupLocator() {
   locator.registerLazySingleton<SecretService>(() => SecretService());
 
   locator.registerLazySingleton<ImageService>(() => ImageService());
-
-  // // Register Cloudflare services as singletons
-  // locator.registerLazySingleton<SecretsService>(() => SecretsService());
-
-
 }

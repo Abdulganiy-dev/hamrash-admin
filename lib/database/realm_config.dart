@@ -1,18 +1,9 @@
 import 'package:hamrash_admin/resources/app_logger.dart';
 import 'package:realm/realm.dart';
 
-import 'models/admin_profile_realm.dart';
-import 'models/app_role_realm.dart';
-import 'models/class_realm.dart';
-import 'models/state_realm.dart';
-import 'models/section_realm.dart';
-import 'models/student_realm.dart';
-import 'models/subject_realm.dart';
-import 'models/teacher_realm.dart';
-
 class RealmConfig {
   /// Bump when adding or changing Realm models (see Supabase_Realm_Architecture_Guide.md).
-  static const int _currentSchemaVersion = 6;
+  static const int _currentSchemaVersion = 7;
   static const String _databaseName = 'hamrash_admin.realm';
 
   static Configuration getConfiguration() {
@@ -20,16 +11,7 @@ class RealmConfig {
 
     return Configuration.local(
       [
-        StateRealm.schema,
-        AppRoleRealm.schema,
-        AdminProfileRealm.schema,
-        ClassRealm.schema,
-        SectionRealm.schema,
-        SubjectRealm.schema,
-        TeacherRealm.schema,
-        StudentRealm.schema,
-        ParentRealm.schema,
-        StudentParentLinkRealm.schema,
+        // Register Realm model schemas here, e.g. `ExampleRealm.schema`.
       ],
       schemaVersion: _currentSchemaVersion,
       migrationCallback: _migrationCallback,
@@ -41,34 +23,11 @@ class RealmConfig {
       'Running Realm migration from version $oldSchemaVersion to $_currentSchemaVersion',
     );
 
-    if (oldSchemaVersion < 1) {
-      AppLogger.info('Initial schema version - no migration required');
-    }
-
-    if (oldSchemaVersion < 2) {
-      AppLogger.info('Schema 2: AppRoleRealm + AdminProfileRealm added');
-    }
-
-    if (oldSchemaVersion < 3) {
-      AppLogger.info('Schema 3: ClassRealm + SubjectRealm added');
-    }
-
-    if (oldSchemaVersion < 4) {
-      AppLogger.info('Schema 4: SectionRealm added');
-    }
-
-    if (oldSchemaVersion < 5) {
-      AppLogger.info('Schema 5: TeacherRealm added');
-    }
-
-    if (oldSchemaVersion < 6) {
-      AppLogger.info(
-        'Schema 6: StudentRealm + ParentRealm + StudentParentLinkRealm added',
-      );
+    if (oldSchemaVersion < 7) {
+      AppLogger.info('Schema 7: all models removed (fresh start)');
     }
   }
 
   /// Get the database file path
   static String get databasePath => _databaseName;
 }
-
