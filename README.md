@@ -92,10 +92,15 @@ Class and subject deletes pre-flight via a single RPC (`preflight_class_delete`,
 
 ## Getting started
 
+The Flutter SDK is pinned to **3.44.8** (Dart 3.12.2) via [FVM](https://fvm.app) in `.fvmrc`.
+
 ```bash
-flutter pub get
-flutter run --flavor dev    # see lib/env_config for flavor wiring
+fvm install                     # installs the pinned SDK if missing
+fvm flutter pub get
+fvm flutter run --flavor dev    # see lib/env_config for flavor wiring
 ```
+
+Point your IDE at `.fvm/versions/3.44.8` (VS Code: `"dart.flutterSdkPath"`).
 
 ### Required environment
 

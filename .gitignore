@@ -46,3 +46,6 @@ app.*.map.json
 
 # Supabase migrations
 supabase/migrations/
+
+# FVM Version Cache
+.fvm/
