@@ -1,6 +1,6 @@
 # Supabase (Hamrash)
 
-Database for the Hamrash platform. Project ref: `ccvyhbyrtobdsecqvhcr`. Design notes: [`docs/organization-schema.md`](../docs/organization-schema.md).
+Database for the Hamrash platform. Project ref: `ccvyhbyrtobdsecqvhcr`. Design notes: [`docs/organization-schema.md`](../docs/organization-schema.md), [`docs/people-schema.md`](../docs/people-schema.md).
 
 ## Migrations
 
@@ -10,6 +10,9 @@ Applied in filename order. Each filename's timestamp matches the version recorde
 |---|------|--------------|
 | 01 | `20261007182933_01_create_organizations_and_members.sql` | `organizations`, `organization_members`, `platform_admins`; RLS helpers in `private`; claim codes; owner guard; RPCs `create_organization`, `set_organization_status`, `redeem_claim_code` |
 | 02 | `20261007185331_02_tidy_rls_initplan_and_rls_auto_enable.sql` | Rewrites two policies to the form the advisor recognises; revokes API execute on `rls_auto_enable()` |
+| 03 | `20261007210000_03_create_people.sql` | `staff`, `students`, `parents`, `student_parents`; generated admission/staff numbers; `organizations.number_prefix` + `logo_id`; `create_organization` now takes the prefix; RPCs `invite_staff`, `invite_student`, `invite_parent` |
+
+Migration 03 contains `drop function`, which the Supabase connector refuses to run, so it was applied in the SQL editor and then recorded in `supabase_migrations.schema_migrations` by hand. Migrations that drop things may need the same treatment.
 
 Before writing a new migration, follow the checklist under "Rules every future school table follows" in the design notes.
 
@@ -17,7 +20,8 @@ Before writing a new migration, follow the checklist under "Rules every future s
 
 | File | What it checks |
 |------|----------------|
-| `tests/01_organizations_access_test.sql` | 28 access rules for migration 01: who can read, invite, edit and suspend, and that schools are kept apart |
+| `tests/01_organizations_access_test.sql` | 28 access rules for schools and memberships: who can read, invite, edit and suspend, and that schools are kept apart. Uses the `create_organization(name, prefix, …)` signature from migration 03. |
+| `tests/02_people_access_test.sql` | 38 checks for staff, students, parents and links: who can read and edit what, issuing logins, numbering, co-parents, cross-school isolation, suspension |
 
 To run a test, paste the file into the SQL editor. It acts as several fake users, then raises an exception on purpose so every change is rolled back. The error message is the PASS/FAIL report. It needs the dummy platform admin `user_dummy_platform_admin` to exist.
 

@@ -5,6 +5,8 @@
 -- rule, then raises an exception on purpose so EVERYTHING is rolled back.
 -- The "error" you see at the end is the report: each line is PASS or FAIL.
 --
+-- Uses create_organization(name, number_prefix, ...) as changed in migration 03.
+--
 -- Requires the dummy platform admin row:
 --   insert into public.platform_admins (clerk_user_id, full_name, email)
 --   values ('user_dummy_platform_admin', 'Dummy Platform Admin', 'dummy-platform-admin@example.com');
@@ -29,7 +31,7 @@ begin
   perform set_config('request.jwt.claims', '{"sub":"test_outsider","role":"authenticated"}', true);
   execute 'set local role authenticated';
   begin
-    perform public.create_organization('Nope School');
+    perform public.create_organization('Nope School', 'NOP');
     v_log := v_log || E'\nFAIL 01 outsider created a school';
   exception when others then
     v_log := v_log || E'\n' || case when sqlstate = '42501' then 'PASS' else 'FAIL' end || ' 01 outsider cannot create school [' || sqlerrm || ']';
@@ -40,9 +42,9 @@ begin
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);
   execute 'set local role authenticated';
   select c.organization_id, c.organization_code, c.owner_claim_code into v_org, v_code, v_claim
-    from public.create_organization('Test School', 'a@b.c') c;
+    from public.create_organization('Test School', 'TST', 'a@b.c') c;
   select c.organization_id, c.owner_claim_code into v_org2, v_claim2
-    from public.create_organization('Other School') c;
+    from public.create_organization('Other School', 'OTH') c;
   v_log := v_log || E'\n' || case when v_code ~ '^HMR-[A-Z0-9]{6}$' and v_claim ~ '^[A-Z0-9]{8}$' then 'PASS' else 'FAIL' end
         || ' 02 platform admin creates school [code ' || v_code || ', owner claim ' || v_claim || ']';
 
@@ -227,7 +229,7 @@ begin
     v_log := v_log || E'\n' || case when sqlstate = '42501' then 'PASS' else 'FAIL' end || ' 24a anon cannot read organizations [' || sqlerrm || ']';
   end;
   begin
-    perform public.create_organization('Anon School');
+    perform public.create_organization('Anon School', 'ANO');
     v_log := v_log || E'\nFAIL 24b anon called create_organization';
   exception when others then
     v_log := v_log || E'\n' || case when sqlstate = '42501' then 'PASS' else 'FAIL' end || ' 24b anon cannot call RPCs [' || sqlerrm || ']';

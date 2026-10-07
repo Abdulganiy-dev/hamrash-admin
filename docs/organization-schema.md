@@ -59,6 +59,8 @@ Managed only by Hamrash through the SQL editor or service role. Clients can read
 | `id` | `uuid` PK. The organization id. |
 | `code` | `HMR-XXXXXX`, unique, generated |
 | `name`, `email`, `phone`, `address`, `state`, `logo_url` | Editable by the school's owner or admin |
+| `logo_id` | Cloudflare Images id of the logo, needed to replace or delete it. Editable by the owner or admin. *(added in migration 03)* |
+| `number_prefix` | Required, 2–8 letters or digits (e.g. `KCL`). Entered by Hamrash at creation; goes in front of admission and staff numbers. Owner or admin can correct it. *(added in migration 03)* |
 | `status` | `trial`, `active`, `suspended`, `archived`. Only platform admins change it. Schools are never deleted. |
 | `created_by` | Clerk id of the platform admin who created it |
 
@@ -84,7 +86,7 @@ Managed only by Hamrash through the SQL editor or service role. Clients can read
 ```
 Hamrash platform admin              School owner                      Owner's staff
 ──────────────────────              ────────────                      ─────────────
-create_organization("Kings College")
+create_organization("Kings College", "KCL")
   → org created (code HMR-7K2Q9P, status trial)
   → owner invite created (claim code ABCD-2345)
 gives the code to the owner  ──►    signs in with Clerk
