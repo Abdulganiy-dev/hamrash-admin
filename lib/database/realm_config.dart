@@ -1,4 +1,4 @@
-import 'package:hamrash_admin/resources/app_logger.dart';
+import 'package:hamrash_admin/core/app_logger.dart';
 import 'package:realm/realm.dart';
 
 class RealmConfig {

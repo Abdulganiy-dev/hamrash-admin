@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
-import 'package:hamrash_admin/widgets/error_modal.dart';
+import 'package:hamrash_admin/core/bottomSheets/error_modal.dart';
 import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
 
 import '../resources/error_messages.dart';
-import '../resources/utils/view_util.dart';
+import '../core/utils/view_util.dart';
 import '../services/error_logger_service.dart';
 
 abstract class BaseViewModel extends ChangeNotifier {

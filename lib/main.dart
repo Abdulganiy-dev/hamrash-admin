@@ -1,7 +1,7 @@
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hamrash_admin/database/realm_service.dart';
-import 'package:hamrash_admin/resources/utils/view_util.dart';
+import 'package:hamrash_admin/core/utils/view_util.dart';
 import 'package:hamrash_admin/services/error_logger_service.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -41,7 +41,7 @@ Future<void> main() async {
 
     setupLocator();
 
-       final realmService = locator<RealmService>();
+    final realmService = locator<RealmService>();
     realmService.initialize();
 
     await ErrorLoggerService.logInfo(

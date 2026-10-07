@@ -1,7 +1,7 @@
 
-import 'package:flutter/material.dart';
-import 'package:hamrash_admin/resources/utils/view_util.dart';
+import 'package:hamrash_admin/core/utils/view_util.dart';
 import 'package:hamrash_admin/services/error_logger_service.dart';
+import 'package:flutter/cupertino.dart';
 
 class NavigationService {
   static PageRouteBuilder<T> generalPageRouteBuilder<T>({
@@ -54,13 +54,15 @@ class NavigationService {
       return Future.value(null);
     }
 
-    return Navigator.push<T>(
-      ctx,
-      NavigationService.generalPageRouteBuilder(
-        screen: screen,
-        transition: transition,
-      ),
-    );
+
+    final Route<T> route = transition == PageTransition.slide
+        ? CupertinoPageRoute<T>(builder: (_) => screen)
+        : NavigationService.generalPageRouteBuilder(
+            screen: screen,
+            transition: transition,
+          );
+
+    return Navigator.push<T>(ctx, route);
   }
 
   static void popScreen<T extends Object?>([T? result]) {

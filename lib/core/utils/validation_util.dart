@@ -1,0 +1,140 @@
+
+
+class ValidationUtil {
+  static String? validateFullName(String value) {
+    if (value.isEmpty) {
+      return 'Full name is required';
+    }
+    return null;
+  }
+
+  static String? validateFirstName(String firstName) {
+    if (firstName.isEmpty) {
+      return "First name is required";
+    }
+    if (!RegExp(r"^[a-zA-Z\s'-]+$").hasMatch(firstName)) {
+      return "First name can only contain letters, spaces, hyphens, and apostrophes";
+    }
+    if (firstName.trim().length < 2) {
+      return "First name must be at least 2 characters";
+    }
+    return null;
+  }
+
+  static String? validateLastName(String lastName) {
+    if (lastName.isEmpty) {
+      return "Last name is required";
+    }
+    if (!RegExp(r"^[a-zA-Z\s'-]+$").hasMatch(lastName)) {
+      return "Last name can only contain letters, spaces, hyphens, and apostrophes";
+    }
+    if (lastName.trim().length < 2) {
+      return "Last name must be at least 2 characters";
+    }
+    return null;
+  }
+
+  static String? validateGender(String lastName) {
+    if (lastName.isEmpty) {
+      return "Gender is required";
+    }
+    return null;
+  }
+
+  static String? validatePhoneNumber(String phoneNumber) {
+    final trimmed = phoneNumber.trim();
+
+    if (trimmed.isEmpty) {
+      return "Phone number is required";
+    }
+
+    // Nigerian phone number formats (your pattern):
+    // ((^+)(234){1}[0-9]{10})|((^234)[0-9]{10})|((^0)(7|8|9){1}(0|1){1}[0-9]{8})
+    //
+    // Cleaned-up and adapted for Dart:
+    // - +234XXXXXXXXXX
+    // - 234XXXXXXXXXX
+    // - 0(7|8|9)(0|1)XXXXXXXX
+    final naijaPhoneRegex =
+        RegExp(r'^(\+234[0-9]{10}|234[0-9]{10}|0(7|8|9)(0|1)[0-9]{8})$');
+
+    if (!naijaPhoneRegex.hasMatch(trimmed)) {
+      return "Enter a valid Nigerian phone number";
+    }
+
+    return null;
+  }
+
+  static String? validateEmail(String email) {
+    if (email.isEmpty) {
+      return "Email address is required";
+    }
+    if (!RegExp(
+      r"^[a-zA-Z0-9.a-zA-Z0-9!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+    ).hasMatch(email)) {
+      return "email address is not valid";
+    }
+
+    return null;
+  }
+
+  static String? validateValue(String value, String displayText) {
+    if (value.isEmpty) {
+      return "$displayText is required";
+    }
+    return null;
+  }
+
+  static const int defaultMinimumAge = 17;
+
+  static String? validateDateOfBirth(
+    String value, {
+    int minimumAge = defaultMinimumAge,
+  }) {
+    final requiredError = validateValue(value, 'Date of birth');
+    if (requiredError != null) return requiredError;
+
+    final birthDate = tryParseDdMmYyyy(value);
+    if (birthDate == null) {
+      return 'Enter a valid date of birth (DD/MM/YYYY)';
+    }
+
+    final today = DateTime.now();
+    if (birthDate.isAfter(today)) {
+      return 'Date of birth cannot be in the future';
+    }
+
+    if (ageOnDate(birthDate, today) < minimumAge) {
+      return 'Must be at least $minimumAge years old';
+    }
+
+    return null;
+  }
+
+  static DateTime? tryParseDdMmYyyy(String input) {
+    final parts = input.trim().split('/');
+    if (parts.length != 3) return null;
+
+    final day = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    final year = int.tryParse(parts[2]);
+    if (day == null || month == null || year == null) return null;
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+
+    final date = DateTime(year, month, day);
+    if (date.year != year || date.month != month || date.day != day) {
+      return null;
+    }
+
+    return date;
+  }
+
+  static int ageOnDate(DateTime birthDate, DateTime onDate) {
+    var age = onDate.year - birthDate.year;
+    if (onDate.month < birthDate.month ||
+        (onDate.month == birthDate.month && onDate.day < birthDate.day)) {
+      age--;
+    }
+    return age;
+  }
+}

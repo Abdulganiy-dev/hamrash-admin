@@ -68,7 +68,8 @@ dependencies:
   device_info_plus: ^12.3.0
   package_info_plus: ^9.0.0
   path: ^1.9.1
-  hugeicons: ^1.1.0
+  lucide_icons_flutter: ^3.1.14+2
+  shimmer: ^3.0.0
   stupid_simple_sheet: ^0.9.1+1
   motor: ^1.1.0
   flutter_svg: ^2.2.4

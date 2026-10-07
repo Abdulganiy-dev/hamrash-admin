@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:hamrash_admin/api/services/api_route.dart';
 
 import '../../env_config/flavor_config.dart';
-import '../../resources/app_logger.dart';
+import '../../core/app_logger.dart';
 
 import 'api_response.dart';
 import 'auth_interceptor.dart';

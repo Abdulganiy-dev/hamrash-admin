@@ -3,8 +3,8 @@ import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/app.dart';
 import 'package:hamrash_admin/database/realm_service.dart';
-import 'package:hamrash_admin/resources/app_logger.dart';
-import 'package:hamrash_admin/resources/utils/view_util.dart';
+import 'package:hamrash_admin/core/app_logger.dart';
+import 'package:hamrash_admin/core/utils/view_util.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'env_config/env.dart';
