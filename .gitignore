@@ -46,8 +46,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Supabase migrations
-supabase/migrations/
-
 # FVM Version Cache
 .fvm/
+
+# Supabase CLI cache
+supabase/.temp/
