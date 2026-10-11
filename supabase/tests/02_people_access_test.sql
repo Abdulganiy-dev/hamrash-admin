@@ -4,12 +4,15 @@
 -- It acts as several fake users, checks every rule, then raises an exception on
 -- purpose so EVERYTHING is rolled back. The "error" at the end is the report.
 --
--- Requires the dummy platform admin 'user_dummy_platform_admin'.
+-- Requires migrations 03 and 05 (staff_private_details) and the dummy
+-- platform admin 'user_dummy_platform_admin'.
 
 do $test$
 declare
   v_log  text := '';
   v_n    int;
+  v_rows int;
+  v_new_staff public.staff;
   v_ok   boolean;
   -- schools and owner codes
   v_org  uuid;  v_claim  text;
@@ -65,8 +68,8 @@ begin
   perform public.redeem_claim_code(v_claim);
 
   -- 01 owner adds staff, students, parents and links
-  insert into public.staff (organization_id, first_name, last_name, job_title)
-    values (v_org, 'Ada', 'Teacher', 'Maths Teacher') returning id into v_teacher_staff;
+  insert into public.staff (organization_id, first_name, last_name, job_title, phone, email)
+    values (v_org, 'Ada', 'Teacher', 'Maths Teacher', '0807777777', 'ada@school.test') returning id into v_teacher_staff;
   insert into public.staff (organization_id, first_name, last_name, job_title, staff_type)
     values (v_org, 'Bayo', 'Bursar', 'Bursar', 'non_teaching') returning id into v_bursar_staff;
   insert into public.students (organization_id, first_name, last_name, admission_number, blood_group, genotype, photo_id)
@@ -181,7 +184,18 @@ begin
   select count(*) into v_n from public.parents;
   v_log := v_log || E'\n' || case when v_n = 3 then 'PASS' else 'FAIL' end || ' 09b teacher reads all parents in school [' || v_n || ']';
   select count(*) into v_n from public.staff;
-  v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 09c teacher reads only own staff record [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 09c teacher reads all staff profiles in school [' || v_n || ']';
+  select count(*) into v_n from public.staff_private_details;
+  v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 09d teacher reads only own private details [' || v_n || ']';
+  update public.staff_private_details set address = 'Somewhere' where staff_id = v_teacher_staff;
+  get diagnostics v_n = row_count;
+  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 09e teacher cannot edit own private details yet';
+  begin
+    perform public.create_staff(v_org, 'Sneaky', 'Hire');
+    v_log := v_log || E'\nFAIL 09f teacher added staff through create_staff';
+  exception when others then
+    v_log := v_log || E'\n' || case when sqlstate = '42501' then 'PASS' else 'FAIL' end || ' 09f teacher cannot use create_staff [' || sqlerrm || ']';
+  end;
 
   begin
     insert into public.students (organization_id, first_name, last_name) values (v_org, 'Sneaky', 'Add');
@@ -209,6 +223,8 @@ begin
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 11a bursar reads students [' || v_n || ']';
   select count(*) into v_n from public.staff;
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 11b bursar reads all staff [' || v_n || ']';
+  select count(*) into v_n from public.staff_private_details;
+  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 11b2 bursar reads all private details [' || v_n || ']';
   begin
     insert into public.staff (organization_id, first_name, last_name) values (v_org, 'Sneaky', 'Hire');
     v_log := v_log || E'\nFAIL 11c bursar added staff';
@@ -230,7 +246,18 @@ begin
   select count(*) into v_n from public.student_parents;
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 12c parent sees all of own child''s links, not others [' || v_n || ']';
   select count(*) into v_n from public.staff;
-  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 12d parent sees no staff records [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 12d parent sees staff profiles (names) [' || v_n || ']';
+  select s.phone || ' / ' || s.email into v_names from public.staff s where s.id = v_teacher_staff;
+  v_log := v_log || E'\n' || case when v_names = '0807777777 / ada@school.test' then 'PASS' else 'FAIL' end || ' 12d2 parent sees teacher''s phone and email [' || coalesce(v_names, '') || ']';
+  select count(*) into v_n from public.staff_private_details;
+  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 12e parent sees no staff private details [' || v_n || ']';
+  begin
+    perform public.update_staff(v_teacher_staff, 'Ada', 'Changed', null, null, null, null, null, null, null, null,
+                                'teaching', 'active', null, null, null, null);
+    v_log := v_log || E'\nFAIL 12f parent edited a staff record';
+  exception when others then
+    v_log := v_log || E'\n' || case when sqlstate = '42501' then 'PASS' else 'FAIL' end || ' 12f parent cannot use update_staff [' || sqlerrm || ']';
+  end;
 
   -- ── student ────────────────────────────────────────────────
   execute 'reset role';
@@ -243,12 +270,42 @@ begin
   select count(*) into v_n from public.student_parents;
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 13b student sees own parent links [' || v_n || ']';
   select count(*) into v_n from public.staff;
-  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 13c student sees no staff records [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 13c student sees staff profiles (names) [' || v_n || ']';
+  select count(*) into v_n from public.staff_private_details;
+  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 13d student sees no staff private details [' || v_n || ']';
 
   -- ── owner again ────────────────────────────────────────────
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_owner","role":"authenticated"}', true);
   execute 'set local role authenticated';
+
+  -- 13e every staff member got a private details row automatically, and the owner can edit it
+  select count(*) into v_n from public.staff_private_details where organization_id = v_org;
+  update public.staff_private_details set address = '1 School Road', date_of_birth = '1990-05-01' where staff_id = v_teacher_staff;
+  get diagnostics v_rows = row_count;
+  v_log := v_log || E'\n' || case when v_n = 2 and v_rows = 1 then 'PASS' else 'FAIL' end || ' 13e details row created with each staff member; owner can edit it [' || v_n || ']';
+
+  -- 13f create_staff saves profile + private details in one call
+  v_new_staff := public.create_staff(
+    p_organization_id => v_org, p_first_name => 'Femi', p_last_name => 'Coach',
+    p_job_title => 'PE Teacher', p_phone => '0806666666',
+    p_date_of_birth => '1988-02-14', p_address => '5 Stadium Road', p_employment_date => '2024-09-01');
+  select count(*) into v_n from public.staff_private_details d
+    where d.staff_id = v_new_staff.id and d.date_of_birth = '1988-02-14' and d.address = '5 Stadium Road' and d.employment_date = '2024-09-01';
+  v_log := v_log || E'\n' || case when v_n = 1 and v_new_staff.phone = '0806666666' and v_new_staff.staff_number like 'SC_/STF/%'
+        then 'PASS' else 'FAIL' end || ' 13f create_staff saves profile and private details together [' || v_new_staff.staff_number || ']';
+
+  -- 13g update_staff changes both tables in one call; blank staff number keeps the old one
+  perform public.update_staff(v_new_staff.id, 'Femi', 'Coach', null, '', null, '0801231234', 'femi@school.test', null, null,
+                              'Head of Sports', 'teaching', 'active', '1988-02-14', '9 New Road', 'Lagos', '2024-09-01');
+  select count(*) into v_n
+    from public.staff s join public.staff_private_details d on d.staff_id = s.id
+    where s.id = v_new_staff.id and s.phone = '0801231234' and s.job_title = 'Head of Sports'
+      and s.staff_number = v_new_staff.staff_number and d.address = '9 New Road' and d.state_of_origin = 'Lagos';
+  v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 13g update_staff saves both tables, keeps staff number';
+
+  -- keep later staff counts as before
+  delete from public.staff where id = v_new_staff.id;
 
   -- 14 a redeemed login cannot be re-issued
   begin

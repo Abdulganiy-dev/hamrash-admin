@@ -1,6 +1,6 @@
 # People Schema: staff, students, parents
 
-> **Status:** applied to the live project on 2026-10-07 (migration `20261007210000`). All 38 checks in the access test pass. SQL: [`supabase/migrations/20261007210000_03_create_people.sql`](../supabase/migrations/20261007210000_03_create_people.sql). Test: [`supabase/tests/02_people_access_test.sql`](../supabase/tests/02_people_access_test.sql). Builds on [organization-schema.md](organization-schema.md).
+> **Status:** applied to the live project. Migration `20261007210000` (2026-10-07) created the tables, and migration `20261011130000` (2026-10-11) split staff into a public profile and private details. All 48 checks in the access test pass. SQL: [`…03_create_people.sql`](../supabase/migrations/20261007210000_03_create_people.sql), [`…05_split_staff_private_details.sql`](../supabase/migrations/20261011130000_05_split_staff_private_details.sql). Test: [`supabase/tests/02_people_access_test.sql`](../supabase/tests/02_people_access_test.sql). Builds on [organization-schema.md](organization-schema.md).
 
 ---
 
@@ -24,21 +24,49 @@ A teacher whose child attends the school has two records (`staff` and `parents`)
 
 ## Tables
 
-### `staff`
-Every employee, teaching and non-teaching.
+### `staff`: public profile
+Every employee, teaching and non-teaching. **Everyone in the school can read this table**, including parents and students, so they can see and contact the teachers.
 
 | Column | Notes |
 |--------|-------|
 | `staff_number` | Generated when left blank (see [Numbering](#numbering)), unique within the school |
-| `first_name`, `middle_name`, `last_name`, `gender`, `date_of_birth` | |
-| `email`, `phone`, `address`, `state_of_origin` | |
+| `first_name`, `middle_name`, `last_name`, `gender` | |
+| `phone`, `email` | Visible to everyone in the school, so parents can contact teachers |
 | `photo_id`, `photo_url` | Cloudflare Images id (needed to replace or delete the photo) and its URL |
 | `job_title` | Free text, e.g. "Maths Teacher", "Bursar" |
 | `staff_type` | `teaching`, `non_teaching` |
-| `employment_date` | |
 | `status` | `active`, `on_leave`, `exited` |
 
 The login role (teacher, bursar, principal…) is chosen when the login is issued. It is separate from `job_title`.
+
+### `staff_private_details`: personal details
+Exactly one row per staff member. It's **created automatically** with the staff record and removed with it, so the app only ever updates it. Only leaders, the bursar, the staff member themselves and platform admins can read it. Only leaders can edit it.
+
+| Column | Notes |
+|--------|-------|
+| `staff_id` | The staff member (primary key) |
+| `date_of_birth`, `address`, `state_of_origin`, `employment_date` | |
+
+Splitting the table is how parents can see a teacher's name, phone and email without seeing their home address or date of birth. Row-level security shows or hides whole rows, so the private columns had to move to a table with stricter rules.
+
+### Saving the staff form: one call
+The Add and Edit staff forms send every field at once, public and private. Use these functions, not separate table writes. Each saves both tables in **one transaction**, so the form is saved completely or not at all.
+
+| Form | Call | Notes |
+|---|---|---|
+| Add staff | `create_staff(organization_id, first_name, last_name, …optional fields)` | Leave `staff_number` blank to generate it. Returns the new staff row. |
+| Edit staff | `update_staff(staff_id, …every field)` | **All arguments are required.** Send the whole form, and `null` clears a field. A blank staff number keeps the current one. |
+
+```dart
+final staff = await supabase.rpc('create_staff', params: {
+  'p_organization_id': orgId,
+  'p_first_name': 'Ada', 'p_last_name': 'Okafor',
+  'p_job_title': 'Maths Teacher', 'p_phone': '0807777777',
+  'p_date_of_birth': '1990-05-01', 'p_address': '1 School Road',
+});
+```
+
+They run with the caller's own permissions, so the usual rules apply: only leaders can add or edit staff.
 
 ### `students`
 | Column | Notes |
@@ -98,7 +126,8 @@ If the app leaves `admission_number` or `staff_number` blank, the database fills
 
 | | Leaders | Bursar | Teacher | Parent | Student | Platform admin |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|
-| **staff**: read | all | all | own record | — | — | all |
+| **staff** (profile): read | all | all | all | all | all | all |
+| **staff_private_details**: read | all | all | own | — | — | all |
 | **students**: read | all | all | all* | own children | own record | all |
 | **parents**: read | all | all | all* | self + their children's other parents/guardians | — | all |
 | **links**: read | all | all | all* | all links of their children | own | all |
