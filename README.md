@@ -4,6 +4,7 @@ Admin app for the Hamrash school management system. Built with Flutter, backed b
 
 - What the app will do: [ADMIN_FEATURES.md](ADMIN_FEATURES.md)
 - Database schema: [docs/supabase-database-schema.md](docs/supabase-database-schema.md)
+- Clerk sign-in setup: [docs/Clerk_Setup_Guide.md](docs/Clerk_Setup_Guide.md)
 
 ## Getting started
 
