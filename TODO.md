@@ -6,21 +6,20 @@ The single list of open work. The design docs explain how things work; anything 
 
 ## Next
 
-- [ ] **Retire the old docs.** The README links `docs/supabase-database-schema.md`, the single-school schema that was never deployed. `docs/RLS_Approach_Guide.md` describes the old patterns (`clerk_id` on each table, `service_role` writes). Replace or remove both, and point the README at the current design docs.
-- [ ] **Two-column indexes for Supabase's five "unindexed foreign key" notices.** They cover the `member_id` links on `staff`, `students` and `parents`, and both links on `student_parents`. The existing single-column indexes already cover these lookups, so this is cosmetic at this size.
+- [ ] **Build the gradebook,** the first item under *With results* below. Design: [docs/results-design.md](docs/results-design.md).
 
 ## With results
 
 Plan and decisions: [docs/results-design.md](docs/results-design.md).
 
-- [ ] **Phase 09, gradebook and workflow:**
+- [ ] **Gradebook and workflow** (next):
   - scores
   - result sheets (draft → submitted)
   - arm reviews (lead class teacher)
   - remarks, and behaviour ratings: a fixed trait list stored as a `behaviour_trait` enum, rated 1–5 (see docs/results-design.md)
   - row-level security that follows role and workflow state
-- [ ] **Phase 10, publishing and report cards:** freeze totals, grades, positions within the arm, class stats and the annual result on publish. Parents and students see published results only.
-- [ ] **Phase 11, homework:** assignments posted to an arm and subject, submissions and marking, and pulling marks into a CA component. Attachments are images via Cloudflare and documents via Supabase Storage.
+- [ ] **Publishing and report cards:** freeze totals, grades, positions within the arm, class stats and the annual result on publish. Parents and students see published results only.
+- [ ] **Homework:** assignments posted to an arm and subject, submissions and marking, and pulling marks into a CA component. Attachments are images via Cloudflare and documents via Supabase Storage.
 - [ ] **Teachers keep their past work.** A teacher can always see the work rows (results, assignments, projects…) for the **subject + arm + session they taught**, even after the student is promoted or graduates.
   - Grant this from `teaching_assignments` in **any** session, not the current one. This also covers late results after the session changes.
   - The student profile split it needs, so past teachers see names only, is in migration 07. See [docs/subjects.md](docs/subjects.md).

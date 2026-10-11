@@ -16,10 +16,12 @@ Applied in filename order. Each filename's timestamp matches the version recorde
 | 06 | `20261011134957_06_create_subjects.sql` | `subjects`, `arm_subjects` (curriculum per arm), `teaching_assignments`, `student_subjects` (electives); teachers now see only the students they teach in the current session; RPCs `create_standard_subjects`, `apply_standard_curriculum`, `copy_arm_subjects`, `copy_assignments_forward`, `session_readiness` |
 | 07 | `20261011144800_07_split_student_and_parent_private_details.sql` | Splits students into a profile (past teachers can see it) and `student_private_details`, and parents into a profile and `parent_private_details` (co-parents can't see each other's email, occupation, address); RPCs `create_student`, `update_student`, `create_parent`, `update_parent` |
 | 08 | `20261011144926_08_create_grading_setup.sql` | `score_columns` and `grade_boundaries` (the school's, or a section's own, with fall-back); `score_columns_for_arm`, `grade_boundaries_for_arm`, `grade_for`, `grading_problems`, `create_standard_grading` |
+| 09 | `20261011145904_09_add_foreign_key_indexes.sql` | Indexes for the two-column `member_id` links on `staff`, `students`, `parents` (and two `student_parents` indexes created in the wrong order, see 10) |
+| 10 | `20261011150634_10_fix_student_parents_indexes.sql` | Replaces those two with `(organization_id, student_id)` and `(organization_id, parent_id)`. Supabase's checker now has no unindexed-foreign-key notices. |
 
-Migrations 03, 05 and 07 contain `drop` statements, which the Supabase connector refuses to run. They were applied in the SQL editor and then recorded in `supabase_migrations.schema_migrations` by hand. Any future migration that drops something needs the same treatment.
+Migrations 03, 05, 07 and 10 contain `drop` statements, which the Supabase connector refuses to run. They were applied in the SQL editor and then recorded in `supabase_migrations.schema_migrations` by hand. Any future migration that drops something needs the same treatment.
 
-Before writing a new migration, follow the checklist under "Rules every future school table follows" in the design notes.
+Before writing a new migration, read [`docs/rls-guide.md`](../docs/rls-guide.md).
 
 ## Tests
 

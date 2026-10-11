@@ -1,6 +1,6 @@
 # Results & Assignments — Design for Discussion
 
-> **Status:** phases 07 and 08 are **applied** (migrations `20261011144800` and `20261011144926`, 2026-10-11). Their access tests pass (last run 2026-10-11). Phases 09 to 11 are proposals.
+> **Status:** phases 07 and 08 are **applied** (migrations `20261011144800` and `20261011144926`, 2026-10-11). Their access tests pass (last run 2026-10-11). The gradebook, publishing and homework phases are proposals; each gets the next free migration number when it's built.
 
 Open work for results is tracked in [TODO.md](../TODO.md#with-results).
 
@@ -19,11 +19,11 @@ Open work for results is tracked in [TODO.md](../TODO.md#with-results).
 |---|---|---|
 | 07 | **Student profile split** | `students` keeps the profile (name, admission number, photo, gender, status). `student_private_details` takes date of birth, address, state of origin, LGA, blood group, genotype and medical notes. Adds one-call `create_student` / `update_student`, like staff. Past teachers can then see names next to old scores. Drops columns, so it goes through the SQL editor. |
 | 08 | **Grading setup** | Score columns and grade boundaries for the school, with optional per-section overrides. One-tap standard setup. |
-| 09 | **Gradebook and workflow** | Scores, result sheets (draft → submitted), arm reviews, remarks, behaviour ratings. Row-level security follows role and workflow state. |
-| 10 | **Publishing and report cards** | On publish, compute and **freeze** totals, grades, positions, class stats and the annual result. Parents and students see published results only. |
-| 11 | **Homework** | Teachers post assignments to an arm and subject. Students submit, teachers mark. Marks can be pulled into a CA component. |
+| — | **Gradebook and workflow** | Scores, result sheets (draft → submitted), arm reviews, remarks, behaviour ratings. Row-level security follows role and workflow state. |
+| — | **Publishing and report cards** | On publish, compute and **freeze** totals, grades, positions, class stats and the annual result. Parents and students see published results only. |
+| — | **Homework** | Teachers post assignments to an arm and subject. Students submit, teachers mark. Marks can be pulled into a CA component. |
 
-Each phase is usable on its own and gets its own access test.
+Each phase is usable on its own and gets its own access test. Planned phases (—) take the next free migration number when they're built. Migrations 09 and 10 were index tidy-ups.
 
 ---
 
@@ -40,11 +40,11 @@ grade_boundaries         A1 from 75% "Excellent" · B2 from 70% … F9 0%     ea
 - **Percentages:** a subject's total is the sum of the student's score columns. The grade comes from the **percentage**, total ÷ (sum of max scores) × 100, so the columns don't have to add up to exactly 100.
 - **Grade boundaries say where each grade starts.** A percentage gets the highest grade it reaches: `grade_for(arm, percent)`. Decimals like 74.5 can never fall into a gap.
   - `grading_problems(school, section)` lists anything missing, such as "No score columns yet" or "No grade boundary at 0%", taking the fall-back into account.
-- **Changes after scores exist are restricted.** Once scores exist for a score column, its max score can't change and it can't be deleted. This is enforced in phase 09.
+- **Changes after scores exist are restricted.** Once scores exist for a score column, its max score can't change and it can't be deleted. This is enforced in the gradebook migration.
 - **One-tap standard setup,** `create_standard_grading`:
   - The school's setup: CA 1 (20) + CA 2 (20) + Exam (60), graded A–F. Nursery and Primary use it.
   - Secondary gets only its own **WAEC grade boundaries** (A1–F9) and keeps the school's columns.
-- **Behaviour traits are a fixed list,** not a table. The app shows them and their group. Phase 09 stores each rating with the trait as a Postgres **enum** (`behaviour_trait`), so the database accepts only these. Adding one later is a one-line migration.
+- **Behaviour traits are a fixed list,** not a table. The app shows them and their group. The gradebook stores each rating with the trait as a Postgres **enum** (`behaviour_trait`), so the database accepts only these. Adding one later is a one-line migration.
 
   | Affective | Psychomotor |
   |---|---|
@@ -52,7 +52,7 @@ grade_boundaries         A1 from 75% "Excellent" · B2 from 70% … F9 0%     ea
 
   Ratings are **1–5**, and the app shows the labels: 5 Excellent · 4 Very good · 3 Good · 2 Fair · 1 Poor.
 
-## 09 · Gradebook and workflow
+## Gradebook and workflow (next)
 
 ```
 scores                  student × subject × component × term → score       (+ arm, teacher, when)
@@ -81,7 +81,7 @@ submits the sheet ───────────────► all sheets su
 ```
 
 - Scores can be edited only while the subject's sheet is **draft** and the arm isn't yet reviewed.
-- Publishing freezes the report cards: see phase 10. To change a published result, a leader unpublishes the arm and the steps repeat.
+- Publishing freezes the report cards: see *Publishing and report cards* below. To change a published result, a leader unpublishes the arm and the steps repeat.
 
 ### Who sees what
 | | Scores and remarks | When |
@@ -92,7 +92,7 @@ submits the sheet ───────────────► all sheets su
 | Parents / students | **their own** child / themselves | **published results only**, never drafts |
 | Bursar | none, unless we decide otherwise | — |
 
-## 10 · Publishing and report cards
+## Publishing and report cards
 
 Publishing an arm for a term computes these and stores them as a **snapshot**, so later changes to grade boundaries or score columns never alter a published report card:
 
@@ -104,7 +104,7 @@ Publishing an arm for a term computes these and stores them as a **snapshot**, s
   - averages only count terms the student actually has scores for
 - Behaviour ratings and remarks go on the same report card.
 
-## 11 · Homework
+## Homework
 
 ```
 assignments              posted by the subject teacher to an arm + subject: title, instructions, due date,

@@ -1,6 +1,6 @@
 # Organization (Tenant) Schema
 
-> **Status:** applied to the live project on 2026-10-07 (migrations `20261007182933` and `20261007185331`). All 28 checks in [`supabase/tests/01_organizations_access_test.sql`](../supabase/tests/01_organizations_access_test.sql) pass. SQL: [`supabase/migrations/20261007182933_01_create_organizations_and_members.sql`](../supabase/migrations/20261007182933_01_create_organizations_and_members.sql). The live Supabase project (`ccvyhbyrtobdsecqvhcr`) was empty when this was written. The older docs (`supabase-database-schema.md`, `RLS_Approach_Guide.md`, `supabase/README.md`) describe a single-school schema that was never deployed.
+> **Status:** applied to the live project on 2026-10-07 (migrations `20261007182933` and `20261007185331`). All 28 checks in [`supabase/tests/01_organizations_access_test.sql`](../supabase/tests/01_organizations_access_test.sql) pass. SQL: [`supabase/migrations/20261007182933_01_create_organizations_and_members.sql`](../supabase/migrations/20261007182933_01_create_organizations_and_members.sql). The live Supabase project (`ccvyhbyrtobdsecqvhcr`) was empty when this was written.
 
 ---
 

@@ -10,9 +10,9 @@ The slice of the [Hamrash platform features](../FEATURES.md) that belongs to the
 
 | Layer | State |
 |-------|-------|
-| Supabase schema | Covers admin roles, classes, subjects, the class–subject curriculum, teachers and their assignments, students, parents and the family graph, and claim codes. See [`docs/supabase-database-schema.md`](docs/supabase-database-schema.md). |
+| Supabase schema | Multi-school: schools, memberships and roles, claim codes, staff, students and parents (profiles + private details), sections, classes, arms, sessions and terms, class teachers, placements, subjects, curriculum per arm, teaching assignments, electives, and the grading setup. See [`docs/README.md`](docs/README.md). |
 | Admin UI | Cleared out in `bf07068`. `lib/views/` only has a template, and the shared UI core came over from AgriTrack (`359b7d9`). Every screen below needs to be built. |
-| Not in the schema yet | Academic sessions and terms, attendance, timetable, assessments and results, fees and payments, payroll, messaging, events, audit log, campuses. |
+| Not in the schema yet | Gradebook, report cards and homework (planned in [`docs/results-design.md`](docs/results-design.md)), promotion, attendance, timetable, fees and payments, payroll, messaging, events, audit log, campuses. See [`TODO.md`](TODO.md). |
 
 Status key used below: **Schema** = tables exist, UI not built · **New** = nothing exists yet.
 

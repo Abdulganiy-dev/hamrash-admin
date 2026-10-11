@@ -48,9 +48,9 @@ Registering apps is **optional in dev but required in prod**. Production instanc
 2. In Supabase, go to **Authentication → Sign In / Up → Third-Party Auth → Add provider → Clerk** and paste the domain.
 
 Database conventions:
-- Tables keep `uuid` primary keys and add a `clerk_id text` column for the user.
 - Clerk user IDs are strings like `user_38hp…`, not UUIDs.
-- RLS compares `clerk_id = (auth.jwt() ->> 'sub')`. Never use `auth.uid()`; it can't read a Clerk ID. See [`RLS_Approach_Guide.md`](RLS_Approach_Guide.md).
+- The caller's Clerk ID is `auth.jwt() ->> 'sub'`. Never use `auth.uid()`; it can't read a Clerk ID.
+- School tables don't store a Clerk ID. It lives only on `organization_members.clerk_user_id`, and the access rules reach it through the helper functions. See [`rls-guide.md`](rls-guide.md).
 
 ## 4. Publishable keys
 
