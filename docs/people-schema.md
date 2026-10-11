@@ -128,15 +128,15 @@ If the app leaves `admission_number` or `staff_number` blank, the database fills
 |---|:-:|:-:|:-:|:-:|:-:|:-:|
 | **staff** (profile): read | all | all | all | all | all | all |
 | **staff_private_details**: read | all | all | own | — | — | all |
-| **students**: read | all | all | all* | own children | own record | all |
-| **parents**: read | all | all | all* | self + their children's other parents/guardians | — | all |
-| **links**: read | all | all | all* | all links of their children | own | all |
+| **students**: read | all | all | students they teach* | own children | own record | all |
+| **parents**: read | all | all | parents of students they teach* | self + their children's other parents/guardians | — | all |
+| **links**: read | all | all | links of students they teach* | all links of their children | own | all |
 | Add and edit any of the above | ✓ | | | | | |
 | Delete staff, students, parents | owner and admin only | | | | | |
 | Add, edit and remove links | ✓ | | | | | |
 | Issue logins | owner and admin only | | | | | ✓ |
 
-\* Teachers see every student and parent in the school until classes exist. After that it narrows to their own classes.
+\* *Since migration 06:* students the teacher teaches **in the current session**: placed in an arm where they're a class teacher or teach a subject. For an optional subject, only the students who take it. Past students' work for the teacher's subject stays visible permanently once results exist. See [subjects.md](subjects.md).
 
 When a school is suspended, everyone except platform admins loses access to its people.
 

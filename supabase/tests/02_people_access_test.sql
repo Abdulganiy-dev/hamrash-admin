@@ -4,7 +4,8 @@
 -- It acts as several fake users, checks every rule, then raises an exception on
 -- purpose so EVERYTHING is rolled back. The "error" at the end is the report.
 --
--- Requires migrations 03 and 05 (staff_private_details) and the dummy
+-- Requires migrations 03, 05 (staff_private_details) and 06 (teachers see only
+-- the students they teach; this test gives the teacher no classes) and the dummy
 -- platform admin 'user_dummy_platform_admin'.
 
 do $test$
@@ -180,9 +181,9 @@ begin
   perform public.redeem_claim_code(v_t_code);
 
   select count(*) into v_n from public.students;
-  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 09a teacher reads all students in school [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 09a teacher with no classes sees no students [' || v_n || ']';
   select count(*) into v_n from public.parents;
-  v_log := v_log || E'\n' || case when v_n = 3 then 'PASS' else 'FAIL' end || ' 09b teacher reads all parents in school [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 09b teacher with no classes sees no parents [' || v_n || ']';
   select count(*) into v_n from public.staff;
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 09c teacher reads all staff profiles in school [' || v_n || ']';
   select count(*) into v_n from public.staff_private_details;

@@ -2,6 +2,7 @@
 
 ## Database
 
+- [ ] **When building results, assignments and projects: teachers keep their past work.** A teacher can always see the work rows (results, assignments, projects…) for the **subject + arm + session they taught**, even after the student is promoted or graduates. Grant this from `teaching_assignments` (any session), not from the current session. To show names next to that work, split `students` into a profile (name, admission number, photo, gender, status) and private details, like staff in migration 05. Past teachers see only the profile. This also covers late results after the session changes.
 - [ ] **When building results:** each result row must store the `arm_id` the student was in at the time (a snapshot). Placements are kept per session, and a mid-year class move edits the placement, so report cards and class positions need their own record of the class.
 
 - [ ] **Self-editing.** Let people update a safe set of fields on their own record, for example a parent updating their phone number. This comes with the parent and staff apps. It needs a rule for which fields each person can change, since admins can edit everything.

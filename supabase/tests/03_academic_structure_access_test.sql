@@ -1,5 +1,6 @@
 -- Access test for migration 04 (sections, classes, arms, sessions, terms,
--- class teachers, student placements).
+-- class teachers, student placements). Expects migration 06's narrowing:
+-- teachers see only the students they teach in the current session.
 --
 -- How to run: paste the whole file into the Supabase SQL editor and run it.
 -- It acts as several fake users, checks every rule, then raises an exception on
@@ -274,7 +275,7 @@ begin
   select count(*) into v_n from public.classes;
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 16a teacher reads school''s classes [' || v_n || ']';
   select count(*) into v_n from public.student_placements;
-  v_log := v_log || E'\n' || case when v_n = 3 then 'PASS' else 'FAIL' end || ' 16b teacher reads all placements in school [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 16b class teacher reads only own pupils'' placements [' || v_n || ']';
   begin
     insert into public.classes (organization_id, section_id, name) values (v_org, v_primary, 'Primary 9');
     v_log := v_log || E'\nFAIL 16c teacher added a class';

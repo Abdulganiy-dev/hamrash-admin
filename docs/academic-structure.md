@@ -88,9 +88,9 @@ Only leaders of the school can call them. Anyone else gets the same "not found, 
 | | Read | Add / edit | Delete |
 |---|---|---|---|
 | sections, classes, arms, sessions, terms, class teachers | **every member of the school**, including parents and students (they need class names and the current term), plus platform admins | leaders | owner and admin. Class teachers: leaders. |
-| student placements | staff (leaders, bursar, teacher), **the child's parents**, the student, platform admins | leaders | leaders |
+| student placements | leaders, the bursar, **the student's teachers** (current session), **the child's parents**, the student, platform admins | leaders | leaders |
 
-Teachers still see every student until subject assignments exist. That narrowing comes with the subjects migration.
+Since migration 06, teachers see only the students they teach in the current session. See [subjects.md](subjects.md).
 
 When a school is suspended, everyone except platform admins loses access.
 
