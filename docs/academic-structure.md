@@ -96,13 +96,14 @@ When a school is suspended, everyone except platform admins loses access.
 
 ---
 
-## Deliberately left for later
-- **Promotion.** Decided so far:
-  - Each child's outcome (promote, repeat, graduate, leave) is **suggested from their results** once results exist, and the admin can override it.
-  - **No default arm.** The admin picks the destination arm; nothing is assumed from the arm letter.
-  - Students promoted out of a class the admin marked `is_graduating_class` graduate.
-  - The **next session must already exist** before promoting into it.
-  - **Class changes happen once a year, at promotion.** A rare mid-year move (for example Primary 3 → Primary 4 in second term) just edits the placement. History is kept per session, not per term.
-  - **Results must record the arm the child was in when the result was recorded.** Then a mid-year move never changes an old report card's class or class position. This is a requirement for the results migration.
-- **Stopping overlapping sessions** in the same school.
-- **Checks when placing a student:** that the student is `active` and the arm is active.
+## Promotion: decided, not built yet
+- Each child's outcome (promote, repeat, graduate, leave) is **suggested from their results** once results exist, and the admin can override it.
+- **No default arm.** The admin picks the destination arm; nothing is assumed from the arm letter.
+- Students promoted out of a class the admin marked `is_graduating_class` graduate.
+- The **next session must already exist** before promoting into it.
+- **Class changes happen once a year, at promotion.** A rare mid-year move (for example Primary 3 → Primary 4 in second term) just edits the placement. History is kept per session, not per term.
+- **Results record the arm the child was in when the result was recorded,** so a mid-year move never changes an old report card's class or class position.
+
+## Open work
+
+Open work for this area is tracked in [TODO.md](../TODO.md).

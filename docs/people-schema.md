@@ -68,29 +68,55 @@ final staff = await supabase.rpc('create_staff', params: {
 
 They run with the caller's own permissions, so the usual rules apply: only leaders can add or edit staff.
 
-### `students`
+### `students`: profile
 | Column | Notes |
 |--------|-------|
 | `admission_number` | Generated when left blank (see [Numbering](#numbering)), unique within the school |
-| `first_name`, `middle_name`, `last_name`, `gender`, `date_of_birth` | |
-| `admission_date`, `address`, `state_of_origin`, `lga` | |
+| `first_name`, `middle_name`, `last_name`, `gender` | |
+| `admission_date` | Stays here because the admission-number generator reads it |
 | `photo_id`, `photo_url` | Cloudflare Images id and URL |
+| `status` | `active`, `graduated`, `transferred`, `withdrawn` |
+
+Class placement is in `student_placements` (see [academic-structure.md](academic-structure.md)).
+
+### `student_private_details`: personal and medical *(migration 07)*
+Exactly one row per student. It's **created automatically** with the student and removed with them.
+
+| Column | Notes |
+|--------|-------|
+| `student_id` | The student (primary key) |
+| `date_of_birth`, `address`, `state_of_origin`, `lga` | |
 | `blood_group` | `A+` … `O-` |
 | `genotype` | `AA`, `AS`, `AC`, `SS`, `SC`, `CC` |
 | `medical_notes` | |
-| `status` | `active`, `graduated`, `transferred`, `withdrawn` |
 
-Class enrollment comes with the classes migration.
+**Why the split:** a teacher keeps seeing the work they marked, permanently (see [results-design.md](results-design.md)), so past students need to show a name. The split lets **past teachers see the profile only**: name, admission number and photo. Medical and personal details are only for the student's **current** teachers, leaders, their parents and the student. The **bursar** sees profiles but not private details.
 
-### `parents`
+**Saving the student form:** `create_student(...)` and `update_student(student_id, …every field)` save both tables in one transaction, the same way `create_staff` / `update_staff` work.
+
+### `parents`: profile
+What co-parents and the child's teachers may see.
+
 | Column | Notes |
 |--------|-------|
 | `title` | Mr, Mrs, Dr, Chief… |
 | `first_name`, `last_name`, `gender` | |
 | `phone` | **Required**, indexed so a sibling's registration can find an existing parent |
-| `alt_phone`, `email`, `occupation`, `address` | |
+| `alt_phone` | |
 | `photo_id`, `photo_url` | Cloudflare Images id and URL |
 | `is_active` | |
+
+### `parent_private_details` *(migration 07)*
+Exactly one row per parent, **created automatically** with the parent and removed with them.
+
+| Column | Notes |
+|--------|-------|
+| `parent_id` | The parent (primary key) |
+| `email`, `occupation`, `address` | |
+
+**Who sees it:** leaders, the **bursar** (for fees and invoices), the **parent themselves** and platform admins. **Not co-parents**, so separated parents can't see each other's email or address, and **not teachers**, who have the parent's name and phone on the profile.
+
+**Saving the parent form:** `create_parent(...)` and `update_parent(parent_id, …every field)` save both tables in one transaction.
 
 ### `student_parents`
 | Column | Notes |
@@ -128,8 +154,10 @@ If the app leaves `admission_number` or `staff_number` blank, the database fills
 |---|:-:|:-:|:-:|:-:|:-:|:-:|
 | **staff** (profile): read | all | all | all | all | all | all |
 | **staff_private_details**: read | all | all | own | — | — | all |
-| **students**: read | all | all | students they teach* | own children | own record | all |
-| **parents**: read | all | all | parents of students they teach* | self + their children's other parents/guardians | — | all |
+| **students** (profile): read | all | all | students they teach now **or taught before** | own children | own record | all |
+| **student_private_details**: read | all | — | students they teach **now*** | own children | own record | all |
+| **parents** (profile): read | all | all | parents of students they teach* | self + their children's other parents/guardians | — | all |
+| **parent_private_details**: read | all | all | — | **own only** | — | all |
 | **links**: read | all | all | links of students they teach* | all links of their children | own | all |
 | Add and edit any of the above | ✓ | | | | | |
 | Delete staff, students, parents | owner and admin only | | | | | |
@@ -142,7 +170,6 @@ When a school is suspended, everyone except platform admins loses access to its 
 
 ---
 
-## Deliberately left for later
-- Self-editing and automatic login suspension are tracked in [TODO.md](../TODO.md).
-- **Linking the owner's own staff record** to the login they got from Hamrash.
-- **Extra roles for one staff member,** such as a principal who also teaches, without a second claim code.
+## Open work
+
+Open work for this area is tracked in [TODO.md](../TODO.md).

@@ -93,6 +93,6 @@ This is built with the results tables, where every row carries its own session, 
 
 ---
 
-## Deliberately left for later
-- **Curriculum history.** Arm subjects describe the **current** curriculum. Results will record the subject and arm for each score, so past report cards don't depend on today's curriculum.
-- **Head-of-section access** to every student in their section. Not wanted for now.
+## Open work
+
+Open work for this area is tracked in [TODO.md](../TODO.md).

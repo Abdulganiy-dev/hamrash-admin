@@ -170,9 +170,6 @@ with check (organization_id in (select private.my_org_ids(array['owner','admin']
   values ('<your Clerk user id>', '<name>', '<email>');
   ```
 
-## Later
+## Open work
 
-- Expiring and re-issuing claim codes.
-- Rate limiting on `redeem_claim_code` (codes have about 1.1 trillion combinations, so this isn't urgent).
-- Campuses as a sub-scope on a few tables.
-- Where the Hamrash team's platform screens live: inside the admin app behind `platform_admins`, or a separate console.
+Open work for this area is tracked in [TODO.md](../TODO.md).

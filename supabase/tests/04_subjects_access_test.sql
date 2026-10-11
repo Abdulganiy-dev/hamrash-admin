@@ -5,7 +5,7 @@
 -- It acts as several fake users, checks every rule, then raises an exception on
 -- purpose so EVERYTHING is rolled back. The "error" at the end is the report.
 --
--- Requires migrations 01–06 and the dummy platform admin 'user_dummy_platform_admin'.
+-- Requires migrations 01–07 and the dummy platform admin 'user_dummy_platform_admin'.
 
 do $test$
 declare
@@ -236,8 +236,12 @@ begin
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 08a compulsory-subject teacher sees the whole arm [' || v_n || ']';
   select count(*) into v_n from public.parents;
   v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 08b and only those students'' parents [' || v_n || ']';
+  select count(*) into v_n from public.parent_private_details;
+  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 08b2 but not the parents'' private details [' || v_n || ']';
   select count(*) into v_n from public.student_placements;
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 08c and only their placements [' || v_n || ']';
+  select count(*) into v_n from public.student_private_details;
+  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 08c2 and their private details while teaching them [' || v_n || ']';
   begin
     insert into public.teaching_assignments (organization_id, session_id, arm_id, subject_id, staff_id) values (v_org, v_sess1, v_jss1b, v_maths, v_ada);
     v_log := v_log || E'\nFAIL 08d teacher assigned themselves';
@@ -362,14 +366,22 @@ begin
   v_log := v_log || E'\n' || case when v_r.terms = 0 and v_r.students_placed = 0 and v_r.active_students_not_placed = 4
         then 'PASS' else 'FAIL' end || ' 16d readiness flags an unprepared session [' || v_r.terms || ' terms, ' || v_r.active_students_not_placed || ' not placed]';
 
-  -- 17 after the school moves to 2027/2028, teachers no longer see last session's students'
-  --    full records (past results/assignments will stay reachable through the results tables)
+  -- 17 after the school moves to 2027/2028, Ada becomes a PAST teacher of S1 and S2:
+  --    she still sees their profiles (names, for old scores), but no longer their
+  --    private details or parents
   perform public.set_current_session(v_sess2);
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_ada","role":"authenticated"}', true);
   execute 'set local role authenticated';
   select count(*) into v_n from public.students;
-  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 17 full student records follow the current session [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 17a past teacher still sees former students'' profiles [' || v_n || ']';
+  select (select count(*) from public.student_private_details) + (select count(*) from public.parents) into v_n;
+  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 17b but not their private details or parents [' || v_n || ']';
+  execute 'reset role';
+  perform set_config('request.jwt.claims', '{"sub":"test_dele","role":"authenticated"}', true);
+  execute 'set local role authenticated';
+  select count(*) into v_n from public.students;
+  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 17c a teacher who never taught them sees nobody [' || v_n || ']';
 
   -- 18 platform admin reads every school's subjects
   execute 'reset role';

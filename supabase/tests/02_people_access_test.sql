@@ -4,7 +4,9 @@
 -- It acts as several fake users, checks every rule, then raises an exception on
 -- purpose so EVERYTHING is rolled back. The "error" at the end is the report.
 --
--- Requires migrations 03, 05 (staff_private_details) and 06 (teachers see only
+-- Requires migrations 03, 05 (staff_private_details), 07 (student and parent
+-- private details)
+-- and 06 (teachers see only
 -- the students they teach; this test gives the teacher no classes) and the dummy
 -- platform admin 'user_dummy_platform_admin'.
 
@@ -73,12 +75,14 @@ begin
     values (v_org, 'Ada', 'Teacher', 'Maths Teacher', '0807777777', 'ada@school.test') returning id into v_teacher_staff;
   insert into public.staff (organization_id, first_name, last_name, job_title, staff_type)
     values (v_org, 'Bayo', 'Bursar', 'Bursar', 'non_teaching') returning id into v_bursar_staff;
-  insert into public.students (organization_id, first_name, last_name, admission_number, blood_group, genotype, photo_id)
-    values (v_org, 'Chidi', 'Pupil', 'A001', 'O+', 'AA', 'cf-image-id-123') returning id into v_s1;
+  v_s1 := (public.create_student(
+    p_organization_id => v_org, p_first_name => 'Chidi', p_last_name => 'Pupil', p_admission_number => 'A001',
+    p_photo_id => 'cf-image-id-123', p_blood_group => 'O+', p_genotype => 'AA', p_medical_notes => 'Asthma')).id;
   insert into public.students (organization_id, first_name, last_name, admission_number)
     values (v_org, 'Dayo', 'Pupil', 'A002') returning id into v_s2;
-  insert into public.parents (organization_id, title, first_name, last_name, phone)
-    values (v_org, 'Mrs', 'Ngozi', 'Pupil', '0801111111') returning id into v_p1;
+  v_p1 := (public.create_parent(
+    p_organization_id => v_org, p_title => 'Mrs', p_first_name => 'Ngozi', p_last_name => 'Pupil', p_phone => '0801111111',
+    p_email => 'ngozi@home.test', p_occupation => 'Nurse', p_address => '3 Mother Lane')).id;
   insert into public.student_parents (organization_id, student_id, parent_id, relationship, is_primary_contact)
     values (v_org, v_s1, v_p1, 'mother', true);
   -- an unrelated parent (Dayo's mother) that Chidi's parents must NOT see
@@ -87,6 +91,9 @@ begin
   insert into public.student_parents (organization_id, student_id, parent_id, relationship, is_primary_contact)
     values (v_org, v_s2, v_p3, 'mother', true);
   v_log := v_log || E'\nPASS 01 owner adds staff, students, parents and links';
+  select count(*) into v_n from public.student_private_details
+    where student_id = v_s1 and blood_group = 'O+' and genotype = 'AA' and medical_notes = 'Asthma';
+  v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 01b create_student saves profile and private details together';
 
   -- 02 invite_staff returns a code; asking again returns the same code
   v_t_code  := public.invite_staff(v_teacher_staff);
@@ -161,14 +168,18 @@ begin
   end;
 
   -- 07 making a second parent primary clears the first
-  insert into public.parents (organization_id, title, first_name, last_name, phone)
-    values (v_org, 'Mr', 'Emeka', 'Pupil', '0802222222') returning id into v_p2;
+  v_p2 := (public.create_parent(
+    p_organization_id => v_org, p_title => 'Mr', p_first_name => 'Emeka', p_last_name => 'Pupil', p_phone => '0802222222',
+    p_email => 'emeka@away.test', p_occupation => 'Engineer', p_address => '9 Father Close')).id;
   insert into public.student_parents (organization_id, student_id, parent_id, relationship, is_primary_contact)
     values (v_org, v_s1, v_p2, 'father', true);
   select count(*) filter (where is_primary_contact), bool_or(parent_id = v_p2 and is_primary_contact)
     into v_n, v_ok
     from public.student_parents where student_id = v_s1;
   v_log := v_log || E'\n' || case when v_n = 1 and v_ok then 'PASS' else 'FAIL' end || ' 07 one primary contact per student';
+  select count(*) into v_n from public.parent_private_details
+    where parent_id = v_p2 and email = 'emeka@away.test' and occupation = 'Engineer' and address = '9 Father Close';
+  v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 07b create_parent saves profile and private details together';
 
   -- 08 owner A cannot see school B's people
   select count(*) into v_n from public.students;
@@ -191,6 +202,10 @@ begin
   update public.staff_private_details set address = 'Somewhere' where staff_id = v_teacher_staff;
   get diagnostics v_n = row_count;
   v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 09e teacher cannot edit own private details yet';
+  select count(*) into v_n from public.student_private_details;
+  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 09g teacher with no classes sees no student private details [' || v_n || ']';
+  select count(*) into v_n from public.parent_private_details;
+  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 09h teachers see no parent private details [' || v_n || ']';
   begin
     perform public.create_staff(v_org, 'Sneaky', 'Hire');
     v_log := v_log || E'\nFAIL 09f teacher added staff through create_staff';
@@ -222,6 +237,10 @@ begin
 
   select count(*) into v_n from public.students;
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 11a bursar reads students [' || v_n || ']';
+  select count(*) into v_n from public.student_private_details;
+  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 11a2 bursar sees no student private details [' || v_n || ']';
+  select count(*) into v_n from public.parent_private_details;
+  v_log := v_log || E'\n' || case when v_n = 3 then 'PASS' else 'FAIL' end || ' 11a3 bursar sees parent private details (for fees) [' || v_n || ']';
   select count(*) into v_n from public.staff;
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 11b bursar reads all staff [' || v_n || ']';
   select count(*) into v_n from public.staff_private_details;
@@ -241,9 +260,14 @@ begin
 
   select count(*) into v_n from public.students;
   v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 12a parent sees only own child [' || v_n || ']';
+  select count(*) into v_n from public.student_private_details where medical_notes = 'Asthma';
+  v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 12a2 parent sees own child''s private details [' || v_n || ']';
   select count(*), string_agg(first_name, ', ' order by first_name) into v_n, v_names from public.parents;
   v_log := v_log || E'\n' || case when v_n = 2 and v_names = 'Emeka, Ngozi' then 'PASS' else 'FAIL' end
         || ' 12b parent sees self and child''s other parent, not unrelated parents [' || coalesce(v_names, '') || ']';
+  select count(*), string_agg(email, ', ') into v_n, v_names from public.parent_private_details;
+  v_log := v_log || E'\n' || case when v_n = 1 and v_names = 'ngozi@home.test' then 'PASS' else 'FAIL' end
+        || ' 12b2 parent sees only own private details, not the co-parent''s [' || coalesce(v_names, '') || ']';
   select count(*) into v_n from public.student_parents;
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 12c parent sees all of own child''s links, not others [' || v_n || ']';
   select count(*) into v_n from public.staff;
@@ -268,12 +292,16 @@ begin
 
   select count(*) into v_n from public.students;
   v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 13a student sees only own record [' || v_n || ']';
+  select count(*) into v_n from public.student_private_details;
+  v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 13a2 student sees own private details [' || v_n || ']';
   select count(*) into v_n from public.student_parents;
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 13b student sees own parent links [' || v_n || ']';
   select count(*) into v_n from public.staff;
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 13c student sees staff profiles (names) [' || v_n || ']';
   select count(*) into v_n from public.staff_private_details;
   v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 13d student sees no staff private details [' || v_n || ']';
+  select count(*) into v_n from public.parent_private_details;
+  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 13d2 student sees no parent private details [' || v_n || ']';
 
   -- ── owner again ────────────────────────────────────────────
   execute 'reset role';
@@ -304,6 +332,23 @@ begin
     where s.id = v_new_staff.id and s.phone = '0801231234' and s.job_title = 'Head of Sports'
       and s.staff_number = v_new_staff.staff_number and d.address = '9 New Road' and d.state_of_origin = 'Lagos';
   v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 13g update_staff saves both tables, keeps staff number';
+
+  -- 13i update_student changes both tables in one call; blank admission number keeps the old one
+  perform public.update_student(v_s1, 'Chidi', 'Pupil', 'Emeka', '', 'male', null, 'cf-image-id-123', null,
+                                'active', '2015-03-02', '2 Home Street', 'Anambra', 'Awka South', 'O+', 'AS', 'Asthma, uses inhaler');
+  select count(*) into v_n
+    from public.students st join public.student_private_details d on d.student_id = st.id
+    where st.id = v_s1 and st.middle_name = 'Emeka' and st.admission_number = 'A001'
+      and d.genotype = 'AS' and d.lga = 'Awka South' and d.medical_notes = 'Asthma, uses inhaler';
+  v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 13i update_student saves both tables, keeps admission number';
+
+  -- 13j update_parent changes both tables in one call
+  perform public.update_parent(v_p1, 'Ngozi', 'Pupil', '0801111112', 'Dr', 'female', null, null, null,
+                               true, 'ngozi@new.test', 'Doctor', '3 Mother Lane');
+  select count(*) into v_n
+    from public.parents pa join public.parent_private_details d on d.parent_id = pa.id
+    where pa.id = v_p1 and pa.title = 'Dr' and pa.phone = '0801111112' and d.email = 'ngozi@new.test' and d.occupation = 'Doctor';
+  v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 13j update_parent saves both tables';
 
   -- keep later staff counts as before
   delete from public.staff where id = v_new_staff.id;
