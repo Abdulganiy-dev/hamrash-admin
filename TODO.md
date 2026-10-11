@@ -6,11 +6,6 @@ The single list of open work. The design docs explain how things work; anything 
 
 ## Next
 
-- [ ] **Run the outstanding access tests** in the Supabase SQL editor (see [supabase/README.md](supabase/README.md)). None of these have been run against migrations 06, 07 and 08:
-  - `02_people_access_test.sql`
-  - `03_academic_structure_access_test.sql`
-  - `04_subjects_access_test.sql`
-  - `05_grading_setup_access_test.sql`
 - [ ] **Retire the old docs.** The README links `docs/supabase-database-schema.md`, the single-school schema that was never deployed. `docs/RLS_Approach_Guide.md` describes the old patterns (`clerk_id` on each table, `service_role` writes). Replace or remove both, and point the README at the current design docs.
 - [ ] **Two-column indexes for Supabase's five "unindexed foreign key" notices.** They cover the `member_id` links on `staff`, `students` and `parents`, and both links on `student_parents`. The existing single-column indexes already cover these lookups, so this is cosmetic at this size.
 

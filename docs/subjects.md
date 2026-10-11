@@ -1,6 +1,6 @@
 # Subjects and Teaching Assignments
 
-> **Status:** applied to the live project on 2026-10-11 (migration `20261011134957`). The access test (44 checks) still needs to be run in the SQL editor. SQL: [`supabase/migrations/20261011134957_06_create_subjects.sql`](../supabase/migrations/20261011134957_06_create_subjects.sql). Test: [`supabase/tests/04_subjects_access_test.sql`](../supabase/tests/04_subjects_access_test.sql). Builds on [academic-structure.md](academic-structure.md).
+> **Status:** applied to the live project on 2026-10-11 (migration `20261011134957`). The access test passes (48 checks, last run 2026-10-11). SQL: [`supabase/migrations/20261011134957_06_create_subjects.sql`](../supabase/migrations/20261011134957_06_create_subjects.sql). Test: [`supabase/tests/04_subjects_access_test.sql`](../supabase/tests/04_subjects_access_test.sql). Builds on [academic-structure.md](academic-structure.md).
 
 ---
 

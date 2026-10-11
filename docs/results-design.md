@@ -1,6 +1,6 @@
 # Results & Assignments — Design for Discussion
 
-> **Status:** phases 07 and 08 are **applied** (migrations `20261011144800` and `20261011144926`, 2026-10-11). Their access tests still need to be run. Phases 09 to 11 are proposals.
+> **Status:** phases 07 and 08 are **applied** (migrations `20261011144800` and `20261011144926`, 2026-10-11). Their access tests pass (last run 2026-10-11). Phases 09 to 11 are proposals.
 
 Open work for results is tracked in [TODO.md](../TODO.md#with-results).
 
