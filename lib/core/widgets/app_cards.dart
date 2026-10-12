@@ -1,100 +1,188 @@
+import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
+import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
-import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
+import 'package:hamrash_admin/core/widgets/app_surface.dart';
 
-/// Outer surface card used as a grouping container for inner content.
+/// Elevation shadows. Light mode only — dark surfaces separate by color, so
+/// dark cards get an edge instead of a shadow.
+class AppShadows {
+  AppShadows._();
+
+  /// Cards on the page: tight contact, soft depth, wide faint lift.
+  static const List<BoxShadow> floating = [
+    BoxShadow(color: Color(0x0A0F172A), offset: Offset(0, 1), blurRadius: 2),
+    BoxShadow(color: Color(0x0A0F172A), offset: Offset(0, 4), blurRadius: 10),
+    BoxShadow(
+      color: Color(0x1A0F172A),
+      offset: Offset(0, 16),
+      blurRadius: 26,
+      spreadRadius: -12,
+    ),
+  ];
+
+  /// Menus, sheets and dialogs that sit above everything.
+  static const List<BoxShadow> overlay = [
+    BoxShadow(color: Color(0x0F0F172A), offset: Offset(0, 2), blurRadius: 4),
+    BoxShadow(color: Color(0x140F172A), offset: Offset(0, 12), blurRadius: 20),
+    BoxShadow(
+      color: Color(0x330F172A),
+      offset: Offset(0, 32),
+      blurRadius: 52,
+      spreadRadius: -16,
+    ),
+  ];
+}
+
+/// White card that floats on the page canvas.
 ///
-/// Uses the muted surface color from the theme and [AppRadius.card] rounding
-/// by default. Pair it with [AppElevatedCard] children for the stacked
-/// "card on card" look used on the home dashboard.
-class AppSurfaceCard extends StatelessWidget {
-  const AppSurfaceCard({
+/// Holds content only: put a section title above it with [AppSectionHeader]
+/// and any action button below it, outside the card.
+///
+/// ```dart
+/// AppSectionHeader(title: 'Your classes', actionLabel: 'See all', onAction: _openClasses),
+/// const SizedBox(height: AppSpacing.ms),
+/// AppCard(child: ...),
+/// ```
+class AppCard extends StatelessWidget {
+  const AppCard({
     super.key,
     required this.child,
-    this.padding,
-    this.borderRadius,
-    this.color,
+    this.padding = AppSpacing.cardPadding,
+    this.onTap,
+    this.enableHaptic = true,
   });
 
   final Widget child;
-  final EdgeInsetsGeometry? padding;
-  final BorderRadius? borderRadius;
-  final Color? color;
+
+  /// Defaults to 20 on all sides. Use [EdgeInsets.zero] for list cards whose
+  /// rows carry their own padding.
+  final EdgeInsetsGeometry padding;
+
+  /// Makes the whole card tappable; it scales to 98% while pressed.
+  final VoidCallback? onTap;
+
+  final bool enableHaptic;
 
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
-    final resolvedColor =
-        color ??
-        (isLight
-            ? LightColors.backgroundSurfaceMute
-            : DarkColors.backgroundSurfaceMute);
 
+    final card = Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: isLight ? AppPalette.white : DarkColors.backgroundSurfaceLayer,
+        borderRadius: AppRadius.brCard,
+        border: Border.all(
+          color: isLight
+              ? LightColors.strokeColourStrokeSoft
+              : const Color(0x0FFFFFFF),
+        ),
+        boxShadow: isLight ? AppShadows.floating : null,
+      ),
+      // Inputs inside a card switch to the slate-50 fill.
+      child: AppSurfaceScope(surface: AppSurface.card, child: child),
+    );
+
+    if (onTap == null) return card;
+    return BouncyButton(
+      onPressed: onTap,
+      pressedScale: 0.98,
+      enableHaptic: enableHaptic,
+      child: card,
+    );
+  }
+}
+
+/// Box nested inside an [AppCard]: soft fill, hairline border, no shadow.
+class AppFlatCard extends StatelessWidget {
+  const AppFlatCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: AppSpacing.md,
+      vertical: AppSpacing.ms,
+    ),
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
     return Container(
       width: double.infinity,
-      padding: padding ?? const EdgeInsets.all(5),
+      padding: padding,
       decoration: BoxDecoration(
-        color: resolvedColor,
-        borderRadius: borderRadius ?? AppRadius.brCard,
+        color: isLight ? AppPalette.slate50 : DarkColors.backgroundSurfaceMute,
+        borderRadius: AppRadius.brControl,
+        border: Border.all(
+          color: isLight ? AppPalette.slate200 : AppPalette.slate700,
+        ),
       ),
       child: child,
     );
   }
 }
 
-/// Elevated inner card with a soft shadow, intended to sit inside an
-/// [AppSurfaceCard] or directly on the scaffold background.
-///
-/// The card color and shadow color adapt to the current theme's brightness
-/// automatically, so the same widget looks correct in light and dark mode.
-class AppElevatedCard extends StatelessWidget {
-  const AppElevatedCard({
+/// Title (and optional link) that sits above a card, outside it.
+class AppSectionHeader extends StatelessWidget {
+  const AppSectionHeader({
     super.key,
-    required this.child,
-    this.padding,
-    this.borderRadius,
-    this.cardColor,
-    this.shadowColor,
-  });
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+    this.trailing,
+  }) : assert(
+         trailing == null || actionLabel == null,
+         'Provide either trailing or actionLabel, not both.',
+       );
 
-  final Widget child;
-  final EdgeInsetsGeometry? padding;
-  final BorderRadius? borderRadius;
-  final Color? cardColor;
-  final Color? shadowColor;
+  final String title;
+
+  /// Text link on the right, e.g. "See all".
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  /// Custom widget on the right instead of a text link.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     final isLight = Theme.of(context).brightness == Brightness.light;
-    final resolvedCardColor =
-        cardColor ??
-        (isLight ? Colors.white : DarkColors.backgroundSurfaceLayer);
-    final resolvedShadowColor =
-        shadowColor ??
-        (isLight
-            ? Colors.black.withOpacity(0.06)
-            : Colors.black.withOpacity(0.35));
 
-    return Container(
-      padding: padding ?? EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: resolvedCardColor,
-        borderRadius: borderRadius ?? AppRadius.brCard,
-        boxShadow: [
-          BoxShadow(
-            color: resolvedShadowColor,
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+    Widget? end = trailing;
+    if (actionLabel != null) {
+      end = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onAction,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+          child: Text(
+            actionLabel!,
+            style: AppTypography.subtitle.copyWith(
+              color: isLight
+                  ? LightColors.textTextBrand
+                  : DarkColors.textTextBrand,
+            ),
           ),
-          BoxShadow(
-            color: resolvedShadowColor,
-            blurRadius: 2,
-            offset: const Offset(0, 1),
-          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+      child: Row(
+        children: [
+          Expanded(child: Text(title, style: textTheme.titleMedium)),
+          ?end,
         ],
       ),
-      child: child,
     );
   }
 }

@@ -28,8 +28,9 @@ class AppTheme {
         background: LightColors.backgroundSurfacePrimaryBG,
         onBackground: LightColors.textTextPrimary,
       ),
-      scaffoldBackgroundColor: LightColors.backgroundSurfacePrimaryBG,
-      cardColor: LightColors.backgroundSurfaceMute,
+      // Slate 50 canvas so white cards can float on it.
+      scaffoldBackgroundColor: LightColors.backgroundSurfaceMute,
+      cardColor: LightColors.backgroundSurfacePrimaryBG,
       dividerColor: LightColors.strokeColourStrokeMild,
       textTheme: AppTypography.textTheme(
         strong: LightColors.textTextInverted,
@@ -109,7 +110,7 @@ class AppTheme {
       ),
       // Card theme
       cardTheme: CardThemeData(
-        color: LightColors.backgroundSurfaceMute,
+        color: LightColors.backgroundSurfacePrimaryBG,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.brCard,
@@ -118,7 +119,8 @@ class AppTheme {
       ),
       // AppBar theme
       appBarTheme: const AppBarTheme(
-        backgroundColor: LightColors.backgroundSurfacePrimaryBG,
+        backgroundColor: LightColors.backgroundSurfaceMute,
+        surfaceTintColor: Colors.transparent,
         foregroundColor: LightColors.textTextPrimary,
         elevation: 0,
         centerTitle: false,
@@ -148,7 +150,7 @@ class AppTheme {
         onBackground: DarkColors.textTextPrimary,
       ),
       scaffoldBackgroundColor: DarkColors.backgroundSurfacePrimaryBG,
-      cardColor: DarkColors.backgroundSurfaceMute,
+      cardColor: DarkColors.backgroundSurfaceLayer,
       dividerColor: DarkColors.strokeColourStrokeMild,
       textTheme: AppTypography.textTheme(
         strong: DarkColors.textTextInverted,
@@ -228,7 +230,7 @@ class AppTheme {
       ),
       // Card theme
       cardTheme: CardThemeData(
-        color: DarkColors.backgroundSurfaceMute,
+        color: DarkColors.backgroundSurfaceLayer,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.brCard,
@@ -238,6 +240,7 @@ class AppTheme {
       // AppBar theme
       appBarTheme: const AppBarTheme(
         backgroundColor: DarkColors.backgroundSurfacePrimaryBG,
+        surfaceTintColor: Colors.transparent,
         foregroundColor: DarkColors.textTextPrimary,
         elevation: 0,
         centerTitle: false,

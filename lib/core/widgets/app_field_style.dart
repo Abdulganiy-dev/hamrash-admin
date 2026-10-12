@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
+import 'package:hamrash_admin/core/widgets/app_surface.dart';
 
-/// Shared look for text inputs ([AppTextField], [AppSearchField]): a soft
-/// fill and hairline border at rest, white with a blue border when focused,
-/// white with a red border on error. No rings or shadows.
+/// Shared look for text inputs ([AppTextField], [AppSearchField]): at rest a
+/// hairline border with a fill that contrasts with what's underneath (white on
+/// the page, slate 50 inside a card — see [AppSurfaceScope]); white with a
+/// blue border when focused, red border on error. No rings or shadows.
 class AppFieldStyle {
   AppFieldStyle._();
 
@@ -27,7 +29,11 @@ class AppFieldStyle {
     if (active) {
       return isLight ? AppPalette.white : DarkColors.backgroundSurfaceLayer;
     }
-    return isLight ? AppPalette.slate50 : DarkColors.backgroundSurfaceLayer;
+    if (!isLight) return DarkColors.backgroundSurfaceLayer;
+    // White on the slate-50 page; slate-50 on white cards, sheets, dialogs.
+    return AppSurfaceScope.of(context) == AppSurface.card
+        ? AppPalette.slate50
+        : AppPalette.white;
   }
 
   static Color restBorder(BuildContext context) =>

@@ -22,8 +22,8 @@ class AppSpacing {
   /// Horizontal padding at the edge of every screen.
   static const double screen = md;
 
-  /// Padding inside cards, sheets and list tiles.
-  static const double card = md;
+  /// Padding inside cards and sheets.
+  static const double card = ml;
 
   /// Gap between unrelated sections on a screen.
   static const double section = lg;

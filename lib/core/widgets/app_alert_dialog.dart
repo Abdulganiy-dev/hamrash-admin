@@ -6,6 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_surface.dart';
 
 /// A clean, modern, reusable confirmation alert — a centered dialog with an
 /// optional icon badge, title, message and a Cancel / Confirm button pair.
@@ -203,87 +204,90 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
                 ),
               ],
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (widget.icon != null) ...[
-                  Center(
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: _accent.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
+            child: AppSurfaceScope(
+              surface: AppSurface.card,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (widget.icon != null) ...[
+                    Center(
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: _accent.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(widget.icon, size: 28, color: _accent),
                       ),
-                      child: Icon(widget.icon, size: 28, color: _accent),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                ],
-                AppText(
-                  widget.title,
-                  colorType: AppTextColor.textInverted,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  textAlign: TextAlign.center,
-                ),
-                if (widget.message != null) ...[
-                  const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
                   AppText(
-                    widget.message!,
-                    colorType: AppTextColor.textMute,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
+                    widget.title,
+                    colorType: AppTextColor.textInverted,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                     textAlign: TextAlign.center,
                   ),
-                ],
-                if (_error != null) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  AppText(
-                    _error!,
-                    colorType: AppTextColor.error,
-                    fontSize: 13,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.lg),
-                Row(
-                  children: [
-                    if (_cancelVisible) ...[
+                  if (widget.message != null) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    AppText(
+                      widget.message!,
+                      colorType: AppTextColor.textMute,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  if (_error != null) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    AppText(
+                      _error!,
+                      colorType: AppTextColor.error,
+                      fontSize: 13,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.lg),
+                  Row(
+                    children: [
+                      if (_cancelVisible) ...[
+                        Expanded(
+                          child: AppSecondaryButton(
+                            isLoading: _isSubmitting,
+                            onPressed: _isSubmitting
+                                ? null
+                                : () => NavigationService.popScreen(false),
+                            child: AppText(
+                              widget.cancelLabel,
+                              colorType: AppTextColor.textInverted,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                      ],
                       Expanded(
-                        child: AppSecondaryButton(
+                        child: AppPrimaryButton(
+                          onPressed: _isSubmitting ? null : _confirm,
                           isLoading: _isSubmitting,
-                          onPressed: _isSubmitting
-                              ? null
-                              : () => NavigationService.popScreen(false),
+                          backgroundColor: _accent,
                           child: AppText(
-                            widget.cancelLabel,
-                            colorType: AppTextColor.textInverted,
+                            widget.confirmLabel,
+                            color: Colors.white,
                             fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
                     ],
-                    Expanded(
-                      child: AppPrimaryButton(
-                        onPressed: _isSubmitting ? null : _confirm,
-                        isLoading: _isSubmitting,
-                        backgroundColor: _accent,
-                        child: AppText(
-                          widget.confirmLabel,
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

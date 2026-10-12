@@ -7,6 +7,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
+import 'package:hamrash_admin/core/widgets/app_surface.dart';
 
 /// Snap presets for the three sheet categories used across the app.
 ///
@@ -146,88 +147,94 @@ class GlassSheet extends StatelessWidget {
       bodyBottomPadding,
     );
 
-    return Column(
-      mainAxisSize: MainAxisSize.max,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.lg,
-            AppSpacing.lg,
-            0,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (leadingIcon != null) ...[
-                    Icon(
-                      leadingIcon,
-                      color: leadingIconColor ?? LightColors.primaryPrimaryDefault,
-                      size: 22,
+    return AppSurfaceScope(
+      surface: AppSurface.card,
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (leadingIcon != null) ...[
+                      Icon(
+                        leadingIcon,
+                        color:
+                            leadingIconColor ??
+                            LightColors.primaryPrimaryDefault,
+                        size: 22,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                    ],
+                    Expanded(
+                      child: AppText(
+                        title,
+                        colorType: AppTextColor.textInverted,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
+                    AppHugeIconButton(
+                      lucidIcon: LucideIcons.x,
+                      lucidIconSize: 22,
+                      foregroundColorType:
+                          AppButtonForegroundColor.textInverted,
+                      padding: EdgeInsets.zero,
+                      onPressed: () => _close(context),
+                    ),
                   ],
-                  Expanded(
-                    child: AppText(
-                      title,
-                      colorType: AppTextColor.textInverted,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  AppHugeIconButton(
-                    lucidIcon: LucideIcons.x,
-                    lucidIconSize: 22,
-                    foregroundColorType: AppButtonForegroundColor.textInverted,
-                    padding: EdgeInsets.zero,
-                    onPressed: () => _close(context),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  AppText(
+                    subtitle!,
+                    colorType: AppTextColor.textMute,
+                    fontSize: 13,
+                    softWrap: true,
                   ),
                 ],
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: AppSpacing.xs),
-                AppText(
-                  subtitle!,
-                  colorType: AppTextColor.textMute,
-                  fontSize: 13,
-                  softWrap: true,
-                ),
               ],
-            ],
-          ),
-        ),
-        Divider(
-          height: 1,
-          thickness: 1,
-          color: dividerColor,
-        ).padding(top: AppSpacing.md),
-        Expanded(
-          child: scrollableBody
-              ? SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  padding: bodyPadding,
-                  child: body,
-                )
-              : Padding(padding: bodyPadding, child: body),
-        ),
-        if (footer != null)
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.sm,
-              AppSpacing.md,
-              bottomInset + safeBottom + AppSpacing.lg,
             ),
-            child: footer,
           ),
-      ],
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: dividerColor,
+          ).padding(top: AppSpacing.md),
+          Expanded(
+            child: scrollableBody
+                ? SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    padding: bodyPadding,
+                    child: body,
+                  )
+                : Padding(padding: bodyPadding, child: body),
+          ),
+          if (footer != null)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.md,
+                bottomInset + safeBottom + AppSpacing.lg,
+              ),
+              child: footer,
+            ),
+        ],
+      ),
     );
   }
 }

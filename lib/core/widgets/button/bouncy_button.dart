@@ -11,12 +11,16 @@ class BouncyButton extends StatefulWidget {
     this.onPressed,
     this.isDisabled = false,
     this.enableHaptic = true,
+    this.pressedScale = 0.95,
   });
 
   final Widget child;
   final VoidCallback? onPressed;
   final bool isDisabled;
   final bool enableHaptic;
+
+  /// Size while pressed. 0.95 for buttons; large surfaces like cards use 0.98.
+  final double pressedScale;
 
   @override
   State<BouncyButton> createState() => _BouncyButtonState();
@@ -26,7 +30,6 @@ class _BouncyButtonState extends State<BouncyButton> {
   /// Target scale; [SingleMotionBuilder] animates toward this when it changes.
   double _scaleTarget = 1.0;
 
-  static const double _pressedScale = 0.95;
   static const Motion _scaleMotion = Motion.snappySpring();
 
   bool get _isEnabled => !widget.isDisabled && widget.onPressed != null;
@@ -51,7 +54,7 @@ class _BouncyButtonState extends State<BouncyButton> {
 
   void _handlePressDown() {
     if (_isEnabled) {
-      setState(() => _scaleTarget = _pressedScale);
+      setState(() => _scaleTarget = widget.pressedScale);
     }
   }
 

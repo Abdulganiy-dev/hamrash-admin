@@ -29,7 +29,6 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: env.enableVerboseLogs,
           title: 'Hamrash Admin',
           theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
           themeMode: ThemeMode.light,
           routes: const {},
           home: const Scaffold(
