@@ -3,6 +3,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/constants/radius_containers.dart';
 
 
 class AppSearchField extends StatefulWidget {
@@ -126,15 +127,15 @@ class _AppSearchFieldState extends State<AppSearchField> {
           vertical: 11,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30.0),
+          borderRadius: AppRadius.brBadge,
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30.0),
+          borderRadius: AppRadius.brBadge,
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30.0),
+          borderRadius: AppRadius.brBadge,
           borderSide: BorderSide.none,
         ),
         counterText: '',

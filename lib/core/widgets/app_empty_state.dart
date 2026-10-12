@@ -36,7 +36,7 @@ class AppEmptyState extends StatelessWidget {
     this.subtitleColorType = AppTextColor.textMute,
     this.titleFontSize = 15,
     this.subtitleFontSize = 13,
-    this.topPadding = AppSpacing.s50,
+    this.topPadding = AppSpacing.xxl,
   });
 
   /// The icon shown above the text.

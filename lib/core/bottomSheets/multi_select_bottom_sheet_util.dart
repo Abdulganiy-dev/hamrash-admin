@@ -8,6 +8,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
+import 'package:hamrash_admin/core/constants/radius_containers.dart';
 
 /// Glass list sheet with multi-select state. Returns the final selection as a
 /// `List<I>` when the user dismisses the sheet. The caller commits the list
@@ -211,7 +212,7 @@ class _Checkbox extends StatelessWidget {
       height: 22,
       decoration: BoxDecoration(
         color: isSelected ? LightColors.primaryPrimaryDefault : Colors.transparent,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: AppRadius.brCheckbox,
         border: Border.all(
           color: isSelected ? LightColors.primaryPrimaryDefault : unselectedBorder,
           width: 1.5,

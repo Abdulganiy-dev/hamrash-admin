@@ -19,7 +19,7 @@ class DetailCardListShimmer extends StatelessWidget {
           left: 16,
           right: 16,
           top: topInset,
-          bottom: AppSpacing.s50,
+          bottom: AppSpacing.xxl,
         ),
         itemCount: count,
         separatorBuilder: (_, _) => SizedBox(height: AppSpacing.md),
@@ -38,7 +38,7 @@ class DetailCardSkeleton extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: AppSpacing.s5),
+        SizedBox(height: AppSpacing.xs),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: const [
@@ -46,14 +46,14 @@ class DetailCardSkeleton extends StatelessWidget {
             ShimmerBox(width: 20, height: 20),
           ],
         ),
-        SizedBox(height: AppSpacing.s10),
+        SizedBox(height: AppSpacing.ms),
         Row(
           children: const [
             Expanded(flex: 7, child: ShimmerBox(height: 14)),
             Spacer(flex: 3),
           ],
         ),
-        SizedBox(height: AppSpacing.s10),
+        SizedBox(height: AppSpacing.ms),
         const ShimmerBox(width: double.infinity, height: 110, radius: 16),
       ],
     );

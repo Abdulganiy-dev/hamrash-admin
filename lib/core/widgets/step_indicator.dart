@@ -1,5 +1,6 @@
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/constants/radius_containers.dart';
 
 class StepIndicator extends StatefulWidget {
   const StepIndicator({
@@ -95,7 +96,7 @@ class _StepIndicatorState extends State<StepIndicator>
           value: _animation.value,
           minHeight: widget.height,
           borderRadius:
-              widget.borderRadius ?? BorderRadius.circular(999),
+              widget.borderRadius ?? AppRadius.brBadge,
         );
       },
     );

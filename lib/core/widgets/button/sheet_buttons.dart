@@ -33,7 +33,7 @@ class SheetButton extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: AppRadius.brChip,
       ),
       child: Icon(icon, size: 16, color: iconColor),
     );
@@ -50,7 +50,7 @@ class SheetButton extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: AppRadius.brR24,
+          borderRadius: AppRadius.brDialog,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

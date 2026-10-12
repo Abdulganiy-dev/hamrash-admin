@@ -1,4 +1,5 @@
 import 'package:hamrash_admin/core/constants/app_colors.dart';
+import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:flutter/material.dart';
 
 /// A reusable text widget that automatically uses light/dark color variants
@@ -6,6 +7,10 @@ import 'package:flutter/material.dart';
 ///
 /// Usage examples:
 /// ```dart
+/// // Named style from the type scale (preferred)
+/// AppText('Attendance', variant: AppTextVariant.h2)
+/// AppText('Taken 8:05 am', variant: AppTextVariant.caption)
+///
 /// // Simple usage with color type (automatically switches light/dark)
 /// AppText(
 ///   'Hello World',
@@ -81,6 +86,10 @@ enum AppTextColor {
 class AppText extends StatelessWidget {
   /// The text to display
   final String text;
+
+  /// Named style from the type scale. Size, weight and color come from the
+  /// theme; any explicit property below overrides it.
+  final AppTextVariant? variant;
 
   /// Color type to use (automatically switches between light/dark)
   final AppTextColor? colorType;
@@ -166,6 +175,7 @@ class AppText extends StatelessWidget {
   const AppText(
     this.text, {
     super.key,
+    this.variant,
     this.colorType,
     this.color,
     this.fontSize,
@@ -194,9 +204,9 @@ class AppText extends StatelessWidget {
     this.textBaseline,
     this.leadingDistribution,
   }) : assert(
-          colorType == null || color == null,
-          'Cannot provide both colorType and color. Use one or the other.',
-        );
+         colorType == null || color == null,
+         'Cannot provide both colorType and color. Use one or the other.',
+       );
 
   /// Get the color based on colorType and theme
   Color? _getColor(BuildContext context) {
@@ -248,13 +258,9 @@ class AppText extends StatelessWidget {
             ? LightColors.errorErrorDefault
             : DarkColors.errorErrorDefault;
       case AppTextColor.errorMute:
-        return isLight
-            ? LightColors.errorErrorMute
-            : DarkColors.errorErrorMute;
+        return isLight ? LightColors.errorErrorMute : DarkColors.errorErrorMute;
       case AppTextColor.errorThin:
-        return isLight
-            ? LightColors.errorErrorThin
-            : DarkColors.errorErrorThin;
+        return isLight ? LightColors.errorErrorThin : DarkColors.errorErrorThin;
       case AppTextColor.textPrimary:
         return isLight
             ? LightColors.textTextPrimary
@@ -298,24 +304,30 @@ class AppText extends StatelessWidget {
   Widget build(BuildContext context) {
     final textColor = _getColor(context);
 
-    final textStyle = TextStyle(
-      color: textColor,
-      fontSize: fontSize,
-      fontWeight: fontWeight,
-      height: height,
-      letterSpacing: letterSpacing,
-      wordSpacing: wordSpacing,
-      decoration: decoration,
-      decorationColor: decorationColor,
-      decorationStyle: decorationStyle,
-      decorationThickness: decorationThickness,
-      fontFamily: fontFamily,
-      fontFamilyFallback: fontFamilyFallback,
-      fontStyle: fontStyle,
-      shadows: shadows,
-      textBaseline: textBaseline,
-      leadingDistribution: leadingDistribution,
-    ).merge(style);
+    final baseStyle = variant?.resolve(Theme.of(context).textTheme);
+
+    final textStyle = (baseStyle ?? const TextStyle())
+        .merge(
+          TextStyle(
+            color: textColor,
+            fontSize: fontSize,
+            fontWeight: fontWeight,
+            height: height,
+            letterSpacing: letterSpacing,
+            wordSpacing: wordSpacing,
+            decoration: decoration,
+            decorationColor: decorationColor,
+            decorationStyle: decorationStyle,
+            decorationThickness: decorationThickness,
+            fontFamily: fontFamily,
+            fontFamilyFallback: fontFamilyFallback,
+            fontStyle: fontStyle,
+            shadows: shadows,
+            textBaseline: textBaseline,
+            leadingDistribution: leadingDistribution,
+          ),
+        )
+        .merge(style);
 
     return Text(
       text,

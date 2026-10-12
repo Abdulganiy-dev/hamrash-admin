@@ -194,7 +194,7 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
               color: surface,
-              borderRadius: BorderRadius.circular(AppRadius.r24),
+              borderRadius: AppRadius.brDialog,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: isLight ? 0.12 : 0.4),

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 /// Outer surface card used as a grouping container for inner content.
 ///
-/// Uses the muted surface color from the theme and [AppRadius.xlLg] rounding
+/// Uses the muted surface color from the theme and [AppRadius.card] rounding
 /// by default. Pair it with [AppElevatedCard] children for the stacked
 /// "card on card" look used on the home dashboard.
 class AppSurfaceCard extends StatelessWidget {
@@ -36,7 +36,7 @@ class AppSurfaceCard extends StatelessWidget {
       padding: padding ?? const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: resolvedColor,
-        borderRadius: borderRadius ?? BorderRadius.circular(AppRadius.xl),
+        borderRadius: borderRadius ?? AppRadius.brCard,
       ),
       child: child,
     );
@@ -80,7 +80,7 @@ class AppElevatedCard extends StatelessWidget {
       padding: padding ?? EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: resolvedCardColor,
-        borderRadius: borderRadius ?? BorderRadius.circular(AppRadius.lg),
+        borderRadius: borderRadius ?? AppRadius.brCard,
         boxShadow: [
           BoxShadow(
             color: resolvedShadowColor,

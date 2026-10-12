@@ -1,52 +1,57 @@
 import 'package:flutter/material.dart';
 
+/// Corner radius scale. Reach for the role names first; small things get
+/// small corners, surfaces get larger ones, badges are fully round.
 class AppRadius {
   AppRadius._();
 
-  // Scale anchors
+  // Scale
   static const double none = 0.0;
-  static const double xs = 2.0;
-  static const double sm = 4.0;
-  static const double md = 8.0;
-  static const double lg = 12.0;
-  static const double xl = 16.0;
-  static const double pill = 100.0;
+  static const double xs = 4.0;
+  static const double sm = 8.0;
+  static const double md = 12.0;
+  static const double lg = 16.0;
+  static const double xl = 24.0;
+  static const double pill = 999.0;
 
-  // Off-scale values — named by pixel value
-  static const double r1 = 1.0;
-  static const double r3 = 3.0;
-  static const double r5 = 5.0;
-  static const double r6 = 6.0;
-  static const double r7 = 7.0;
-  static const double r9 = 9.0;
-  static const double r10 = 10.0;
-  static const double r11 = 11.0;
-  static const double r14 = 14.0;
-  static const double r15 = 15.0;
-  static const double r20 = 20.0;
-  static const double r24 = 24.0;
-  static const double r30 = 30.0;
-  static const double r32 = 32.0;
-  static const double r40 = 40.0;
-  static const double r50 = 50.0;
-  static const double r200 = 200.0;
+  // Roles
+  /// Checkboxes, progress bars, tiny indicators.
+  static const double checkbox = xs;
 
-  // Pre-built BorderRadius — scale anchors
-  static final BorderRadius brNone = BorderRadius.circular(none);
-  static final BorderRadius brXs = BorderRadius.circular(xs);
-  static final BorderRadius brSm = BorderRadius.circular(sm);
-  static final BorderRadius brMd = BorderRadius.circular(md);
-  static final BorderRadius brLg = BorderRadius.circular(lg);
-  static final BorderRadius brXl = BorderRadius.circular(xl);
-  static final BorderRadius brPill = BorderRadius.circular(pill);
+  /// Square chips, icon tiles, tooltips, small buttons.
+  static const double chip = sm;
 
-  // Pre-built BorderRadius — off-scale
-  static final BorderRadius brR6 = BorderRadius.circular(r6);
-  static final BorderRadius brR10 = BorderRadius.circular(r10);
-  static final BorderRadius brR11 = BorderRadius.circular(r11);
-  static final BorderRadius brR20 = BorderRadius.circular(r20);
-  static final BorderRadius brR24 = BorderRadius.circular(r24);
-  static final BorderRadius brR30 = BorderRadius.circular(r30);
-  static final BorderRadius brR32 = BorderRadius.circular(r32);
-  static final BorderRadius brR40 = BorderRadius.circular(r40);
+  /// Buttons, text fields, dropdowns, segmented controls.
+  static const double control = md;
+
+  /// Cards, list groups, image thumbnails.
+  static const double card = lg;
+
+  /// Dialogs, bottom sheets (top corners), large tiles.
+  static const double dialog = xl;
+
+  /// Status badges, search fields, avatars.
+  static const double badge = pill;
+
+  // Pre-built BorderRadius — scale
+  static const BorderRadius brNone = BorderRadius.zero;
+  static const BorderRadius brXs = BorderRadius.all(Radius.circular(xs));
+  static const BorderRadius brSm = BorderRadius.all(Radius.circular(sm));
+  static const BorderRadius brMd = BorderRadius.all(Radius.circular(md));
+  static const BorderRadius brLg = BorderRadius.all(Radius.circular(lg));
+  static const BorderRadius brXl = BorderRadius.all(Radius.circular(xl));
+  static const BorderRadius brPill = BorderRadius.all(Radius.circular(pill));
+
+  // Pre-built BorderRadius — roles
+  static const BorderRadius brCheckbox = brXs;
+  static const BorderRadius brChip = brSm;
+  static const BorderRadius brControl = brMd;
+  static const BorderRadius brCard = brLg;
+  static const BorderRadius brDialog = brXl;
+  static const BorderRadius brBadge = brPill;
+
+  /// Bottom sheets: rounded top, square bottom.
+  static const BorderRadius brSheet = BorderRadius.vertical(
+    top: Radius.circular(xl),
+  );
 }

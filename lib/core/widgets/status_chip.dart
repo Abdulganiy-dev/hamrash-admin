@@ -41,7 +41,7 @@ class StatusChip extends StatelessWidget {
         color: showBackground ? bg : Colors.transparent,
         borderRadius:
             showBorderRadius
-                ? BorderRadius.circular(AppRadius.pill)
+                ? AppRadius.brBadge
                 : BorderRadius.zero,
         border: showBackground ? Border.all(color: border, width: 1) : null,
       ),
@@ -88,7 +88,7 @@ class PriorityChip extends StatelessWidget {
         color: showBackground ? bg : Colors.transparent,
         borderRadius:
             showBorderRadius
-                ? BorderRadius.circular(AppRadius.pill)
+                ? AppRadius.brBadge
                 : BorderRadius.zero,
         border: showBackground ? Border.all(color: border, width: 1) : null,
       ),
