@@ -1,10 +1,11 @@
-import 'package:hamrash_admin/core/constants/app_colors.dart';
-import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
-import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/widgets/app_field_style.dart';
+import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:hamrash_admin/core/constants/radius_containers.dart';
 
+/// Search input in the shared field style: search icon on the left, a clear
+/// button on the right once there's text. 48 tall, 12px corners.
 
 class AppSearchField extends StatefulWidget {
   const AppSearchField({
@@ -39,13 +40,16 @@ class _AppSearchFieldState extends State<AppSearchField> {
     _focusNode = widget.focusNode ?? FocusNode();
     _controller = widget.controller ?? TextEditingController();
     _focusNode.addListener(_onFocusChange);
+    _controller.addListener(_onTextChange);
   }
 
   @override
   void didUpdateWidget(AppSearchField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.controller != oldWidget.controller) {
+      _controller.removeListener(_onTextChange);
       _controller = widget.controller ?? _controller;
+      _controller.addListener(_onTextChange);
     }
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode.removeListener(_onFocusChange);
@@ -58,9 +62,18 @@ class _AppSearchFieldState extends State<AppSearchField> {
     setState(() => _isFocused = _focusNode.hasFocus);
   }
 
+  /// Rebuild so the clear button appears and disappears with the text.
+  void _onTextChange() => setState(() {});
+
+  void _clear() {
+    _controller.clear();
+    widget.onChanged?.call('');
+  }
+
   @override
   void dispose() {
     _focusNode.removeListener(_onFocusChange);
+    _controller.removeListener(_onTextChange);
     if (widget.focusNode == null) _focusNode.dispose();
     if (widget.controller == null) _controller.dispose();
     super.dispose();
@@ -68,14 +81,8 @@ class _AppSearchFieldState extends State<AppSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final hintColor = (isLight
-            ? LightColors.textTextMute
-            : DarkColors.textTextMute)
-        .withValues(alpha: 0.55);
-
-    
-      
+    final iconColor = AppFieldStyle.icon(context);
+    final restBorder = AppFieldStyle.border(AppFieldStyle.restBorder(context));
 
     return TextField(
       controller: _controller,
@@ -84,59 +91,50 @@ class _AppSearchFieldState extends State<AppSearchField> {
       onSubmitted: widget.onSubmitted,
       autofocus: widget.autofocus,
       textInputAction: TextInputAction.search,
-      style: TextStyle(
-        color: isLight
-            ? LightColors.textTextPrimary
-            : DarkColors.textTextPrimary,
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
+      textAlignVertical: TextAlignVertical.center,
+      style: AppTypography.bodyLarge.copyWith(
+        color: AppFieldStyle.text(context, enabled: true),
       ),
       decoration: InputDecoration(
+        isDense: true,
         hintText: widget.hintText,
-        hintStyle: TextStyle(
-          color: hintColor,
-          fontSize: 14,
+        hintStyle: AppTypography.bodyLarge.copyWith(
+          color: AppFieldStyle.placeholder(context),
         ),
-
-        suffixIcon: AppHugeIconButton(
-          lucidIcon: LucideIcons.x,
-          lucidIconSize: 18,
-          foregroundColorType:_isFocused ? AppButtonForegroundColor.textInverted : AppButtonForegroundColor.textMute,
-          onPressed:  () {
-            widget.controller?.clear();
-            widget.onChanged?.call('');
-          } ,
-        ),
-
         prefixIcon: Padding(
-          padding: const EdgeInsets.only(left: 14, right: 8),
+          padding: const EdgeInsets.only(left: 14, right: 12),
           child: Icon(
             LucideIcons.search,
-            size: 18,
-            color: _isFocused
-                ? Colors.black.withValues(alpha: 0.7)
-                : (isLight
-                      ? LightColors.textTextMute
-                      : DarkColors.textTextMute),
+            size: AppFieldStyle.iconSize,
+            color: iconColor,
           ),
         ),
-        prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 0),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 11,
+        prefixIconConstraints: const BoxConstraints(),
+        suffixIcon: _controller.text.isEmpty
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(left: 12, right: 10),
+                child: AppHugeIconButton(
+                  lucidIcon: LucideIcons.x,
+                  lucidIconSize: 18,
+                  foregroundColor: iconColor,
+                  onPressed: _clear,
+                ),
+              ),
+        suffixIconConstraints: const BoxConstraints(),
+        contentPadding: AppFieldStyle.contentPadding,
+        filled: true,
+        hoverColor: Colors.transparent,
+        fillColor: AppFieldStyle.fill(
+          context,
+          enabled: true,
+          active: _isFocused,
         ),
-        border: OutlineInputBorder(
-          borderRadius: AppRadius.brBadge,
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: AppRadius.brBadge,
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: AppRadius.brBadge,
-          borderSide: BorderSide.none,
+        border: restBorder,
+        enabledBorder: restBorder,
+        focusedBorder: AppFieldStyle.border(
+          AppFieldStyle.focusBorder(context),
+          width: 1.5,
         ),
         counterText: '',
       ),

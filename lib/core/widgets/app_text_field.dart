@@ -1,38 +1,43 @@
-import 'package:hamrash_admin/core/constants/app_colors.dart';
-import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hamrash_admin/core/constants/app_colors.dart';
+import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/widgets/app_field_style.dart';
 
-
-/// A modern, reusable text field widget with label above the field.
+/// Text field with the label above, helper or error text below.
 ///
-/// Features:
-/// - Label displayed above the field
-/// - Black border and text color on focus
-/// - Support for validation, read-only mode, keyboard types, and focus nodes
-/// - Modern design with rounded corners
-/// - Validator and [errorText] messages clear on tap or when focus returns
+/// Quiet at rest (soft fill, hairline border), white with a blue border when
+/// focused, white with a red border on error. 48 tall, 12px corners.
+/// Validator and [errorText] messages clear on tap or when focus returns.
 ///
 /// Usage example:
 /// ```dart
 /// AppTextField(
 ///   controller: nameController,
-///   label: 'Full Name',
-///   hintText: 'Enter your full name',
+///   label: 'Full name',
+///   hintText: "Student's full name",
 ///   validator: (value) {
-///     if (value == null || value.isEmpty) {
-///       return 'Please enter your name';
-///     }
+///     if (value == null || value.isEmpty) return 'Enter a name';
 ///     return null;
 ///   },
 /// )
+///
+/// AppTextField(label: "Parent's phone", prefixText: '+234')
+/// AppTextField(label: 'Password', obscureText: true) // eye toggle built in
 /// ```
+
 class AppTextField extends StatefulWidget {
   /// The controller for the text field
   final TextEditingController? controller;
 
-  /// The label text that floats above the field
+  /// The label shown above the field
   final String label;
+
+  /// Adds a muted "(optional)" after the label
+  final bool isOptional;
+
+  /// Fixed text before the input, split off by a divider (e.g. "+234", "₦")
+  final String? prefixText;
 
   /// Optional hint text shown when field is empty
   final String? hintText;
@@ -58,7 +63,7 @@ class AppTextField extends StatefulWidget {
   /// Optional text input formatters
   final List<TextInputFormatter>? inputFormatters;
 
-  /// Maximum number of lines (null = single line)
+  /// Maximum number of lines (1 = single line, null = grows)
   final int? maxLines;
 
   /// Minimum number of lines
@@ -67,7 +72,8 @@ class AppTextField extends StatefulWidget {
   /// Maximum length of input
   final int? maxLength;
 
-  /// Whether to obscure text (for passwords)
+  /// Whether to obscure text (for passwords). Adds a show/hide eye unless a
+  /// [suffixIcon] is given.
   final bool obscureText;
 
   /// Text input action
@@ -128,6 +134,8 @@ class AppTextField extends StatefulWidget {
     super.key,
     this.controller,
     required this.label,
+    this.isOptional = false,
+    this.prefixText,
     this.hintText,
     this.helperText,
     this.errorText,
@@ -171,11 +179,18 @@ class _AppTextFieldState extends State<AppTextField> {
   bool _isFocused = false;
   bool _hadFocus = false;
   bool _hideExternalError = false;
+  late bool _obscured = widget.obscureText;
+
+  /// Latest validator message. The field's own error line is hidden so this
+  /// can be drawn with an icon below the field.
+  String? _validatorError;
 
   String? get _displayedExternalError =>
       _hideExternalError ? null : widget.errorText;
 
-  bool get _hasExternalError => _displayedExternalError != null;
+  String? get _errorMessage => _displayedExternalError ?? _validatorError;
+
+  bool get _isMultiline => widget.maxLines != 1;
 
   @override
   void initState() {
@@ -199,6 +214,9 @@ class _AppTextFieldState extends State<AppTextField> {
     if (widget.errorText != oldWidget.errorText) {
       _hideExternalError = false;
     }
+    if (widget.obscureText != oldWidget.obscureText) {
+      _obscured = widget.obscureText;
+    }
   }
 
   void _onFocusChange() {
@@ -217,6 +235,7 @@ class _AppTextFieldState extends State<AppTextField> {
   /// (submit) still runs the validator and can show a new message.
   void _clearDisplayedError() {
     _hideExternalError = true;
+    _validatorError = null;
     _clearValidatorError();
   }
 
@@ -226,6 +245,17 @@ class _AppTextFieldState extends State<AppTextField> {
     state.clearError();
   }
 
+  String? _runValidator(String? value) {
+    final message = widget.validator?.call(value);
+    if (message != _validatorError) {
+      // Validation runs during build; update our error line afterwards.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _validatorError = message);
+      });
+    }
+    return message;
+  }
+
   void _handleTap() {
     _clearDisplayedError();
     setState(() {});
@@ -233,6 +263,7 @@ class _AppTextFieldState extends State<AppTextField> {
   }
 
   void _handleChanged(String value) {
+    if (widget.showCounter) setState(() {});
     widget.onChanged?.call(value);
   }
 
@@ -248,224 +279,227 @@ class _AppTextFieldState extends State<AppTextField> {
     super.dispose();
   }
 
-  Color _getBorderColor(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    
-    if (!widget.enabled) {
-      return isLight
-          ? LightColors.strokeColourStrokeSoft
-          : DarkColors.strokeColourStrokeSoft;
+  Widget? _buildPrefix(BuildContext context) {
+    if (widget.prefixText != null) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 16, right: 12),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              widget.prefixText!,
+              style: AppTypography.bodyLarge.copyWith(
+                color: AppFieldStyle.icon(context),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              width: 1,
+              height: 24,
+              color: AppFieldStyle.restBorder(context),
+            ),
+          ],
+        ),
+      );
     }
-
-    if (_hasExternalError) {
-      return isLight
-          ? LightColors.errorErrorDefault
-          : DarkColors.errorErrorDefault;
-    }
-
-    if (_isFocused) {
-      return Colors.black.withOpacity(0.7);
-    }
-
-    return isLight
-        ? LightColors.strokeColourStrokeMild
-        : DarkColors.strokeColourStrokeMild;
+    if (widget.prefixIcon == null) return null;
+    return Padding(
+      padding: const EdgeInsets.only(left: 14, right: 12),
+      child: widget.prefixIcon,
+    );
   }
 
-  Color _getTextColor(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    
-    if (!widget.enabled) {
-      return isLight
-          ? LightColors.textTextDisabled
-          : DarkColors.textTextDisabled;
+  Widget? _buildSuffix(BuildContext context) {
+    Widget? icon = widget.suffixIcon;
+    if (icon == null && widget.obscureText) {
+      icon = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => setState(() => _obscured = !_obscured),
+        child: Icon(
+          _obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+        ),
+      );
     }
-
-    if (_isFocused) {
-      return Colors.black;
-    }
-
-    return isLight
-        ? LightColors.textTextPrimary
-        : DarkColors.textTextPrimary;
+    if (icon == null) return null;
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, right: 14),
+      child: icon,
+    );
   }
 
-  Color _getLabelColor(BuildContext context) {
+  Widget _buildLabel(BuildContext context) {
+    final style = AppTypography.subtitle
+        .copyWith(
+          color: widget.enabled
+              ? AppFieldStyle.text(context, enabled: true)
+              : AppFieldStyle.text(context, enabled: false),
+        )
+        .merge(widget.labelStyle);
+    if (!widget.isOptional) return Text(widget.label, style: style);
+    return Text.rich(
+      TextSpan(
+        text: widget.label,
+        style: style,
+        children: [
+          TextSpan(
+            text: '  (optional)',
+            style: AppTypography.body.copyWith(
+              color: Theme.of(context).brightness == Brightness.light
+                  ? LightColors.textTextMute
+                  : DarkColors.textTextMute,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget? _buildFooter(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
-    
-    if (!widget.enabled) {
-      return isLight
-          ? LightColors.textTextDisabled
-          : DarkColors.textTextDisabled;
-    }
-
-    if (_hasExternalError) {
-      return isLight
-          ? LightColors.errorErrorDefault
-          : DarkColors.errorErrorDefault;
-    }
-
-    if (_isFocused) {
-      return Colors.black;
-    }
-
-    return isLight
+    final error = _errorMessage;
+    final mutedColor = isLight
         ? LightColors.textTextMute
         : DarkColors.textTextMute;
-  }
+    final counter = widget.showCounter && widget.maxLength != null
+        ? '${_controller.text.characters.length} / ${widget.maxLength}'
+        : null;
 
-  Color _getHintColor(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final baseHintColor = isLight
-        ? LightColors.textTextMute
-        : DarkColors.textTextMute;
-    return baseHintColor.withValues(alpha: 0.55);
+    Widget? message;
+    if (error != null) {
+      final errorColor = isLight
+          ? LightColors.errorErrorText
+          : DarkColors.errorErrorText;
+      message = Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.error_outline_rounded, size: 16, color: errorColor),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              error,
+              style: AppTypography.caption
+                  .copyWith(color: errorColor)
+                  .merge(widget.errorStyle),
+            ),
+          ),
+        ],
+      );
+    } else if (widget.helperText != null) {
+      message = Text(
+        widget.helperText!,
+        maxLines: 5,
+        style: AppTypography.caption
+            .copyWith(color: mutedColor)
+            .merge(widget.helperStyle),
+      );
+    }
+
+    if (message == null && counter == null) return null;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: message ?? const SizedBox.shrink()),
+          if (counter != null) ...[
+            const SizedBox(width: 12),
+            Text(
+              counter,
+              style: AppTypography.caption.copyWith(color: mutedColor),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final borderColor = _getBorderColor(context);
-    final textColor = _getTextColor(context);
-    final labelColor = _getLabelColor(context);
-    final hintColor = _getHintColor(context);
-    final errorMessage = _displayedExternalError;
+    final hasError = _errorMessage != null;
+    final active = _isFocused || hasError;
+    final restBorder = AppFieldStyle.restBorder(context);
+    final errorBorder = AppFieldStyle.errorBorder(context);
+    final footer = _buildFooter(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label
-        AppText(
-          widget.label,
-          colorType: null,
-          color: labelColor,
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-          style: widget.labelStyle,
-        ),
+        _buildLabel(context),
         const SizedBox(height: 8),
-        // Text field
-        TextFormField(
+        IconTheme.merge(
+          data: IconThemeData(
+            size: AppFieldStyle.iconSize,
+            color: AppFieldStyle.icon(context),
+          ),
+          child: TextFormField(
             key: _fieldKey,
             controller: _controller,
             focusNode: _focusNode,
             readOnly: widget.readOnly,
             keyboardType: widget.keyboardType,
             inputFormatters: widget.inputFormatters,
-            maxLines: widget.maxLines,
-            minLines: widget.minLines,
+            maxLines: widget.obscureText ? 1 : widget.maxLines,
+            minLines: widget.minLines ?? (_isMultiline ? 4 : null),
             maxLength: widget.maxLength,
-            obscureText: widget.obscureText,
+            obscureText: _obscured,
             textInputAction: widget.textInputAction,
             onFieldSubmitted: widget.onSubmitted,
             onTap: _handleTap,
             onTapAlwaysCalled: true,
             autovalidateMode: AutovalidateMode.disabled,
+            textAlignVertical: _isMultiline
+                ? TextAlignVertical.top
+                : TextAlignVertical.center,
             onChanged: _handleChanged,
-            validator: widget.validator,
+            validator: widget.validator == null ? null : _runValidator,
+            errorBuilder: (_, _) => const SizedBox.shrink(),
             enabled: widget.enabled,
             autofillHints: widget.autofillHints,
             textCapitalization: widget.textCapitalization,
             enableSuggestions: widget.enableSuggestions,
             autocorrect: widget.autocorrect,
-            style: widget.textStyle ??
-                TextStyle(
-                  color: textColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                ),
+            style: AppTypography.bodyLarge
+                .copyWith(
+                  color: AppFieldStyle.text(context, enabled: widget.enabled),
+                )
+                .merge(widget.textStyle),
             decoration: InputDecoration(
+              isDense: true,
               hintText: widget.hintText,
-              hintStyle: widget.hintStyle ??
-                  TextStyle(
-                    color: hintColor,
-                    fontWeight: FontWeight.w400,
-                    fontSize: 14,
-                  ),
-              helperText: widget.helperText,
-              helperMaxLines: 5,
-              helperStyle: widget.helperStyle ??
-                  TextStyle(
-                    color: isLight
-                        ? LightColors.textTextMute
-                        : DarkColors.textTextMute,
-                    fontWeight: FontWeight.w400,
-                    fontSize: 12,
-                  ),
-              errorText: errorMessage,
-              errorStyle: widget.errorStyle ??
-                  TextStyle(
-                    color: isLight
-                        ? LightColors.errorErrorDefault
-                        : DarkColors.errorErrorDefault,
-                    fontSize: 12,
-                  ),
-              prefixIcon: widget.prefixIcon,
-              suffixIcon: widget.suffixIcon,
-              
-              counterText: widget.showCounter ? null : '',
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
+              hintStyle: AppTypography.bodyLarge
+                  .copyWith(color: AppFieldStyle.placeholder(context))
+                  .merge(widget.hintStyle),
+              // Errors draw the red border here; the message itself is
+              // shown by the footer, with an icon.
+              error: _displayedExternalError == null
+                  ? null
+                  : const SizedBox.shrink(),
+              counterText: '',
+              prefixIcon: _buildPrefix(context),
+              prefixIconConstraints: const BoxConstraints(),
+              suffixIcon: _buildSuffix(context),
+              suffixIconConstraints: const BoxConstraints(),
+              contentPadding: AppFieldStyle.contentPadding,
               filled: true,
-              fillColor: isLight
-                  ? (widget.enabled
-                      ? LightColors.backgroundSurfacePrimaryBG
-                      : LightColors.backgroundSurfaceMild)
-                  : (widget.enabled
-                      ? DarkColors.backgroundSurfacePrimaryBG
-                      : DarkColors.backgroundSurfaceMild),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: borderColor,
-                  width: 1.3,
-                ),
+              hoverColor: Colors.transparent,
+              fillColor: AppFieldStyle.fill(
+                context,
+                enabled: widget.enabled,
+                active: active,
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: borderColor,
-                  width: 1.5,
-                ),
+              border: AppFieldStyle.border(restBorder),
+              enabledBorder: AppFieldStyle.border(restBorder),
+              disabledBorder: AppFieldStyle.border(restBorder),
+              focusedBorder: AppFieldStyle.border(
+                AppFieldStyle.focusBorder(context),
+                width: 1.5,
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:  BorderSide(
-                  color: LightColors.primaryPrimaryDefault,
-                  width: 1.5,
-                ),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: isLight
-                      ? LightColors.errorErrorDefault
-                      : DarkColors.errorErrorDefault,
-                  width: 1.5,
-                ),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: isLight
-                      ? LightColors.errorErrorDefault
-                      : DarkColors.errorErrorDefault,
-                  width: 1.5,
-                ),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: isLight
-                      ? LightColors.strokeColourStrokeSoft
-                      : DarkColors.strokeColourStrokeSoft,
-                  width: 1.5,
-                ),
-              ),
+              errorBorder: AppFieldStyle.border(errorBorder, width: 1.5),
+              focusedErrorBorder: AppFieldStyle.border(errorBorder, width: 1.5),
             ),
           ),
+        ),
+        ?footer,
       ],
     );
   }

@@ -177,9 +177,7 @@ class _AppButtonState extends State<AppButton> {
   /// Target scale; [SingleMotionBuilder] animates toward this when it changes.
   double _scaleTarget = 1.0;
 
-  static const double _pressedScale = 0.97;
-
-  bool get _isPressed => _scaleTarget != 1.0;
+  static const double _pressedScale = 0.95;
 
   static const Motion _scaleMotion = Motion.snappySpring();
 
@@ -619,19 +617,12 @@ class _AppButtonState extends State<AppButton> {
     final isLight = Theme.of(context).brightness == Brightness.light;
     if (!isEnabled) return AppButtonFill.disabled(isLight: isLight);
     if (widget.haveGradient && widget.gradient != null) {
-      return AppButtonFill.fromGradient(widget.gradient!, pressed: _isPressed);
+      return AppButtonFill.fromGradient(widget.gradient!);
     }
     if (widget.backgroundColor != null || widget.backgroundColorType != null) {
-      return AppButtonFill.flat(
-        getBackgroundColor(context),
-        pressed: _isPressed,
-      );
+      return AppButtonFill.flat(getBackgroundColor(context));
     }
-    return AppButtonFill.forType(
-      widget.type,
-      isLight: isLight,
-      pressed: _isPressed,
-    );
+    return AppButtonFill.forType(widget.type, isLight: isLight);
   }
 
   @override

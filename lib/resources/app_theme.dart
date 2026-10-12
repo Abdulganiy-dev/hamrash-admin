@@ -11,6 +11,9 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      // Same control sizes on phone, web and desktop (Flutter would
+      // otherwise shrink inputs on desktop).
+      visualDensity: VisualDensity.standard,
       brightness: Brightness.light,
       fontFamily: _fontFamily, // Default font family for all text
       colorScheme: ColorScheme.light(
@@ -127,6 +130,9 @@ class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
+      // Same control sizes on phone, web and desktop (Flutter would
+      // otherwise shrink inputs on desktop).
+      visualDensity: VisualDensity.standard,
       brightness: Brightness.dark,
       fontFamily: _fontFamily, // Default font family for all text
       colorScheme: ColorScheme.dark(
