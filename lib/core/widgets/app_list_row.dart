@@ -94,7 +94,7 @@ class AppListRow extends StatelessWidget {
       child: Row(
         children: [
           if (leading != null) ...[
-            _LeadingPicture(leading: leading!, size: 52),
+            AppLeadingPicture(leading: leading!, size: 52),
             const SizedBox(width: 14),
           ],
           Expanded(
@@ -312,7 +312,7 @@ class _CompactRowState extends State<_CompactRow> {
         child: Row(
           children: [
             if (item.leading != null) ...[
-              _LeadingPicture(leading: item.leading!, size: 40),
+              AppLeadingPicture(leading: item.leading!, size: 40),
               const SizedBox(width: 12),
             ],
             Expanded(
@@ -369,8 +369,13 @@ class _Chevron extends StatelessWidget {
 }
 
 /// Bordered picture: 1px slate-200 border, 2px white gap, then the content.
-class _LeadingPicture extends StatelessWidget {
-  const _LeadingPicture({required this.leading, required this.size});
+/// Used by list rows and the app bar ([AppNavPicture]).
+class AppLeadingPicture extends StatelessWidget {
+  const AppLeadingPicture({
+    super.key,
+    required this.leading,
+    required this.size,
+  });
 
   final AppListLeading leading;
   final double size;

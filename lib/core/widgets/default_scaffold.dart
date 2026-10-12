@@ -1,9 +1,10 @@
-
+import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/utils/extensions.dart';
+import 'package:hamrash_admin/core/widgets/navigation/app_nav_button.dart';
+import 'package:hamrash_admin/core/widgets/navigation/app_nav_metrics.dart';
+import 'package:hamrash_admin/core/widgets/navigation/app_tab_shell.dart';
 import 'package:hamrash_admin/core/widgets/standard_app_bar.dart';
-import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
-import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -11,16 +12,19 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 enum DefaultScaffoldAppBarType { standard, custom, none }
 
 /// Publishes the layout metrics of the enclosing [DefaultScaffold] so any
-/// descendant widget can read the top inset it needs to clear (safe area +
-/// app bar + fade region) without the scaffold having to push the body down
-/// globally.
+/// descendant widget can read the space it needs to clear at the top (safe
+/// area + app bar) and bottom (tab bar or safe area) without the scaffold
+/// having to push the body in globally. Content scrolls under both bars.
 ///
 /// Usage from any view inside a [DefaultScaffold]:
 ///
 /// ```dart
-/// final top = ScaffoldInsets.bodyTopInsetOf(context);
-/// // or access the full metrics:
-/// final insets = ScaffoldInsets.of(context);
+/// ListView(
+///   padding: EdgeInsets.only(
+///     top: ScaffoldInsets.bodyTopInsetOf(context),
+///     bottom: ScaffoldInsets.bodyBottomInsetOf(context),
+///   ),
+/// )
 /// ```
 class ScaffoldInsets extends InheritedWidget {
   const ScaffoldInsets({
@@ -29,6 +33,7 @@ class ScaffoldInsets extends InheritedWidget {
     required this.appBarHeight,
     required this.appBarFadeHeight,
     required this.hasAppBar,
+    required this.bottomInset,
     required super.child,
   });
 
@@ -44,10 +49,18 @@ class ScaffoldInsets extends InheritedWidget {
   /// Whether the enclosing scaffold is actually rendering an app bar layer.
   final bool hasAppBar;
 
+  /// Bottom space a body child should leave clear: the floating tab bar
+  /// inside an [AppTabShell], otherwise the safe area.
+  final double bottomInset;
+
   /// Total top space a body child should leave clear so it is not covered by
-  /// the translucent app bar overlay. The safe area is always included; the
-  /// app bar and its fade region are only included when an app bar exists.
-  double get bodyTopInset => topInset + (hasAppBar ? appBarHeight - 15 : 0);
+  /// the app bar. The safe area is always included; the app bar and a small
+  /// gap are only included when an app bar exists.
+  double get bodyTopInset =>
+      topInset + (hasAppBar ? appBarHeight + AppNavMetrics.contentGap : 0);
+
+  /// Total bottom space a body child should leave clear.
+  double get bodyBottomInset => bottomInset;
 
   /// Returns the nearest [ScaffoldInsets], or `null` if no [DefaultScaffold]
   /// is an ancestor of [context].
@@ -76,12 +89,21 @@ class ScaffoldInsets extends InheritedWidget {
     return MediaQuery.viewPaddingOf(context).top;
   }
 
+  /// Convenience accessor for [bodyBottomInset]. Falls back to the safe area
+  /// bottom when no [DefaultScaffold] is in the tree.
+  static double bodyBottomInsetOf(BuildContext context) {
+    final insets = maybeOf(context);
+    if (insets != null) return insets.bodyBottomInset;
+    return MediaQuery.viewPaddingOf(context).bottom;
+  }
+
   @override
   bool updateShouldNotify(ScaffoldInsets oldWidget) {
     return topInset != oldWidget.topInset ||
         appBarHeight != oldWidget.appBarHeight ||
         appBarFadeHeight != oldWidget.appBarFadeHeight ||
-        hasAppBar != oldWidget.hasAppBar;
+        hasAppBar != oldWidget.hasAppBar ||
+        bottomInset != oldWidget.bottomInset;
   }
 }
 
@@ -105,6 +127,10 @@ class DefaultScaffold extends StatelessWidget {
   final EdgeInsetsGeometry? bodyPadding;
   final bool busy;
   final String? subtitle;
+
+  /// Centre the title. Defaults to true when a back button shows (detail
+  /// screens) and false otherwise (tab screens).
+  final bool? centerTitle;
 
   @Deprecated('Safe area top is always handled internally for consistency.')
   final bool showSafeAreaTop;
@@ -131,12 +157,13 @@ class DefaultScaffold extends StatelessWidget {
     this.drawer,
     this.endDrawer,
     this.automaticallyImplyLeading = true,
-    this.appBarHeight = kToolbarHeight,
-    this.appBarFadeHeight = 20,
+    this.appBarHeight = AppNavMetrics.appBarHeight,
+    this.appBarFadeHeight = AppNavMetrics.appBarFadeExtent,
     this.customAppBar,
     this.appBarType,
     this.bodyPadding,
     this.busy = false,
+    this.centerTitle,
   });
 
   /// Default function to pop the current route
@@ -148,10 +175,11 @@ class DefaultScaffold extends StatelessWidget {
   }
 
   Widget _buildDefaultLeading(BuildContext context) {
-    return AppHugeIconButton(
-      lucidIcon: LucideIcons.chevronLeft,
-      lucidIconSize: 24,
-      foregroundColorType: AppButtonForegroundColor.textInverted,
+    return AppNavIconButton(
+      icon: LucideIcons.chevronLeft500,
+      iconSize: 22,
+      iconColor: AppPalette.slate900,
+      semanticLabel: 'Back',
       onPressed: onBackPressed ?? () => _defaultPop(context),
     );
   }
@@ -168,9 +196,6 @@ class DefaultScaffold extends StatelessWidget {
         ? DefaultScaffoldAppBarType.standard
         : DefaultScaffoldAppBarType.none;
   }
-
-  double get _effectiveAppBarHeight =>
-      subtitle != null ? appBarHeight + 16 : appBarHeight;
 
   Widget _buildStandardAppBar(BuildContext context) {
     final showDefaultBackButton =
@@ -189,6 +214,7 @@ class DefaultScaffold extends StatelessWidget {
       actions: actions,
       title: title,
       subtitle: subtitle,
+      centerTitle: centerTitle ?? showDefaultBackButton,
       height: appBarHeight,
     );
   }
@@ -199,6 +225,7 @@ class DefaultScaffold extends StatelessWidget {
     required Color surface,
     required Widget appBarContent,
   }) {
+    final solidHeight = topInset + appBarHeight;
     return Positioned(
       top: 0,
       left: 0,
@@ -206,30 +233,19 @@ class DefaultScaffold extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Gradient is visual only — must not steal taps from body content.
+          // Content fades out under the bar. Solid behind the title, then
+          // fades over [appBarFadeHeight]. Visual only — must not steal taps.
           IgnorePointer(
             child: Container(
               width: double.infinity,
+              height: solidHeight + appBarFadeHeight,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    surface.withValues(alpha: 0.96),
-                    surface.withValues(alpha: 0.76),
-                    surface.withValues(alpha: 0),
-                  ],
-                  stops: const [0.0, 0.62, 1.0],
+                  colors: [surface, surface, surface.withValues(alpha: 0)],
+                  stops: [0, solidHeight / (solidHeight + appBarFadeHeight), 1],
                 ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(height: topInset),
-                  SizedBox(height: _effectiveAppBarHeight),
-                  // SizedBox(height: appBarFadeHeight),
-                ],
               ),
             ),
           ),
@@ -244,8 +260,12 @@ class DefaultScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final surface =
+        backgroundColor ?? Theme.of(context).scaffoldBackgroundColor;
     final topInset = MediaQuery.viewPaddingOf(context).top;
+    final bottomInset =
+        AppTabShellScope.maybeOf(context)?.bottomClearance ??
+        MediaQuery.viewPaddingOf(context).bottom + AppNavMetrics.contentGap;
     final resolvedAppBarType = _resolveAppBarType();
 
     final Widget? appBarContent;
@@ -255,10 +275,7 @@ class DefaultScaffold extends StatelessWidget {
         break;
       case DefaultScaffoldAppBarType.custom:
         appBarContent = customAppBar != null
-            ? SizedBox(
-                height: appBarHeight,
-                child: customAppBar,
-              )
+            ? SizedBox(height: appBarHeight, child: customAppBar)
             : null;
         break;
       case DefaultScaffoldAppBarType.none:
@@ -269,12 +286,13 @@ class DefaultScaffold extends StatelessWidget {
     final hasAppBarLayer = appBarContent != null;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: surface,
       body: ScaffoldInsets(
         topInset: topInset,
-        appBarHeight: _effectiveAppBarHeight,
+        appBarHeight: appBarHeight,
         appBarFadeHeight: appBarFadeHeight,
         hasAppBar: hasAppBarLayer,
+        bottomInset: bottomInset,
         child: Stack(
           children: [
             SizedBox(
@@ -286,7 +304,7 @@ class DefaultScaffold extends StatelessWidget {
               _buildAppBarLayer(
                 context,
                 topInset: topInset,
-                surface: colorScheme.surface,
+                surface: surface,
                 appBarContent: appBarContent,
               ),
             Positioned.fill(
