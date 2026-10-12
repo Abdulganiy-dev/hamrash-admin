@@ -1,39 +1,40 @@
-import 'package:hamrash_admin/core/constants/app_colors.dart';
-import 'package:hamrash_admin/core/constants/radius_containers.dart';
-import 'package:hamrash_admin/core/constants/spacing_constants.dart';
-import 'package:hamrash_admin/core/haptic_helper.dart';
-import 'package:hamrash_admin/core/widgets/app_text.dart';
-import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/constants/app_colors.dart';
+import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/haptic_helper.dart';
+import 'package:hamrash_admin/core/widgets/app_badge.dart';
+import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_surface.dart';
+import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// A clean, modern, reusable confirmation alert — a centered dialog with an
-/// optional icon badge, title, message and a Cancel / Confirm button pair.
+/// Centred dialog for decisions that must block everything, e.g. "Session
+/// expired". For everyday confirmations prefer a floating sheet — its
+/// buttons sit within thumb reach.
 ///
-/// Returns `true` when confirmed, `false`/`null` when cancelled or dismissed.
+/// A tinted icon, a title, a message and a Cancel / Confirm pair side by
+/// side. Returns `true` when confirmed, `false`/`null` when cancelled or
+/// dismissed.
 ///
-/// Pass [onConfirm] to run an async action while the dialog stays open with a
-/// loading spinner on the confirm button; throw inside it to keep the dialog
-/// open and surface an inline error (throw an [AppAlertError] to control the
-/// message). Omit it for a plain confirm that closes immediately.
+/// Pass [onConfirm] to run an async action while the dialog stays open with
+/// a spinner on the confirm button; throw inside it to keep the dialog open
+/// and show an inline error (throw an [AppAlertError] to control the
+/// message). Omit it for a plain confirm that closes straight away.
 ///
 /// For an action the user should not skip, set `showCancel: false` and
 /// `barrierDismissible: false`, and give [revealCancelAfterAttempts] a small
-/// number so a user who genuinely cannot succeed right now still has a way out.
+/// number so someone who genuinely cannot succeed right now still has a way
+/// out.
 ///
 /// ```dart
 /// final ok = await AppAlertDialog.show(
 ///   context,
-///   icon: LucideIcons.userCheck,
-///   accentColor: LightColors.primaryPrimaryDefault,
-///   title: 'Approve Registration',
-///   message: 'The applicant will be notified by email.',
-///   confirmLabel: 'Approve',
-///   onConfirm: () async {
-///     final res = await service.approve(id);
-///     if (!res.isSuccess) throw AppAlertError(res.message);
-///   },
+///   icon: LucideIcons.triangleAlert,
+///   tone: AppBadgeTone.warning,
+///   title: 'Session expired',
+///   message: 'Sign in again to keep working. Unsaved attendance is kept on this phone.',
+///   cancelLabel: 'Later',
+///   confirmLabel: 'Sign in',
 /// );
 /// ```
 class AppAlertDialog extends StatefulWidget {
@@ -42,7 +43,7 @@ class AppAlertDialog extends StatefulWidget {
     required this.title,
     this.message,
     this.icon,
-    this.accentColor,
+    this.tone,
     this.confirmLabel = 'Confirm',
     this.cancelLabel = 'Cancel',
     this.isDestructive = false,
@@ -53,39 +54,47 @@ class AppAlertDialog extends StatefulWidget {
 
   final String title;
   final String? message;
+
+  /// Shown in a tinted circle above the title.
   final IconData? icon;
 
-  /// Tints the icon badge and confirm button. Defaults to the brand color, or
-  /// the error color when [isDestructive] is true.
-  final Color? accentColor;
+  /// Colours the icon. Defaults to [AppBadgeTone.info], or
+  /// [AppBadgeTone.error] when [isDestructive].
+  final AppBadgeTone? tone;
+
   final String confirmLabel;
   final String cancelLabel;
+
+  /// Makes the confirm button red, for deleting or withdrawing things.
   final bool isDestructive;
 
-  /// Set false for a required action: the cancel button is hidden and the back
-  /// gesture is blocked, so the only way out is a successful [onConfirm].
-  /// Pair it with `barrierDismissible: false`.
+  /// Set false for a required action: the cancel button is hidden and the
+  /// back gesture is blocked, so the only way out is a successful
+  /// [onConfirm]. Pair it with `barrierDismissible: false`.
   final bool showCancel;
 
   /// Escape hatch for a required action ([showCancel] false): after this many
   /// failed [onConfirm] attempts the cancel button appears after all.
   ///
-  /// The point is to insist without trapping — someone who simply tapped past
-  /// the dialog has to engage with it, but someone who genuinely cannot succeed
+  /// The point is to insist without trapping — someone who simply tapped
+  /// past the dialog has to engage with it, but someone who cannot succeed
   /// right now (no signal, server down) is not stuck on it indefinitely.
   /// Ignored when [showCancel] is true.
   final int? revealCancelAfterAttempts;
 
-  /// Optional async action run when confirm is tapped. While it runs the dialog
-  /// stays open showing a loading state; it closes with `true` on success.
+  /// Optional async action run when confirm is tapped. While it runs the
+  /// dialog stays open with a spinner; it closes with `true` on success.
   final Future<void> Function()? onConfirm;
+
+  /// Slate-900 at 36%, the same scrim as sheets.
+  static const _scrim = Color(0x5C0F172A);
 
   static Future<bool?> show(
     BuildContext context, {
     required String title,
     String? message,
     IconData? icon,
-    Color? accentColor,
+    AppBadgeTone? tone,
     String confirmLabel = 'Confirm',
     String cancelLabel = 'Cancel',
     bool isDestructive = false,
@@ -97,12 +106,12 @@ class AppAlertDialog extends StatefulWidget {
     return showDialog<bool>(
       context: context,
       barrierDismissible: barrierDismissible,
-      barrierColor: Colors.black.withValues(alpha: 0.45),
+      barrierColor: _scrim,
       builder: (_) => AppAlertDialog(
         title: title,
         message: message,
         icon: icon,
-        accentColor: accentColor,
+        tone: tone,
         confirmLabel: confirmLabel,
         cancelLabel: cancelLabel,
         isDestructive: isDestructive,
@@ -122,27 +131,24 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
   String? _error;
   int _failedAttempts = 0;
 
-  /// Whether the cancel button is currently shown — always for an ordinary
-  /// dialog, and for a required one only once [AppAlertDialog
-  /// .revealCancelAfterAttempts] failures have piled up.
+  /// Always shown for an ordinary dialog; for a required one only once
+  /// [AppAlertDialog.revealCancelAfterAttempts] failures have piled up.
   bool get _cancelVisible {
     if (widget.showCancel) return true;
     final threshold = widget.revealCancelAfterAttempts;
     return threshold != null && _failedAttempts >= threshold;
   }
 
-  Color get _accent =>
-      widget.accentColor ??
-      (widget.isDestructive
-          ? LightColors.errorErrorDefault
-          : LightColors.primaryPrimaryDefault);
+  AppBadgeTone get _tone =>
+      widget.tone ??
+      (widget.isDestructive ? AppBadgeTone.error : AppBadgeTone.info);
 
   Future<void> _confirm() async {
     HapticHelpers.vibrate(VibrationType.selection);
 
     final action = widget.onConfirm;
     if (action == null) {
-      NavigationService.popScreen(true);
+      Navigator.of(context).pop(true);
       return;
     }
 
@@ -153,56 +159,52 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
 
     try {
       await action();
-      if (mounted) NavigationService.popScreen(true);
-    } on AppAlertError catch (e) {
-      if (mounted) {
-        setState(() {
-          _failedAttempts++;
-          _isSubmitting = false;
-          _error = e.message;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _failedAttempts++;
-          _isSubmitting = false;
-          _error = 'Something went wrong. Please try again.';
-        });
-      }
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _failedAttempts++;
+        _isSubmitting = false;
+        _error = e is AppAlertError
+            ? e.message
+            : 'Something went wrong. Please try again.';
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final surface = isLight ? Colors.white : DarkColors.backgroundSurfaceLayer;
+    final confirmLabel = Text(widget.confirmLabel);
+    final confirm = widget.isDestructive
+        ? AppDestructiveButton(
+            width: double.infinity,
+            isLoading: _isSubmitting,
+            onPressed: _isSubmitting ? null : _confirm,
+            child: confirmLabel,
+          )
+        : AppPrimaryButton(
+            width: double.infinity,
+            isLoading: _isSubmitting,
+            onPressed: _isSubmitting ? null : _confirm,
+            child: confirmLabel,
+          );
 
     return PopScope(
-      // With no cancel button the dialog is a required action, so the Android
-      // back gesture must not dismiss it either.
+      // With no cancel button the dialog is a required action, so the
+      // Android back gesture must not dismiss it either.
       canPop: _cancelVisible && !_isSubmitting,
       child: Dialog(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        insetPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.lg,
-        ),
+        insetPadding: const EdgeInsets.all(24),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
           child: Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: surface,
-              borderRadius: AppRadius.brDialog,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isLight ? 0.12 : 0.4),
-                  blurRadius: 30,
-                  offset: const Offset(0, 12),
-                ),
-              ],
+              color: AppPalette.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: AppShadows.overlay,
             ),
             child: AppSurfaceScope(
               surface: AppSurface.card,
@@ -212,78 +214,50 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
                 children: [
                   if (widget.icon != null) ...[
                     Center(
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: _accent.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(widget.icon, size: 28, color: _accent),
-                      ),
+                      child: _DialogIcon(icon: widget.icon!, tone: _tone),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: 16),
                   ],
-                  AppText(
+                  Text(
                     widget.title,
-                    colorType: AppTextColor.textInverted,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
                     textAlign: TextAlign.center,
+                    style: AppTypography.h3.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: LightColors.textTextInverted,
+                    ),
                   ),
                   if (widget.message != null) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    AppText(
+                    const SizedBox(height: 6),
+                    Text(
                       widget.message!,
-                      colorType: AppTextColor.textMute,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
                       textAlign: TextAlign.center,
+                      style: AppTypography.body.copyWith(
+                        fontSize: 15,
+                        height: 22 / 15,
+                        color: LightColors.textTextPrimary,
+                      ),
                     ),
                   ],
                   if (_error != null) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    AppText(
-                      _error!,
-                      colorType: AppTextColor.error,
-                      fontSize: 13,
-                      textAlign: TextAlign.center,
-                    ),
+                    const SizedBox(height: 12),
+                    _ErrorLine(message: _error!),
                   ],
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: 20),
                   Row(
                     children: [
                       if (_cancelVisible) ...[
                         Expanded(
                           child: AppSecondaryButton(
-                            isLoading: _isSubmitting,
+                            width: double.infinity,
                             onPressed: _isSubmitting
                                 ? null
-                                : () => NavigationService.popScreen(false),
-                            child: AppText(
-                              widget.cancelLabel,
-                              colorType: AppTextColor.textInverted,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
+                                : () => Navigator.of(context).pop(false),
+                            child: Text(widget.cancelLabel),
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.sm),
+                        const SizedBox(width: 10),
                       ],
-                      Expanded(
-                        child: AppPrimaryButton(
-                          onPressed: _isSubmitting ? null : _confirm,
-                          isLoading: _isSubmitting,
-                          backgroundColor: _accent,
-                          child: AppText(
-                            widget.confirmLabel,
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      Expanded(child: confirm),
                     ],
                   ),
                 ],
@@ -296,8 +270,72 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
   }
 }
 
-/// Throw inside [AppAlertDialog]'s `onConfirm` to keep the dialog open and show
-/// [message] as an inline error instead of closing.
+/// 56 tinted circle with the icon in the tone's base colour.
+class _DialogIcon extends StatelessWidget {
+  const _DialogIcon({required this.icon, required this.tone});
+
+  final IconData icon;
+  final AppBadgeTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 56,
+      height: 56,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: tone.mute,
+        shape: BoxShape.circle,
+        border: Border.all(color: tone.thin),
+      ),
+      child: Icon(icon, size: 26, color: tone.base),
+    );
+  }
+}
+
+/// Inline failure from [AppAlertDialog.onConfirm], on a pale red strip.
+class _ErrorLine extends StatelessWidget {
+  const _ErrorLine({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppBadgeTone.error.mute,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppBadgeTone.error.thin),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            LucideIcons.circleAlert500,
+            size: 16,
+            color: AppBadgeTone.error.strong,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: AppTypography.caption.copyWith(
+                fontSize: 13,
+                height: 18 / 13,
+                fontWeight: FontWeight.w600,
+                color: AppBadgeTone.error.strong,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Throw inside [AppAlertDialog]'s `onConfirm` to keep the dialog open and
+/// show [message] as an inline error instead of closing.
 class AppAlertError implements Exception {
   const AppAlertError(this.message);
   final String message;

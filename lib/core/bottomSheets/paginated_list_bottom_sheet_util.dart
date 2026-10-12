@@ -1,25 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:hamrash_admin/core/bottomSheets/glass_sheet.dart';
+import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/bottomSheets/paginated_list_controller.dart';
 import 'package:hamrash_admin/core/bottomSheets/paginated_list_cache.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
+import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_search_field.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
+import 'package:hamrash_admin/core/widgets/button/app_button.dart';
+import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:hamrash_admin/core/widgets/haptic_list_tile.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
+import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
+import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 export 'paginated_list_controller.dart';
 
-/// Searchable counterpart of ListBottomSheet for API-backed selectors.
+/// Searchable counterpart of ListBottomSheet for API-backed selectors: a
+/// full sheet with the search field pinned under the title and results that
+/// load more as you scroll.
+///
+/// With [closeOnSelected] (the default) rows show radios and a tap picks and
+/// closes. Set it false to pick many: rows show checkboxes and a Done button
+/// is pinned at the bottom.
 abstract final class PaginatedListBottomSheet {
   static Future<void> showSelectable<I>({
     required BuildContext context,
     required String title,
-    required IconData headerIcon,
     required PaginatedListLoader<I> loadPage,
     required String Function(I) idBuilder,
     required String Function(I) labelBuilder,
@@ -35,34 +44,33 @@ abstract final class PaginatedListBottomSheet {
     String searchHint = 'Search…',
     VoidCallback? onCleared,
     String clearLabel = 'Clear selection',
-  }) => GlassSheet.show<void>(
-    context: context,
-    title: title,
-    leadingIcon: headerIcon,
-    size: GlassSheetSize.form,
-    scrollableBody: false,
-    body: _PaginatedSelectionBody<I>(
-      loadPage: loadPage,
-      cache: PaginatedListCache.forKey<I>(cacheKey),
-      idBuilder: idBuilder,
-      labelBuilder: labelBuilder,
-      subtitleBuilder: subtitleBuilder,
-      matchesSearch: matchesSearch,
-      currentValue: currentValue,
-      isSelected: isSelected,
-      onDeselected: onDeselected,
-      closeOnSelected: closeOnSelected,
-      doneLabel: doneLabel,
-      onSelected: onSelected,
-      searchHint: searchHint,
-      onCleared: onCleared,
-      clearLabel: clearLabel,
+  }) => Navigator.of(context).push<void>(
+    AppSheetRoute<void>(
+      child: _PaginatedSelectionBody<I>(
+        title: title,
+        loadPage: loadPage,
+        cache: PaginatedListCache.forKey<I>(cacheKey),
+        idBuilder: idBuilder,
+        labelBuilder: labelBuilder,
+        subtitleBuilder: subtitleBuilder,
+        matchesSearch: matchesSearch,
+        currentValue: currentValue,
+        isSelected: isSelected,
+        onDeselected: onDeselected,
+        closeOnSelected: closeOnSelected,
+        doneLabel: doneLabel,
+        onSelected: onSelected,
+        searchHint: searchHint,
+        onCleared: onCleared,
+        clearLabel: clearLabel,
+      ),
     ),
   );
 }
 
 class _PaginatedSelectionBody<I> extends StatefulWidget {
   const _PaginatedSelectionBody({
+    required this.title,
     required this.loadPage,
     required this.cache,
     required this.idBuilder,
@@ -79,6 +87,7 @@ class _PaginatedSelectionBody<I> extends StatefulWidget {
     this.matchesSearch,
     this.onCleared,
   });
+  final String title;
   final PaginatedListLoader<I> loadPage;
   final PaginatedListCache<I> cache;
   final String Function(I) idBuilder, labelBuilder;
@@ -142,139 +151,188 @@ class _PaginatedSelectionBodyState<I>
     super.dispose();
   }
 
+  bool get _multi => !widget.closeOnSelected;
+
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const SizedBox(height: AppSpacing.sm),
-      AppSearchField(
-        controller: _searchController,
-        hintText: widget.searchHint,
-        onChanged: _search,
-        onSubmitted: (value) => _search(value, immediately: true),
-      ),
-      if (widget.onCleared != null) ...[
-        const SizedBox(height: AppSpacing.md),
-        AppSecondaryButton(
-          onPressed: () {
-            widget.onCleared!();
-            Navigator.of(context).pop();
-          },
-          child: AppText(widget.clearLabel),
+  Widget build(BuildContext context) => AppSheet(
+    title: widget.title,
+    scrollableBody: false,
+    bodyPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+    footer: _multi
+        ? AppPrimaryButton(
+            width: double.infinity,
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(widget.doneLabel),
+          )
+        : null,
+    body: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppSearchField(
+          controller: _searchController,
+          hintText: widget.searchHint,
+          onChanged: _search,
+          onSubmitted: (value) => _search(value, immediately: true),
         ),
-      ],
-      const SizedBox(height: AppSpacing.md),
-      Expanded(
-        child: ListenableBuilder(
-          listenable: _model,
-          builder: (context, _) => Column(
-            children: [
-              SizedBox(
-                height: 2,
-                child: _model.loading
-                    ? const LinearProgressIndicator(
-                        minHeight: 2,
-                        borderRadius: BorderRadius.all(Radius.circular(2)),
-                      )
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Expanded(child: _results()),
-            ],
-          ),
-        ),
-      ),
-      if (!widget.closeOnSelected) ...[
-        const SizedBox(height: AppSpacing.md),
-        AppPrimaryButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: AppText(
-            widget.doneLabel,
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+        if (widget.onCleared != null)
+          Align(
+            alignment: Alignment.centerRight,
+            child: AppButton(
+              type: AppButtonType.text,
+              size: AppButtonSize.small,
+              text: widget.clearLabel,
+              onPressed: () {
+                widget.onCleared!();
+                Navigator.of(context).pop();
+              },
+            ),
+          )
+        else
+          const SizedBox(height: AppSpacing.sm),
+        Expanded(
+          child: ListenableBuilder(
+            listenable: _model,
+            builder: (context, _) => _results(),
           ),
         ),
       ],
-    ],
+    ),
   );
 
   Widget _results() {
     final items = _model.visibleItems;
-    final footer = !_model.loading && (_model.hasMore || _model.error != null);
+    final showStatusRow =
+        items.isNotEmpty &&
+        (_model.loading || _model.hasMore || _model.error != null);
+    final bottomGap = _multi
+        ? AppSpacing.md
+        : MediaQuery.paddingOf(context).bottom + AppSpacing.md;
+
+    if (items.isEmpty) {
+      return ListView(
+        controller: _scrollController,
+        physics: const ClampingScrollPhysics(),
+        padding: EdgeInsets.only(bottom: bottomGap),
+        children: [_emptyStatus()],
+      );
+    }
+
     return ListView.separated(
       controller: _scrollController,
       physics: const ClampingScrollPhysics(),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.paddingOf(context).bottom + AppSpacing.md,
-      ),
-      itemCount:
-          (items.isEmpty ? 1 : items.length) +
-          (footer && items.isNotEmpty ? 1 : 0),
-      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xs),
+      padding: EdgeInsets.only(bottom: bottomGap),
+      itemCount: items.length + (showStatusRow ? 1 : 0),
+      separatorBuilder: (_, index) => index >= items.length - 1
+          ? const SizedBox.shrink()
+          : Container(
+              height: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              color: AppPalette.slate100,
+            ),
       itemBuilder: (context, index) {
-        if (items.isEmpty || index == items.length) {
-          if (_model.loading) return const SizedBox.shrink();
-          if (_model.error != null) {
-            return LoadErrorView(
-              title: "Couldn't load options",
-              message: _model.error,
-              onRetry: _model.retry,
-            );
-          }
-          if (_model.hasMore) {
-            return AppSecondaryButton(
-              onPressed: () => _model.load(more: true),
-              child: const AppText('Load more'),
-            );
-          }
-          return const AppEmptyState(
-            icon: LucideIcons.search,
-            title: 'No options found',
-            subtitle: 'Try a different search.',
-          );
-        }
-        final item = items[index];
-        final selected =
-            widget.isSelected?.call(item) ??
-            (widget.currentValue != null &&
-                widget.idBuilder(widget.currentValue as I) ==
-                    widget.idBuilder(item));
-        return HapticListTile(
-          title: AppText(
-            widget.labelBuilder(item),
-            colorType: AppTextColor.textInverted,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-          ),
-          subtitle: widget.subtitleBuilder == null
-              ? null
-              : AppText(
-                  widget.subtitleBuilder!(item),
-                  colorType: AppTextColor.textMute,
-                  fontSize: 12,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-          trailing: selected
-              ? const Icon(
-                  LucideIcons.circleCheck,
-                  color: LightColors.primaryPrimaryDefault,
-                  size: 22,
-                )
-              : null,
-          onTap: () {
-            if (selected && widget.onDeselected != null) {
-              widget.onDeselected!(item);
-            } else {
-              widget.onSelected(item);
-            }
-            if (widget.closeOnSelected) {
-              Navigator.of(context).pop();
-            } else {
-              setState(() {});
-            }
-          },
-        );
+        if (index == items.length) return _moreStatus();
+        return _row(items[index]);
       },
+    );
+  }
+
+  Widget _row(I item) {
+    final selected =
+        widget.isSelected?.call(item) ??
+        (widget.currentValue != null &&
+            widget.idBuilder(widget.currentValue as I) ==
+                widget.idBuilder(item));
+
+    return AppSelectionRow(
+      title: widget.labelBuilder(item),
+      subtitle: widget.subtitleBuilder?.call(item),
+      control: _multi
+          ? AppCheckbox(value: selected)
+          : AppRadio<bool>(value: true, groupValue: selected),
+      onTap: () {
+        if (selected && widget.onDeselected != null) {
+          widget.onDeselected!(item);
+        } else if (!selected) {
+          widget.onSelected(item);
+        }
+        if (widget.closeOnSelected) {
+          Navigator.of(context).pop();
+        } else {
+          setState(() {});
+        }
+      },
+    );
+  }
+
+  /// Shown instead of the list when there is nothing to show yet.
+  Widget _emptyStatus() {
+    if (_model.loading) return const _LoadingRow(label: 'Loading…');
+    if (_model.error != null) {
+      return LoadErrorView(
+        title: "Couldn't load options",
+        message: _model.error,
+        onRetry: _model.retry,
+      );
+    }
+    return const AppEmptyState(
+      icon: LucideIcons.search,
+      title: 'No options found',
+      subtitle: 'Try a different search.',
+    );
+  }
+
+  /// Last row of the list: loading, retry, or a manual "Load more".
+  Widget _moreStatus() {
+    if (_model.loading) return const _LoadingRow(label: 'Loading more…');
+    if (_model.error != null) {
+      return LoadErrorView(
+        title: "Couldn't load more",
+        message: _model.error,
+        onRetry: _model.retry,
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: AppSecondaryButton(
+        width: double.infinity,
+        onPressed: () => _model.load(more: true),
+        child: const AppText('Load more'),
+      ),
+    );
+  }
+}
+
+class _LoadingRow extends StatelessWidget {
+  const _LoadingRow({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox.square(
+            dimension: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: LightColors.primaryPrimaryDefault,
+              backgroundColor: AppPalette.slate200,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: AppTypography.caption.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: LightColors.textTextMute,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

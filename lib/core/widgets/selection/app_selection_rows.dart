@@ -3,6 +3,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_surface.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
 
@@ -16,27 +17,43 @@ import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart
 /// ])
 /// ```
 class AppRowGroup extends StatelessWidget {
-  const AppRowGroup({super.key, required this.children});
+  /// Floating white card, for rows on the page.
+  const AppRowGroup({super.key, required this.children}) : _inset = false;
+
+  /// Flat slate-50 block, for rows inside a white sheet or card.
+  const AppRowGroup.inset({super.key, required this.children}) : _inset = true;
 
   final List<Widget> children;
+  final bool _inset;
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < children.length; i++) ...[
-            if (i > 0)
-              Container(
-                height: 1,
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                color: AppPalette.slate100,
-              ),
-            children[i],
-          ],
+    final rows = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0)
+            Container(
+              height: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              color: _inset ? AppPalette.slate200 : AppPalette.slate100,
+            ),
+          children[i],
         ],
+      ],
+    );
+
+    if (!_inset) {
+      return AppCard(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: rows,
+      );
+    }
+    return AppSurfaceScope(
+      surface: AppSurface.inset,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: ColoredBox(color: AppPalette.slate50, child: rows),
       ),
     );
   }
@@ -62,7 +79,7 @@ class AppSwitchRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final active = enabled && onChanged != null;
-    return _SelectionRow(
+    return AppSelectionRow(
       title: title,
       subtitle: subtitle,
       enabled: enabled,
@@ -94,7 +111,7 @@ class AppCheckboxRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final active = enabled && onChanged != null;
-    return _SelectionRow(
+    return AppSelectionRow(
       title: title,
       subtitle: subtitle,
       enabled: enabled,
@@ -126,7 +143,7 @@ class AppRadioRow<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final active = enabled && onChanged != null && value != groupValue;
-    return _SelectionRow(
+    return AppSelectionRow(
       title: title,
       subtitle: subtitle,
       enabled: enabled,
@@ -140,15 +157,19 @@ class AppRadioRow<T> extends StatelessWidget {
   }
 }
 
-/// A row inside [AppRowGroup]: title, optional subtitle, control on the
-/// right. Turns slate-50 while pressed.
-class _SelectionRow extends StatefulWidget {
-  const _SelectionRow({
+/// A row with a title, optional subtitle and any [control] on the right.
+/// The whole row is the tap target; it darkens a step while pressed.
+///
+/// Prefer [AppSwitchRow], [AppCheckboxRow] and [AppRadioRow]. Use this when
+/// the tap needs custom handling, e.g. a picker that closes on tap.
+class AppSelectionRow extends StatefulWidget {
+  const AppSelectionRow({
+    super.key,
     required this.title,
-    required this.subtitle,
-    required this.enabled,
-    required this.onTap,
     required this.control,
+    required this.onTap,
+    this.subtitle,
+    this.enabled = true,
   });
 
   final String title;
@@ -158,11 +179,17 @@ class _SelectionRow extends StatefulWidget {
   final Widget control;
 
   @override
-  State<_SelectionRow> createState() => _SelectionRowState();
+  State<AppSelectionRow> createState() => _AppSelectionRowState();
 }
 
-class _SelectionRowState extends State<_SelectionRow> {
+class _AppSelectionRowState extends State<AppSelectionRow> {
   bool _pressed = false;
+
+  /// One step darker than whatever the row sits on.
+  Color _pressedColor(BuildContext context) =>
+      AppSurfaceScope.of(context) == AppSurface.card
+      ? AppPalette.slate50
+      : AppPalette.slate100;
 
   void _setPressed(bool value) {
     if (widget.onTap == null) return;
@@ -185,7 +212,7 @@ class _SelectionRowState extends State<_SelectionRow> {
               },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
-          color: _pressed ? AppPalette.slate50 : Colors.transparent,
+          color: _pressed ? _pressedColor(context) : Colors.transparent,
           constraints: const BoxConstraints(minHeight: 56),
           padding: EdgeInsets.symmetric(
             horizontal: 16,

@@ -1,17 +1,25 @@
-import 'package:hamrash_admin/core/constants/spacing_constants.dart';
-import 'package:hamrash_admin/core/haptic_helper.dart';
-import 'package:hamrash_admin/core/utils/extensions.dart';
-import 'package:hamrash_admin/core/widgets/app_text.dart';
-import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
-import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
-import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
+import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
+import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
+import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
 
-/// Glass list sheet with multi-select state. Returns the final selection as a
-/// `List<I>` when the user dismisses the sheet. The caller commits the list
-/// to its source of truth after [show] resolves.
+/// Pick many: a full sheet of checkbox rows with an optional "Select all"
+/// row and a pinned Done button showing the count.
+///
+/// Resolves with the picked items when Done is tapped, or `null` when the
+/// sheet is closed any other way (close button, drag, scrim) — treat that
+/// as cancel and keep the old selection.
+///
+/// ```dart
+/// final picked = await MultiSelectBottomSheet.show(
+///   context: context,
+///   title: 'Subjects taught',
+///   items: subjects,
+///   initiallySelected: teacher.subjects,
+///   labelBuilder: (s) => s.name,
+/// );
+/// if (picked != null) model.setSubjects(picked);
+/// ```
 abstract final class MultiSelectBottomSheet {
   MultiSelectBottomSheet._();
 
@@ -19,27 +27,22 @@ abstract final class MultiSelectBottomSheet {
     required BuildContext context,
     required List<I> items,
     required List<I> initiallySelected,
-    required Widget headerImage,
     required String title,
     String Function(I item)? labelBuilder,
-    SheetSnappingConfig snappingConfig = const SheetSnappingConfig([0.7, 1.0]),
-    bool originateAboveBottomViewInset = true,
-    RouteSnapshotMode backgroundSnapshotMode = RouteSnapshotMode.always,
+    String Function(I item)? subtitleBuilder,
+    bool showSelectAll = true,
+    String doneLabel = 'Done',
   }) {
     return Navigator.of(context).push<List<I>>(
-      StupidSimpleGlassSheetRoute<List<I>>(
-        snappingConfig: snappingConfig,
-        originateAboveBottomViewInset: originateAboveBottomViewInset,
-        backgroundSnapshotMode: backgroundSnapshotMode,
-        child: Material(
-          type: MaterialType.transparency,
-          child: _MultiSelectBody<I>(
-            headerImage: headerImage,
-            title: title,
-            items: items,
-            initiallySelected: initiallySelected,
-            labelBuilder: labelBuilder,
-          ),
+      AppSheetRoute<List<I>>(
+        child: _MultiSelectBody<I>(
+          title: title,
+          items: items,
+          initiallySelected: initiallySelected,
+          labelBuilder: labelBuilder,
+          subtitleBuilder: subtitleBuilder,
+          showSelectAll: showSelectAll,
+          doneLabel: doneLabel,
         ),
       ),
     );
@@ -48,18 +51,22 @@ abstract final class MultiSelectBottomSheet {
 
 class _MultiSelectBody<I> extends StatefulWidget {
   const _MultiSelectBody({
-    required this.headerImage,
     required this.title,
     required this.items,
     required this.initiallySelected,
     required this.labelBuilder,
+    required this.subtitleBuilder,
+    required this.showSelectAll,
+    required this.doneLabel,
   });
 
-  final Widget headerImage;
   final String title;
   final List<I> items;
   final List<I> initiallySelected;
   final String Function(I item)? labelBuilder;
+  final String Function(I item)? subtitleBuilder;
+  final bool showSelectAll;
+  final String doneLabel;
 
   @override
   State<_MultiSelectBody<I>> createState() => _MultiSelectBodyState<I>();
@@ -68,127 +75,56 @@ class _MultiSelectBody<I> extends StatefulWidget {
 class _MultiSelectBodyState<I> extends State<_MultiSelectBody<I>> {
   late final Set<I> _selected = {...widget.initiallySelected};
 
-  void _toggle(I item) {
-    HapticHelpers.vibrate(VibrationType.selection);
-    setState(() {
-      if (!_selected.add(item)) _selected.remove(item);
-    });
+  /// true when everything is picked, false when nothing is, null in between.
+  bool? get _allState {
+    if (_selected.isEmpty) return false;
+    return widget.items.every(_selected.contains) ? true : null;
   }
 
-  void _close() => Navigator.of(context).maybePop(_selected.toList());
+  void _toggle(I item) => setState(() {
+    if (!_selected.add(item)) _selected.remove(item);
+  });
+
+  void _toggleAll(bool pickAll) => setState(() {
+    pickAll ? _selected.addAll(widget.items) : _selected.clear();
+  });
 
   String _label(I item) => widget.labelBuilder?.call(item) ?? item.toString();
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor = Theme.of(context).dividerColor;
-    final selectedCount = _selected.length;
+    final count = _selected.length;
 
-    return PopScope<List<I>>(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) Navigator.of(context).pop(_selected.toList());
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return AppSheet(
+      title: widget.title,
+      subtitle: '$count of ${widget.items.length} selected',
+      body: AppRowGroup.inset(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              0,
+          if (widget.showSelectAll && widget.items.length > 1)
+            AppCheckboxRow(
+              title: 'Select all',
+              value: _allState,
+              onChanged: _toggleAll,
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      widget.headerImage,
-                      SizedBox(height: AppSpacing.sm),
-                      AppText(
-                        widget.title,
-                        colorType: AppTextColor.textInverted,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (selectedCount > 0)
-                        AppText(
-                          '$selectedCount selected',
-                          colorType: AppTextColor.textMute,
-                          fontSize: 12,
-                        ).padding(top: 2),
-                    ],
-                  ),
-                ),
-                AppHugeIconButton(
-                  lucidIcon: LucideIcons.check,
-                  lucidIconSize: 22,
-                  foregroundColorType: AppButtonForegroundColor.textInverted,
-                  padding: EdgeInsets.zero,
-                  onPressed: _close,
-                ),
-              ],
+          for (final item in widget.items)
+            AppCheckboxRow(
+              title: _label(item),
+              subtitle: widget.subtitleBuilder?.call(item),
+              value: _selected.contains(item),
+              onChanged: (_) => _toggle(item),
             ),
-          ),
-          Divider(height: 1, thickness: 1, color: dividerColor)
-              .padding(top: AppSpacing.md),
-          Flexible(
-            child: ListView.builder(
-              physics: const ClampingScrollPhysics(),
-              padding: EdgeInsets.only(
-                top: AppSpacing.sm,
-                bottom: MediaQuery.paddingOf(context).bottom + AppSpacing.lg,
-              ),
-              itemCount: widget.items.length,
-              itemBuilder: (context, index) {
-                final item = widget.items[index];
-                final isSelected = _selected.contains(item);
-                return _MultiSelectTile(
-                  label: _label(item),
-                  isSelected: isSelected,
-                  onTap: () => _toggle(item),
-                );
-              },
-            ),
-          ),
         ],
       ),
-    );
-  }
-}
-
-class _MultiSelectTile extends StatelessWidget {
-  const _MultiSelectTile({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      splashColor: Colors.transparent,
-      focusColor: Colors.transparent,
-      hoverColor: Colors.transparent,
-      
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: 2,
+      footer: AppPrimaryButton(
+        width: double.infinity,
+        onPressed: () =>
+            Navigator.of(context).pop(_selected.toList(growable: false)),
+        child: Text(
+          count == 0
+              ? widget.doneLabel
+              : '${widget.doneLabel} · $count selected',
+        ),
       ),
-      title: AppText(label, colorType: AppTextColor.textInverted),
-      trailing: AppCheckbox(value: isSelected),
     );
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
-import 'package:hamrash_admin/core/bottomSheets/error_modal.dart';
-import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
+import 'package:hamrash_admin/core/bottomSheets/app_result_sheet.dart';
 
 import '../resources/error_messages.dart';
 import '../core/utils/view_util.dart';
@@ -29,7 +28,6 @@ abstract class BaseViewModel extends ChangeNotifier {
     bool showErrorModal = true,
     bool fatal = false,
     Map<String, dynamic>? customParams,
-    SheetSnappingConfig? snappingConfig,
   }) async {
     setBusy(false);
 
@@ -42,16 +40,13 @@ abstract class BaseViewModel extends ChangeNotifier {
     );
 
     if (showSnackBar) {
-      ViewUtil.showSnackBar(
-        userMessage ?? ErrorMessages.somethingWentWrong,
-      );
+      ViewUtil.showSnackBar(userMessage ?? ErrorMessages.somethingWentWrong);
     }
 
     if (showErrorModal) {
-      ErrorModal.show(
-        snappingConfig: snappingConfig,
-        ViewUtil.navigatorKey.currentContext!,
-        title: "Error",
+      AppResultSheet.showGlobal(
+        type: AppResultType.error,
+        title: 'Something went wrong',
         message: userMessage ?? ErrorMessages.somethingWentWrong,
       );
     }
@@ -76,9 +71,7 @@ abstract class BaseViewModel extends ChangeNotifier {
       stackTrace: stackTrace,
     );
 
-    ViewUtil.showSnackBar(
-      userMessage ?? ErrorMessages.networkError,
-    );
+    ViewUtil.showSnackBar(userMessage ?? ErrorMessages.networkError);
   }
 
   @protected
@@ -98,9 +91,7 @@ abstract class BaseViewModel extends ChangeNotifier {
       stackTrace: stackTrace,
     );
 
-    ViewUtil.showSnackBar(
-      userMessage ?? ErrorMessages.databaseError,
-    );
+    ViewUtil.showSnackBar(userMessage ?? ErrorMessages.databaseError);
   }
 
   @override
@@ -115,4 +106,3 @@ abstract class BaseViewModel extends ChangeNotifier {
     super.notifyListeners();
   }
 }
-
