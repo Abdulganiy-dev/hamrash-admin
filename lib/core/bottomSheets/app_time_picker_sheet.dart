@@ -191,10 +191,12 @@ class _WheelState extends State<_Wheel> {
 
   Widget _item(int raw) {
     final distance = (raw - _selected).abs();
-    return Center(
-      child: AppText(
-        widget.label(raw % widget.count),
-        style: _Wheel.style(distance),
+    return AnimatedDefaultTextStyle(
+      duration: const Duration(milliseconds: 140),
+      curve: Curves.easeOutCubic,
+      style: _Wheel.style(distance),
+      child: Center(
+        child: AppText(widget.label(raw % widget.count)),
       ),
     );
   }
