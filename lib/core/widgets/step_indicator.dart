@@ -91,7 +91,7 @@ class _StepIndicatorState extends State<StepIndicator>
       builder: (context, child) {
         return LinearProgressIndicator(
           backgroundColor:
-              widget.backgroundColor ?? primary.withOpacity(0.1),
+              widget.backgroundColor ?? primary.withValues(alpha: 0.1),
           color: widget.activeColor ?? primary,
           value: _animation.value,
           minHeight: widget.height,

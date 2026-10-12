@@ -37,8 +37,6 @@ class AppTheme {
         onSecondary: LightColors.primaryOncolorWhite,
         onError: LightColors.primaryOncolorWhite,
         onSurface: LightColors.textBody,
-        background: LightColors.backgroundSurfacePrimaryBG,
-        onBackground: LightColors.textBody,
       ),
       // Slate 50 canvas so white cards can float on it.
       scaffoldBackgroundColor: LightColors.backgroundSurfaceMute,
@@ -176,8 +174,6 @@ class AppTheme {
         onSecondary: DarkColors.primaryOncolorBlack,
         onError: DarkColors.primaryOncolorWhite,
         onSurface: DarkColors.textBody,
-        background: DarkColors.backgroundSurfacePrimaryBG,
-        onBackground: DarkColors.textBody,
       ),
       scaffoldBackgroundColor: DarkColors.backgroundSurfacePrimaryBG,
       cardColor: DarkColors.backgroundSurfaceLayer,
