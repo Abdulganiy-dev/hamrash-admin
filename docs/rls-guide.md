@@ -8,7 +8,7 @@ The working reference for every new migration. It replaces the old single-school
 
 - Clerk signs the user in. Supabase verifies the Clerk token and exposes it as `auth.jwt()`. The caller's id is `auth.jwt() ->> 'sub'`.
 - **Never use `auth.uid()`.** It's Supabase Auth's id, not Clerk's.
-- **School tables don't store `clerk_id`.** Identity flows through one place: `organization_members.clerk_user_id`, set only by `redeem_claim_code`. People records point at a membership with `member_id`, set only by `invite_staff`, `invite_student` and `invite_parent`.
+- **School tables don't store `clerk_id`.** Identity flows through one place: `organization_members.clerk_user_id`, set only by `redeem_claim_code`. People records point at a membership with `member_id`, set only by `invite_staff`, `invite_student` and `invite_parent` (and by `redeem_claim_code` for the owner's own staff record).
 
 ## 2. Every school table
 

@@ -52,7 +52,7 @@ begin
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_owner","role":"authenticated"}', true);
   execute 'set local role authenticated';
-  v_member := public.redeem_claim_code(lower(substr(v_claim, 1, 4) || '-' || substr(v_claim, 5, 4)));
+  v_member := public.redeem_claim_code(lower(substr(v_claim, 1, 4) || '-' || substr(v_claim, 5, 4)), 'Olu', 'Owner');
   v_log := v_log || E'\n' || case when v_member.status = 'active' and v_member.role = 'owner'
         and v_member.clerk_user_id = 'test_owner' and v_member.claim_code is null and v_member.joined_at is not null
         then 'PASS' else 'FAIL' end || ' 03 owner redeems claim code (lowercase, with dash)';

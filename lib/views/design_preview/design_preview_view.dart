@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_action_sheet.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_confirm_sheet.dart';
+import 'package:hamrash_admin/core/bottomSheets/app_date_picker_sheet.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_result_sheet.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/bottomSheets/list_bottom_sheet_util.dart';
@@ -20,6 +21,8 @@ import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
+import 'package:hamrash_admin/core/widgets/pickers/app_date_fields.dart';
+import 'package:hamrash_admin/core/widgets/pickers/app_picker_field.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -73,6 +76,20 @@ class _DesignPreviewViewState extends State<DesignPreviewView> {
   List<String> _pickedSubjects = const ['Mathematics', 'English Language'];
   String? _teacher = 'Adebayo Ogunleye';
   int _withdrawAttempts = 0;
+
+  // Picker fields
+  static const _classes = [
+    'JSS 1 · Gold',
+    'JSS 1 · Blue',
+    'JSS 2 · Gold',
+    'JSS 2 · Blue',
+    'JSS 3 · Gold',
+  ];
+  final _formKey = GlobalKey<FormState>();
+  String? _class;
+  DateTime? _attendanceDate = DateTime.now();
+  DateTimeRange? _midTerm;
+  TimeOfDay? _assembly = const TimeOfDay(hour: 7, minute: 45);
 
   // ── Toasts ──────────────────────────────────────────────────────────
 
@@ -177,6 +194,27 @@ class _DesignPreviewViewState extends State<DesignPreviewView> {
     if (picked != null) setState(() => _pickedSubjects = picked);
   }
 
+  /// Pretends to be the API: a short wait, then one page of matches.
+  Future<PaginatedListPage<(String, String)>> _loadTeachers({
+    required int page,
+    required int pageSize,
+    String? search,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    final query = search?.toLowerCase();
+    final matches = _teachers
+        .where(
+          (t) =>
+              query == null || '${t.$1} ${t.$2}'.toLowerCase().contains(query),
+        )
+        .toList();
+    final start = (page - 1) * pageSize;
+    return PaginatedListPage(
+      items: matches.skip(start).take(pageSize).toList(),
+      hasMore: start + pageSize < matches.length,
+    );
+  }
+
   void _pickTeacher() {
     PaginatedListBottomSheet.showSelectable<(String, String)>(
       context: context,
@@ -189,23 +227,7 @@ class _DesignPreviewViewState extends State<DesignPreviewView> {
       idBuilder: (t) => t.$1,
       labelBuilder: (t) => t.$1,
       subtitleBuilder: (t) => t.$2,
-      loadPage: ({required page, required pageSize, search}) async {
-        // Pretend to be the API.
-        await Future<void>.delayed(const Duration(milliseconds: 700));
-        final query = search?.toLowerCase();
-        final matches = _teachers
-            .where(
-              (t) =>
-                  query == null ||
-                  '${t.$1} ${t.$2}'.toLowerCase().contains(query),
-            )
-            .toList();
-        final start = (page - 1) * pageSize;
-        return PaginatedListPage(
-          items: matches.skip(start).take(pageSize).toList(),
-          hasMore: start + pageSize < matches.length,
-        );
-      },
+      loadPage: _loadTeachers,
       onSelected: (t) => setState(() => _teacher = t.$1),
       onCleared: () => setState(() => _teacher = null),
     );
@@ -351,7 +373,7 @@ class _DesignPreviewViewState extends State<DesignPreviewView> {
   Widget build(BuildContext context) {
     return DefaultScaffold(
       title: 'Design preview',
-      subtitle: 'Toasts, sheets and feedback',
+      subtitle: 'Pickers, toasts, sheets and feedback',
       body: Builder(
         builder: (context) => ListView(
           padding: EdgeInsets.fromLTRB(
@@ -361,6 +383,96 @@ class _DesignPreviewViewState extends State<DesignPreviewView> {
             ScaffoldInsets.bodyBottomInsetOf(context) + 24,
           ),
           children: [
+            const _Heading('Picker fields'),
+            AppCard(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppSelectField<String>(
+                      label: 'Class',
+                      placeholder: 'Choose a class',
+                      value: _class,
+                      items: _classes,
+                      onChanged: (c) => setState(() => _class = c),
+                      validator: (c) => c == null
+                          ? 'Pick the class this student joins.'
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
+                    AppMultiSelectField<String>(
+                      label: 'Subjects taught',
+                      values: _pickedSubjects,
+                      items: _subjects,
+                      onChanged: (s) => setState(() => _pickedSubjects = s),
+                    ),
+                    const SizedBox(height: 20),
+                    AppSelectField<(String, String)>.search(
+                      label: 'Class teacher',
+                      sheetTitle: 'Class teacher',
+                      placeholder: 'Choose a teacher',
+                      value: _teacher == null
+                          ? null
+                          : _teachers.firstWhere((t) => t.$1 == _teacher),
+                      loadPage: _loadTeachers,
+                      idBuilder: (t) => t.$1,
+                      cacheKey: 'design-preview-teachers',
+                      searchHint: 'Search by name or subject',
+                      labelBuilder: (t) => t.$1,
+                      subtitleBuilder: (t) => t.$2,
+                      onChanged: (t) => setState(() => _teacher = t.$1),
+                      onCleared: () => setState(() => _teacher = null),
+                    ),
+                    const SizedBox(height: 20),
+                    AppDateField(
+                      label: 'Attendance date',
+                      value: _attendanceDate,
+                      firstDate: DateTime.now().subtract(
+                        const Duration(days: 90),
+                      ),
+                      lastDate: DateTime.now(),
+                      quickPicks: [
+                        AppDateQuickPick.today(),
+                        AppDateQuickPick.yesterday(),
+                        AppDateQuickPick.last(DateTime.friday),
+                      ],
+                      onChanged: (d) => setState(() => _attendanceDate = d),
+                    ),
+                    const SizedBox(height: 20),
+                    AppDateRangeField(
+                      label: 'Mid-term break',
+                      value: _midTerm,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      onChanged: (r) => setState(() => _midTerm = r),
+                    ),
+                    const SizedBox(height: 20),
+                    AppTimeField(
+                      label: 'Assembly starts',
+                      value: _assembly,
+                      onChanged: (t) => setState(() => _assembly = t),
+                    ),
+                    const SizedBox(height: 20),
+                    const _LockedSessionField(),
+                    const SizedBox(height: 24),
+                    AppSecondaryButton(
+                      width: double.infinity,
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          AppToast.show(
+                            'All filled in',
+                            type: AppToastType.success,
+                          );
+                        }
+                      },
+                      child: const AppText('Check the form'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
             _list('Toasts', [
               _item(
                 'Saved, with Undo',
@@ -555,6 +667,22 @@ class _DesignPreviewViewState extends State<DesignPreviewView> {
       subtitle: subtitle,
       leading: AppListLeading.icon(icon, tone: tone),
       onTap: onTap,
+    );
+  }
+}
+
+/// A locked field, as set by the school admin.
+class _LockedSessionField extends StatelessWidget {
+  const _LockedSessionField();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppPickerField(
+      label: 'Session',
+      valueText: '2026/27',
+      helperText: 'Set by the school admin.',
+      enabled: false,
+      onTap: () async {},
     );
   }
 }

@@ -49,7 +49,7 @@ begin
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_owner_b","role":"authenticated"}', true);
   execute 'set local role authenticated';
-  perform public.redeem_claim_code(v_claim2);
+  perform public.redeem_claim_code(v_claim2, 'Bimbo', 'Owner');
   with s as (insert into public.sections (organization_id, name) values (v_org2, 'Primary') returning id)
   insert into public.classes (organization_id, section_id, name) select v_org2, s.id, 'Primary 1' from s returning id into v_b_class;
 
@@ -65,7 +65,7 @@ begin
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_owner_c","role":"authenticated"}', true);
   execute 'set local role authenticated';
-  perform public.redeem_claim_code(v_claim3);
+  perform public.redeem_claim_code(v_claim3, 'Chika', 'Owner');
   v_n := public.create_standard_structure(v_org3);
   select string_agg(c.name, ',' order by s.sort_order, c.sort_order) into v_names
     from public.classes c join public.sections s on s.id = c.section_id
@@ -80,7 +80,7 @@ begin
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_owner","role":"authenticated"}', true);
   execute 'set local role authenticated';
-  perform public.redeem_claim_code(v_claim);
+  perform public.redeem_claim_code(v_claim, 'Olu', 'Owner');
   insert into public.staff (organization_id, first_name, last_name) values (v_org, 'Ada', 'Teacher') returning id into v_teacher;
   insert into public.staff (organization_id, first_name, last_name) values (v_org, 'Bisi', 'Teacher') returning id into v_teacher2;
   insert into public.staff (organization_id, first_name, last_name) values (v_org, 'Kemi', 'Teacher') returning id into v_teacher3;

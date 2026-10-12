@@ -90,10 +90,13 @@ create_organization("Kings College", "KCL")
   → org created (code HMR-7K2Q9P, status trial)
   → owner invite created (claim code ABCD-2345)
 gives the code to the owner  ──►    signs in with Clerk
-                                    redeem_claim_code("ABCD-2345")
+                                    redeem_claim_code("ABCD-2345", first, last, email, phone)
                                       → membership active, role owner
+                                      → owner's staff record created (STF/0001)
                                     invites admins/teachers  ──►      sign in, redeem their codes
 ```
+
+**The owner's staff record.** Redeeming an owner code also creates the owner's `staff` record (job title `Owner`, non-teaching) and links it to the membership, so the owner has a staff number and appears in the staff list. The app passes the name, email and phone from the Clerk profile. A name is required for owner codes only, and only when the person has no staff record at the school yet: a teacher who is made a co-owner keeps their one record. Codes issued by `invite_staff`, `invite_student` and `invite_parent` already point at a record, so they need only the code. *(added in migration 11)*
 
 Later, `set_organization_status(org, 'active' | 'suspended' | 'archived')` is platform-admin only.
 

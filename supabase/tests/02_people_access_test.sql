@@ -59,7 +59,7 @@ begin
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_owner_b","role":"authenticated"}', true);
   execute 'set local role authenticated';
-  perform public.redeem_claim_code(v_claim2);
+  perform public.redeem_claim_code(v_claim2, 'Bimbo', 'Owner');
   insert into public.parents (organization_id, first_name, last_name, phone)
     values (v_org2, 'Bola', 'Other', '0800000000') returning id into v_pb;
   insert into public.students (organization_id, first_name, last_name, admission_number)
@@ -68,7 +68,7 @@ begin
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_owner","role":"authenticated"}', true);
   execute 'set local role authenticated';
-  perform public.redeem_claim_code(v_claim);
+  perform public.redeem_claim_code(v_claim, 'Olu', 'Owner');
 
   -- 01 owner adds staff, students, parents and links
   insert into public.staff (organization_id, first_name, last_name, job_title, phone, email)
@@ -130,8 +130,9 @@ begin
   end;
 
   -- 05b staff numbers are generated with the prefix given at school creation
+  --     (0001 is the owner's own record, made by redeem_claim_code)
   select s.staff_number into v_num from public.staff s where s.id = v_bursar_staff;
-  v_log := v_log || E'\n' || case when v_num = 'SCA/STF/0002' then 'PASS' else 'FAIL' end || ' 05b staff number generated [' || v_num || ']';
+  v_log := v_log || E'\n' || case when v_num = 'SCA/STF/0003' then 'PASS' else 'FAIL' end || ' 05b staff number generated [' || v_num || ']';
 
   -- 05c admission numbers are generated when left blank
   insert into public.students (organization_id, first_name, last_name) values (v_org, 'Auto', 'One')
@@ -196,7 +197,7 @@ begin
   select count(*) into v_n from public.parents;
   v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 09b teacher with no classes sees no parents [' || v_n || ']';
   select count(*) into v_n from public.staff;
-  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 09c teacher reads all staff profiles in school [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 3 then 'PASS' else 'FAIL' end || ' 09c teacher reads all staff profiles in school [' || v_n || ']';
   select count(*) into v_n from public.staff_private_details;
   v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 09d teacher reads only own private details [' || v_n || ']';
   update public.staff_private_details set address = 'Somewhere' where staff_id = v_teacher_staff;
@@ -242,9 +243,9 @@ begin
   select count(*) into v_n from public.parent_private_details;
   v_log := v_log || E'\n' || case when v_n = 3 then 'PASS' else 'FAIL' end || ' 11a3 bursar sees parent private details (for fees) [' || v_n || ']';
   select count(*) into v_n from public.staff;
-  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 11b bursar reads all staff [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 3 then 'PASS' else 'FAIL' end || ' 11b bursar reads all staff [' || v_n || ']';
   select count(*) into v_n from public.staff_private_details;
-  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 11b2 bursar reads all private details [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 3 then 'PASS' else 'FAIL' end || ' 11b2 bursar reads all private details [' || v_n || ']';
   begin
     insert into public.staff (organization_id, first_name, last_name) values (v_org, 'Sneaky', 'Hire');
     v_log := v_log || E'\nFAIL 11c bursar added staff';
@@ -271,7 +272,7 @@ begin
   select count(*) into v_n from public.student_parents;
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 12c parent sees all of own child''s links, not others [' || v_n || ']';
   select count(*) into v_n from public.staff;
-  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 12d parent sees staff profiles (names) [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 3 then 'PASS' else 'FAIL' end || ' 12d parent sees staff profiles (names) [' || v_n || ']';
   select s.phone || ' / ' || s.email into v_names from public.staff s where s.id = v_teacher_staff;
   v_log := v_log || E'\n' || case when v_names = '0807777777 / ada@school.test' then 'PASS' else 'FAIL' end || ' 12d2 parent sees teacher''s phone and email [' || coalesce(v_names, '') || ']';
   select count(*) into v_n from public.staff_private_details;
@@ -297,7 +298,7 @@ begin
   select count(*) into v_n from public.student_parents;
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 13b student sees own parent links [' || v_n || ']';
   select count(*) into v_n from public.staff;
-  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 13c student sees staff profiles (names) [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 3 then 'PASS' else 'FAIL' end || ' 13c student sees staff profiles (names) [' || v_n || ']';
   select count(*) into v_n from public.staff_private_details;
   v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 13d student sees no staff private details [' || v_n || ']';
   select count(*) into v_n from public.parent_private_details;
@@ -312,7 +313,7 @@ begin
   select count(*) into v_n from public.staff_private_details where organization_id = v_org;
   update public.staff_private_details set address = '1 School Road', date_of_birth = '1990-05-01' where staff_id = v_teacher_staff;
   get diagnostics v_rows = row_count;
-  v_log := v_log || E'\n' || case when v_n = 2 and v_rows = 1 then 'PASS' else 'FAIL' end || ' 13e details row created with each staff member; owner can edit it [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 3 and v_rows = 1 then 'PASS' else 'FAIL' end || ' 13e details row created with each staff member; owner can edit it [' || v_n || ']';
 
   -- 13f create_staff saves profile + private details in one call
   v_new_staff := public.create_staff(

@@ -42,12 +42,12 @@ begin
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_owner_b","role":"authenticated"}', true);
   execute 'set local role authenticated';
-  perform public.redeem_claim_code(v_claim2);
+  perform public.redeem_claim_code(v_claim2, 'Bimbo', 'Owner');
 
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_owner","role":"authenticated"}', true);
   execute 'set local role authenticated';
-  perform public.redeem_claim_code(v_claim);
+  perform public.redeem_claim_code(v_claim, 'Olu', 'Owner');
 
   -- structure, session, term
   perform public.create_standard_structure(v_org);
