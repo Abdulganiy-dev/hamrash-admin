@@ -1,50 +1,87 @@
 import 'package:flutter/material.dart';
 
+/// Raw color scales. Widgets should use [LightColors] / [DarkColors] tokens;
+/// reach for these only when a token doesn't exist for the job.
+///
+/// Main colors: brand blue (anchored on the app icon, #0168F0), slate gray
+/// and white. Supporting colors (success, warning, error, accent) are only
+/// used when the color carries meaning.
+class AppPalette {
+  // Brand blue — 500 is the app icon color.
+  static const blue50 = Color(0xFFEEF5FF);
+  static const blue100 = Color(0xFFD9E8FE);
+  static const blue200 = Color(0xFFB3D1FD);
+  static const blue300 = Color(0xFF7AB0F9);
+  static const blue400 = Color(0xFF3C8BF5);
+  static const blue500 = Color(0xFF0168F0);
+  static const blue600 = Color(0xFF0157CC);
+  static const blue700 = Color(0xFF0147A6);
+  static const blue800 = Color(0xFF053A85);
+  static const blue900 = Color(0xFF0A2F66);
+
+  // Slate gray — cool-tinted so it sits well next to the blue.
+  static const white = Color(0xFFFFFFFF);
+  static const slate50 = Color(0xFFF8FAFC);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate300 = Color(0xFFCBD5E1);
+  static const slate400 = Color(0xFF94A3B8);
+  static const slate500 = Color(0xFF64748B);
+  static const slate600 = Color(0xFF475569);
+  static const slate700 = Color(0xFF334155);
+  static const slate800 = Color(0xFF1E293B);
+  static const slate850 = Color(0xFF131C2E);
+  static const slate900 = Color(0xFF0F172A);
+  static const slate950 = Color(0xFF0B1120);
+}
+
 class LightColors {
-  // Primary
-  static const primaryPrimaryMute = Color(0xFFEBF2FE);
-  static const primaryPrimaryThin = Color(0xFFC4D9FC);
-  static const primaryPrimaryDefault = Color(0xFF3B82F6);
+  // Primary (brand blue)
+  static const primaryPrimaryMute = AppPalette.blue50;
+  static const primaryPrimaryThin = AppPalette.blue200;
+  static const primaryPrimaryDefault = AppPalette.blue500;
+  static const primaryPrimaryHover = AppPalette.blue600;
+  static const primaryPrimaryPressed = AppPalette.blue700;
+  static const primaryPrimaryText = AppPalette.blue700;
 
   // Success
-  static const successSuccessMute = Color(0xFFE5FBEC);
-  static const successSuccessThin = Color(0xFFB2F3C7);
-  static const successSuccessDefault = Color(0xFF00D743);
+  static const successSuccessMute = Color(0xFFECFDF3);
+  static const successSuccessThin = Color(0xFFABEFC6);
+  static const successSuccessDefault = Color(0xFF16A34A);
+  static const successSuccessText = Color(0xFF15803D);
 
   // Warning
-  static const warningWarningMute = Color(0xFFFCF3E5);
-  static const warningWarningThin = Color(0xFFF7DBB2);
-  static const warningWarningDefault = Color(0xFFE58600);
+  static const warningWarningMute = Color(0xFFFFFAEB);
+  static const warningWarningThin = Color(0xFFFEDF89);
+  static const warningWarningDefault = Color(0xFFF59E0B);
+  static const warningWarningText = Color(0xFFB54708);
 
   // Error
-  static const errorErrorMute = Color(0xFFFFEBEA);
-  static const errorErrorThin = Color(0xFFFFC4C1);
-  static const errorErrorDefault = Color(0xFFFF3B30);
+  static const errorErrorMute = Color(0xFFFEF3F2);
+  static const errorErrorThin = Color(0xFFFECDCA);
+  static const errorErrorDefault = Color(0xFFDC2626);
+  static const errorErrorText = Color(0xFFB42318);
 
   // Text
-  static const textTextBrand = Color(0xFF3B82F6);
-  static const textTextInverted = Color(0xFF1E1E1E);
-  static const textTextMute = Color(0xFF818181);
-  static const textTextPrimary = Color(0xFF4F4F4F);
-  static const textTextDisabled = Color(0xFFD9D9D9);
+  static const textTextBrand = AppPalette.blue500;
+  static const textTextInverted = AppPalette.slate900; // strongest: headings
+  static const textTextPrimary = AppPalette.slate600; // body
+  static const textTextMute = AppPalette.slate500; // hints, metadata
+  static const textTextDisabled = AppPalette.slate400;
 
   // Background
-  static const backgroundSurfacePrimaryBG = Color(0xFFFFFFFF);
-  static const backgroundSurfaceLayer = Color(0xFFE9E1D9);
-  static const backgroundSurfaceMute = Color(0xFFF7F7F7);
-  static const backgroundSurfaceMild = Color(0xFFE8E8E8);
+  static const backgroundSurfacePrimaryBG = AppPalette.white;
+  static const backgroundSurfaceLayer = AppPalette.slate100;
+  static const backgroundSurfaceMute = AppPalette.slate50;
+  static const backgroundSurfaceMild = AppPalette.slate200;
 
-  // Folder
-  static const folderFront = Colors.white;
-  static const folderBack = Color(0xFF2F7AA8);
-
-  // Stroke
-  static const strokeColourStrokeSoft = Color(0x0A000000);
-  static const strokeColourStrokeSubtle = Color(0x14000000);
-  static const strokeColourStrokeMild = Color(0x1E000000);
-  static const strokeColourStrokeWarm = Color(0x28000000);
-  static const strokeColourStrokeStrong = Color(0x33000000);
-  static const strokeColourStrokePrimary = Color(0xFF3B82F6);
+  // Stroke (slate-900 at increasing opacity)
+  static const strokeColourStrokeSoft = Color(0x0A0F172A);
+  static const strokeColourStrokeSubtle = Color(0x140F172A);
+  static const strokeColourStrokeMild = Color(0x1F0F172A);
+  static const strokeColourStrokeWarm = Color(0x290F172A);
+  static const strokeColourStrokeStrong = Color(0x330F172A);
+  static const strokeColourStrokePrimary = AppPalette.blue500;
 
   // On-color / neutral
   static const primaryOncolorBlack = Colors.black;
@@ -53,68 +90,72 @@ class LightColors {
   static const primaryNeutralBlack = Colors.black;
 
   // Icon
-  static const iconIconPrimary = Color(0xFF4F4F4F);
-  static const iconIconInverted = Color(0xFF1E1E1E);
-  static const iconIconMute = Color(0xFF818181);
-  static const iconIconDisabled = Color(0xFFD9D9D9);
-  static const iconIconBrand = Color(0xFF3B82F6);
+  static const iconIconPrimary = AppPalette.slate600;
+  static const iconIconInverted = AppPalette.slate900;
+  static const iconIconMute = AppPalette.slate500;
+  static const iconIconDisabled = AppPalette.slate400;
+  static const iconIconBrand = AppPalette.blue500;
 
-  // Backdrop
-  static const backgroundBackdropSoft = Color(0x513B82F6);
-  static const backgroundBackdropMild = Color(0xA33B82F6);
-  static const backgroundBackdropWarm = Color(0xCC3B82F6);
+  // Backdrop (brand blue at increasing opacity)
+  static const backgroundBackdropSoft = Color(0x520168F0);
+  static const backgroundBackdropMild = Color(0xA30168F0);
+  static const backgroundBackdropWarm = Color(0xCC0168F0);
 
-  // Extra
-  static const extraExtraDefault = Color(0xFF9455FD);
-  static const extraExtraThin = Color(0xFFDFCCFE);
-  static const extraExtraMute = Color(0xFFF4EEFF);
+  // Extra (violet accent — charts and "new" tags only)
+  static const extraExtraDefault = Color(0xFF7C3AED);
+  static const extraExtraThin = Color(0xFFD9CCFF);
+  static const extraExtraMute = Color(0xFFF3F0FF);
+  static const extraExtraText = Color(0xFF6D28D9);
 }
 
 class DarkColors {
-  // Primary
-  static const primaryPrimaryMute = Color(0xFFC4D9FC);
-  static const primaryPrimaryThin = Color(0xFFC4D9FC);
-  static const primaryPrimaryDefault = Color(0xFF3B82F6);
+  // Primary (brand blue). Fills keep the brand blue so white labels stay
+  // readable; brand text, icons and strokes use the lighter blue-400.
+  static const primaryPrimaryMute = Color(0xFF10264A);
+  static const primaryPrimaryThin = AppPalette.blue800;
+  static const primaryPrimaryDefault = AppPalette.blue500;
+  static const primaryPrimaryHover = AppPalette.blue400;
+  static const primaryPrimaryPressed = AppPalette.blue600;
+  static const primaryPrimaryText = AppPalette.blue300;
 
   // Success
-  static const successSuccessMute = Color(0xFFE5FBEC);
-  static const successSuccessThin = Color(0xFFB2F3C7);
-  static const successSuccessDefault = Color(0xFF00D743);
+  static const successSuccessMute = Color(0xFF0B2A1A);
+  static const successSuccessThin = Color(0xFF14532D);
+  static const successSuccessDefault = Color(0xFF22C55E);
+  static const successSuccessText = Color(0xFF4ADE80);
 
   // Warning
-  static const warningWarningMute = Color(0xFFFCF3E5);
-  static const warningWarningThin = Color(0xFFF7DBB2);
-  static const warningWarningDefault = Color(0xFFE58600);
+  static const warningWarningMute = Color(0xFF2A1E05);
+  static const warningWarningThin = Color(0xFF713F12);
+  static const warningWarningDefault = Color(0xFFF59E0B);
+  static const warningWarningText = Color(0xFFFBBF24);
 
   // Error
-  static const errorErrorMute = Color(0xFFFFEBEA);
-  static const errorErrorThin = Color(0xFFFFC4C1);
-  static const errorErrorDefault = Color(0xFFFF3B30);
+  static const errorErrorMute = Color(0xFF2D1212);
+  static const errorErrorThin = Color(0xFF7F1D1D);
+  static const errorErrorDefault = Color(0xFFEF4444);
+  static const errorErrorText = Color(0xFFF87171);
 
   // Text
-  static const textTextBrand = Color(0xFF3B82F6);
-  static const textTextInverted = Color(0xFFE8E8E8);
-  static const textTextMute = Color(0xFF818181);
-  static const textTextPrimary = Color(0xFFBCBCBC);
-  static const textTextDisabled = Color(0xFF3B3B3B);
+  static const textTextBrand = AppPalette.blue400;
+  static const textTextInverted = AppPalette.slate100; // strongest: headings
+  static const textTextPrimary = AppPalette.slate300; // body
+  static const textTextMute = AppPalette.slate400; // hints, metadata
+  static const textTextDisabled = AppPalette.slate600;
 
   // Background
-  static const backgroundSurfacePrimaryBG = Color(0xFF0A0A0A);
-  static const backgroundSurfaceLayer = Color(0xFF1A1A1A);
-  static const backgroundSurfaceMute = Color(0xFF282828);
-  static const backgroundSurfaceMild = Color(0xFF3B3B3B);
+  static const backgroundSurfacePrimaryBG = AppPalette.slate950;
+  static const backgroundSurfaceLayer = AppPalette.slate850;
+  static const backgroundSurfaceMute = AppPalette.slate800;
+  static const backgroundSurfaceMild = AppPalette.slate700;
 
-  // Folder
-  static const folderFront = Color(0xFF1F2A37);
-  static const folderBack = Color(0xFF111827);
-
-  // Stroke
+  // Stroke (white at increasing opacity)
   static const strokeColourStrokeSoft = Color(0x0AFFFFFF);
   static const strokeColourStrokeSubtle = Color(0x14FFFFFF);
-  static const strokeColourStrokeMild = Color(0x1EFFFFFF);
-  static const strokeColourStrokeWarm = Color(0x28FFFFFF);
+  static const strokeColourStrokeMild = Color(0x1FFFFFFF);
+  static const strokeColourStrokeWarm = Color(0x29FFFFFF);
   static const strokeColourStrokeStrong = Color(0x33FFFFFF);
-  static const strokeColourStrokePrimary = Color(0xFF3B82F6);
+  static const strokeColourStrokePrimary = AppPalette.blue400;
 
   // On-color / neutral
   static const primaryOncolorBlack = Colors.white;
@@ -123,21 +164,22 @@ class DarkColors {
   static const primaryNeutralBlack = Colors.black;
 
   // Icon
-  static const iconIconPrimary = Color(0xFFBCBCBC);
-  static const iconIconInverted = Color(0xFFE8E8E8);
-  static const iconIconMute = Color(0xFF818181);
-  static const iconIconDisabled = Color(0xFF3B3B3B);
-  static const iconIconBrand = Color(0xFF3B82F6);
+  static const iconIconPrimary = AppPalette.slate300;
+  static const iconIconInverted = AppPalette.slate100;
+  static const iconIconMute = AppPalette.slate400;
+  static const iconIconDisabled = AppPalette.slate600;
+  static const iconIconBrand = AppPalette.blue400;
 
-  // Backdrop
-  static const backgroundBackdropSoft = Color(0x513B82F6);
-  static const backgroundBackdropMild = Color(0xA33B82F6);
-  static const backgroundBackdropWarm = Color(0xCC3B82F6);
+  // Backdrop (brand blue at increasing opacity)
+  static const backgroundBackdropSoft = Color(0x520168F0);
+  static const backgroundBackdropMild = Color(0xA30168F0);
+  static const backgroundBackdropWarm = Color(0xCC0168F0);
 
-  // Extra
-  static const extraExtraDefault = Color(0xFF9455FD);
-  static const extraExtraThin = Color(0xFFDFCCFE);
-  static const extraExtraMute = Color(0xFFF4EEFF);
+  // Extra (violet accent — charts and "new" tags only)
+  static const extraExtraDefault = Color(0xFF8B5CF6);
+  static const extraExtraThin = Color(0xFF4C1D95);
+  static const extraExtraMute = Color(0xFF1E1638);
+  static const extraExtraText = Color(0xFFA78BFA);
 }
 
-const String primaryColorHex = '#3B82F6';
+const String primaryColorHex = '#0168F0';

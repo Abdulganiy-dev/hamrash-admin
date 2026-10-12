@@ -18,23 +18,23 @@ enum Priority {
   (Color bg, Color border, Color text) get colors => switch (this) {
     Priority.low => (
       LightColors.primaryPrimaryMute,
-      LightColors.primaryPrimaryDefault,
-      LightColors.primaryPrimaryDefault,
+      LightColors.primaryPrimaryThin,
+      LightColors.primaryPrimaryText,
     ),
     Priority.medium => (
       LightColors.warningWarningMute,
-      LightColors.warningWarningDefault,
-      LightColors.warningWarningDefault,
+      LightColors.warningWarningThin,
+      LightColors.warningWarningText,
     ),
     Priority.high => (
       LightColors.errorErrorMute,
-      LightColors.errorErrorDefault,
-      LightColors.errorErrorDefault,
+      LightColors.errorErrorThin,
+      LightColors.errorErrorText,
     ),
     Priority.critical => (
       LightColors.errorErrorMute,
-      LightColors.errorErrorDefault,
-      LightColors.errorErrorDefault,
+      LightColors.errorErrorThin,
+      LightColors.errorErrorText,
     ),
   };
 }
@@ -61,38 +61,38 @@ enum Status {
   (Color bg, Color border, Color text) get colors => switch (this) {
     Status.submitted => (
       LightColors.primaryPrimaryMute,
-      LightColors.primaryPrimaryDefault,
-      LightColors.primaryPrimaryDefault,
+      LightColors.primaryPrimaryThin,
+      LightColors.primaryPrimaryText,
     ),
     Status.signedOff => (
       LightColors.successSuccessMute,
-      LightColors.successSuccessDefault,
-      LightColors.primaryPrimaryDefault,
+      LightColors.successSuccessThin,
+      LightColors.successSuccessText,
     ),
     Status.completed => (
       LightColors.successSuccessMute,
-      LightColors.successSuccessDefault,
-      LightColors.primaryPrimaryDefault,
+      LightColors.successSuccessThin,
+      LightColors.successSuccessText,
     ),
     Status.pending => (
       LightColors.warningWarningMute,
-      LightColors.warningWarningDefault,
-      LightColors.warningWarningDefault,
+      LightColors.warningWarningThin,
+      LightColors.warningWarningText,
     ),
     Status.failed => (
       LightColors.errorErrorMute,
-      LightColors.errorErrorDefault,
-      LightColors.errorErrorDefault,
+      LightColors.errorErrorThin,
+      LightColors.errorErrorText,
     ),
     Status.open => (
       LightColors.errorErrorMute,
-      LightColors.errorErrorDefault,
-      LightColors.errorErrorDefault,
+      LightColors.errorErrorThin,
+      LightColors.errorErrorText,
     ),
     Status.flagged => (
       LightColors.warningWarningMute,
-      LightColors.warningWarningDefault,
-      LightColors.warningWarningDefault,
+      LightColors.warningWarningThin,
+      LightColors.warningWarningText,
     ),
   };
 }
