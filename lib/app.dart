@@ -1,9 +1,9 @@
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/resources/app_theme.dart';
 import 'package:hamrash_admin/core/utils/view_util.dart';
 import 'package:hamrash_admin/services/error_logger_service.dart';
+import 'package:hamrash_admin/views/design_preview/design_preview_view.dart';
 
 
 import 'env_config/flavor_config.dart';
@@ -32,9 +32,7 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           themeMode: ThemeMode.light,
           routes: const {},
-          home: const Scaffold(
-            body: Center(child: AppText('Hamrash Admin')),
-          ),
+          home: const DesignPreviewView(),
         ),
       ),
     );

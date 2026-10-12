@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/utils/view_util.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -31,7 +33,8 @@ enum AppToastType {
 /// a dark pill that drops in from the top, under the status bar. It blurs and
 /// fades in on a spring, and leaves on its own.
 ///
-/// - One at a time: a new toast replaces the one showing.
+/// - One at a time: a new toast replaces the one showing. Showing the same
+///   toast again while it is still up shakes it and restarts its timer.
 /// - 4 seconds, or 6 when it has an action. Swipe up to dismiss early.
 /// - Not for decisions — if someone must read or act, use [AppResultSheet].
 ///
@@ -51,6 +54,10 @@ abstract final class AppToast {
   AppToast._();
 
   static OverlayEntry? _entry;
+  static GlobalKey<_ToastHostState>? _hostKey;
+
+  /// What the showing toast says, to spot a repeat of it.
+  static String? _signature;
 
   static void show(
     String message, {
@@ -68,12 +75,20 @@ abstract final class AppToast {
         ViewUtil.navigatorKey.currentState?.overlay;
     if (overlay == null || message.trim().isEmpty) return;
 
+    // The same toast again while it's up: shake it rather than replace it.
+    final signature = '${type.name}|${icon?.codePoint}|$message|$actionLabel';
+    if (signature == _signature && (_hostKey?.currentState?.shake() ?? false)) {
+      return;
+    }
+
     // One at a time.
     _removeCurrent();
 
+    final hostKey = GlobalKey<_ToastHostState>();
     late final OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => _ToastHost(
+        key: hostKey,
         message: message,
         type: type,
         icon: icon ?? type.icon,
@@ -85,12 +100,18 @@ abstract final class AppToast {
                 ? const Duration(seconds: 4)
                 : const Duration(seconds: 6)),
         onGone: () {
-          if (_entry == entry) _entry = null;
+          if (_entry == entry) {
+            _entry = null;
+            _hostKey = null;
+            _signature = null;
+          }
           if (entry.mounted) entry.remove();
         },
       ),
     );
     _entry = entry;
+    _hostKey = hostKey;
+    _signature = signature;
     overlay.insert(entry);
   }
 
@@ -100,12 +121,15 @@ abstract final class AppToast {
   static void _removeCurrent() {
     final current = _entry;
     _entry = null;
+    _hostKey = null;
+    _signature = null;
     if (current != null && current.mounted) current.remove();
   }
 }
 
 class _ToastHost extends StatefulWidget {
   const _ToastHost({
+    super.key,
     required this.message,
     required this.type,
     required this.icon,
@@ -127,12 +151,19 @@ class _ToastHost extends StatefulWidget {
   State<_ToastHost> createState() => _ToastHostState();
 }
 
-class _ToastHostState extends State<_ToastHost> {
+class _ToastHostState extends State<_ToastHost>
+    with SingleTickerProviderStateMixin {
   /// 0 = hidden (blurred, faded, lower), 1 = showing.
   double _target = 0;
   bool _leaving = false;
   Timer? _stay;
   Timer? _leave;
+
+  /// 0 → 1 over one shake.
+  late final AnimationController _shake = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 480),
+  );
 
   static const _enter = Motion.bouncySpring();
   static const _exit = Motion.snappySpring();
@@ -151,7 +182,22 @@ class _ToastHostState extends State<_ToastHost> {
   void dispose() {
     _stay?.cancel();
     _leave?.cancel();
+    _shake.dispose();
     super.dispose();
+  }
+
+  /// Shakes the toast side to side with a haptic nudge, and gives it its
+  /// full time again.
+  /// Returns false when it is already leaving, so a fresh one should show.
+  bool shake() {
+    if (_leaving || !mounted) return false;
+    _stay?.cancel();
+    _stay = Timer(widget.duration, _dismiss);
+    _shake.forward(from: 0);
+    // A firm nudge, felt as well as seen. Skipped if the user turned
+    // haptics off.
+    unawaited(HapticHelpers.vibrate(VibrationType.medium));
+    return true;
   }
 
   void _dismiss() {
@@ -198,21 +244,30 @@ class _ToastHostState extends State<_ToastHost> {
             ),
           );
         },
-        child: Dismissible(
-          key: const ValueKey('app-toast'),
-          direction: DismissDirection.up,
-          onDismissed: (_) => widget.onGone(),
-          child: _ToastBody(
-            message: widget.message,
-            icon: widget.icon,
-            iconColor: widget.type.color,
-            actionLabel: widget.actionLabel,
-            onAction: widget.onAction == null
-                ? null
-                : () {
-                    _dismiss();
-                    widget.onAction!();
-                  },
+        child: AnimatedBuilder(
+          animation: _shake,
+          // Three quick swings that die away.
+          builder: (context, child) {
+            final t = _shake.value;
+            final dx = math.sin(t * math.pi * 6) * 10 * (1 - t);
+            return Transform.translate(offset: Offset(dx, 0), child: child);
+          },
+          child: Dismissible(
+            key: const ValueKey('app-toast'),
+            direction: DismissDirection.up,
+            onDismissed: (_) => widget.onGone(),
+            child: _ToastBody(
+              message: widget.message,
+              icon: widget.icon,
+              iconColor: widget.type.color,
+              actionLabel: widget.actionLabel,
+              onAction: widget.onAction == null
+                  ? null
+                  : () {
+                      _dismiss();
+                      widget.onAction!();
+                    },
+            ),
           ),
         ),
       ),
