@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_scroll_fade.dart';
 import 'package:hamrash_admin/core/widgets/app_surface.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -163,8 +164,9 @@ class AppSheet extends StatelessWidget {
   /// button, or a secondary + primary pair.
   final Widget? footer;
 
-  /// Wrap [body] in a scroll view. Turn off when the body brings its own
-  /// list (it must then size itself to the space it is given).
+  /// Wrap [body] in a scroll view that fades out under the header once
+  /// scrolled. Turn off when the body brings its own list (it must then size
+  /// itself to the space it is given; wrap that list in [AppScrollFade]).
   final bool scrollableBody;
 
   final bool showCloseButton;
@@ -236,10 +238,13 @@ class AppSheet extends StatelessWidget {
         EdgeInsets.fromLTRB(16, 16, 16, footer == null ? bottomGap : 16);
 
     final content = scrollableBody
-        ? SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            padding: padding,
-            child: body,
+        // Rows fade out under the header once the body scrolls.
+        ? AppScrollFade(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              padding: padding,
+              child: body,
+            ),
           )
         : Padding(padding: padding, child: body);
 

@@ -6,6 +6,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
+import 'package:hamrash_admin/core/widgets/app_scroll_fade.dart';
 import 'package:hamrash_admin/core/widgets/app_search_field.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button.dart';
@@ -190,9 +191,12 @@ class _PaginatedSelectionBodyState<I>
         else
           const SizedBox(height: AppSpacing.sm),
         Expanded(
-          child: ListenableBuilder(
-            listenable: _model,
-            builder: (context, _) => _results(),
+          // Results fade out under the search field once scrolled.
+          child: AppScrollFade(
+            child: ListenableBuilder(
+              listenable: _model,
+              builder: (context, _) => _results(),
+            ),
           ),
         ),
       ],
