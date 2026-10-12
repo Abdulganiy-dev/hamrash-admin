@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
@@ -92,7 +93,7 @@ class AppStatusPicker<T extends BadgeStatus> extends StatelessWidget {
                   // reads as "to do".
                   : (value == null ? AppPalette.slate500 : AppPalette.slate400),
             ),
-            child: Text(text),
+            child: AppText(text),
           ),
         ),
       ),

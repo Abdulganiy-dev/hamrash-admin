@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
@@ -174,7 +175,7 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final confirmLabel = Text(widget.confirmLabel);
+    final confirmLabel = AppText(widget.confirmLabel);
     final confirm = widget.isDestructive
         ? AppDestructiveButton(
             width: double.infinity,
@@ -218,23 +219,23 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
                     ),
                     const SizedBox(height: 16),
                   ],
-                  Text(
+                  AppText(
                     widget.title,
                     textAlign: TextAlign.center,
                     style: AppTypography.h3.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: LightColors.textTextInverted,
+                      color: LightColors.textStrong,
                     ),
                   ),
                   if (widget.message != null) ...[
                     const SizedBox(height: 6),
-                    Text(
+                    AppText(
                       widget.message!,
                       textAlign: TextAlign.center,
                       style: AppTypography.body.copyWith(
                         fontSize: 15,
                         height: 22 / 15,
-                        color: LightColors.textTextPrimary,
+                        color: LightColors.textBody,
                       ),
                     ),
                   ],
@@ -252,7 +253,7 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
                             onPressed: _isSubmitting
                                 ? null
                                 : () => Navigator.of(context).pop(false),
-                            child: Text(widget.cancelLabel),
+                            child: AppText(widget.cancelLabel),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -318,7 +319,7 @@ class _ErrorLine extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
+            child: AppText(
               message,
               style: AppTypography.caption.copyWith(
                 fontSize: 13,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
@@ -119,7 +120,7 @@ class _MultiSelectBodyState<I> extends State<_MultiSelectBody<I>> {
         width: double.infinity,
         onPressed: () =>
             Navigator.of(context).pop(_selected.toList(growable: false)),
-        child: Text(
+        child: AppText(
           count == 0
               ? widget.doneLabel
               : '${widget.doneLabel} · $count selected',

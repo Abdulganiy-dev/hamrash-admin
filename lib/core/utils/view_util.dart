@@ -1,11 +1,10 @@
 import 'package:hamrash_admin/core/utils/extensions.dart';
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-
 class ViewUtil {
-
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
@@ -27,7 +26,7 @@ class ViewUtil {
 
     ScaffoldMessenger.of(navContext).showMaterialBanner(
       MaterialBanner(
-        content: Text(
+        content: AppText(
           message,
           style: TextStyle(color: textColor ?? Colors.white),
         ),
@@ -50,7 +49,6 @@ class ViewUtil {
       }
     });
   }
-
 
   static void showErrorSnackBar(
     String? message, {
@@ -103,13 +101,12 @@ class ViewUtil {
   }
 
   static final blackGradient = LinearGradient(
-  colors: [Color(0xFF3A3A3C), Color(0xFF1C1C1E)],
-  begin: Alignment.topCenter,
-  end: Alignment.bottomCenter,
-);
+    colors: [Color(0xFF3A3A3C), Color(0xFF1C1C1E)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
 
-
-static Widget svgPictureAsset({
+  static Widget svgPictureAsset({
     required String assetName,
     Color? color,
     double? width,
@@ -120,12 +117,12 @@ static Widget svgPictureAsset({
       scale: scale,
       child: SvgPicture.asset(
         assetName,
-        colorFilter:
-            color != null ? ColorFilter.mode(color, BlendMode.srcIn) : null,
+        colorFilter: color != null
+            ? ColorFilter.mode(color, BlendMode.srcIn)
+            : null,
         width: width,
         height: height,
       ),
     );
   }
-
 }

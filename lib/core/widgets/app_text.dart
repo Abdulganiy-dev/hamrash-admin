@@ -29,7 +29,7 @@ import 'package:flutter/material.dart';
 /// // With text overflow and max lines
 /// AppText(
 ///   'Long text that might overflow...',
-///   colorType: AppTextColor.textPrimary,
+///   colorType: AppTextColor.textBody,
 ///   fontSize: 14,
 ///   maxLines: 2,
 ///   overflow: TextOverflow.ellipsis,
@@ -39,7 +39,7 @@ import 'package:flutter/material.dart';
 /// // With alignment
 /// AppText(
 ///   'Centered Text',
-///   colorType: AppTextColor.textPrimary,
+///   colorType: AppTextColor.textBody,
 ///   textAlign: TextAlign.center,
 ///   fontSize: 18,
 /// )
@@ -67,10 +67,10 @@ enum AppTextColor {
   error,
   errorMute,
   errorThin,
-  textPrimary,
-  textMute,
+  textBody,
+  textMuted,
   textBrand,
-  textInverted,
+  textStrong,
   textDisabled,
   iconPrimary,
   iconMute,
@@ -261,22 +261,16 @@ class AppText extends StatelessWidget {
         return isLight ? LightColors.errorErrorMute : DarkColors.errorErrorMute;
       case AppTextColor.errorThin:
         return isLight ? LightColors.errorErrorThin : DarkColors.errorErrorThin;
-      case AppTextColor.textPrimary:
-        return isLight
-            ? LightColors.textTextPrimary
-            : DarkColors.textTextPrimary;
-      case AppTextColor.textMute:
-        return isLight ? LightColors.textTextMute : DarkColors.textTextMute;
+      case AppTextColor.textBody:
+        return isLight ? LightColors.textBody : DarkColors.textBody;
+      case AppTextColor.textMuted:
+        return isLight ? LightColors.textMuted : DarkColors.textMuted;
       case AppTextColor.textBrand:
-        return isLight ? LightColors.textTextBrand : DarkColors.textTextBrand;
-      case AppTextColor.textInverted:
-        return isLight
-            ? LightColors.textTextInverted
-            : DarkColors.textTextInverted;
+        return isLight ? LightColors.textBrand : DarkColors.textBrand;
+      case AppTextColor.textStrong:
+        return isLight ? LightColors.textStrong : DarkColors.textStrong;
       case AppTextColor.textDisabled:
-        return isLight
-            ? LightColors.textTextDisabled
-            : DarkColors.textTextDisabled;
+        return isLight ? LightColors.textDisabled : DarkColors.textDisabled;
       case AppTextColor.iconPrimary:
         return isLight
             ? LightColors.iconIconPrimary
@@ -336,7 +330,9 @@ class AppText extends StatelessWidget {
       softWrap: softWrap,
       overflow: overflow,
       maxLines: maxLines,
-      textScaleFactor: textScaleFactor,
+      textScaler: textScaleFactor == null
+          ? null
+          : TextScaler.linear(textScaleFactor!),
       textDirection: textDirection,
       locale: locale,
       textWidthBasis: textWidthBasis,

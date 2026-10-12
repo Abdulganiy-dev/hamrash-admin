@@ -44,7 +44,7 @@ class LoadErrorView extends StatelessWidget {
               onPressed: onRetry,
               child: AppText(
                 'Retry',
-                colorType: AppTextColor.textInverted,
+                colorType: AppTextColor.textStrong,
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
               ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
@@ -180,25 +181,25 @@ class _AppResultSheetState extends State<AppResultSheet> {
           _ResultIcon(type: type),
           const SizedBox(height: 16),
           if (widget.title != null) ...[
-            Text(
+            AppText(
               widget.title!,
               textAlign: TextAlign.center,
               style: AppTypography.h3.copyWith(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.22,
-                color: LightColors.textTextInverted,
+                color: LightColors.textStrong,
               ),
             ),
             const SizedBox(height: 6),
           ],
-          Text(
+          AppText(
             widget.message,
             textAlign: TextAlign.center,
             style: AppTypography.body.copyWith(
               fontSize: 15,
               height: 22 / 15,
-              color: LightColors.textTextPrimary,
+              color: LightColors.textBody,
             ),
           ),
           if (widget.body != null) ...[
@@ -214,7 +215,7 @@ class _AppResultSheetState extends State<AppResultSheet> {
           AppPrimaryButton(
             width: double.infinity,
             onPressed: () => _closeThen(widget.onPrimary),
-            child: Text(widget.primaryLabel ?? type.defaultLabel),
+            child: AppText(widget.primaryLabel ?? type.defaultLabel),
           ),
           if (widget.secondaryLabel != null) ...[
             const SizedBox(height: 8),
@@ -251,7 +252,7 @@ class _ResultIcon extends StatelessWidget {
         size: 26,
         color: AppPalette.white,
       ),
-      AppResultType.warning => Text(
+      AppResultType.warning => AppText(
         '!',
         style: AppTypography.h3.copyWith(
           fontSize: 28,

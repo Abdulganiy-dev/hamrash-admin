@@ -1,4 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
@@ -11,7 +14,8 @@ import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
 /// How a sheet sits on the screen.
 enum AppSheetSize {
   /// Short sheets (menus, pickers, results, confirmations): a card inset 8
-  /// from the screen edges with 32 corners, sized to its content.
+  /// from the sides, resting just above the home indicator, with 32 corners
+  /// and sized to its content.
   floating,
 
   /// Tall sheets (forms, filters, long or searchable lists): edge to edge
@@ -67,10 +71,14 @@ class _AppSheetFrame extends StatelessWidget {
 
     switch (size) {
       case AppSheetSize.floating:
+        // Sit above the home indicator so the rounded screen corners never
+        // clip the sheet. `padding` drops to 0 while the keyboard is open,
+        // so the sheet then rests 8 above the keyboard instead.
+        final bottom = math.max(8.0, MediaQuery.paddingOf(context).bottom);
         return SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.fromLTRB(8, 8, 8, bottom),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(32),
@@ -341,23 +349,22 @@ class _Header extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (title != null)
-                    Text(
+                    AppText(
                       title!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.h3.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: LightColors.textTextInverted,
+                        color: LightColors.textStrong,
                       ),
                     ),
                   if (subtitle != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
-                      child: Text(
+                      child: AppText(
                         subtitle!,
-                        style: AppTypography.body.copyWith(
-                          color: LightColors.textTextPrimary,
-                        ),
+                        variant: AppTextVariant.body,
+                        colorType: AppTextColor.textBody,
                       ),
                     ),
                 ],

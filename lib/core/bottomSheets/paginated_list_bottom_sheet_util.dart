@@ -163,7 +163,7 @@ class _PaginatedSelectionBodyState<I>
         ? AppPrimaryButton(
             width: double.infinity,
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(widget.doneLabel),
+            child: AppText(widget.doneLabel),
           )
         : null,
     body: Column(
@@ -327,12 +327,12 @@ class _LoadingRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Text(
+          AppText(
             label,
             style: AppTypography.caption.copyWith(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: LightColors.textTextMute,
+              color: LightColors.textMuted,
             ),
           ),
         ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
@@ -153,9 +154,6 @@ class AppSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final isLight = Theme.of(context).brightness == Brightness.light;
-
     Widget? end = trailing;
     if (actionLabel != null) {
       end = GestureDetector(
@@ -163,13 +161,10 @@ class AppSectionHeader extends StatelessWidget {
         onTap: onAction,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-          child: Text(
+          child: AppText(
             actionLabel!,
-            style: AppTypography.subtitle.copyWith(
-              color: isLight
-                  ? LightColors.textTextBrand
-                  : DarkColors.textTextBrand,
-            ),
+            variant: AppTextVariant.subtitle,
+            colorType: AppTextColor.textBrand,
           ),
         ),
       );
@@ -179,7 +174,7 @@ class AppSectionHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       child: Row(
         children: [
-          Expanded(child: Text(title, style: textTheme.titleMedium)),
+          Expanded(child: AppText(title, variant: AppTextVariant.title)),
           ?end,
         ],
       ),

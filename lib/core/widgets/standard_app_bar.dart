@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_metrics.dart';
@@ -90,22 +91,21 @@ class StandardAppBar extends StatelessWidget {
           ? CrossAxisAlignment.center
           : CrossAxisAlignment.start,
       children: [
-        Text(
+        AppText(
           title!,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: align,
-          style: titleStyle.copyWith(color: LightColors.textTextInverted),
+          style: titleStyle.copyWith(color: LightColors.textStrong),
         ),
         if (subtitle != null)
-          Text(
+          AppText(
             subtitle!,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: align,
-            style: AppTypography.label.copyWith(
-              color: LightColors.textTextMute,
-            ),
+            variant: AppTextVariant.label,
+            colorType: AppTextColor.textMuted,
           ),
       ],
     );

@@ -54,11 +54,9 @@ class AppFieldStyle {
   static Color text(BuildContext context, {required bool enabled}) {
     final isLight = Theme.of(context).brightness == Brightness.light;
     if (!enabled) {
-      return isLight
-          ? LightColors.textTextDisabled
-          : DarkColors.textTextDisabled;
+      return isLight ? LightColors.textDisabled : DarkColors.textDisabled;
     }
-    return isLight ? LightColors.textTextInverted : DarkColors.textTextInverted;
+    return isLight ? LightColors.textStrong : DarkColors.textStrong;
   }
 
   static Color placeholder(BuildContext context) =>

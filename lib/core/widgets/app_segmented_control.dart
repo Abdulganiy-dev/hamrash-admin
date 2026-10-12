@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
@@ -121,9 +122,7 @@ class _Segment<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected
-        ? LightColors.textTextInverted
-        : LightColors.textTextMute;
+    final color = selected ? LightColors.textStrong : LightColors.textMuted;
 
     return Semantics(
       button: true,
@@ -145,7 +144,7 @@ class _Segment<T> extends StatelessWidget {
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                   color: color,
                 ),
-                child: Text(
+                child: AppText(
                   option.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

@@ -5,6 +5,7 @@ import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_fill.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:motor/motor.dart';
 
 /// Height of a medium button ([AppButtonSize.medium]).
@@ -376,22 +377,16 @@ class _AppButtonState extends State<AppButton> {
           return isLight
               ? LightColors.errorErrorThin
               : DarkColors.errorErrorThin;
-        case AppButtonForegroundColor.textPrimary:
-          return isLight
-              ? LightColors.textTextPrimary
-              : DarkColors.textTextPrimary;
-        case AppButtonForegroundColor.textMute:
-          return isLight ? LightColors.textTextMute : DarkColors.textTextMute;
+        case AppButtonForegroundColor.textBody:
+          return isLight ? LightColors.textBody : DarkColors.textBody;
+        case AppButtonForegroundColor.textMuted:
+          return isLight ? LightColors.textMuted : DarkColors.textMuted;
         case AppButtonForegroundColor.textBrand:
-          return isLight ? LightColors.textTextBrand : DarkColors.textTextBrand;
-        case AppButtonForegroundColor.textInverted:
-          return isLight
-              ? LightColors.textTextInverted
-              : DarkColors.textTextInverted;
+          return isLight ? LightColors.textBrand : DarkColors.textBrand;
+        case AppButtonForegroundColor.textStrong:
+          return isLight ? LightColors.textStrong : DarkColors.textStrong;
         case AppButtonForegroundColor.textDisabled:
-          return isLight
-              ? LightColors.textTextDisabled
-              : DarkColors.textTextDisabled;
+          return isLight ? LightColors.textDisabled : DarkColors.textDisabled;
         case AppButtonForegroundColor.iconPrimary:
           return isLight
               ? LightColors.iconIconPrimary
@@ -432,9 +427,7 @@ class _AppButtonState extends State<AppButton> {
     }
 
     if (widget.isDisabled || widget.isLoading) {
-      return isLight
-          ? LightColors.textTextDisabled
-          : DarkColors.textTextDisabled;
+      return isLight ? LightColors.textDisabled : DarkColors.textDisabled;
     }
 
     switch (widget.type) {
@@ -662,7 +655,7 @@ class _AppButtonState extends State<AppButton> {
           );
           break;
         case AppButtonType.text:
-          buttonContent = Text(widget.text!, style: textStyle);
+          buttonContent = AppText(widget.text!, style: textStyle);
           break;
         default:
           if (widget.icon != null || widget.lucidIcon != null) {
@@ -672,11 +665,11 @@ class _AppButtonState extends State<AppButton> {
               children: [
                 _buildLeadingGraphic(fgColor, widget.iconSize ?? 20),
                 const SizedBox(width: 8),
-                Text(widget.text!, style: textStyle),
+                AppText(widget.text!, style: textStyle),
               ],
             );
           } else {
-            buttonContent = Text(widget.text!, style: textStyle);
+            buttonContent = AppText(widget.text!, style: textStyle);
           }
       }
     }
@@ -724,13 +717,11 @@ class _AppButtonState extends State<AppButton> {
             shape: shape,
             minimumSize: Size(widget.width ?? 0, resolvedHeight),
             fixedSize: widget.width != null || widget.height != null
-                ? Size(
-                    widget.width ?? double.infinity,
-                    resolvedHeight,
-                  )
+                ? Size(widget.width ?? double.infinity, resolvedHeight)
                 : null,
-            // Remove splash effect
+            // No ripple or press overlay; the button shrinks instead.
             splashFactory: NoSplash.splashFactory,
+            overlayColor: Colors.transparent,
           ),
           child: buttonContent,
         );
@@ -740,7 +731,10 @@ class _AppButtonState extends State<AppButton> {
           onPressed: isEnabled
               ? () {}
               : null, // Empty callback to keep button enabled, actual logic in GestureDetector
-          style: TextButton.styleFrom(splashFactory: NoSplash.splashFactory),
+          style: TextButton.styleFrom(
+            splashFactory: NoSplash.splashFactory,
+            overlayColor: Colors.transparent,
+          ),
           child: buttonContent,
         );
         break;

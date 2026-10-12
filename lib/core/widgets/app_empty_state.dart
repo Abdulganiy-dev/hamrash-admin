@@ -32,8 +32,8 @@ class AppEmptyState extends StatelessWidget {
     this.action,
     this.iconSize = 36,
     this.iconColor,
-    this.titleColorType = AppTextColor.textInverted,
-    this.subtitleColorType = AppTextColor.textMute,
+    this.titleColorType = AppTextColor.textStrong,
+    this.subtitleColorType = AppTextColor.textMuted,
     this.titleFontSize = 15,
     this.subtitleFontSize = 13,
     this.topPadding = AppSpacing.xxl,
@@ -75,7 +75,8 @@ class AppEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
-    final resolvedIconColor = iconColor ??
+    final resolvedIconColor =
+        iconColor ??
         (isLight ? LightColors.iconIconMute : DarkColors.iconIconMute);
 
     return Padding(
@@ -102,10 +103,7 @@ class AppEmptyState extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
             ],
-            if (action != null) ...[
-              SizedBox(height: AppSpacing.md),
-              action!,
-            ],
+            if (action != null) ...[SizedBox(height: AppSpacing.md), action!],
           ],
         ),
       ),

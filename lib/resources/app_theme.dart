@@ -11,6 +11,18 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      // No ink ripple or grey press highlight anywhere: buttons answer a
+      // press by shrinking (BouncyButton) instead.
+      splashFactory: NoSplash.splashFactory,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          overlayColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+        ),
+      ),
       // Same control sizes on phone, web and desktop (Flutter would
       // otherwise shrink inputs on desktop).
       visualDensity: VisualDensity.standard,
@@ -24,18 +36,18 @@ class AppTheme {
         onPrimary: LightColors.primaryOncolorWhite,
         onSecondary: LightColors.primaryOncolorWhite,
         onError: LightColors.primaryOncolorWhite,
-        onSurface: LightColors.textTextPrimary,
+        onSurface: LightColors.textBody,
         background: LightColors.backgroundSurfacePrimaryBG,
-        onBackground: LightColors.textTextPrimary,
+        onBackground: LightColors.textBody,
       ),
       // Slate 50 canvas so white cards can float on it.
       scaffoldBackgroundColor: LightColors.backgroundSurfaceMute,
       cardColor: LightColors.backgroundSurfacePrimaryBG,
       dividerColor: LightColors.strokeColourStrokeMild,
       textTheme: AppTypography.textTheme(
-        strong: LightColors.textTextInverted,
-        body: LightColors.textTextPrimary,
-        muted: LightColors.textTextMute,
+        strong: LightColors.textStrong,
+        body: LightColors.textBody,
+        muted: LightColors.textMuted,
       ),
       // Icon theme
       iconTheme: const IconThemeData(
@@ -86,6 +98,8 @@ class AppTheme {
       // Button themes
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
+          overlayColor: Colors.transparent,
+          splashFactory: NoSplash.splashFactory,
           backgroundColor: LightColors.primaryPrimaryDefault,
           foregroundColor: LightColors.primaryOncolorWhite,
           elevation: 0,
@@ -95,6 +109,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
+          overlayColor: Colors.transparent,
+          splashFactory: NoSplash.splashFactory,
           foregroundColor: LightColors.primaryPrimaryDefault,
           side: const BorderSide(color: LightColors.strokeColourStrokePrimary),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -103,6 +119,8 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
+          overlayColor: Colors.transparent,
+          splashFactory: NoSplash.splashFactory,
           foregroundColor: LightColors.primaryPrimaryDefault,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           shape: RoundedRectangleBorder(borderRadius: AppRadius.brControl),
@@ -121,7 +139,7 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         backgroundColor: LightColors.backgroundSurfaceMute,
         surfaceTintColor: Colors.transparent,
-        foregroundColor: LightColors.textTextPrimary,
+        foregroundColor: LightColors.textBody,
         elevation: 0,
         centerTitle: false,
       ),
@@ -132,6 +150,18 @@ class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
+      // No ink ripple or grey press highlight anywhere: buttons answer a
+      // press by shrinking (BouncyButton) instead.
+      splashFactory: NoSplash.splashFactory,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          overlayColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+        ),
+      ),
       // Same control sizes on phone, web and desktop (Flutter would
       // otherwise shrink inputs on desktop).
       visualDensity: VisualDensity.standard,
@@ -145,17 +175,17 @@ class AppTheme {
         onPrimary: DarkColors.primaryOncolorBlack,
         onSecondary: DarkColors.primaryOncolorBlack,
         onError: DarkColors.primaryOncolorWhite,
-        onSurface: DarkColors.textTextPrimary,
+        onSurface: DarkColors.textBody,
         background: DarkColors.backgroundSurfacePrimaryBG,
-        onBackground: DarkColors.textTextPrimary,
+        onBackground: DarkColors.textBody,
       ),
       scaffoldBackgroundColor: DarkColors.backgroundSurfacePrimaryBG,
       cardColor: DarkColors.backgroundSurfaceLayer,
       dividerColor: DarkColors.strokeColourStrokeMild,
       textTheme: AppTypography.textTheme(
-        strong: DarkColors.textTextInverted,
-        body: DarkColors.textTextPrimary,
-        muted: DarkColors.textTextMute,
+        strong: DarkColors.textStrong,
+        body: DarkColors.textBody,
+        muted: DarkColors.textMuted,
       ),
       // Icon theme
       iconTheme: const IconThemeData(
@@ -206,6 +236,8 @@ class AppTheme {
       // Button themes
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
+          overlayColor: Colors.transparent,
+          splashFactory: NoSplash.splashFactory,
           backgroundColor: DarkColors.primaryPrimaryDefault,
           foregroundColor: DarkColors.primaryOncolorBlack,
           elevation: 0,
@@ -215,6 +247,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
+          overlayColor: Colors.transparent,
+          splashFactory: NoSplash.splashFactory,
           foregroundColor: DarkColors.primaryPrimaryDefault,
           side: const BorderSide(color: DarkColors.strokeColourStrokePrimary),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -223,6 +257,8 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
+          overlayColor: Colors.transparent,
+          splashFactory: NoSplash.splashFactory,
           foregroundColor: DarkColors.primaryPrimaryDefault,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           shape: RoundedRectangleBorder(borderRadius: AppRadius.brControl),
@@ -241,7 +277,7 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         backgroundColor: DarkColors.backgroundSurfacePrimaryBG,
         surfaceTintColor: Colors.transparent,
-        foregroundColor: DarkColors.textTextPrimary,
+        foregroundColor: DarkColors.textBody,
         elevation: 0,
         centerTitle: false,
       ),

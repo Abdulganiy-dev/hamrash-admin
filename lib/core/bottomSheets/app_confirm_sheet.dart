@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
@@ -133,7 +134,7 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
   @override
   Widget build(BuildContext context) {
     final tone = _tone;
-    final label = Text(widget.confirmLabel);
+    final label = AppText(widget.confirmLabel);
     final confirm = widget.isDestructive
         ? AppDestructiveButton(
             width: double.infinity,
@@ -171,23 +172,23 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
               ),
               const SizedBox(height: 14),
             ],
-            Text(
+            AppText(
               widget.title,
               style: AppTypography.h3.copyWith(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.22,
-                color: LightColors.textTextInverted,
+                color: LightColors.textStrong,
               ),
             ),
             if (widget.message != null) ...[
               const SizedBox(height: 6),
-              Text(
+              AppText(
                 widget.message!,
                 style: AppTypography.body.copyWith(
                   fontSize: 15,
                   height: 22 / 15,
-                  color: LightColors.textTextPrimary,
+                  color: LightColors.textBody,
                 ),
               ),
             ],
@@ -203,7 +204,7 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
+                    child: AppText(
                       _error!,
                       style: AppTypography.caption.copyWith(
                         fontSize: 13,
@@ -229,7 +230,7 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
               onPressed: _isSubmitting
                   ? null
                   : () => Navigator.of(context).pop(false),
-              child: Text(widget.cancelLabel),
+              child: AppText(widget.cancelLabel),
             ),
           ],
         ),

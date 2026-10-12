@@ -63,11 +63,11 @@ class LightColors {
   static const errorErrorText = Color(0xFFB42318);
 
   // Text
-  static const textTextBrand = AppPalette.blue500;
-  static const textTextInverted = AppPalette.slate900; // strongest: headings
-  static const textTextPrimary = AppPalette.slate600; // body
-  static const textTextMute = AppPalette.slate500; // hints, metadata
-  static const textTextDisabled = AppPalette.slate400;
+  static const textBrand = AppPalette.blue500; // links, brand accents
+  static const textStrong = AppPalette.slate900; // headings, titles, labels
+  static const textBody = AppPalette.slate600; // running text
+  static const textMuted = AppPalette.slate500; // captions, hints, metadata
+  static const textDisabled = AppPalette.slate400; // unavailable controls
 
   // Background
   static const backgroundSurfacePrimaryBG = AppPalette.white;
@@ -137,11 +137,11 @@ class DarkColors {
   static const errorErrorText = Color(0xFFF87171);
 
   // Text
-  static const textTextBrand = AppPalette.blue400;
-  static const textTextInverted = AppPalette.slate100; // strongest: headings
-  static const textTextPrimary = AppPalette.slate300; // body
-  static const textTextMute = AppPalette.slate400; // hints, metadata
-  static const textTextDisabled = AppPalette.slate600;
+  static const textBrand = AppPalette.blue400; // links, brand accents
+  static const textStrong = AppPalette.slate100; // headings, titles, labels
+  static const textBody = AppPalette.slate300; // running text
+  static const textMuted = AppPalette.slate400; // captions, hints, metadata
+  static const textDisabled = AppPalette.slate600; // unavailable controls
 
   // Background
   static const backgroundSurfacePrimaryBG = AppPalette.slate950;

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
-import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 
@@ -153,14 +153,14 @@ class _Tile extends StatelessWidget {
                 color: LightColors.primaryPrimaryDefault,
               ),
               const SizedBox(height: 6),
-              Text(
+              AppText(
                 tile.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.label.copyWith(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: LightColors.textTextInverted,
+                  color: LightColors.textStrong,
                 ),
               ),
             ],
@@ -198,7 +198,6 @@ class _Group extends StatelessWidget {
                 ),
               _ActionRow(
                 action: actions[i],
-                inDangerGroup: danger,
                 onTap: () => onTap(actions[i].onTap),
               ),
             ],
@@ -209,55 +208,30 @@ class _Group extends StatelessWidget {
   }
 }
 
-class _ActionRow extends StatefulWidget {
-  const _ActionRow({
-    required this.action,
-    required this.inDangerGroup,
-    required this.onTap,
-  });
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({required this.action, required this.onTap});
 
   final AppSheetAction action;
-  final bool inDangerGroup;
   final VoidCallback onTap;
 
   @override
-  State<_ActionRow> createState() => _ActionRowState();
-}
-
-class _ActionRowState extends State<_ActionRow> {
-  bool _pressed = false;
-
-  void _setPressed(bool value) => setState(() => _pressed = value);
-
-  @override
   Widget build(BuildContext context) {
-    final action = widget.action;
     final color = action.isDestructive
         ? AppBadgeTone.error.strong
-        : LightColors.textTextInverted;
+        : LightColors.textStrong;
 
     return Semantics(
       button: true,
       label: action.label,
       excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => _setPressed(true),
-        onTapUp: (_) => _setPressed(false),
-        onTapCancel: () => _setPressed(false),
-        onTap: () {
-          HapticHelpers.vibrate(VibrationType.light);
-          widget.onTap();
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 100),
+      // Shrinks a touch while pressed, like every other button; no tint.
+      child: BouncyButton(
+        onPressed: onTap,
+        pressedScale: 0.98,
+        child: Container(
           height: 52,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          color: _pressed
-              ? (widget.inDangerGroup
-                    ? AppBadgeTone.error.thin.withValues(alpha: 0.5)
-                    : AppPalette.slate100)
-              : Colors.transparent,
+          color: Colors.transparent,
           child: Row(
             children: [
               Icon(
@@ -267,7 +241,7 @@ class _ActionRowState extends State<_ActionRow> {
               ),
               const SizedBox(width: 14),
               Expanded(
-                child: Text(
+                child: AppText(
                   action.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

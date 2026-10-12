@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:flutter/services.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
@@ -287,7 +288,7 @@ class _AppTextFieldState extends State<AppTextField> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            AppText(
               widget.prefixText!,
               style: AppTypography.bodyLarge.copyWith(
                 color: AppFieldStyle.icon(context),
@@ -316,9 +317,7 @@ class _AppTextFieldState extends State<AppTextField> {
       icon = GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => setState(() => _obscured = !_obscured),
-        child: Icon(
-          _obscured ? LucideIcons.eye : LucideIcons.eyeOff,
-        ),
+        child: Icon(_obscured ? LucideIcons.eye : LucideIcons.eyeOff),
       );
     }
     if (icon == null) return null;
@@ -336,7 +335,7 @@ class _AppTextFieldState extends State<AppTextField> {
               : AppFieldStyle.text(context, enabled: false),
         )
         .merge(widget.labelStyle);
-    if (!widget.isOptional) return Text(widget.label, style: style);
+    if (!widget.isOptional) return AppText(widget.label, style: style);
     return Text.rich(
       TextSpan(
         text: widget.label,
@@ -346,8 +345,8 @@ class _AppTextFieldState extends State<AppTextField> {
             text: '  (optional)',
             style: AppTypography.body.copyWith(
               color: Theme.of(context).brightness == Brightness.light
-                  ? LightColors.textTextMute
-                  : DarkColors.textTextMute,
+                  ? LightColors.textMuted
+                  : DarkColors.textMuted,
             ),
           ),
         ],
@@ -358,9 +357,7 @@ class _AppTextFieldState extends State<AppTextField> {
   Widget? _buildFooter(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
     final error = _errorMessage;
-    final mutedColor = isLight
-        ? LightColors.textTextMute
-        : DarkColors.textTextMute;
+    final mutedColor = isLight ? LightColors.textMuted : DarkColors.textMuted;
     final counter = widget.showCounter && widget.maxLength != null
         ? '${_controller.text.characters.length} / ${widget.maxLength}'
         : null;
@@ -376,7 +373,7 @@ class _AppTextFieldState extends State<AppTextField> {
           Icon(LucideIcons.circleAlert500, size: 16, color: errorColor),
           const SizedBox(width: 6),
           Expanded(
-            child: Text(
+            child: AppText(
               error,
               style: AppTypography.caption
                   .copyWith(color: errorColor)
@@ -386,7 +383,7 @@ class _AppTextFieldState extends State<AppTextField> {
         ],
       );
     } else if (widget.helperText != null) {
-      message = Text(
+      message = AppText(
         widget.helperText!,
         maxLines: 5,
         style: AppTypography.caption
@@ -404,7 +401,7 @@ class _AppTextFieldState extends State<AppTextField> {
           Expanded(child: message ?? const SizedBox.shrink()),
           if (counter != null) ...[
             const SizedBox(width: 12),
-            Text(
+            AppText(
               counter,
               style: AppTypography.caption.copyWith(color: mutedColor),
             ),

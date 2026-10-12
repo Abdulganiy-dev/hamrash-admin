@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
-import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -102,22 +102,20 @@ class AppListRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
+                AppText(
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.title.copyWith(
-                    color: LightColors.textTextInverted,
-                  ),
+                  variant: AppTextVariant.title,
+                  colorType: AppTextColor.textStrong,
                 ),
                 const SizedBox(height: 2),
-                Text(
+                AppText(
                   subtitle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.body.copyWith(
-                    color: LightColors.textTextPrimary,
-                  ),
+                  variant: AppTextVariant.body,
+                  colorType: AppTextColor.textBody,
                 ),
               ],
             ),
@@ -172,7 +170,7 @@ class AppCompactListItem {
 /// ```dart
 /// AppCompactList(
 ///   title: 'Recent fee payments',
-///   headerTrailing: Text('Today'),
+///   headerTrailing: AppText('Today'),
 ///   items: payments.map(toItem).toList(),
 ///   viewAllLabel: 'View all ${payments.length} payments',
 ///   onViewAll: openPayments,
@@ -219,7 +217,7 @@ class AppCompactList extends StatelessWidget {
                 ? null
                 : DefaultTextStyle.merge(
                     style: AppTypography.body.copyWith(
-                      color: LightColors.textTextMute,
+                      color: LightColors.textMuted,
                     ),
                     child: headerTrailing!,
                   ),
@@ -253,11 +251,10 @@ class AppCompactList extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
+                  AppText(
                     viewAllLabel,
-                    style: AppTypography.subtitle.copyWith(
-                      color: LightColors.primaryPrimaryDefault,
-                    ),
+                    variant: AppTextVariant.subtitle,
+                    colorType: AppTextColor.primary,
                   ),
                   const SizedBox(width: 4),
                   const Icon(
@@ -274,40 +271,18 @@ class AppCompactList extends StatelessWidget {
   }
 }
 
-class _CompactRow extends StatefulWidget {
+class _CompactRow extends StatelessWidget {
   const _CompactRow({required this.item});
 
   final AppCompactListItem item;
 
   @override
-  State<_CompactRow> createState() => _CompactRowState();
-}
-
-class _CompactRowState extends State<_CompactRow> {
-  bool _pressed = false;
-
-  void _setPressed(bool value) {
-    if (widget.item.onTap == null) return;
-    setState(() => _pressed = value);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final item = widget.item;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (_) => _setPressed(true),
-      onTapUp: (_) => _setPressed(false),
-      onTapCancel: () => _setPressed(false),
-      onTap: item.onTap == null
-          ? null
-          : () {
-              HapticHelpers.vibrate(VibrationType.light);
-              item.onTap!();
-            },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        color: _pressed ? AppPalette.slate50 : Colors.transparent,
+    // Shrinks a touch while pressed, like every other button; no tint.
+    return BouncyButton(
+      onPressed: item.onTap,
+      pressedScale: 0.98,
+      child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
@@ -320,21 +295,19 @@ class _CompactRowState extends State<_CompactRow> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  AppText(
                     item.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.subtitle.copyWith(
-                      color: LightColors.textTextInverted,
-                    ),
+                    variant: AppTextVariant.subtitle,
+                    colorType: AppTextColor.textStrong,
                   ),
-                  Text(
+                  AppText(
                     item.subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.caption.copyWith(
-                      color: LightColors.textTextPrimary,
-                    ),
+                    variant: AppTextVariant.caption,
+                    colorType: AppTextColor.textBody,
                   ),
                 ],
               ),
@@ -459,7 +432,7 @@ class _Initials extends StatelessWidget {
     return ColoredBox(
       color: LightColors.primaryPrimaryMute,
       child: Center(
-        child: Text(
+        child: AppText(
           _letters,
           style: AppTypography.title.copyWith(
             fontSize: size >= 52 ? 16 : 13,

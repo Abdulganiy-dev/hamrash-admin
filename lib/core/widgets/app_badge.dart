@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
@@ -130,7 +131,7 @@ class AppBadge extends StatelessWidget {
             decoration: BoxDecoration(color: tone.base, shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
-          Text(
+          AppText(
             label,
             style: AppTypography.body.copyWith(
               fontWeight: FontWeight.w600,
@@ -159,7 +160,10 @@ class AppBadge extends StatelessWidget {
             Icon(icon, size: 12, color: foreground),
             const SizedBox(width: 4),
           ],
-          Text(label, style: AppTypography.label.copyWith(color: foreground)),
+          AppText(
+            label,
+            style: AppTypography.label.copyWith(color: foreground),
+          ),
         ],
       ),
     );
@@ -237,7 +241,7 @@ class AppFilterChip extends StatelessWidget {
             Icon(LucideIcons.check600, size: 16, color: text),
             const SizedBox(width: 6),
           ],
-          Text(
+          AppText(
             label,
             style: AppTypography.body.copyWith(
               fontWeight: FontWeight.w600,
@@ -308,7 +312,7 @@ class AppCountBadge extends StatelessWidget {
           borderRadius: AppRadius.brBadge,
           border: Border.all(color: outlineColor, width: 2),
         ),
-        child: Text(
+        child: AppText(
           text,
           style: AppTypography.overline.copyWith(
             fontWeight: FontWeight.w800,
@@ -329,7 +333,7 @@ class AppCountBadge extends StatelessWidget {
         color: AppPalette.slate100,
         borderRadius: AppRadius.brBadge,
       ),
-      child: Text(
+      child: AppText(
         text,
         style: AppTypography.caption.copyWith(
           fontWeight: FontWeight.w700,

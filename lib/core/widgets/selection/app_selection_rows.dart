@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
@@ -158,11 +159,11 @@ class AppRadioRow<T> extends StatelessWidget {
 }
 
 /// A row with a title, optional subtitle and any [control] on the right.
-/// The whole row is the tap target; it darkens a step while pressed.
+/// The whole row is the tap target; the control answers the tap (no tint).
 ///
 /// Prefer [AppSwitchRow], [AppCheckboxRow] and [AppRadioRow]. Use this when
 /// the tap needs custom handling, e.g. a picker that closes on tap.
-class AppSelectionRow extends StatefulWidget {
+class AppSelectionRow extends StatelessWidget {
   const AppSelectionRow({
     super.key,
     required this.title,
@@ -179,56 +180,33 @@ class AppSelectionRow extends StatefulWidget {
   final Widget control;
 
   @override
-  State<AppSelectionRow> createState() => _AppSelectionRowState();
-}
-
-class _AppSelectionRowState extends State<AppSelectionRow> {
-  bool _pressed = false;
-
-  /// One step darker than whatever the row sits on.
-  Color _pressedColor(BuildContext context) =>
-      AppSurfaceScope.of(context) == AppSurface.card
-      ? AppPalette.slate50
-      : AppPalette.slate100;
-
-  void _setPressed(bool value) {
-    if (widget.onTap == null) return;
-    setState(() => _pressed = value);
-  }
-
-  @override
   Widget build(BuildContext context) {
     return MergeSemantics(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => _setPressed(true),
-        onTapUp: (_) => _setPressed(false),
-        onTapCancel: () => _setPressed(false),
-        onTap: widget.onTap == null
+        onTap: onTap == null
             ? null
             : () {
                 HapticHelpers.vibrate(VibrationType.selection);
-                widget.onTap!();
+                onTap!();
               },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 100),
-          color: _pressed ? _pressedColor(context) : Colors.transparent,
+        child: Container(
           constraints: const BoxConstraints(minHeight: 56),
           padding: EdgeInsets.symmetric(
             horizontal: 16,
-            vertical: widget.subtitle == null ? 12 : 14,
+            vertical: subtitle == null ? 12 : 14,
           ),
           child: Row(
             children: [
               Expanded(
                 child: _RowText(
-                  title: widget.title,
-                  subtitle: widget.subtitle,
-                  enabled: widget.enabled,
+                  title: title,
+                  subtitle: subtitle,
+                  enabled: enabled,
                 ),
               ),
               const SizedBox(width: 16),
-              widget.control,
+              control,
             ],
           ),
         ),
@@ -258,23 +236,23 @@ class _RowText extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
+        AppText(
           title,
           style: (large ? AppTypography.title : AppTypography.subtitle)
               .copyWith(
                 color: enabled
-                    ? LightColors.textTextInverted
-                    : LightColors.textTextDisabled,
+                    ? LightColors.textStrong
+                    : LightColors.textDisabled,
               ),
         ),
         if (subtitle != null)
-          Text(
+          AppText(
             subtitle!,
             style: (large ? AppTypography.body : AppTypography.caption)
                 .copyWith(
                   color: enabled
-                      ? LightColors.textTextPrimary
-                      : LightColors.textTextDisabled,
+                      ? LightColors.textBody
+                      : LightColors.textDisabled,
                 ),
           ),
       ],
