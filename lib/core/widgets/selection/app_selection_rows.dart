@@ -1,0 +1,349 @@
+import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/constants/app_colors.dart';
+import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/haptic_helper.dart';
+import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
+import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
+
+/// One card holding several rows with hairlines between them. Use it for
+/// switch, checkbox and radio rows.
+///
+/// ```dart
+/// AppRowGroup(children: [
+///   AppSwitchRow(title: 'Absence alerts', value: a, onChanged: setA),
+///   AppSwitchRow(title: 'Fee reminders', value: b, onChanged: setB),
+/// ])
+/// ```
+class AppRowGroup extends StatelessWidget {
+  const AppRowGroup({super.key, required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0)
+              Container(
+                height: 1,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                color: AppPalette.slate100,
+              ),
+            children[i],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Row with a switch on the right. The whole row toggles it.
+class AppSwitchRow extends StatelessWidget {
+  const AppSwitchRow({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+    this.subtitle,
+    this.enabled = true,
+  });
+
+  final String title;
+  final String? subtitle;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = enabled && onChanged != null;
+    return _SelectionRow(
+      title: title,
+      subtitle: subtitle,
+      enabled: enabled,
+      onTap: active ? () => onChanged!(!value) : null,
+      control: AppSwitch(value: value, enabled: enabled),
+    );
+  }
+}
+
+/// Row with a checkbox on the right. The whole row toggles it.
+///
+/// For a "Select all" row pass [value] null when only some are picked.
+class AppCheckboxRow extends StatelessWidget {
+  const AppCheckboxRow({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+    this.subtitle,
+    this.enabled = true,
+  });
+
+  final String title;
+  final String? subtitle;
+  final bool? value;
+  final ValueChanged<bool>? onChanged;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = enabled && onChanged != null;
+    return _SelectionRow(
+      title: title,
+      subtitle: subtitle,
+      enabled: enabled,
+      onTap: active ? () => onChanged!(value != true) : null,
+      control: AppCheckbox(value: value, enabled: enabled),
+    );
+  }
+}
+
+/// Row with a radio on the right. The whole row picks it.
+class AppRadioRow<T> extends StatelessWidget {
+  const AppRadioRow({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+    this.subtitle,
+    this.enabled = true,
+  });
+
+  final String title;
+  final String? subtitle;
+  final T value;
+  final T? groupValue;
+  final ValueChanged<T>? onChanged;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = enabled && onChanged != null && value != groupValue;
+    return _SelectionRow(
+      title: title,
+      subtitle: subtitle,
+      enabled: enabled,
+      onTap: active ? () => onChanged!(value) : null,
+      control: AppRadio<T>(
+        value: value,
+        groupValue: groupValue,
+        enabled: enabled,
+      ),
+    );
+  }
+}
+
+/// A row inside [AppRowGroup]: title, optional subtitle, control on the
+/// right. Turns slate-50 while pressed.
+class _SelectionRow extends StatefulWidget {
+  const _SelectionRow({
+    required this.title,
+    required this.subtitle,
+    required this.enabled,
+    required this.onTap,
+    required this.control,
+  });
+
+  final String title;
+  final String? subtitle;
+  final bool enabled;
+  final VoidCallback? onTap;
+  final Widget control;
+
+  @override
+  State<_SelectionRow> createState() => _SelectionRowState();
+}
+
+class _SelectionRowState extends State<_SelectionRow> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (widget.onTap == null) return;
+    setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MergeSemantics(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => _setPressed(true),
+        onTapUp: (_) => _setPressed(false),
+        onTapCancel: () => _setPressed(false),
+        onTap: widget.onTap == null
+            ? null
+            : () {
+                HapticHelpers.vibrate(VibrationType.selection);
+                widget.onTap!();
+              },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          color: _pressed ? AppPalette.slate50 : Colors.transparent,
+          constraints: const BoxConstraints(minHeight: 56),
+          padding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: widget.subtitle == null ? 12 : 14,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _RowText(
+                  title: widget.title,
+                  subtitle: widget.subtitle,
+                  enabled: widget.enabled,
+                ),
+              ),
+              const SizedBox(width: 16),
+              widget.control,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RowText extends StatelessWidget {
+  const _RowText({
+    required this.title,
+    required this.subtitle,
+    required this.enabled,
+    this.large = false,
+  });
+
+  final String title;
+  final String? subtitle;
+  final bool enabled;
+
+  /// Choice cards use the bigger title and body subtitle.
+  final bool large;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: (large ? AppTypography.title : AppTypography.subtitle)
+              .copyWith(
+                color: enabled
+                    ? LightColors.textTextInverted
+                    : LightColors.textTextDisabled,
+              ),
+        ),
+        if (subtitle != null)
+          Text(
+            subtitle!,
+            style: (large ? AppTypography.body : AppTypography.caption)
+                .copyWith(
+                  color: enabled
+                      ? LightColors.textTextPrimary
+                      : LightColors.textTextDisabled,
+                ),
+          ),
+      ],
+    );
+  }
+}
+
+/// A whole card as one option of a single choice. The picked card gets a
+/// blue border. Stack them 12 apart.
+///
+/// ```dart
+/// AppChoiceCard(
+///   title: 'Full term',
+///   subtitle: '₦120,000 now, 5% off',
+///   value: Plan.full,
+///   groupValue: plan,
+///   onChanged: (p) => setState(() => plan = p),
+/// )
+/// ```
+class AppChoiceCard<T> extends StatelessWidget {
+  const AppChoiceCard({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+    this.subtitle,
+    this.leading,
+    this.enabled = true,
+  });
+
+  final String title;
+  final String? subtitle;
+  final T value;
+  final T? groupValue;
+  final ValueChanged<T>? onChanged;
+
+  /// Optional icon or picture on the left.
+  final Widget? leading;
+
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final picked = enabled && value == groupValue;
+
+    return MergeSemantics(
+      child: Semantics(
+        selected: picked,
+        child: BouncyButton(
+          pressedScale: 0.98,
+          enableHaptic: false,
+          isDisabled: !enabled,
+          onPressed: onChanged == null || picked
+              ? null
+              : () {
+                  HapticHelpers.vibrate(VibrationType.selection);
+                  onChanged!(value);
+                },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            // Keep the content still while the border thickens.
+            padding: EdgeInsets.all(picked ? 16 : 16.5),
+            decoration: BoxDecoration(
+              color: enabled ? AppPalette.white : AppPalette.slate50,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: picked
+                    ? LightColors.primaryPrimaryDefault
+                    : LightColors.strokeColourStrokeSoft,
+                width: picked ? 1.5 : 1,
+              ),
+              boxShadow: enabled ? AppShadows.floating : null,
+            ),
+            child: Row(
+              children: [
+                if (leading != null) ...[leading!, const SizedBox(width: 14)],
+                Expanded(
+                  child: _RowText(
+                    title: title,
+                    subtitle: subtitle,
+                    enabled: enabled,
+                    large: true,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                AppRadio<T>(
+                  value: value,
+                  groupValue: groupValue,
+                  enabled: enabled,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

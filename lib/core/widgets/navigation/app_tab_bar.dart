@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
-import 'package:hamrash_admin/core/constants/app_typography.dart';
-import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_metrics.dart';
 
@@ -22,14 +19,17 @@ class AppTabItem {
   /// Falls back to [icon].
   final IconData? activeIcon;
 
+  /// Not shown; read out by screen readers.
   final String label;
 
   /// Red alert count on the icon. Hidden when null or 0.
   final int? count;
 }
 
-/// Floating capsule tab bar. The selected tab turns blue and bold; there is
-/// no fill behind it. Usually built for you by [AppTabShell].
+/// Plain icon-only tab bar that sits on the page colour, with no
+/// background, border or shadow. The selected icon turns blue and heavier.
+/// Usually built for you by [AppTabShell], which also fades content out
+/// behind it.
 class AppTabBar extends StatelessWidget {
   const AppTabBar({
     super.key,
@@ -44,15 +44,8 @@ class AppTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: AppNavMetrics.tabBarHeight,
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: AppPalette.white,
-        borderRadius: AppRadius.brPill,
-        border: Border.all(color: LightColors.strokeColourStrokeSoft),
-        boxShadow: AppShadows.floating,
-      ),
       child: Row(
         children: [
           for (var i = 0; i < items.length; i++)
@@ -92,49 +85,30 @@ class _Tab extends StatelessWidget {
       excludeSemantics: true,
       child: BouncyButton(
         onPressed: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                TweenAnimationBuilder<Color?>(
-                  tween: ColorTween(end: color),
-                  duration: _duration,
-                  builder: (context, value, _) => Icon(
-                    selected ? (item.activeIcon ?? item.icon) : item.icon,
-                    size: 22,
-                    color: value,
+        child: Center(
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              TweenAnimationBuilder<Color?>(
+                tween: ColorTween(end: color),
+                duration: _duration,
+                builder: (context, value, _) => Icon(
+                  selected ? (item.activeIcon ?? item.icon) : item.icon,
+                  size: 24,
+                  color: value,
+                ),
+              ),
+              if (showCount)
+                Positioned(
+                  left: 12,
+                  top: -6,
+                  child: AppCountBadge(
+                    count: item.count!,
+                    tone: AppCountTone.alert,
                   ),
                 ),
-                if (showCount)
-                  Positioned(
-                    left: 11,
-                    top: -5,
-                    child: AppCountBadge(
-                      count: item.count!,
-                      tone: AppCountTone.alert,
-                      outlineColor: AppPalette.white,
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 2),
-            AnimatedDefaultTextStyle(
-              duration: _duration,
-              style: AppTypography.label.copyWith(
-                fontSize: 11,
-                height: 14 / 11,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                color: color,
-              ),
-              child: Text(
-                item.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

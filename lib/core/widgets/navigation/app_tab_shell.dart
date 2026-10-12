@@ -15,8 +15,8 @@ class AppTab {
   final WidgetBuilder builder;
 }
 
-/// Home of the app: tab pages with the floating [AppTabBar] on top and
-/// content fading out above it.
+/// Home of the app: tab pages with the [AppTabBar] at the bottom and
+/// content fading out behind it.
 ///
 /// Detail screens are pushed on the root navigator, so they cover the shell
 /// and show no tab bar.
@@ -65,9 +65,10 @@ class _AppTabShellState extends State<AppTabShell> {
   Widget build(BuildContext context) {
     final surface = Theme.of(context).scaffoldBackgroundColor;
     final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
-    // Sit just above the home indicator, or 16 up on phones without one.
-    final barBottom = math.max(safeBottom - 8, 16.0);
+    // Sit just above the home indicator, or 12 up on phones without one.
+    final barBottom = math.max(safeBottom - 6, 12.0);
     final barTop = barBottom + AppNavMetrics.tabBarHeight;
+    final fadeHeight = barTop + AppNavMetrics.tabBarFadeExtent;
 
     return PopScope(
       // Back on another tab returns to the first tab before leaving the app.
@@ -97,12 +98,13 @@ class _AppTabShellState extends State<AppTabShell> {
                   ],
                 ),
               ),
-              // Content fades out behind the bar. Visual only.
+              // Content fades out behind the bar: solid under the icons,
+              // then fading over [AppNavMetrics.tabBarFadeExtent]. Visual only.
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: 0,
-                height: barTop + AppNavMetrics.tabBarFadeExtent,
+                height: fadeHeight,
                 child: IgnorePointer(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
@@ -114,7 +116,7 @@ class _AppTabShellState extends State<AppTabShell> {
                           surface,
                           surface.withValues(alpha: 0),
                         ],
-                        stops: const [0, 0.45, 1],
+                        stops: [0, barTop / fadeHeight, 1],
                       ),
                     ),
                   ),

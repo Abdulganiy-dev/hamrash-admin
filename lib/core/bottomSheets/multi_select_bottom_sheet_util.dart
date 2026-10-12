@@ -1,14 +1,13 @@
-import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/utils/extensions.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
+import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
-import 'package:hamrash_admin/core/constants/radius_containers.dart';
 
 /// Glass list sheet with multi-select state. Returns the final selection as a
 /// `List<I>` when the user dismisses the sheet. The caller commits the list
@@ -189,38 +188,7 @@ class _MultiSelectTile extends StatelessWidget {
         vertical: 2,
       ),
       title: AppText(label, colorType: AppTextColor.textInverted),
-      trailing: _Checkbox(isSelected: isSelected),
-    );
-  }
-}
-
-class _Checkbox extends StatelessWidget {
-  const _Checkbox({required this.isSelected});
-
-  final bool isSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final unselectedBorder = isLight
-        ? LightColors.strokeColourStrokeMild
-        : DarkColors.strokeColourStrokeMild;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 120),
-      width: 22,
-      height: 22,
-      decoration: BoxDecoration(
-        color: isSelected ? LightColors.primaryPrimaryDefault : Colors.transparent,
-        borderRadius: AppRadius.brCheckbox,
-        border: Border.all(
-          color: isSelected ? LightColors.primaryPrimaryDefault : unselectedBorder,
-          width: 1.5,
-        ),
-      ),
-      child: isSelected
-          ? const Icon(LucideIcons.check600, size: 16, color: Colors.white)
-          : null,
+      trailing: AppCheckbox(value: isSelected),
     );
   }
 }

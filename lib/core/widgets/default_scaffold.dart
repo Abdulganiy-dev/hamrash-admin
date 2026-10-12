@@ -49,7 +49,7 @@ class ScaffoldInsets extends InheritedWidget {
   /// Whether the enclosing scaffold is actually rendering an app bar layer.
   final bool hasAppBar;
 
-  /// Bottom space a body child should leave clear: the floating tab bar
+  /// Bottom space a body child should leave clear: the tab bar
   /// inside an [AppTabShell], otherwise the safe area.
   final double bottomInset;
 
