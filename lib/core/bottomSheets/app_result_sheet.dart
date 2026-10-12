@@ -24,7 +24,7 @@ enum AppResultType {
   final String defaultLabel;
 }
 
-/// Floating sheet that reports how something went: a tinted icon, a title,
+/// Floating sheet that reports how something went: a plain icon, a title,
 /// a message and one or two buttons. Replaces the old success, error and
 /// warning modals.
 ///
@@ -232,7 +232,7 @@ class _AppResultSheetState extends State<AppResultSheet> {
   }
 }
 
-/// 72 tinted ring around a 48 solid circle with a white glyph.
+/// Plain outline status icon in the tone colour, no background.
 class _ResultIcon extends StatelessWidget {
   const _ResultIcon({required this.type});
 
@@ -240,45 +240,11 @@ class _ResultIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tone = type.tone;
-    final Widget glyph = switch (type) {
-      AppResultType.success => const Icon(
-        LucideIcons.check600,
-        size: 26,
-        color: AppPalette.white,
-      ),
-      AppResultType.error => const Icon(
-        LucideIcons.x600,
-        size: 26,
-        color: AppPalette.white,
-      ),
-      AppResultType.warning => AppText(
-        '!',
-        style: AppTypography.h3.copyWith(
-          fontSize: 28,
-          height: 1,
-          fontWeight: FontWeight.w900,
-          color: AppPalette.white,
-        ),
-      ),
+    final icon = switch (type) {
+      AppResultType.success => LucideIcons.circleCheck300,
+      AppResultType.error => LucideIcons.circleX300,
+      AppResultType.warning => LucideIcons.triangleAlert300,
     };
-
-    return Container(
-      width: 72,
-      height: 72,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: tone.mute,
-        shape: BoxShape.circle,
-        border: Border.all(color: tone.thin),
-      ),
-      child: Container(
-        width: 48,
-        height: 48,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: tone.base, shape: BoxShape.circle),
-        child: glyph,
-      ),
-    );
+    return Icon(icon, size: 64, color: type.tone.base);
   }
 }

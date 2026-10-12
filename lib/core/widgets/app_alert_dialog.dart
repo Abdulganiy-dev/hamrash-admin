@@ -13,7 +13,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// expired". For everyday confirmations prefer a floating sheet — its
 /// buttons sit within thumb reach.
 ///
-/// A tinted icon, a title, a message and a Cancel / Confirm pair side by
+/// A plain icon, a title, a message and a Cancel / Confirm pair side by
 /// side. Returns `true` when confirmed, `false`/`null` when cancelled or
 /// dismissed.
 ///
@@ -56,7 +56,7 @@ class AppAlertDialog extends StatefulWidget {
   final String title;
   final String? message;
 
-  /// Shown in a tinted circle above the title.
+  /// Shown on its own above the title, in the tone colour.
   final IconData? icon;
 
   /// Colours the icon. Defaults to [AppBadgeTone.info], or
@@ -271,7 +271,7 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
   }
 }
 
-/// 56 tinted circle with the icon in the tone's base colour.
+/// Plain icon in the tone's base colour, no background.
 class _DialogIcon extends StatelessWidget {
   const _DialogIcon({required this.icon, required this.tone});
 
@@ -279,19 +279,7 @@ class _DialogIcon extends StatelessWidget {
   final AppBadgeTone tone;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 56,
-      height: 56,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: tone.mute,
-        shape: BoxShape.circle,
-        border: Border.all(color: tone.thin),
-      ),
-      child: Icon(icon, size: 26, color: tone.base),
-    );
-  }
+  Widget build(BuildContext context) => Icon(icon, size: 44, color: tone.base);
 }
 
 /// Inline failure from [AppAlertDialog.onConfirm], on a pale red strip.

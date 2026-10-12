@@ -39,7 +39,7 @@ abstract class BaseViewModel extends ChangeNotifier {
     );
 
     if (showSnackBar) {
-      ViewUtil.showSnackBar(userMessage ?? ErrorMessages.somethingWentWrong);
+      ViewUtil.showErrorSnackBar(userMessage ?? ErrorMessages.somethingWentWrong);
     }
 
     if (showErrorModal) {
@@ -70,7 +70,7 @@ abstract class BaseViewModel extends ChangeNotifier {
       stackTrace: stackTrace,
     );
 
-    ViewUtil.showSnackBar(userMessage ?? ErrorMessages.networkError);
+    ViewUtil.showErrorSnackBar(userMessage ?? ErrorMessages.networkError);
   }
 
   @protected
@@ -90,7 +90,7 @@ abstract class BaseViewModel extends ChangeNotifier {
       stackTrace: stackTrace,
     );
 
-    ViewUtil.showSnackBar(userMessage ?? ErrorMessages.databaseError);
+    ViewUtil.showErrorSnackBar(userMessage ?? ErrorMessages.databaseError);
   }
 
   @override

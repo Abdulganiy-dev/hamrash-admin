@@ -1,104 +1,57 @@
-import 'package:hamrash_admin/core/utils/extensions.dart';
 import 'package:flutter/material.dart';
-import 'package:hamrash_admin/core/widgets/app_text.dart';
+import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class ViewUtil {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
+  /// Shows [message] as an [AppToast] (dark pill above the tab bar).
   static void showSnackBar(
     String? message, {
+    AppToastType type = AppToastType.info,
     BuildContext? translationContext,
-    Color? bgColor,
-    Color? textColor,
     int? durationSeconds,
   }) {
     if (message == null || message.isEmpty) return;
-
-    final navContext = navigatorKey.currentContext;
-    if (navContext == null) return;
-
-    ScaffoldMessenger.of(navContext).hideCurrentMaterialBanner();
-
-    final int duration = durationSeconds ?? _calculateSnackBarDuration(message);
-
-    ScaffoldMessenger.of(navContext).showMaterialBanner(
-      MaterialBanner(
-        content: AppText(
-          message,
-          style: TextStyle(color: textColor ?? Colors.white),
-        ),
-        backgroundColor: bgColor ?? Colors.red,
-
-        actions: [
-          GestureDetector(
-            child: Icon(LucideIcons.x, color: Colors.white),
-            onTap: () {
-              ScaffoldMessenger.of(navContext).hideCurrentMaterialBanner();
-            },
-          ).hapticFeedback(),
-        ],
-      ),
+    AppToast.show(
+      message,
+      type: type,
+      duration: durationSeconds == null
+          ? null
+          : Duration(seconds: durationSeconds),
     );
-    Future.delayed(Duration(seconds: duration), () {
-      // Add a safety check to ensure the screen is still visible
-      if (navContext.mounted) {
-        ScaffoldMessenger.of(navContext).hideCurrentMaterialBanner();
-      }
-    });
   }
 
   static void showErrorSnackBar(
     String? message, {
     BuildContext? translationContext,
     int? durationSeconds,
-  }) {
-    showSnackBar(
-      message,
-      translationContext: translationContext,
-      bgColor: Colors.red,
-      textColor: Colors.white,
-      durationSeconds: durationSeconds,
-    );
-  }
+  }) => showSnackBar(
+    message,
+    type: AppToastType.error,
+    durationSeconds: durationSeconds,
+  );
 
   static void showWarningSnackBar(
     String? message, {
     BuildContext? translationContext,
     int? durationSeconds,
-  }) {
-    showSnackBar(
-      message,
-      translationContext: translationContext,
-      bgColor: Colors.orange,
-      textColor: Colors.white,
-      durationSeconds: durationSeconds,
-    );
-  }
+  }) => showSnackBar(
+    message,
+    type: AppToastType.warning,
+    durationSeconds: durationSeconds,
+  );
 
   static void showSuccessSnackBar(
     String? message, {
     BuildContext? translationContext,
     int? durationSeconds,
-  }) {
-    showSnackBar(
-      message,
-      translationContext: translationContext,
-      bgColor: Colors.green,
-      textColor: Colors.white,
-      durationSeconds: durationSeconds,
-    );
-  }
-
-  static int _calculateSnackBarDuration(String message) {
-    final int characterCount = message.length;
-
-    final int calculatedDuration = 10 + (characterCount / 20).ceil();
-
-    return calculatedDuration.clamp(7, 8);
-  }
+  }) => showSnackBar(
+    message,
+    type: AppToastType.success,
+    durationSeconds: durationSeconds,
+  );
 
   static final blackGradient = LinearGradient(
     colors: [Color(0xFF3A3A3C), Color(0xFF1C1C1E)],

@@ -1,26 +1,37 @@
-import 'package:hamrash_admin/core/constants/app_colors.dart';
-import 'package:hamrash_admin/core/constants/spacing_constants.dart';
-import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/constants/app_colors.dart';
+import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
+import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
+import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
+import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// A reusable empty-state placeholder: a muted icon above a title and an
-/// optional subtitle, centered with a top offset.
+/// Centred message for a screen or list with nothing to show: a plain icon
+/// (no background), a title, one line of explanation and one clear next step.
 ///
-/// Use it anywhere a list or section has no content to show.
+/// Say what's missing, not "No data". Use [compact] for small spaces such as
+/// "no search results" inside a list or sheet.
 ///
 /// ```dart
-/// // Minimal
 /// AppEmptyState(
-///   icon: LucideIcons.search,
-///   title: 'No results found',
-///   subtitle: 'Try searching by name, class, or status.',
+///   icon: LucideIcons.users300,
+///   title: 'No students in JSS 2 Gold yet',
+///   subtitle: 'Add them one by one, or import the class list from a spreadsheet.',
+///   actionLabel: 'Add student',
+///   onAction: addStudent,
+///   secondaryLabel: 'Import class list',
+///   onSecondary: importList,
 /// )
 ///
-/// // With a call-to-action
 /// AppEmptyState(
-///   icon: LucideIcons.users,
-///   title: 'No students yet',
-///   action: AppButton(label: 'Add student', onPressed: _addStudent),
+///   compact: true,
+///   icon: LucideIcons.search300,
+///   title: 'No matches for “$query”',
+///   subtitle: 'Check the spelling, or search by admission number.',
+///   actionLabel: 'Clear search',
+///   onAction: clearSearch,
 /// )
 /// ```
 class AppEmptyState extends StatelessWidget {
@@ -29,81 +40,241 @@ class AppEmptyState extends StatelessWidget {
     required this.icon,
     required this.title,
     this.subtitle,
-    this.action,
-    this.iconSize = 36,
     this.iconColor,
-    this.titleColorType = AppTextColor.textStrong,
-    this.subtitleColorType = AppTextColor.textMuted,
-    this.titleFontSize = 15,
-    this.subtitleFontSize = 13,
+    this.actionLabel,
+    this.onAction,
+    this.secondaryLabel,
+    this.onSecondary,
+    this.action,
+    this.compact = false,
     this.topPadding = AppSpacing.xxl,
   });
 
-  /// The icon shown above the text.
+  /// Shown on its own, no tile or circle behind it. Thin Lucide weights
+  /// (e.g. `LucideIcons.users300`) suit the large size.
   final IconData icon;
 
-  /// Primary line, e.g. "No results found".
+  /// What's missing or what failed, e.g. "No payments today".
   final String title;
 
-  /// Optional supporting line shown below the title.
+  /// The likely reason or what to do, in plain words.
   final String? subtitle;
 
-  /// Optional widget (typically a button) shown below the subtitle.
-  final Widget? action;
-
-  /// Icon size. Defaults to 36.
-  final double iconSize;
-
-  /// Icon color. Defaults to the theme's muted icon color.
+  /// Defaults to brand blue, or slate-400 when [compact].
   final Color? iconColor;
 
-  /// Color type for the title.
-  final AppTextColor titleColorType;
+  /// The one next step. A filled button, or a text link when [compact].
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
-  /// Color type for the subtitle.
-  final AppTextColor subtitleColorType;
+  /// Optional real alternative, shown as a text link under the button.
+  final String? secondaryLabel;
+  final VoidCallback? onSecondary;
 
-  /// Title font size.
-  final double titleFontSize;
+  /// Any custom widget in place of [actionLabel]'s button.
+  final Widget? action;
 
-  /// Subtitle font size.
-  final double subtitleFontSize;
+  /// Smaller icon and type, text-link action.
+  final bool compact;
 
-  /// Space above the empty state.
+  /// Space above the state.
   final double topPadding;
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final resolvedIconColor =
-        iconColor ??
-        (isLight ? LightColors.iconIconMute : DarkColors.iconIconMute);
+    final hasAction = actionLabel != null && onAction != null;
+    final hasSecondary = secondaryLabel != null && onSecondary != null;
 
     return Padding(
       padding: EdgeInsets.only(top: topPadding),
       child: Center(
-        child: Column(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: compact ? 36 : 56,
+                color:
+                    iconColor ??
+                    (compact
+                        ? AppPalette.slate400
+                        : LightColors.primaryPrimaryDefault),
+              ),
+              SizedBox(height: compact ? 12 : 20),
+              AppText(
+                title,
+                textAlign: TextAlign.center,
+                colorType: AppTextColor.textStrong,
+                style: (compact ? AppTypography.title : AppTypography.h3)
+                    .copyWith(fontWeight: FontWeight.w800),
+              ),
+              if (subtitle != null) ...[
+                SizedBox(height: compact ? 2 : 6),
+                AppText(
+                  subtitle!,
+                  textAlign: TextAlign.center,
+                  colorType: AppTextColor.textBody,
+                  style: compact
+                      ? AppTypography.body
+                      : AppTypography.body.copyWith(
+                          fontSize: 15,
+                          height: 22 / 15,
+                        ),
+                ),
+              ],
+              if (action != null) ...[
+                SizedBox(height: compact ? 12 : 20),
+                _Hug(child: action!),
+              ] else if (hasAction) ...[
+                SizedBox(height: compact ? 8 : 20),
+                compact
+                    ? _TextLink(label: actionLabel!, onTap: onAction!)
+                    : _Hug(
+                        child: AppPrimaryButton(
+                          onPressed: onAction,
+                          child: AppText(actionLabel!),
+                        ),
+                      ),
+              ],
+              if (hasSecondary) ...[
+                const SizedBox(height: 4),
+                _TextLink(label: secondaryLabel!, onTap: onSecondary!),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A missing or failed piece inside a card, so the rest of the page keeps
+/// working: a plain icon, a title, a short line and an optional action on
+/// the right. It draws its own card.
+///
+/// ```dart
+/// AppInlineState(
+///   icon: LucideIcons.wallet,
+///   title: 'No payments today',
+///   message: 'Payments you record show up here.',
+///   actionLabel: 'Record',
+///   onAction: recordPayment,
+/// )
+/// AppInlineState.error(title: 'Couldn’t load fee summary', onRetry: model.retry)
+/// ```
+class AppInlineState extends StatelessWidget {
+  const AppInlineState({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.message,
+    this.iconColor = AppPalette.slate500,
+    this.actionLabel,
+    this.actionIcon,
+    this.onAction,
+  });
+
+  /// Red alert icon with a "Retry" action.
+  const AppInlineState.error({
+    super.key,
+    required this.title,
+    this.message = 'The rest of the page still works.',
+    VoidCallback? onRetry,
+  }) : icon = LucideIcons.circleAlert,
+       iconColor = LightColors.errorErrorDefault,
+       actionLabel = 'Retry',
+       actionIcon = LucideIcons.refreshCw500,
+       onAction = onRetry;
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String? message;
+  final String? actionLabel;
+
+  /// Small icon before [actionLabel], e.g. a refresh arrow.
+  final IconData? actionIcon;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Row(
+        children: [
+          Icon(icon, size: 24, color: iconColor),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppText(
+                  title,
+                  variant: AppTextVariant.subtitle,
+                  colorType: AppTextColor.textStrong,
+                ),
+                if (message != null)
+                  AppText(
+                    message!,
+                    colorType: AppTextColor.textBody,
+                    style: AppTypography.caption.copyWith(
+                      fontSize: 13,
+                      height: 18 / 13,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(width: 12),
+            _TextLink(label: actionLabel!, icon: actionIcon, onTap: onAction!),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Lets a button size itself to its label. Filled buttons stretch to any
+/// bounded width, and a row hands them an unbounded one.
+class _Hug extends StatelessWidget {
+  const _Hug({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      Row(mainAxisSize: MainAxisSize.min, children: [child]);
+}
+
+/// Blue text action that shrinks a touch when pressed.
+class _TextLink extends StatelessWidget {
+  const _TextLink({required this.label, required this.onTap, this.icon});
+
+  final String label;
+  final IconData? icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return BouncyButton(
+      onPressed: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: iconSize, color: resolvedIconColor),
-            SizedBox(height: AppSpacing.sm),
-            AppText(
-              title,
-              colorType: titleColorType,
-              fontSize: titleFontSize,
-              fontWeight: FontWeight.w600,
-              textAlign: TextAlign.center,
-            ),
-            if (subtitle != null) ...[
-              SizedBox(height: AppSpacing.xs),
-              AppText(
-                subtitle!,
-                colorType: subtitleColorType,
-                fontSize: subtitleFontSize,
-                textAlign: TextAlign.center,
-              ),
+            if (icon != null) ...[
+              Icon(icon, size: 16, color: LightColors.primaryPrimaryDefault),
+              const SizedBox(width: 6),
             ],
-            if (action != null) ...[SizedBox(height: AppSpacing.md), action!],
+            AppText(
+              label,
+              colorType: AppTextColor.primary,
+              style: AppTypography.subtitle,
+            ),
           ],
         ),
       ),

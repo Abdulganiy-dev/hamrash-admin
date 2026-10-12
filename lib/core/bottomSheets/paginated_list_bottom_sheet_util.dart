@@ -279,7 +279,8 @@ class _PaginatedSelectionBodyState<I>
       );
     }
     return const AppEmptyState(
-      icon: LucideIcons.search,
+      compact: true,
+      icon: LucideIcons.search300,
       title: 'No options found',
       subtitle: 'Try a different search.',
     );
@@ -290,6 +291,7 @@ class _PaginatedSelectionBodyState<I>
     if (_model.loading) return const _LoadingRow(label: 'Loading more…');
     if (_model.error != null) {
       return LoadErrorView(
+        compact: true,
         title: "Couldn't load more",
         message: _model.error,
         onRetry: _model.retry,

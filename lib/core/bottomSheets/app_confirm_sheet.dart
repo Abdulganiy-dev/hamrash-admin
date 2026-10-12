@@ -9,7 +9,7 @@ import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Floating sheet that asks before doing something: a tinted icon, a title,
+/// Floating sheet that asks before doing something: a plain icon, a title,
 /// a message, then the confirm button with Cancel under it — both within
 /// thumb reach. Use this for everyday confirmations; keep [AppAlertDialog]
 /// for things that must block everything.
@@ -47,7 +47,7 @@ class AppConfirmSheet extends StatefulWidget {
   final String title;
   final String? message;
 
-  /// Shown in a tinted circle above the title.
+  /// Shown on its own above the title, in the tone colour.
   final IconData? icon;
 
   /// Colours the icon. Defaults to [AppBadgeTone.info], or
@@ -159,17 +159,7 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (widget.icon != null) ...[
-              Container(
-                width: 48,
-                height: 48,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: tone.mute,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: tone.thin),
-                ),
-                child: Icon(widget.icon, size: 22, color: tone.base),
-              ),
+              Icon(widget.icon, size: 36, color: tone.base),
               const SizedBox(height: 14),
             ],
             AppText(
