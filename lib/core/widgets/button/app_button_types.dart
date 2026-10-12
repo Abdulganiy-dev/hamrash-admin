@@ -1,4 +1,27 @@
-enum AppButtonType { primary, secondary, tertiary, outline, text, icon }
+/// Filled types (primary, secondary, tertiary, destructive) use the lit
+/// gradient surface; tertiary is the pale brand-blue "tinted" button.
+enum AppButtonType {
+  primary,
+  secondary,
+  tertiary,
+  destructive,
+  outline,
+  text,
+  icon,
+}
+
+/// Button heights. Large for screen-level actions, small for rows and
+/// toolbars, medium everywhere else.
+enum AppButtonSize {
+  small(height: 36, horizontalPadding: 16),
+  medium(height: 48, horizontalPadding: 24),
+  large(height: 56, horizontalPadding: 24);
+
+  const AppButtonSize({required this.height, required this.horizontalPadding});
+
+  final double height;
+  final double horizontalPadding;
+}
 
 enum AppButtonBackgroundColor {
   primary,

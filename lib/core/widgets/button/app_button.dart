@@ -1,12 +1,20 @@
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
+import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/constants/radius_containers.dart';
+import 'package:hamrash_admin/core/widgets/button/app_button_fill.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:flutter/material.dart';
 import 'package:motor/motor.dart';
 
-const double kAppButtonDefaultHeight = 44;
+/// Height of a medium button ([AppButtonSize.medium]).
+const double kAppButtonDefaultHeight = 48;
 
-/// A customizable button widget with capsule style and haptic feedback
+/// A customizable button with haptic feedback and a spring press.
+///
+/// Filled types (primary, secondary, tertiary, destructive) are painted with
+/// [AppButtonSurface]: a gradient lit from above, rounded to
+/// [AppRadius.control].
 class AppButton extends StatefulWidget {
   /// The button type
   final AppButtonType type;
@@ -46,8 +54,11 @@ class AppButton extends StatefulWidget {
   /// Custom width for the button
   final double? width;
 
-  /// Custom height for the button
+  /// Custom height for the button (overrides [size])
   final double? height;
+
+  /// Preset height and padding. Defaults to [AppButtonSize.medium].
+  final AppButtonSize size;
 
   /// Custom padding for the button
   final EdgeInsetsGeometry? padding;
@@ -111,7 +122,8 @@ class AppButton extends StatefulWidget {
     this.onPressed,
     this.isDisabled = false,
     this.width,
-    this.height = kAppButtonDefaultHeight,
+    this.height,
+    this.size = AppButtonSize.medium,
     this.padding,
     this.textStyle,
     this.iconSize,
@@ -165,7 +177,9 @@ class _AppButtonState extends State<AppButton> {
   /// Target scale; [SingleMotionBuilder] animates toward this when it changes.
   double _scaleTarget = 1.0;
 
-  static const double _pressedScale = 0.95;
+  static const double _pressedScale = 0.97;
+
+  bool get _isPressed => _scaleTarget != 1.0;
 
   static const Motion _scaleMotion = Motion.snappySpring();
 
@@ -297,6 +311,10 @@ class _AppButtonState extends State<AppButton> {
         return isLight
             ? LightColors.primaryPrimaryMute
             : DarkColors.primaryPrimaryMute;
+      case AppButtonType.destructive:
+        return isLight
+            ? LightColors.errorErrorDefault
+            : DarkColors.errorErrorDefault;
       case AppButtonType.outline:
       case AppButtonType.text:
       case AppButtonType.icon:
@@ -427,11 +445,13 @@ class _AppButtonState extends State<AppButton> {
             ? LightColors.primaryOncolorWhite
             : DarkColors.primaryOncolorBlack;
       case AppButtonType.secondary:
-        return isLight
-            ? LightColors.textTextPrimary
-            : DarkColors.textTextPrimary;
+        return isLight ? AppPalette.slate700 : AppPalette.slate200;
       case AppButtonType.tertiary:
-        return isLight ? LightColors.textTextBrand : DarkColors.textTextBrand;
+        return isLight
+            ? LightColors.primaryPrimaryText
+            : DarkColors.primaryPrimaryText;
+      case AppButtonType.destructive:
+        return Colors.white;
       case AppButtonType.outline:
       case AppButtonType.text:
         return isLight
@@ -549,17 +569,16 @@ class _AppButtonState extends State<AppButton> {
       case AppButtonType.text:
         return const EdgeInsets.symmetric(horizontal: 12, vertical: 6);
       default:
-        return const EdgeInsets.symmetric(horizontal: 20, vertical: 10);
+        return EdgeInsets.symmetric(horizontal: widget.size.horizontalPadding);
     }
   }
 
   /// Get default text style
   TextStyle getDefaultTextStyle(BuildContext context) {
-    final baseStyle = TextStyle(
-      color: getForegroundColor(context),
-      fontWeight: FontWeight.w500,
-      fontSize: 18,
-    );
+    final scaleStyle = widget.size == AppButtonSize.small
+        ? AppTypography.subtitle
+        : AppTypography.title;
+    final baseStyle = scaleStyle.copyWith(color: getForegroundColor(context));
 
     return widget.textStyle != null
         ? baseStyle.merge(widget.textStyle)
@@ -594,22 +613,40 @@ class _AppButtonState extends State<AppButton> {
     return Icon(widget.icon, size: outerSize, color: fgColor);
   }
 
+  /// Paint for filled types: disabled look first, then any caller-supplied
+  /// gradient or color, then the default for [AppButton.type].
+  AppButtonFill _resolveFill(BuildContext context, bool isEnabled) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    if (!isEnabled) return AppButtonFill.disabled(isLight: isLight);
+    if (widget.haveGradient && widget.gradient != null) {
+      return AppButtonFill.fromGradient(widget.gradient!, pressed: _isPressed);
+    }
+    if (widget.backgroundColor != null || widget.backgroundColorType != null) {
+      return AppButtonFill.flat(
+        getBackgroundColor(context),
+        pressed: _isPressed,
+      );
+    }
+    return AppButtonFill.forType(
+      widget.type,
+      isLight: isLight,
+      pressed: _isPressed,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bgColor = getBackgroundColor(context);
     final fgColor = getForegroundColor(context);
     final borderColor = getBorderColor(context);
     final defaultPadding = getDefaultPadding();
     final textStyle = getDefaultTextStyle(context);
 
-    // Capsule shape (fully rounded)
+    final resolvedHeight = widget.height ?? widget.size.height;
     final borderRadius = BorderRadius.circular(
-      widget.radius ?? 1000,
-    ); // Very large radius for capsule
+      widget.radius ?? AppRadius.control,
+    );
     final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(
-        widget.radius ?? 1000,
-      ), // Very large radius for capsule
+      borderRadius: borderRadius,
       side: widget.type == AppButtonType.outline
           ? BorderSide(color: borderColor, width: 1.5)
           : widget.type == AppButtonType.secondary
@@ -664,29 +701,24 @@ class _AppButtonState extends State<AppButton> {
       case AppButtonType.primary:
       case AppButtonType.secondary:
       case AppButtonType.tertiary:
-        button = ElevatedButton(
-          onPressed: isEnabled
-              ? () {}
-              : null, // Empty callback to keep button enabled, actual logic in GestureDetector
-          style: ElevatedButton.styleFrom(
-            backgroundColor: showGradient ? Colors.transparent : bgColor,
-            foregroundColor: fgColor,
-            elevation: 10,
-            shadowColor: Colors.transparent,
-            surfaceTintColor: Colors.transparent,
-            padding: defaultPadding,
-            shape: shape,
-            minimumSize: Size(widget.width ?? 0, widget.height ?? 0),
-            fixedSize: widget.width != null || widget.height != null
-                ? Size(
-                    widget.width ?? double.infinity,
-                    widget.height ?? kAppButtonDefaultHeight,
-                  )
-                : null,
-            // Remove splash effect
-            splashFactory: NoSplash.splashFactory,
+      case AppButtonType.destructive:
+        final fill = _resolveFill(context, isEnabled);
+        button = AppButtonSurface(
+          fill: fill,
+          borderRadius: borderRadius,
+          width: widget.width,
+          height: resolvedHeight,
+          padding: defaultPadding,
+          child: IconTheme.merge(
+            data: IconThemeData(color: fgColor, size: 20),
+            child: DefaultTextStyle.merge(
+              style: textStyle.shadows == null
+                  ? textStyle.copyWith(shadows: fill.textShadows)
+                  : textStyle,
+              textAlign: TextAlign.center,
+              child: buttonContent,
+            ),
           ),
-          child: buttonContent,
         );
         break;
       case AppButtonType.outline:
@@ -699,11 +731,11 @@ class _AppButtonState extends State<AppButton> {
             side: BorderSide(color: borderColor, width: 1.5),
             padding: defaultPadding,
             shape: shape,
-            minimumSize: Size(widget.width ?? 0, widget.height ?? 0),
+            minimumSize: Size(widget.width ?? 0, resolvedHeight),
             fixedSize: widget.width != null || widget.height != null
                 ? Size(
                     widget.width ?? double.infinity,
-                    widget.height ?? kAppButtonDefaultHeight,
+                    resolvedHeight,
                   )
                 : null,
             // Remove splash effect
@@ -730,7 +762,7 @@ class _AppButtonState extends State<AppButton> {
         break;
     }
 
-    if (showGradient) {
+    if (showGradient && widget.type == AppButtonType.icon) {
       button = ClipRRect(
         borderRadius: borderRadius,
         child: DecoratedBox(

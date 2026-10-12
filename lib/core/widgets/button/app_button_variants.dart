@@ -2,7 +2,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:flutter/material.dart';
 
-/// Primary call-to-action — solid brand fill; use [child] for label (e.g. bold white [Text]).
+/// Primary call-to-action — lit brand-blue gradient; use [child] for the label.
 class AppPrimaryButton extends StatelessWidget {
   const AppPrimaryButton({
     super.key,
@@ -12,6 +12,7 @@ class AppPrimaryButton extends StatelessWidget {
     this.isLoading = false,
     this.width,
     this.height,
+    this.size = AppButtonSize.medium,
     this.padding,
     this.enableHaptic = true,
     this.haveGradient = false,
@@ -32,6 +33,7 @@ class AppPrimaryButton extends StatelessWidget {
   final bool isLoading;
   final double? width;
   final double? height;
+  final AppButtonSize size;
   final EdgeInsetsGeometry? padding;
   final bool enableHaptic;
   final bool haveGradient;
@@ -54,7 +56,8 @@ class AppPrimaryButton extends StatelessWidget {
       isDisabled: isDisabled,
       isLoading: isLoading,
       width: width,
-      height: height ?? kAppButtonDefaultHeight,
+      height: height,
+      size: size,
       padding: padding,
       enableHaptic: enableHaptic,
       haveGradient: haveGradient,
@@ -72,7 +75,7 @@ class AppPrimaryButton extends StatelessWidget {
   }
 }
 
-/// Secondary action — light surface, subtle border; use [child] for icon + text rows (e.g. Google).
+/// Secondary action — white-to-slate fill, subtle border; use [child] for icon + text rows (e.g. Google).
 class AppSecondaryButton extends StatelessWidget {
   const AppSecondaryButton({
     super.key,
@@ -82,6 +85,7 @@ class AppSecondaryButton extends StatelessWidget {
     this.isLoading = false,
     this.width,
     this.height,
+    this.size = AppButtonSize.medium,
     this.padding,
     this.enableHaptic = true,
     this.loadingIndicatorSize,
@@ -102,6 +106,7 @@ class AppSecondaryButton extends StatelessWidget {
   final bool isLoading;
   final double? width;
   final double? height;
+  final AppButtonSize size;
   final EdgeInsetsGeometry? padding;
   final bool enableHaptic;
   final double? loadingIndicatorSize;
@@ -124,7 +129,8 @@ class AppSecondaryButton extends StatelessWidget {
       isDisabled: isDisabled,
       isLoading: isLoading,
       width: width,
-      height: height ?? kAppButtonDefaultHeight,
+      height: height,
+      size: size,
       padding: padding,
       enableHaptic: enableHaptic,
       loadingIndicatorSize: loadingIndicatorSize,
@@ -142,7 +148,7 @@ class AppSecondaryButton extends StatelessWidget {
   }
 }
 
-/// Tertiary action — soft brand-tinted fill, brand text (e.g. “I already have an account”).
+/// Tinted action — pale brand-blue fill, dark brand text (e.g. “View class”).
 class AppTertiaryButton extends StatelessWidget {
   const AppTertiaryButton({
     super.key,
@@ -152,6 +158,7 @@ class AppTertiaryButton extends StatelessWidget {
     this.isLoading = false,
     this.width,
     this.height,
+    this.size = AppButtonSize.medium,
     this.padding,
     this.enableHaptic = true,
     this.loadingIndicatorSize,
@@ -170,6 +177,7 @@ class AppTertiaryButton extends StatelessWidget {
   final bool isLoading;
   final double? width;
   final double? height;
+  final AppButtonSize size;
   final EdgeInsetsGeometry? padding;
   final bool enableHaptic;
   final double? loadingIndicatorSize;
@@ -190,7 +198,8 @@ class AppTertiaryButton extends StatelessWidget {
       isDisabled: isDisabled,
       isLoading: isLoading,
       width: width,
-      height: height ?? kAppButtonDefaultHeight,
+      height: height,
+      size: size,
       padding: padding,
       enableHaptic: enableHaptic,
       loadingIndicatorSize: loadingIndicatorSize,
@@ -200,6 +209,61 @@ class AppTertiaryButton extends StatelessWidget {
       backgroundColorType: backgroundColorType,
       foregroundColor: foregroundColor,
       foregroundColorType: foregroundColorType,
+      radius: radius,
+      child: child,
+    );
+  }
+}
+
+/// Destructive action — lit red gradient for delete, remove, withdraw.
+class AppDestructiveButton extends StatelessWidget {
+  const AppDestructiveButton({
+    super.key,
+    required this.child,
+    this.onPressed,
+    this.isDisabled = false,
+    this.isLoading = false,
+    this.width,
+    this.height,
+    this.size = AppButtonSize.medium,
+    this.padding,
+    this.enableHaptic = true,
+    this.loadingIndicatorSize,
+    this.loadingIndicatorColor,
+    this.textStyle,
+    this.radius,
+  });
+
+  final Widget child;
+  final VoidCallback? onPressed;
+  final bool isDisabled;
+  final bool isLoading;
+  final double? width;
+  final double? height;
+  final AppButtonSize size;
+  final EdgeInsetsGeometry? padding;
+  final bool enableHaptic;
+  final double? loadingIndicatorSize;
+  final Color? loadingIndicatorColor;
+  final TextStyle? textStyle;
+  final double? radius;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppButton(
+      type: AppButtonType.destructive,
+      text: '',
+      onPressed: onPressed,
+      isDisabled: isDisabled,
+      isLoading: isLoading,
+      width: width,
+      height: height,
+      size: size,
+      padding: padding,
+      enableHaptic: enableHaptic,
+      loadingIndicatorSize: loadingIndicatorSize,
+      loadingIndicatorColor: loadingIndicatorColor,
+      textStyle: textStyle,
       radius: radius,
       child: child,
     );
