@@ -13,15 +13,15 @@ flutter_launcher_icons:
   # After regenerating, revert the tool's change to ios/Runner.xcodeproj/project.pbxproj
   # (it wrongly sets ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS).
   android: true
-  adaptive_icon_background: "#0168F0"
+  adaptive_icon_background: "#0866E8"
   adaptive_icon_foreground: "branding/app_icon/icon_light.png"
   min_sdk_android: 21
 
   web:
     generate: true
     image_path: "branding/app_icon/icon_light.png"
-    background_color: "#0168F0"
-    theme_color: "#0168F0"
+    background_color: "#0866E8"
+    theme_color: "#0866E8"
 
   macos:
     generate: true

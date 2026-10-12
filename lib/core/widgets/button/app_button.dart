@@ -5,6 +5,7 @@ import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_fill.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:motor/motor.dart';
 
@@ -91,8 +92,13 @@ class AppButton extends StatefulWidget {
   /// Whether to show haptic feedback (default: true)
   final bool enableHaptic;
 
-  /// Whether the button is in loading state
+  /// Busy: keeps its colour and width, shows an [AppSpinner] in place of
+  /// the label and ignores taps.
   final bool isLoading;
+
+  /// Words beside the spinner while [isLoading], e.g. "Saving…". Use them
+  /// when the wait may be more than a second or two.
+  final String? loadingText;
 
   /// Custom widget to display as label (overrides text/icon)
   final Widget? customLabel;
@@ -136,6 +142,7 @@ class AppButton extends StatefulWidget {
     this.borderColorType,
     this.enableHaptic = true,
     this.isLoading = false,
+    this.loadingText,
     this.customLabel,
     this.loadingIndicatorSize,
     this.loadingIndicatorColor,
@@ -291,7 +298,7 @@ class _AppButtonState extends State<AppButton> {
       }
     }
 
-    if (widget.isDisabled || widget.isLoading) {
+    if (widget.isDisabled) {
       return isLight
           ? LightColors.backgroundSurfaceMild
           : DarkColors.backgroundSurfaceMild;
@@ -426,7 +433,7 @@ class _AppButtonState extends State<AppButton> {
       }
     }
 
-    if (widget.isDisabled || widget.isLoading) {
+    if (widget.isDisabled) {
       return isLight ? LightColors.textDisabled : DarkColors.textDisabled;
     }
 
@@ -506,7 +513,7 @@ class _AppButtonState extends State<AppButton> {
       }
     }
 
-    if (widget.isDisabled || widget.isLoading) {
+    if (widget.isDisabled) {
       return isLight
           ? LightColors.strokeColourStrokeSoft
           : DarkColors.strokeColourStrokeSoft;
@@ -576,17 +583,32 @@ class _AppButtonState extends State<AppButton> {
         : baseStyle;
   }
 
-  /// Build loading indicator
-  Widget buildLoadingIndicator(BuildContext context, Color color) {
-    return SizedBox(
-      width: widget.loadingIndicatorSize ?? 20,
-      height: widget.loadingIndicatorSize ?? 20,
-      child: CircularProgressIndicator(
-        strokeWidth: 2,
-        valueColor: AlwaysStoppedAnimation<Color>(
-          widget.loadingIndicatorColor ?? color,
+  /// The busy label: a spinner in the label's colour, with [loadingText]
+  /// beside it when given.
+  Widget buildLoadingIndicator(
+    BuildContext context,
+    Color color,
+    TextStyle textStyle,
+  ) {
+    final spinner = AppSpinner(
+      size: widget.loadingIndicatorSize ?? 20,
+      color: widget.loadingIndicatorColor ?? color,
+    );
+    if (widget.loadingText == null) return spinner;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        spinner,
+        const SizedBox(width: 10),
+        Flexible(
+          child: AppText(
+            widget.loadingText!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textStyle,
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -640,9 +662,7 @@ class _AppButtonState extends State<AppButton> {
 
     Widget buttonContent;
 
-    if (widget.isLoading) {
-      buttonContent = buildLoadingIndicator(context, fgColor);
-    } else if (widget.child != null) {
+    if (widget.child != null) {
       buttonContent = widget.child!;
     } else if (widget.customLabel != null) {
       buttonContent = widget.customLabel!;
@@ -674,19 +694,48 @@ class _AppButtonState extends State<AppButton> {
       }
     }
 
+    // While busy, the label fades to a spinner. The label stays in the
+    // layout (invisible) so the button keeps its width.
+    buttonContent = Stack(
+      alignment: Alignment.center,
+      children: [
+        ExcludeSemantics(
+          child: Visibility.maintain(
+            visible: false,
+            child: widget.isLoading ? buttonContent : const SizedBox.shrink(),
+          ),
+        ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 160),
+          child: widget.isLoading
+              ? KeyedSubtree(
+                  key: const ValueKey('loading'),
+                  child: buildLoadingIndicator(context, fgColor, textStyle),
+                )
+              : KeyedSubtree(
+                  key: const ValueKey('label'),
+                  child: buttonContent,
+                ),
+        ),
+      ],
+    );
+
     // Build the appropriate button widget
     Widget button;
 
+    // Taps and the press bounce stop while busy, but the button keeps its
+    // normal look; only [AppButton.isDisabled] greys it out.
     final isEnabled = !widget.isDisabled && !widget.isLoading;
+    final looksEnabled = !widget.isDisabled;
     final showGradient =
-        widget.haveGradient && widget.gradient != null && isEnabled;
+        widget.haveGradient && widget.gradient != null && looksEnabled;
 
     switch (widget.type) {
       case AppButtonType.primary:
       case AppButtonType.secondary:
       case AppButtonType.tertiary:
       case AppButtonType.destructive:
-        final fill = _resolveFill(context, isEnabled);
+        final fill = _resolveFill(context, looksEnabled);
         button = AppButtonSurface(
           fill: fill,
           borderRadius: borderRadius,
@@ -707,7 +756,7 @@ class _AppButtonState extends State<AppButton> {
         break;
       case AppButtonType.outline:
         button = OutlinedButton(
-          onPressed: isEnabled
+          onPressed: looksEnabled
               ? () {}
               : null, // Empty callback to keep button enabled, actual logic in GestureDetector
           style: OutlinedButton.styleFrom(
@@ -728,7 +777,7 @@ class _AppButtonState extends State<AppButton> {
         break;
       case AppButtonType.text:
         button = TextButton(
-          onPressed: isEnabled
+          onPressed: looksEnabled
               ? () {}
               : null, // Empty callback to keep button enabled, actual logic in GestureDetector
           style: TextButton.styleFrom(

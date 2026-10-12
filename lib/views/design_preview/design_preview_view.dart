@@ -13,6 +13,7 @@ import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
+import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_segmented_control.dart';
 import 'package:hamrash_admin/core/widgets/app_shimmer.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
@@ -90,6 +91,25 @@ class _DesignPreviewViewState extends State<DesignPreviewView> {
   DateTime? _attendanceDate = DateTime.now();
   DateTimeRange? _midTerm;
   TimeOfDay? _assembly = const TimeOfDay(hour: 7, minute: 45);
+
+  // Loading and refresh
+  String? _busy;
+  int _refreshes = 0;
+
+  /// Shows [key]'s button as busy for a moment, then a success toast.
+  Future<void> _runBusy(String key, String done) async {
+    setState(() => _busy = key);
+    await Future<void>.delayed(const Duration(milliseconds: 1800));
+    if (!mounted) return;
+    setState(() => _busy = null);
+    AppToast.show(done, type: AppToastType.success);
+  }
+
+  /// Pretends to reload; every third try fails.
+  Future<void> _refresh() async {
+    await Future<void>.delayed(const Duration(milliseconds: 1400));
+    if (++_refreshes % 3 == 0) throw Exception('offline');
+  }
 
   // ── Toasts ──────────────────────────────────────────────────────────
 
@@ -373,16 +393,58 @@ class _DesignPreviewViewState extends State<DesignPreviewView> {
   Widget build(BuildContext context) {
     return DefaultScaffold(
       title: 'Design preview',
-      subtitle: 'Pickers, toasts, sheets and feedback',
+      subtitle: 'Loading, pickers, toasts, sheets and feedback',
       body: Builder(
-        builder: (context) => ListView(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            ScaffoldInsets.bodyTopInsetOf(context),
-            16,
-            ScaffoldInsets.bodyBottomInsetOf(context) + 24,
-          ),
+        builder: (context) => AppRefreshScrollView.children(
+          onRefresh: _refresh,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
+            const _Heading('Loading buttons'),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const AppText(
+                    'Tap one to see it busy. Pull this page down to refresh; '
+                    'every third refresh fails so you can see the error.',
+                    variant: AppTextVariant.body,
+                  ),
+                  const SizedBox(height: 16),
+                  AppPrimaryButton(
+                    width: double.infinity,
+                    isLoading: _busy == 'save',
+                    onPressed: () => _runBusy('save', 'Attendance saved'),
+                    child: const AppText('Save attendance'),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppSecondaryButton(
+                          width: double.infinity,
+                          isLoading: _busy == 'export',
+                          loadingText: 'Exporting…',
+                          onPressed: () => _runBusy('export', 'List exported'),
+                          child: const AppText('Export list'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: AppDestructiveButton(
+                          width: double.infinity,
+                          isLoading: _busy == 'withdraw',
+                          loadingText: 'Withdrawing…',
+                          onPressed: () =>
+                              _runBusy('withdraw', 'Chiamaka withdrawn'),
+                          child: const AppText('Withdraw'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
             const _Heading('Picker fields'),
             AppCard(
               child: Form(

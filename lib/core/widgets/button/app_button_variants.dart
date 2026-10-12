@@ -10,6 +10,7 @@ class AppPrimaryButton extends StatelessWidget {
     this.onPressed,
     this.isDisabled = false,
     this.isLoading = false,
+    this.loadingText,
     this.width,
     this.height,
     this.size = AppButtonSize.medium,
@@ -31,6 +32,9 @@ class AppPrimaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isDisabled;
   final bool isLoading;
+
+  /// Words beside the spinner while loading, e.g. "Saving…".
+  final String? loadingText;
   final double? width;
   final double? height;
   final AppButtonSize size;
@@ -55,6 +59,7 @@ class AppPrimaryButton extends StatelessWidget {
       onPressed: onPressed,
       isDisabled: isDisabled,
       isLoading: isLoading,
+      loadingText: loadingText,
       width: width,
       height: height,
       size: size,
@@ -83,6 +88,7 @@ class AppSecondaryButton extends StatelessWidget {
     this.onPressed,
     this.isDisabled = false,
     this.isLoading = false,
+    this.loadingText,
     this.width,
     this.height,
     this.size = AppButtonSize.medium,
@@ -104,6 +110,9 @@ class AppSecondaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isDisabled;
   final bool isLoading;
+
+  /// Words beside the spinner while loading, e.g. "Saving…".
+  final String? loadingText;
   final double? width;
   final double? height;
   final AppButtonSize size;
@@ -128,6 +137,7 @@ class AppSecondaryButton extends StatelessWidget {
       onPressed: onPressed,
       isDisabled: isDisabled,
       isLoading: isLoading,
+      loadingText: loadingText,
       width: width,
       height: height,
       size: size,
@@ -156,6 +166,7 @@ class AppTertiaryButton extends StatelessWidget {
     this.onPressed,
     this.isDisabled = false,
     this.isLoading = false,
+    this.loadingText,
     this.width,
     this.height,
     this.size = AppButtonSize.medium,
@@ -175,6 +186,9 @@ class AppTertiaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isDisabled;
   final bool isLoading;
+
+  /// Words beside the spinner while loading, e.g. "Saving…".
+  final String? loadingText;
   final double? width;
   final double? height;
   final AppButtonSize size;
@@ -197,6 +211,7 @@ class AppTertiaryButton extends StatelessWidget {
       onPressed: onPressed,
       isDisabled: isDisabled,
       isLoading: isLoading,
+      loadingText: loadingText,
       width: width,
       height: height,
       size: size,
@@ -223,6 +238,7 @@ class AppDestructiveButton extends StatelessWidget {
     this.onPressed,
     this.isDisabled = false,
     this.isLoading = false,
+    this.loadingText,
     this.width,
     this.height,
     this.size = AppButtonSize.medium,
@@ -238,6 +254,9 @@ class AppDestructiveButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isDisabled;
   final bool isLoading;
+
+  /// Words beside the spinner while loading, e.g. "Saving…".
+  final String? loadingText;
   final double? width;
   final double? height;
   final AppButtonSize size;
@@ -256,6 +275,7 @@ class AppDestructiveButton extends StatelessWidget {
       onPressed: onPressed,
       isDisabled: isDisabled,
       isLoading: isLoading,
+      loadingText: loadingText,
       width: width,
       height: height,
       size: size,
