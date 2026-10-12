@@ -3,6 +3,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// What a badge means. Colour follows meaning, never decoration.
 enum AppBadgeTone {
@@ -233,7 +234,7 @@ class AppFilterChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (showCheck) ...[
-            Icon(Icons.check_rounded, size: 16, color: text),
+            Icon(LucideIcons.check600, size: 16, color: text),
             const SizedBox(width: 6),
           ],
           Text(
@@ -252,7 +253,7 @@ class AppFilterChip extends StatelessWidget {
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: enabled ? onRemove : null,
-              child: Icon(Icons.close_rounded, size: 18, color: text),
+              child: Icon(LucideIcons.x500, size: 18, color: text),
             ),
           ],
         ],

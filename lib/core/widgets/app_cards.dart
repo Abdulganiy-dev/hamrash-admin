@@ -11,15 +11,15 @@ import 'package:hamrash_admin/core/widgets/app_surface.dart';
 class AppShadows {
   AppShadows._();
 
-  /// Cards on the page: tight contact, soft depth, wide faint lift.
+  /// Cards on the page: a tight contact shadow plus a soft blue-slate float
+  /// pooled under the card. Paired with the 1px slate border on [AppCard].
   static const List<BoxShadow> floating = [
-    BoxShadow(color: Color(0x0A0F172A), offset: Offset(0, 1), blurRadius: 2),
-    BoxShadow(color: Color(0x0A0F172A), offset: Offset(0, 4), blurRadius: 10),
+    BoxShadow(color: Color(0x080F172A), offset: Offset(0, 1), blurRadius: 2),
     BoxShadow(
-      color: Color(0x1A0F172A),
-      offset: Offset(0, 16),
-      blurRadius: 26,
-      spreadRadius: -12,
+      color: Color(0x1A25488C),
+      offset: Offset(0, 14),
+      blurRadius: 27,
+      spreadRadius: -10,
     ),
   ];
 

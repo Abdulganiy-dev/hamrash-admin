@@ -1,6 +1,7 @@
 import 'package:hamrash_admin/core/utils/extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 
 class ViewUtil {
@@ -34,7 +35,7 @@ class ViewUtil {
 
         actions: [
           GestureDetector(
-            child: Icon(Icons.close, color: Colors.white),
+            child: Icon(LucideIcons.x, color: Colors.white),
             onTap: () {
               ScaffoldMessenger.of(navContext).hideCurrentMaterialBanner();
             },

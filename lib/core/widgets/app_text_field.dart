@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_field_style.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Text field with the label above, helper or error text below.
 ///
@@ -316,7 +317,7 @@ class _AppTextFieldState extends State<AppTextField> {
         behavior: HitTestBehavior.opaque,
         onTap: () => setState(() => _obscured = !_obscured),
         child: Icon(
-          _obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+          _obscured ? LucideIcons.eye : LucideIcons.eyeOff,
         ),
       );
     }
@@ -372,7 +373,7 @@ class _AppTextFieldState extends State<AppTextField> {
       message = Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.error_outline_rounded, size: 16, color: errorColor),
+          Icon(LucideIcons.circleAlert500, size: 16, color: errorColor),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
