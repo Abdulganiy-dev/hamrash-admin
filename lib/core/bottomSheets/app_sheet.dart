@@ -265,7 +265,7 @@ class AppSheet extends StatelessWidget {
         if (showGrabber) const _Grabber() else const SizedBox(height: 8),
         if (hasHeader)
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 10, 0),
+            padding:  EdgeInsets.fromLTRB(20, 8, 10,subtitle != null ? 10 : 0),
             child: _Header(
               title: title,
               subtitle: subtitle,
@@ -341,33 +341,29 @@ class _Header extends StatelessWidget {
         children: [
           if (leading != null) ...[leading!, const SizedBox(width: 12)],
           Expanded(
-            child: Padding(
-              // Line the title up with the middle of the close button.
-              padding: EdgeInsets.only(top: subtitle == null ? 0 : 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (title != null)
-                    AppText(
-                      title!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.h3.copyWith(
-                        color: LightColors.textStrong,
-                      ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (title != null)
+                  AppText(
+                    title!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.h3.copyWith(
+                      color: LightColors.textStrong,
                     ),
-                  if (subtitle != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: AppText(
-                        subtitle!,
-                        variant: AppTextVariant.body,
-                        colorType: AppTextColor.textBody,
-                      ),
+                  ),
+                if (subtitle != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: AppText(
+                      subtitle!,
+                      variant: AppTextVariant.body,
+                      colorType: AppTextColor.textBody,
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
           if (showCloseButton) ...[

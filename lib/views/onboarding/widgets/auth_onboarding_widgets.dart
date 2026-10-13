@@ -20,7 +20,7 @@ class AuthScreenFrame extends StatelessWidget {
     required this.footer,
     this.showBackButton = true,
     this.onBack,
-    this.shouldShowKeyBoardDone = true
+    this.shouldShowKeyBoardDone = true,
   });
 
   final Widget scrollContent;
@@ -32,11 +32,14 @@ class AuthScreenFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final keyboardOpen = AppKeyboardBar.isKeyboardOpen(context);
+
     return DefaultScaffold(
       backgroundColor: AppPalette.linen,
       showBackButton: showBackButton,
       onBackPressed: onBack,
-
+      // The keyboard and its Done bar float over the page; it doesn't move.
+      extendBody: keyboardOpen,
       bottomNavigationBar: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
         switchInCurve: Curves.easeOutCubic,
@@ -58,7 +61,7 @@ class AuthScreenFrame extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           children: [...previousChildren, ?currentChild],
         ),
-        child: AppKeyboardBar.isKeyboardOpen(context) && shouldShowKeyBoardDone
+        child: keyboardOpen && shouldShowKeyBoardDone
             ? const AppKeyboardBar(key: ValueKey('keyboard-bar'))
             : SafeArea(
                 key: _footerKey,

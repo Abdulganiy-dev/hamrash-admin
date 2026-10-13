@@ -6,13 +6,14 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
+import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
-import 'package:hamrash_admin/core/widgets/navigation/app_tab_shell.dart';
+import 'package:hamrash_admin/core/widgets/navigation/app_nav_metrics.dart';
 import 'package:hamrash_admin/views/home/home_view_model.dart';
 import 'package:hamrash_admin/views/schools/widgets/school_logo.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -50,44 +51,29 @@ class HomeScreen extends StatelessWidget {
           onOpenSchoolDetails: onOpenSchoolDetails,
         ),
         onViewModelReady: (model) => model.load(),
-        builder: (context, model, _) {
-          final clearance =
-              AppTabShellScope.maybeOf(context)?.bottomClearance ??
-              MediaQuery.paddingOf(context).bottom;
-          return DefaultScaffold(
-            appBarType: DefaultScaffoldAppBarType.none,
-            backgroundColor: AppPalette.linen,
-            body: RefreshIndicator(
-              color: AppPalette.aubergine500,
-              onRefresh: model.load,
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(
-                  AppSpacing.md,
-                  MediaQuery.paddingOf(context).top,
-                  AppSpacing.md,
-                  clearance,
+        builder: (context, model, _) => DefaultScaffold(
+          backgroundColor: AppPalette.linen,
+          // The school header is this screen's app bar: it stays pinned in
+          // the 60px slot and content fades out under it.
+          customAppBar: _Header(
+            model: model,
+            onAvatarTap: () => onAvatarTap(model.displayName, model.photoUrl),
+          ),
+          body: AppRefreshScrollView.children(
+            onRefresh: model.refresh,
+            children: [
+              if (model.error != null)
+                LoadErrorView(onRetry: model.load)
+              else if (model.progress case final progress?)
+                _SetupCard(model: model, progress: progress)
+              else
+                const Padding(
+                  padding: EdgeInsets.only(top: AppSpacing.xxl),
+                  child: Center(child: AppSpinner()),
                 ),
-                children: [
-                  _Header(
-                    model: model,
-                    onAvatarTap: () =>
-                        onAvatarTap(model.displayName, model.photoUrl),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  if (model.error != null)
-                    LoadErrorView(onRetry: model.load)
-                  else if (model.progress case final progress?)
-                    _SetupCard(model: model, progress: progress)
-                  else
-                    const Padding(
-                      padding: EdgeInsets.only(top: AppSpacing.xxl),
-                      child: Center(child: AppSpinner()),
-                    ),
-                ],
-              ),
-            ),
-          );
-        },
+            ],
+          ),
+        ),
       );
 }
 
@@ -98,8 +84,10 @@ class _Header extends StatelessWidget {
   final VoidCallback onAvatarTap;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 60,
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppNavMetrics.appBarSideInset,
+    ),
     child: Row(
       children: [
         SchoolLogo(

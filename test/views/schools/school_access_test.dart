@@ -62,7 +62,8 @@ class _Members extends OrganizationMemberService {
 class _Schools extends SchoolService {
   _Schools(this.progress, {this.ownerName, this.me}) : super(_client());
 
-  final SetupProgress progress;
+  SetupProgress progress;
+  bool fail = false;
   final String? ownerName;
   final StaffProfile? me;
   List<String>? askedMemberIds;
@@ -77,8 +78,10 @@ class _Schools extends SchoolService {
   }
 
   @override
-  Future<SetupProgress> getSetupProgress(Organization organization) async =>
-      progress;
+  Future<SetupProgress> getSetupProgress(Organization organization) async {
+    if (fail) throw StateError('offline');
+    return progress;
+  }
 
   @override
   Future<String?> getOwnerName(String organizationId) async => ownerName;
@@ -261,6 +264,52 @@ void main() {
         model.beingSetUpMessage,
         startsWith('Amina Bello, the owner, is getting Kings College ready.'),
       );
+    });
+  });
+
+  group('Home refresh', () {
+    final school = MemberSchool(
+      organization: kings,
+      roles: const [OrganizationMemberRole.owner],
+    );
+
+    test(
+      'a failed refresh keeps the card and rethrows for the toast',
+      () async {
+        final service = _Schools(
+          const SetupProgress({SetupStep.schoolDetails}),
+        );
+        final model = HomeViewModel(
+          school: school,
+          signedInName: 'Amina',
+          service: service,
+        );
+        await model.load();
+
+        service.fail = true;
+        await expectLater(model.refresh(), throwsStateError);
+        expect(model.error, isNull);
+        expect(model.progress?.doneCount, 1);
+
+        service
+          ..fail = false
+          ..progress = const SetupProgress({
+            SetupStep.schoolDetails,
+            SetupStep.academicCalendar,
+          });
+        await model.refresh();
+        expect(model.progress?.doneCount, 2);
+      },
+    );
+
+    test('a first load that fails shows the error view', () async {
+      final model = HomeViewModel(
+        school: school,
+        signedInName: 'Amina',
+        service: _Schools(const SetupProgress({}))..fail = true,
+      );
+      await model.load();
+      expect(model.error, isNotNull);
     });
   });
 

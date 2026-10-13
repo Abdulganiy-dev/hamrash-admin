@@ -140,6 +140,15 @@ class DefaultScaffold extends StatelessWidget {
   @Deprecated('Body is always laid out beneath a custom app bar layer.')
   final bool extendBodyBehindAppBar;
 
+  /// Off by default: the keyboard (and any bar riding on it) floats over
+  /// the page instead of shrinking it, so content never jumps when a field
+  /// is focused.
+  final bool resizeToAvoidBottomInset;
+
+  /// Lay the body out behind [bottomNavigationBar] too, e.g. while a
+  /// keyboard bar floats over the page.
+  final bool extendBody;
+
   const DefaultScaffold({
     super.key,
     required this.body,
@@ -155,6 +164,8 @@ class DefaultScaffold extends StatelessWidget {
     this.extendBodyBehindAppBar = true,
     this.floatingActionButton,
     this.bottomNavigationBar,
+    this.resizeToAvoidBottomInset = false,
+    this.extendBody = false,
     this.drawer,
     this.endDrawer,
     this.automaticallyImplyLeading = true,
@@ -288,6 +299,8 @@ class DefaultScaffold extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: surface,
+      resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+      extendBody: extendBody,
       body: ScaffoldInsets(
         topInset: topInset,
         appBarHeight: appBarHeight,

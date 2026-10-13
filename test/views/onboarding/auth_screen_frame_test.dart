@@ -58,4 +58,48 @@ void main() {
     expect(find.text('Done'), findsNothing);
     expect(find.text('Join school'), findsOneWidget);
   });
+
+  testWidgets('the keyboard floats over the page without moving it', (
+    tester,
+  ) async {
+    addTearDown(tester.view.resetViewInsets);
+    final field = FocusNode();
+    addTearDown(field.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AuthScreenFrame(
+          showBackButton: false,
+          scrollContent: Column(
+            children: [
+              const Text('Title'),
+              // Low enough that the keyboard will cover it.
+              const SizedBox(height: 400),
+              TextField(key: const Key('field'), focusNode: field),
+            ],
+          ),
+          footer: const Text('Join school'),
+        ),
+      ),
+    );
+    final titleBefore = tester.getTopLeft(find.text('Title'));
+    final fieldBefore = tester.getTopLeft(find.byKey(const Key('field')));
+
+    await tester.showKeyboard(find.byKey(const Key('field')));
+    await tester.pump();
+    tester.view.viewInsets = const FakeViewPadding(bottom: 900);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(tester.getTopLeft(find.text('Title')), titleBefore);
+    expect(tester.getTopLeft(find.byKey(const Key('field'))), fieldBefore);
+
+    // The Done bar still rides just above the keyboard.
+    final keyboardTop =
+        (tester.view.physicalSize.height - tester.view.viewInsets.bottom) /
+        tester.view.devicePixelRatio;
+    final doneBottom = tester.getBottomLeft(find.text('Done')).dy;
+    expect(doneBottom, lessThan(keyboardTop));
+    expect(doneBottom, greaterThan(keyboardTop - 52));
+  });
 }

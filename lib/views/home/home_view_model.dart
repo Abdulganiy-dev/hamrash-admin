@@ -79,22 +79,12 @@ class HomeViewModel extends BaseViewModel {
         "appear here as they're added.";
   }
 
+  /// First load: shows the spinner, then the card or an error view.
   Future<void> load() async {
     _error = null;
     notifyListeners();
     try {
-      final results = await Future.wait<Object?>([
-        _service.getSetupProgress(school.organization),
-        // The header still works without these, so a failure isn't fatal.
-        _service
-            .getMyStaffProfile(school.id, school.memberIds)
-            .catchError((_) => null),
-        if (!school.canManage)
-          _service.getOwnerName(school.id).catchError((_) => null),
-      ]);
-      _progress = results[0] as SetupProgress;
-      _me = results[1] as StaffProfile?;
-      if (results.length > 2) _ownerName = results[2] as String?;
+      await _fetch();
     } catch (error, stackTrace) {
       _error = error;
       await handleError(
@@ -105,6 +95,40 @@ class HomeViewModel extends BaseViewModel {
       );
     }
     notifyListeners();
+  }
+
+  /// Pull to refresh: keeps what's on screen and rethrows a failure, so
+  /// [AppRefreshScrollView] can spring back with its error toast.
+  Future<void> refresh() async {
+    try {
+      await _fetch();
+      _error = null;
+    } catch (error, stackTrace) {
+      await handleError(
+        error,
+        stackTrace: stackTrace,
+        context: 'Home.refresh',
+        showErrorModal: false,
+      );
+      rethrow;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> _fetch() async {
+    final results = await Future.wait<Object?>([
+      _service.getSetupProgress(school.organization),
+      // The header still works without these, so a failure isn't fatal.
+      _service
+          .getMyStaffProfile(school.id, school.memberIds)
+          .catchError((_) => null),
+      if (!school.canManage)
+        _service.getOwnerName(school.id).catchError((_) => null),
+    ]);
+    _progress = results[0] as SetupProgress;
+    _me = results[1] as StaffProfile?;
+    if (results.length > 2) _ownerName = results[2] as String?;
   }
 
   void openStep(SetupStep step) {
