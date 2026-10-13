@@ -32,8 +32,11 @@ class MyApp extends StatelessWidget {
       config: ClerkAuthConfig(publishableKey: env.clerkPublishableKey),
 
       child: ClerkErrorListener(
-        handler: (context, error) =>
-            ErrorLoggerService.logError(error, context: 'ClerkErrorListener'),
+        handler:
+            (context, error) => ErrorLoggerService.logError(
+              error,
+              context: 'ClerkErrorListener',
+            ),
         child: MaterialApp(
           navigatorKey: ViewUtil.navigatorKey,
           debugShowCheckedModeBanner: env.enableVerboseLogs,
@@ -87,7 +90,9 @@ class _OnboardingAuthGate extends StatelessWidget {
           return JoinScreen(
             email: user.email ?? '',
             initialName: user.name,
+            memberships: model.memberships,
             onUseAnotherAccount: signOut,
+            onJoin: model.check,
             onSignOut: signOut,
             onBack: signOut,
           );

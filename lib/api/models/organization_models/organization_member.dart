@@ -15,12 +15,27 @@ enum OrganizationMemberRole {
 
   final String value;
 
-  static OrganizationMemberRole fromJson(String value) =>
-      OrganizationMemberRole.values.firstWhere(
-        (role) => role.value == value,
-        orElse: () =>
-            throw FormatException('Unknown organization member role: $value'),
-      );
+  String get displayName => switch (this) {
+    OrganizationMemberRole.vicePrincipal => 'Vice Principal',
+    _ => '${name[0].toUpperCase()}${name.substring(1)}',
+  };
+
+  bool get isAdminAppRole => switch (this) {
+    OrganizationMemberRole.owner ||
+    OrganizationMemberRole.admin ||
+    OrganizationMemberRole.principal ||
+    OrganizationMemberRole.vicePrincipal ||
+    OrganizationMemberRole.bursar => true,
+    _ => false,
+  };
+
+  static OrganizationMemberRole fromJson(
+    String value,
+  ) => OrganizationMemberRole.values.firstWhere(
+    (role) => role.value == value,
+    orElse:
+        () => throw FormatException('Unknown organization member role: $value'),
+  );
 }
 
 enum OrganizationMemberStatus {
@@ -35,8 +50,11 @@ enum OrganizationMemberStatus {
   static OrganizationMemberStatus fromJson(String value) =>
       OrganizationMemberStatus.values.firstWhere(
         (status) => status.value == value,
-        orElse: () =>
-            throw FormatException('Unknown organization member status: $value'),
+        orElse:
+            () =>
+                throw FormatException(
+                  'Unknown organization member status: $value',
+                ),
       );
 }
 
@@ -81,11 +99,12 @@ class OrganizationMember {
       joinedAt: _dateTimeOrNull(json['joined_at']),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
-      organization: organizationJson == null
-          ? null
-          : Organization.fromJson(
-              Map<String, dynamic>.from(organizationJson as Map),
-            ),
+      organization:
+          organizationJson == null
+              ? null
+              : Organization.fromJson(
+                Map<String, dynamic>.from(organizationJson as Map),
+              ),
     );
   }
 

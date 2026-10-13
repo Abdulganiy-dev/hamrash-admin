@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
@@ -25,7 +26,7 @@ class JoinScreen extends StatelessWidget {
     this.newRole = 'Principal',
     this.coveredRole = 'Admin',
     this.initialCode,
-    this.onContinue,
+    this.memberships = const [],
     this.onUseAnotherAccount,
     this.onJoin,
     this.onDifferentCode,
@@ -45,7 +46,7 @@ class JoinScreen extends StatelessWidget {
   final String newRole;
   final String coveredRole;
   final String? initialCode;
-  final Future<JoinPhase?> Function(String code)? onContinue;
+  final List<OrganizationMember> memberships;
   final VoidCallback? onUseAnotherAccount;
   final VoidCallback? onJoin;
   final VoidCallback? onDifferentCode;
@@ -55,27 +56,28 @@ class JoinScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       ViewModelBuilder<JoinViewModel>.reactive(
-        viewModelBuilder: () => JoinViewModel(
-          phase: initialPhase,
-          email: email,
-          initialName: initialName,
-          schoolName: schoolName,
-          location: location,
-          role: role,
-          schoolCode: schoolCode,
-          targetApp: targetApp,
-          currentRole: currentRole,
-          newRole: newRole,
-          coveredRole: coveredRole,
-          initialCode: initialCode,
-          onContinue: onContinue,
-          onUseAnotherAccount: onUseAnotherAccount,
-          onJoin: onJoin,
-          onDifferentCode: onDifferentCode,
-          onSignOut: onSignOut,
-        ),
-        builder: (context, model, _) =>
-            _JoinContent(model: model, onBack: onBack),
+        viewModelBuilder:
+            () => JoinViewModel(
+              phase: initialPhase,
+              email: email,
+              initialName: initialName,
+              schoolName: schoolName,
+              location: location,
+              role: role,
+              schoolCode: schoolCode,
+              targetApp: targetApp,
+              currentRole: currentRole,
+              newRole: newRole,
+              coveredRole: coveredRole,
+              initialCode: initialCode,
+              memberships: memberships,
+              onUseAnotherAccount: onUseAnotherAccount,
+              onJoin: onJoin,
+              onDifferentCode: onDifferentCode,
+              onSignOut: onSignOut,
+            ),
+        builder:
+            (context, model, _) => _JoinContent(model: model, onBack: onBack),
       );
 }
 
@@ -94,7 +96,8 @@ class _JoinContent extends StatelessWidget {
     scrollContent: switch (model.phase) {
       JoinPhase.enterCode ||
       JoinPhase.wrongCode ||
-      JoinPhase.tooManyTries => _buildCodeEntry(),
+      JoinPhase.tooManyTries ||
+      JoinPhase.schoolInactive => _buildCodeEntry(),
       JoinPhase.confirmStaff => _buildStaffConfirmation(),
       JoinPhase.codeForAnotherApp => _buildWrongApp(),
       JoinPhase.confirmOwner => _buildOwnerConfirmation(),
@@ -104,7 +107,8 @@ class _JoinContent extends StatelessWidget {
     footer: switch (model.phase) {
       JoinPhase.enterCode ||
       JoinPhase.wrongCode ||
-      JoinPhase.tooManyTries => _buildCodeFooter(),
+      JoinPhase.tooManyTries ||
+      JoinPhase.schoolInactive => _buildCodeFooter(),
       JoinPhase.confirmStaff => _buildStaffFooter(),
       JoinPhase.codeForAnotherApp => _buildWrongAppFooter(),
       JoinPhase.confirmOwner => _buildOwnerFooter(),
@@ -116,10 +120,7 @@ class _JoinContent extends StatelessWidget {
   Widget _buildCodeEntry() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const AppText(
-        'Join your school',
-        variant: AppTextVariant.h1,
-      ),
+      const AppText('Join your school', variant: AppTextVariant.h1),
       const SizedBox(height: AppSpacing.ms),
       const AppText(
         'Enter the 8-character code you were given. Owners get theirs from Hamrash; everyone else from their school.',
@@ -131,16 +132,24 @@ class _JoinContent extends StatelessWidget {
         controller: model.code,
         enabled: !model.isCodeLocked,
         errorMessage: model.codeError,
-        helperMessage: model.codeError == null && !model.isCodeLocked
-            ? 'Letters and numbers only. The dash is added for you.'
-            : null,
+        helperMessage:
+            model.codeError == null && !model.isCodeLocked
+                ? 'Letters and numbers only. The dash is added for you.'
+                : null,
       ),
-      if (model.phase == JoinPhase.wrongCode) ...[
+      if (model.phase == JoinPhase.wrongCode && model.triesLeft != null) ...[
         const SizedBox(height: AppSpacing.sm),
-        const AppText(
-          '3 more tries this hour.',
+        AppText(
+          '${model.triesLeft} more tries this hour.',
           variant: AppTextVariant.caption,
           colorType: AppTextColor.textMuted,
+        ),
+      ],
+      if (model.phase == JoinPhase.schoolInactive) ...[
+        const SizedBox(height: AppSpacing.md),
+        AuthWarningBanner(
+          message:
+              '${model.schoolName} is paused\nAsk your school to contact Hamrash before joining.',
         ),
       ],
       if (model.isCodeLocked) ...[
@@ -156,8 +165,9 @@ class _JoinContent extends StatelessWidget {
       AppPrimaryButton(
         size: AppButtonSize.large,
         isDisabled: !model.canContinue,
+        isLoading: model.busy,
         onPressed: model.continueWithCode,
-        child: const AppText('Continue', variant: AppTextVariant.button),
+        child: const AppText('Continue'),
       ),
       const SizedBox(height: AppSpacing.md),
       AuthAccountLine(email: model.email, onTap: model.useAnotherAccount),
@@ -167,10 +177,7 @@ class _JoinContent extends StatelessWidget {
   Widget _buildStaffConfirmation() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const AppText(
-        'Is this your school?',
-        variant: AppTextVariant.h1,
-      ),
+      const AppText('Is this your school?', variant: AppTextVariant.h1),
       const SizedBox(height: AppSpacing.ms),
       const AppText(
         'Check the details before you join. Your code is only used once you tap Join.',
@@ -192,6 +199,7 @@ class _JoinContent extends StatelessWidget {
     children: [
       AppPrimaryButton(
         size: AppButtonSize.large,
+        isLoading: model.busy,
         onPressed: model.joinSchool,
         child: AppText(
           'Join ${model.schoolName}',
@@ -258,10 +266,7 @@ class _JoinContent extends StatelessWidget {
   Widget _buildOwnerConfirmation() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const AppText(
-        'Welcome, owner',
-        variant: AppTextVariant.h1,
-      ),
+      const AppText('Welcome, owner', variant: AppTextVariant.h1),
       const SizedBox(height: AppSpacing.ms),
       const AppText(
         "Hamrash set up your school. Check it's right and tell us your name for the staff list.",
@@ -279,7 +284,8 @@ class _JoinContent extends StatelessWidget {
         controller: model.fullName,
         label: 'Your full name',
         hintText: 'Amina Bello',
-        helperText: 'From your Apple account. Shown to your staff.',
+        helperText: 'From your signed in account. Shown to your staff.',
+        errorText: model.nameError,
         textCapitalization: TextCapitalization.words,
       ),
       const SizedBox(height: AppSpacing.md),
@@ -324,7 +330,9 @@ class _JoinContent extends StatelessWidget {
       ),
       const SizedBox(height: AppSpacing.ms),
       AppText(
-        "You're the ${model.currentRole.toLowerCase()} of ${model.schoolName}, and owners can do everything an admin can. We haven't used this code, so whoever sent it can cancel it.",
+        model.currentRole == 'Owner'
+            ? "You're the owner of ${model.schoolName}, and owners can do everything an admin can. We haven't used this code, so whoever sent it can cancel it."
+            : "You already have the ${model.currentRole.toLowerCase()} role at ${model.schoolName}. We haven't used this code, so whoever sent it can cancel it.",
         variant: AppTextVariant.bodyLarge,
         colorType: AppTextColor.textBody,
       ),
@@ -344,6 +352,7 @@ class _JoinContent extends StatelessWidget {
     children: [
       AppPrimaryButton(
         size: AppButtonSize.large,
+        isLoading: model.busy,
         onPressed: model.joinSchool,
         child: AppText(
           'Add ${model.newRole.toLowerCase()} role',
@@ -360,6 +369,7 @@ class _JoinContent extends StatelessWidget {
     children: [
       AppPrimaryButton(
         size: AppButtonSize.large,
+        isLoading: model.busy,
         onPressed: model.joinSchool,
         child: AppText(
           'Open ${model.schoolName}',
@@ -379,8 +389,9 @@ class _JoinContent extends StatelessWidget {
     children: [
       AppPrimaryButton(
         size: AppButtonSize.large,
+        isLoading: model.busy,
         onPressed: model.joinSchool,
-        child: const AppText('Join as owner', variant: AppTextVariant.button),
+        child: const AppText('Join as owner'),
       ),
       const SizedBox(height: AppSpacing.md),
       AuthTextLink(
@@ -389,5 +400,4 @@ class _JoinContent extends StatelessWidget {
       ),
     ],
   );
-
 }

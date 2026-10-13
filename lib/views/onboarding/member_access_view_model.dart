@@ -1,4 +1,5 @@
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
+import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/services/supabase_services/organization_member_service.dart';
 import 'package:hamrash_admin/services/error_logger_service.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
@@ -17,7 +18,13 @@ class MemberAccessViewModel extends BaseViewModel {
 
   bool get checked => _checked;
   List<OrganizationMember> get memberships => _memberships;
-  bool get hasMembership => _memberships.isNotEmpty;
+  bool get hasMembership => _memberships.any(
+    (member) =>
+        member.status == OrganizationMemberStatus.active &&
+        member.role.isAdminAppRole &&
+        (member.organization?.status == OrganizationStatus.trial ||
+            member.organization?.status == OrganizationStatus.active),
+  );
   Object? get error => _error;
 
   Future<void> check() async {
