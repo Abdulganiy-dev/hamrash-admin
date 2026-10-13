@@ -29,9 +29,11 @@ class AppPickerField extends StatefulWidget {
     this.icon = LucideIcons.chevronDown,
     this.isOptional = false,
     this.helperText,
+    this.warningText,
     this.errorText,
     this.validator,
     this.enabled = true,
+    this.animateChanges = false,
   });
 
   final String label;
@@ -57,6 +59,9 @@ class AppPickerField extends StatefulWidget {
 
   final String? helperText;
 
+  /// Non-blocking date or value warning, shown in amber.
+  final String? warningText;
+
   /// Error from outside (e.g. the API). Hidden once the field is tapped.
   final String? errorText;
 
@@ -64,6 +69,9 @@ class AppPickerField extends StatefulWidget {
   final String? Function()? validator;
 
   final bool enabled;
+
+  /// Animates value and supporting text changes within this field.
+  final bool animateChanges;
 
   @override
   State<AppPickerField> createState() => _AppPickerFieldState();
@@ -103,6 +111,13 @@ class _AppPickerFieldState extends State<AppPickerField> {
       builder: (field) {
         final error =
             (_hideExternalError ? null : widget.errorText) ?? field.errorText;
+        final footer = error != null
+            ? _Footer.error(error)
+            : widget.warningText != null
+            ? _Footer.warning(widget.warningText!)
+            : widget.helperText != null
+            ? _Footer.helper(widget.helperText!)
+            : const SizedBox.shrink();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -123,18 +138,35 @@ class _AppPickerFieldState extends State<AppPickerField> {
                 child: _Box(
                   open: _open,
                   hasError: error != null,
+                  hasWarning: error == null && widget.warningText != null,
                   enabled: widget.enabled,
                   icon: widget.icon,
                   valueText: widget.valueText,
                   valueChild: widget.valueChild,
                   placeholder: widget.placeholder,
+                  animateChanges: widget.animateChanges,
                 ),
               ),
             ),
-            if (error != null)
-              _Footer.error(error)
-            else if (widget.helperText != null)
-              _Footer.helper(widget.helperText!),
+            if (widget.animateChanges)
+              AnimatedSize(
+                duration: _changeDuration(context),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: AnimatedSwitcher(
+                  duration: _changeDuration(context),
+                  child: KeyedSubtree(
+                    key: ValueKey((
+                      error,
+                      widget.warningText,
+                      widget.helperText,
+                    )),
+                    child: footer,
+                  ),
+                ),
+              )
+            else if (footer is! SizedBox)
+              footer,
           ],
         );
       },
@@ -146,20 +178,24 @@ class _Box extends StatelessWidget {
   const _Box({
     required this.open,
     required this.hasError,
+    required this.hasWarning,
     required this.enabled,
     required this.icon,
     required this.valueText,
     required this.valueChild,
     required this.placeholder,
+    required this.animateChanges,
   });
 
   final bool open;
   final bool hasError;
+  final bool hasWarning;
   final bool enabled;
   final IconData icon;
   final String? valueText;
   final Widget? valueChild;
   final String? placeholder;
+  final bool animateChanges;
 
   @override
   Widget build(BuildContext context) {
@@ -169,6 +205,9 @@ class _Box extends StatelessWidget {
     final double borderWidth;
     if (hasError) {
       borderColor = AppFieldStyle.errorBorder(context);
+      borderWidth = 1.5;
+    } else if (hasWarning) {
+      borderColor = LightColors.warningWarningDefault;
       borderWidth = 1.5;
     } else if (open) {
       borderColor = AppFieldStyle.focusBorder(context);
@@ -198,6 +237,25 @@ class _Box extends StatelessWidget {
             ),
           );
 
+    final value = hasValue
+        ? valueChild ??
+              AppText(
+                valueText!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppFieldStyle.text(context, enabled: enabled),
+                ),
+              )
+        : AppText(
+            placeholder ?? '',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.bodyLarge.copyWith(
+              color: AppFieldStyle.placeholder(context),
+            ),
+          );
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       constraints: const BoxConstraints(minHeight: AppFieldStyle.height),
@@ -214,24 +272,15 @@ class _Box extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: hasValue
-                ? valueChild ??
-                      AppText(
-                        valueText!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.bodyLarge.copyWith(
-                          color: AppFieldStyle.text(context, enabled: enabled),
-                        ),
-                      )
-                : AppText(
-                    placeholder ?? '',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodyLarge.copyWith(
-                      color: AppFieldStyle.placeholder(context),
+            child: animateChanges
+                ? AnimatedSwitcher(
+                    duration: _changeDuration(context),
+                    child: KeyedSubtree(
+                      key: ValueKey(valueText ?? placeholder ?? ''),
+                      child: value,
                     ),
-                  ),
+                  )
+                : value,
           ),
           const SizedBox(width: 12),
           trailing,
@@ -240,6 +289,11 @@ class _Box extends StatelessWidget {
     );
   }
 }
+
+Duration _changeDuration(BuildContext context) =>
+    MediaQuery.disableAnimationsOf(context)
+    ? Duration.zero
+    : const Duration(milliseconds: 220);
 
 class _Label extends StatelessWidget {
   const _Label({
@@ -274,15 +328,16 @@ class _Label extends StatelessWidget {
 }
 
 class _Footer extends StatelessWidget {
-  const _Footer.error(this.text) : isError = true;
-  const _Footer.helper(this.text) : isError = false;
+  const _Footer.error(this.text) : tone = _FooterTone.error;
+  const _Footer.warning(this.text) : tone = _FooterTone.warning;
+  const _Footer.helper(this.text) : tone = _FooterTone.helper;
 
   final String text;
-  final bool isError;
+  final _FooterTone tone;
 
   @override
   Widget build(BuildContext context) {
-    if (!isError) {
+    if (tone == _FooterTone.helper) {
       return Padding(
         padding: const EdgeInsets.only(top: 8),
         child: AppText(
@@ -292,23 +347,33 @@ class _Footer extends StatelessWidget {
         ),
       );
     }
+    final warning = tone == _FooterTone.warning;
+    final color = warning
+        ? LightColors.warningWarningText
+        : LightColors.errorErrorText;
+    if (warning) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: AppText(
+          text,
+          style: AppTypography.caption.copyWith(
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            LucideIcons.circleAlert500,
-            size: 16,
-            color: LightColors.errorErrorText,
-          ),
+          Icon(LucideIcons.circleAlert500, size: 16, color: color),
           const SizedBox(width: 6),
           Expanded(
             child: AppText(
               text,
-              style: AppTypography.caption.copyWith(
-                color: LightColors.errorErrorText,
-              ),
+              style: AppTypography.caption.copyWith(color: color),
             ),
           ),
         ],
@@ -316,6 +381,8 @@ class _Footer extends StatelessWidget {
     );
   }
 }
+
+enum _FooterTone { helper, warning, error }
 
 /// Pick one item. Opens the list sheet (floating up to 6 items, full
 /// above), or with [AppSelectField.search] the searchable, paged sheet for

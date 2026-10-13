@@ -14,6 +14,7 @@ import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_metrics.dart';
+import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/home/home_view_model.dart';
 import 'package:hamrash_admin/views/academic_calendar/create_session/create_session_screen.dart';
 import 'package:hamrash_admin/views/schools/widgets/school_logo.dart';
@@ -265,23 +266,7 @@ class _SetupCard extends StatelessWidget {
                         ? _StepState.current
                         : _StepState.todo,
                     onTap: model.canOpen(step)
-                        ? () async {
-                            if (step == SetupStep.academicCalendar &&
-                                !progress.isDone(step)) {
-                              final created = await Navigator.of(context)
-                                  .push<bool>(
-                                    MaterialPageRoute(
-                                      builder: (_) => CreateSessionScreen(
-                                        organizationId:
-                                            model.school.organization.id,
-                                      ),
-                                    ),
-                                  );
-                              if (created == true) await model.refresh();
-                            } else {
-                              model.openStep(step);
-                            }
-                          }
+                        ? () => _openStep(context, step)
                         : null,
                   ),
                   const SizedBox(height: 2),
@@ -292,6 +277,27 @@ class _SetupCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _openStep(BuildContext context, SetupStep step) async {
+    if (step != SetupStep.academicCalendar || progress.isDone(step)) {
+      model.openStep(step);
+      return;
+    }
+
+    final created = await NavigationService.animatedNavigation<bool>(
+      screen: CreateSessionScreen(organizationId: model.school.organization.id),
+    );
+    if (created != true || !context.mounted) return;
+
+    try {
+      await model.refreshSetupProgress();
+    } catch (_) {
+      AppToast.show(
+        'Calendar saved. Pull to refresh setup progress.',
+        type: AppToastType.error,
+      );
+    }
   }
 
   static String _moreSteps(int count) => switch (count) {

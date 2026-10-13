@@ -123,6 +123,24 @@ class HomeViewModel extends BaseViewModel {
     }
   }
 
+  /// Refreshes the checklist immediately after a setup step is saved.
+  Future<void> refreshSetupProgress() async {
+    try {
+      _progress = await _service.getSetupProgress(school.organization);
+      _error = null;
+    } catch (error, stackTrace) {
+      await handleError(
+        error,
+        stackTrace: stackTrace,
+        context: 'Home.refreshSetupProgress',
+        showErrorModal: false,
+      );
+      rethrow;
+    } finally {
+      notifyListeners();
+    }
+  }
+
   Future<void> _fetch() async {
     final results = await Future.wait<Object?>([
       _service.getSetupProgress(school.organization),

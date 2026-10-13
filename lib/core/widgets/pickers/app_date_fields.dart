@@ -107,9 +107,12 @@ class AppDateRangeField extends StatelessWidget {
     this.saveLabel = 'Save',
     this.isOptional = false,
     this.helperText,
+    this.valueFormatter,
+    this.warningText,
     this.errorText,
     this.validator,
     this.enabled = true,
+    this.animateChanges = false,
   });
 
   final String label;
@@ -126,9 +129,14 @@ class AppDateRangeField extends StatelessWidget {
   final String saveLabel;
   final bool isOptional;
   final String? helperText;
+
+  /// Overrides the text shown in the field without changing the picked dates.
+  final String Function(DateTimeRange)? valueFormatter;
+  final String? warningText;
   final String? errorText;
   final String? Function(DateTimeRange? value)? validator;
   final bool enabled;
+  final bool animateChanges;
 
   @override
   Widget build(BuildContext context) {
@@ -136,14 +144,18 @@ class AppDateRangeField extends StatelessWidget {
     return AppPickerField(
       label: label,
       icon: LucideIcons.calendar,
-      valueText: range == null ? null : AppDateFormat.range(range),
+      valueText: range == null
+          ? null
+          : (valueFormatter?.call(range) ?? AppDateFormat.range(range)),
       placeholder: placeholder,
       isOptional: isOptional,
       helperText:
           helperText ?? (range == null ? null : AppDateFormat.length(range)),
+      warningText: warningText,
       errorText: errorText,
       validator: validator == null ? null : () => validator!(value),
       enabled: enabled,
+      animateChanges: animateChanges,
       onTap: () async {
         final picked = await AppDateRangePickerSheet.show(
           context,
