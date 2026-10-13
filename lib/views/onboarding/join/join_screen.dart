@@ -89,8 +89,6 @@ class _JoinContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AuthScreenFrame(
-    reserveHeaderSpace: true,
-    contentTopPadding: AppSpacing.lg,
     showBackButton: model.showBackButton,
     onBack: () => model.handleBack(context, onBack),
     scrollContent: switch (model.phase) {
@@ -287,15 +285,18 @@ class _JoinContent extends StatelessWidget {
         helperText: 'From your signed in account. Shown to your staff.',
         errorText: model.nameError,
         textCapitalization: TextCapitalization.words,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
       ),
       const SizedBox(height: AppSpacing.md),
       AppTextField(
         controller: model.phoneNumber,
         label: 'Phone number',
-        isOptional: true,
-        prefixText: '+234',
-        hintText: '803 000 0000',
+        hintText: '08030000000',
+        errorText: model.phoneError,
         keyboardType: TextInputType.phone,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
       ),
     ],
   );

@@ -14,6 +14,7 @@ class _ClaimCodeService extends OrganizationMemberService {
   int redeemCalls = 0;
   String? firstName;
   String? lastName;
+  String? phone;
 
   @override
   Future<ClaimCodeCheck> checkClaimCode(String code) async => checkResult;
@@ -29,6 +30,7 @@ class _ClaimCodeService extends OrganizationMemberService {
     redeemCalls++;
     this.firstName = firstName;
     this.lastName = lastName;
+    this.phone = phone;
     return redeemResult;
   }
 }
@@ -104,7 +106,7 @@ void main() {
     expect(service.redeemCalls, 0);
   });
 
-  test('owner redemption requires a full name', () async {
+  test('owner redemption validates the full name and phone number', () async {
     final service = _ClaimCodeService(
       _check(role: OrganizationMemberRole.owner, needsName: true),
     )..redeemResult = _member();
@@ -115,15 +117,45 @@ void main() {
     await model.continueWithCode();
     expect(model.phase, JoinPhase.confirmOwner);
     await model.joinSchool();
-    expect(model.nameError, isNotNull);
+    expect(model.nameError, 'Full name is required');
+    expect(model.phoneError, 'Phone number is required');
+    expect(service.redeemCalls, 0);
+
+    model.fullName.text = 'Amina';
+    model.phoneNumber.text = '8030000000';
+    await model.joinSchool();
+    expect(model.nameError, 'Enter your first and last name');
+    expect(model.phoneError, 'Enter a valid Nigerian phone number');
     expect(service.redeemCalls, 0);
 
     model.fullName.text = 'Amina Bello';
+    model.phoneNumber.text = '08030000000';
     await model.joinSchool();
     expect(service.firstName, 'Amina');
     expect(service.lastName, 'Bello');
+    expect(service.phone, '+2348030000000');
     expect(service.redeemCalls, 1);
   });
+
+  for (final phone in ['+2348030000000', '2348030000000']) {
+    test('owner redemption accepts $phone', () async {
+      final service = _ClaimCodeService(
+        _check(role: OrganizationMemberRole.owner, needsName: true),
+      )..redeemResult = _member();
+      final model = JoinViewModel(service: service);
+      addTearDown(model.dispose);
+      model.code.text = 'KQ7M-2X9B';
+      await model.continueWithCode();
+
+      model.fullName.text = 'Amina Bello';
+      model.phoneNumber.text = phone;
+      await model.joinSchool();
+
+      expect(model.phoneError, isNull);
+      expect(service.phone, '+2348030000000');
+      expect(service.redeemCalls, 1);
+    });
+  }
 
   test('a locked result disables code submission until retry time', () async {
     final service = _ClaimCodeService(

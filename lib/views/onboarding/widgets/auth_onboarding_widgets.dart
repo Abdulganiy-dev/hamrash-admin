@@ -8,6 +8,7 @@ import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_field_style.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
+import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class AuthScreenFrame extends StatelessWidget {
@@ -16,163 +17,84 @@ class AuthScreenFrame extends StatelessWidget {
     required this.scrollContent,
     required this.footer,
     this.showBackButton = true,
-    this.reserveHeaderSpace = false,
-    this.contentTopPadding = AppSpacing.lg,
     this.onBack,
   });
 
   final Widget scrollContent;
   final Widget footer;
   final bool showBackButton;
-  final bool reserveHeaderSpace;
-  final double contentTopPadding;
   final VoidCallback? onBack;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppPalette.linen,
-    body: SafeArea(
-      child:
-          reserveHeaderSpace
-              ? _buildPaperLayout(context)
-              : Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.screen,
-                  AppSpacing.md,
-                  AppSpacing.screen,
-                  AppSpacing.sm,
-                ),
-                child: Column(
-                  children: [
-                    if (showBackButton) ...[
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppPalette.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: LightColors.strokeColourStrokeMild,
-                            ),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x1F2A1712),
-                                offset: Offset(0, 4),
-                                blurRadius: 12,
-                                spreadRadius: -4,
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            tooltip: 'Back',
-                            onPressed:
-                                onBack ??
-                                () {
-                                  if (Navigator.of(context).canPop()) {
-                                    Navigator.of(context).pop();
-                                  }
-                                },
-                            icon: const Icon(
-                              LucideIcons.arrowLeft,
-                              size: 20,
-                            ),
-                            color: AppPalette.stone900,
-                            padding: EdgeInsets.zero,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                    ],
-                    Expanded(
-                      child: LayoutBuilder(
-                        builder:
-                            (context, constraints) => SingleChildScrollView(
-                              keyboardDismissBehavior:
-                                  ScrollViewKeyboardDismissBehavior.onDrag,
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  minHeight: constraints.maxHeight,
-                                ),
-                                child: scrollContent,
-                              ),
-                            ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    footer,
-                  ],
-                ),
-              ),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
 
-  Widget _buildPaperLayout(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
-    child: Column(
-      children: [
-        SizedBox(
-          height: 60,
-          child:
-              showBackButton
-                  ? Align(
-                    alignment: Alignment.centerLeft,
-                    child: _backButton(context),
-                  )
-                  : null,
-        ),
-        Expanded(
-          child: LayoutBuilder(
-            builder:
-                (context, constraints) => SingleChildScrollView(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  child: Padding(
-                    padding: EdgeInsets.only(top: contentTopPadding),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: (constraints.maxHeight - contentTopPadding)
-                            .clamp(0, double.infinity),
-                      ),
-                      child: scrollContent,
+    return DefaultScaffold(
+      backgroundColor: AppPalette.linen,
+      showBackButton: showBackButton,
+      onBackPressed: onBack,
+      bottomNavigationBar: keyboardOpen
+          ? Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: SizedBox(
+                height: 48,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.screen,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => FocusManager.instance.primaryFocus?.unfocus(),
+                      child: const Text('Done'),
                     ),
                   ),
                 ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-          child: footer,
-        ),
-      ],
-    ),
-  );
+              ),
+            )
+          : SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screen,
+                  0,
+                  AppSpacing.screen,
+                  AppSpacing.md,
+                ),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [footer]),
+              ),
+            ),
+      body: Builder(
+        builder: (context) {
+          final topInset = ScaffoldInsets.bodyTopInsetOf(context);
 
-  Widget _backButton(BuildContext context) => Container(
-    width: 44,
-    height: 44,
-    decoration: BoxDecoration(
-      color: AppPalette.white,
-      shape: BoxShape.circle,
-      border: Border.all(color: LightColors.strokeColourStrokeMild),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x1F2A1712),
-          offset: Offset(0, 4),
-          blurRadius: 12,
-          spreadRadius: -4,
-        ),
-      ],
-    ),
-    child: IconButton(
-      tooltip: 'Back',
-      onPressed: onBack ?? () => Navigator.of(context).maybePop(),
-      icon: const Icon(LucideIcons.arrowLeft, size: 20),
-      color: AppPalette.stone900,
-      padding: EdgeInsets.zero,
-    ),
-  );
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
+            child: LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: topInset,
+                    bottom: AppSpacing.md,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight:
+                          (constraints.maxHeight - topInset - AppSpacing.md)
+                              .clamp(0.0, double.infinity),
+                    ),
+                    child: scrollContent,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class AuthProviderLabel extends StatelessWidget {
@@ -197,8 +119,9 @@ class AuthProviderLabel extends StatelessWidget {
         asset,
         width: 20,
         height: 20,
-        colorFilter:
-            tint == null ? null : ColorFilter.mode(tint!, BlendMode.srcIn),
+        colorFilter: tint == null
+            ? null
+            : ColorFilter.mode(tint!, BlendMode.srcIn),
       ),
       const SizedBox(width: 10),
       Text(
@@ -237,7 +160,6 @@ class AuthAccountLine extends StatelessWidget {
         email,
         variant: AppTextVariant.caption,
         colorType: AppTextColor.textMuted,
-                
       ),
       const AppText(
         '  ·  ',
@@ -269,17 +191,15 @@ class AuthTextLink extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => TextButton(
-    onPressed: onTap ?? _ignoreTap,
-    style: TextButton.styleFrom(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      foregroundColor: AppPalette.aubergine500,
-    ),
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap ?? _ignoreTap,
+
     child: AppText(
       label,
       variant: AppTextVariant.subtitle,
       colorType: AppTextColor.textBrand,
       textAlign: TextAlign.center,
+      fontWeight: FontWeight.bold,
     ),
   );
 }
@@ -310,19 +230,16 @@ class JoinCodeEntryField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isError = errorMessage != null;
-    final restBorder =
-        isError
-            ? AppFieldStyle.errorBorder(context)
-            : AppFieldStyle.restBorder(context);
-    final focusedBorder =
-        isError
-            ? AppFieldStyle.errorBorder(context)
-            : AppFieldStyle.focusBorder(context);
+    final restBorder = isError
+        ? AppFieldStyle.errorBorder(context)
+        : AppFieldStyle.restBorder(context);
+    final focusedBorder = isError
+        ? AppFieldStyle.errorBorder(context)
+        : AppFieldStyle.focusBorder(context);
     final codeStyle = AppTypography.title.copyWith(
-      color:
-          enabled
-              ? AppFieldStyle.text(context, enabled: true)
-              : AppFieldStyle.text(context, enabled: false),
+      color: enabled
+          ? AppFieldStyle.text(context, enabled: true)
+          : AppFieldStyle.text(context, enabled: false),
       fontSize: 24,
       fontWeight: FontWeight.w800,
       height: 32 / 24,
@@ -340,6 +257,8 @@ class JoinCodeEntryField extends StatelessWidget {
             enabled: enabled,
             maxLength: 9,
             keyboardType: TextInputType.visiblePassword,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => FocusScope.of(context).unfocus(),
             textCapitalization: TextCapitalization.characters,
             autocorrect: false,
             enableSuggestions: false,
@@ -352,48 +271,46 @@ class JoinCodeEntryField extends StatelessWidget {
               hintStyle: codeStyle.copyWith(
                 color: AppFieldStyle.placeholder(context),
               ),
-              prefixIcon:
-                  enabled
-                      ? null
-                      : Icon(
-                        LucideIcons.lock,
-                        size: AppFieldStyle.iconSize,
-                        color: AppFieldStyle.icon(context),
-                      ),
+              prefixIcon: enabled
+                  ? null
+                  : Icon(
+                      LucideIcons.lock,
+                      size: AppFieldStyle.iconSize,
+                      color: AppFieldStyle.icon(context),
+                    ),
               prefixIconConstraints: const BoxConstraints(minWidth: 48),
-              suffixIcon:
-                  enabled
-                      ? Padding(
-                        padding: const EdgeInsets.only(right: 10),
-                        child: TextButton(
-                          onPressed: _paste,
-                          style: TextButton.styleFrom(
-                            minimumSize: const Size(0, 40),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.ms,
-                            ),
-                            foregroundColor: AppPalette.aubergine500,
-                            backgroundColor: LightColors.primaryPrimaryMute,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              suffixIcon: enabled
+                  ? Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: TextButton(
+                        onPressed: _paste,
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(0, 40),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.ms,
                           ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(LucideIcons.clipboardPaste, size: 16),
-                              SizedBox(width: 6),
-                              AppText(
-                                'Paste',
-                                variant: AppTextVariant.subtitle,
-                                colorType: AppTextColor.textBrand,
-                              ),
-                            ],
+                          foregroundColor: AppPalette.aubergine500,
+                          backgroundColor: LightColors.primaryPrimaryMute,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                      )
-                      : null,
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(LucideIcons.clipboardPaste, size: 16),
+                            SizedBox(width: 6),
+                            AppText(
+                              'Paste',
+                              variant: AppTextVariant.subtitle,
+                              colorType: AppTextColor.textBrand,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : null,
               suffixIconConstraints: const BoxConstraints(
                 minWidth: 0,
                 minHeight: 40,
@@ -450,11 +367,10 @@ class JoinCodeEntryField extends StatelessWidget {
 
 class JoinCodeInputFormatter extends TextInputFormatter {
   static String format(String value) {
-    final clean =
-        value.toUpperCase().split('').where((character) {
-          final code = character.codeUnitAt(0);
-          return (code >= 48 && code <= 57) || (code >= 65 && code <= 90);
-        }).join();
+    final clean = value.toUpperCase().split('').where((character) {
+      final code = character.codeUnitAt(0);
+      return (code >= 48 && code <= 57) || (code >= 65 && code <= 90);
+    }).join();
     final capped = clean.length > 8 ? clean.substring(0, 8) : clean;
     if (capped.length <= 4) return capped;
     return '${capped.substring(0, 4)}-${capped.substring(4)}';
@@ -590,10 +506,9 @@ class SchoolConfirmationCard extends StatelessWidget {
                 _ConfirmationRow(
                   label: codeRoleLabel,
                   value: codeRole!,
-                  tone:
-                      codeRole == 'Teacher'
-                          ? AppBadgeTone.info
-                          : AppBadgeTone.neutral,
+                  tone: codeRole == 'Teacher'
+                      ? AppBadgeTone.info
+                      : AppBadgeTone.neutral,
                 ),
               if (code != null)
                 _ConfirmationRow(

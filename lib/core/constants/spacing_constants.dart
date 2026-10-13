@@ -19,9 +19,10 @@ class AppSpacing {
   static const double xxxl = 64.0;
 
   // Roles
-  /// Horizontal padding at the edge of every screen. App bar buttons, titles,
-  /// cards, buttons and the tab bar all line up on it.
-  static const double screen = lg;
+  /// Horizontal padding at the edge of every screen: 16, the standard phone
+  /// margin on iOS (compact width) and Material 3 (compact window). App bar
+  /// buttons, titles, cards, buttons and the tab bar all line up on it.
+  static const double screen = md;
 
   /// Padding inside cards and sheets.
   static const double card = ml;

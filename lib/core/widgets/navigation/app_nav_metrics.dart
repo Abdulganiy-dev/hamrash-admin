@@ -32,7 +32,7 @@ class AppNavMetrics {
 
   /// Gap between the app bar row and the first piece of content, such as a
   /// screen title.
-  static const double contentTopGap = AppSpacing.lg;
+  static const double contentTopGap = AppSpacing.md;
 
   /// Gap between the last piece of content and the tab bar or the bottom
   /// safe area.

@@ -1,0 +1,39 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hamrash_admin/views/onboarding/widgets/auth_onboarding_widgets.dart';
+
+void main() {
+  testWidgets('Done replaces the footer and closes the keyboard', (tester) async {
+    addTearDown(tester.view.resetViewInsets);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: AuthScreenFrame(
+          showBackButton: false,
+          scrollContent: TextField(keyboardType: TextInputType.phone),
+          footer: Text('Join school'),
+        ),
+      ),
+    );
+    expect(find.text('Join school'), findsOneWidget);
+    expect(find.text('Done'), findsNothing);
+
+    await tester.tap(find.byType(TextField));
+    await tester.pump();
+    final fieldFocus = tester.widget<EditableText>(find.byType(EditableText)).focusNode;
+    expect(fieldFocus.hasFocus, isTrue);
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    await tester.pump();
+    expect(find.text('Join school'), findsNothing);
+    expect(find.text('Done'), findsOneWidget);
+    final keyboardTop =
+        (tester.view.physicalSize.height - tester.view.viewInsets.bottom) /
+        tester.view.devicePixelRatio;
+    expect(tester.getBottomLeft(find.text('Done')).dy, lessThan(keyboardTop));
+
+    await tester.tap(find.text('Done'));
+    await tester.pump();
+    expect(fieldFocus.hasFocus, isFalse);
+  });
+}

@@ -2,8 +2,12 @@
 
 class ValidationUtil {
   static String? validateFullName(String value) {
-    if (value.isEmpty) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
       return 'Full name is required';
+    }
+    if (trimmed.split(RegExp(r'\s+')).length < 2) {
+      return 'Enter your first and last name';
     }
     return null;
   }

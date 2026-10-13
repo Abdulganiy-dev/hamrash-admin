@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/organization_models/claim_code_check.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/services/supabase_services/organization_member_service.dart';
+import 'package:hamrash_admin/core/utils/validation_util.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 import 'package:hamrash_admin/views/onboarding/widgets/auth_onboarding_widgets.dart';
@@ -47,6 +48,7 @@ class JoinViewModel extends BaseViewModel {
        phoneNumber = TextEditingController() {
     code.addListener(_onCodeChanged);
     fullName.addListener(_onFullNameChanged);
+    phoneNumber.addListener(_onPhoneNumberChanged);
   }
 
   JoinPhase phase;
@@ -75,6 +77,7 @@ class JoinViewModel extends BaseViewModel {
   int? triesLeft;
   DateTime? retryAt;
   String? nameError;
+  String? phoneError;
 
   bool get showBackButton => switch (phase) {
     JoinPhase.confirmStaff ||
@@ -119,6 +122,13 @@ class JoinViewModel extends BaseViewModel {
   void _onFullNameChanged() {
     if (nameError != null) {
       nameError = null;
+      notifyListeners();
+    }
+  }
+
+  void _onPhoneNumberChanged() {
+    if (phoneError != null) {
+      phoneError = null;
       notifyListeners();
     }
   }
@@ -269,12 +279,13 @@ class JoinViewModel extends BaseViewModel {
     String? firstName;
     String? lastName;
     if (_checkedCode!.needsName == true) {
-      final names = fullName.text.trim().split(RegExp(r'\s+'));
-      if (names.length < 2) {
-        nameError = 'Enter your first and last name.';
+      nameError = ValidationUtil.validateFullName(fullName.text);
+      phoneError = ValidationUtil.validatePhoneNumber(phoneNumber.text);
+      if (nameError != null || phoneError != null) {
         notifyListeners();
         return;
       }
+      final names = fullName.text.trim().split(RegExp(r'\s+'));
       firstName = names.first;
       lastName = names.skip(1).join(' ');
     }
@@ -288,10 +299,13 @@ class JoinViewModel extends BaseViewModel {
         firstName: firstName,
         lastName: lastName,
         email: email.isEmpty ? null : email,
-        phone:
-            phone.isEmpty
-                ? null
-                : '+234${phone.replaceFirst(RegExp(r'^0'), '')}',
+        phone: phone.isEmpty
+            ? null
+            : phone.startsWith('+234')
+            ? phone
+            : phone.startsWith('234')
+            ? '+$phone'
+            : '+234${phone.substring(1)}',
       );
       if (isDisposed) return;
       if (member == null) {
@@ -352,6 +366,7 @@ class JoinViewModel extends BaseViewModel {
     _lockTimer?.cancel();
     code.removeListener(_onCodeChanged);
     fullName.removeListener(_onFullNameChanged);
+    phoneNumber.removeListener(_onPhoneNumberChanged);
     code.dispose();
     fullName.dispose();
     phoneNumber.dispose();

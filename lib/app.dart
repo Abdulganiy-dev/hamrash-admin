@@ -6,6 +6,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
+import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/utils/view_util.dart';
 import 'package:hamrash_admin/resources/app_theme.dart';
 import 'package:hamrash_admin/services/error_logger_service.dart';
@@ -67,7 +68,7 @@ class _OnboardingAuthGate extends StatelessWidget {
         onViewModelReady: (model) => model.check(),
         builder: (context, model, _) {
           if (!model.checked) {
-            return const Scaffold(
+            return const DefaultScaffold(
               body: Center(
                 child: CircularProgressIndicator(
                   color: AppPalette.aubergine500,
@@ -109,7 +110,7 @@ class _MembershipCheckError extends StatelessWidget {
   final VoidCallback onSignOut;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => DefaultScaffold(
     body: Center(
       child: Padding(
         padding: AppSpacing.screenPadding,
