@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/resources/app_theme.dart';
 import 'package:hamrash_admin/core/utils/view_util.dart';
 import 'package:hamrash_admin/services/error_logger_service.dart';
-import 'package:hamrash_admin/views/design_preview/design_preview_view.dart';
-
+import 'package:hamrash_admin/views/onboarding/sign_in/sign_in_screen.dart';
 
 import 'env_config/flavor_config.dart';
 
@@ -23,8 +22,11 @@ class MyApp extends StatelessWidget {
       config: ClerkAuthConfig(publishableKey: env.clerkPublishableKey),
 
       child: ClerkErrorListener(
-        handler: (context, error) =>
-            ErrorLoggerService.logError(error, context: 'ClerkErrorListener'),
+        handler:
+            (context, error) => ErrorLoggerService.logError(
+              error,
+              context: 'ClerkErrorListener',
+            ),
         child: MaterialApp(
           navigatorKey: ViewUtil.navigatorKey,
           debugShowCheckedModeBanner: env.enableVerboseLogs,
@@ -32,7 +34,7 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           themeMode: ThemeMode.light,
           routes: const {},
-          home: const DesignPreviewView(),
+          home: const SignInScreen(),
         ),
       ),
     );
