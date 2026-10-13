@@ -396,7 +396,8 @@ begin
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);
   execute 'set local role authenticated';
-  select count(*) into v_n from public.students;
+  -- only the test schools: real schools in the database don't affect the result
+  select count(*) into v_n from public.students s where s.organization_id in (v_org, v_org2);
   v_log := v_log || E'\n' || case when v_n = 3 then 'PASS' else 'FAIL' end || ' 16 platform admin reads students in every school [' || v_n || ']';
   perform public.set_organization_status(v_org, 'suspended');
 

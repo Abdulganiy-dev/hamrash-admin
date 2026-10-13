@@ -70,12 +70,12 @@ begin
     where s.id = v_staff.id and s.job_title = 'Proprietor' and s.staff_type = 'teaching' and s.staff_number = 'TST/STF/0001';
   v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 04 owner can edit own staff record';
 
-  -- 05 a used owner code is still rejected, name or not
+  -- 05 a used owner code is still rejected, name or not (returns NULL since migration 13)
   begin
-    perform public.redeem_claim_code(v_claim, 'Olu', 'Owner');
-    v_log := v_log || E'\nFAIL 05 owner code reused';
+    v_member := public.redeem_claim_code(v_claim, 'Olu', 'Owner');
+    v_log := v_log || E'\n' || case when v_member.id is null then 'PASS' else 'FAIL' end || ' 05 used owner code rejected';
   exception when others then
-    v_log := v_log || E'\n' || case when sqlerrm like '%invalid or has already been used%' then 'PASS' else 'FAIL' end || ' 05 used owner code rejected [' || sqlerrm || ']';
+    v_log := v_log || E'\nFAIL 05 used owner code raised instead of returning NULL [' || sqlerrm || ']';
   end;
 
   -- 06 a teacher code needs no name and makes no extra staff record

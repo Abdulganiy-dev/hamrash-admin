@@ -113,6 +113,20 @@ gives the code to the owner  ──►    signs in with Clerk
 
 **The owner's staff record.** Redeeming an owner code also creates the owner's `staff` record (job title `Owner`, non-teaching) and links it to the membership, so the owner has a staff number and appears in the staff list. The app passes the name, email and phone from the Clerk profile. A name is required for owner codes only, and only when the person has no staff record at the school yet: a teacher who is made a co-owner keeps their one record. Codes issued by `invite_staff`, `invite_student` and `invite_parent` already point at a record, so they need only the code. *(added in migration 11)*
 
+### Checking a code first *(added in migration 13)*
+
+Apps look a code up with `check_claim_code(code)` before redeeming it. Checking never uses the code. It returns one row:
+
+| Column | Notes |
+|--------|-------|
+| `status` | `ok`, `not_found` (wrong or used), `locked` (too many wrong codes), `school_inactive`, `already_member` |
+| `organization_id`, `school_name`, `school_code`, `school_address`, `school_state`, `school_logo_url` | Filled in unless `not_found` or `locked`, so the person can confirm the school |
+| `role`, `app` | `app` is the app that role signs in to: `admin` (owner, admin, principal, vice principal, bursar), `staff` (teacher, staff), `family` (parent, student). Hamrash Admin turns away anything but `admin`, and the code stays usable in the right app. |
+| `needs_name` | `true` for an owner code that will create the owner's staff record, so the app knows to ask for a name |
+| `tries_left`, `retry_at` | Wrong codes left this hour; when a `locked` account can try again |
+
+**Wrong-code limit.** 5 wrong codes per account per hour, counted across `check_claim_code` and `redeem_claim_code` in `private.claim_code_attempts`. The lock lifts an hour after the 5th most recent wrong try. Half-typed codes (not 8 letters or numbers) don't count, and a successful redeem clears the count. Since migration 13, `redeem_claim_code` returns NULL for a wrong or used code instead of raising, so the attempt is kept; while locked it raises "Too many wrong codes. Try again in N minutes." Tested by `supabase/tests/08_check_claim_code_test.sql`.
+
 Later, `set_organization_status(org, 'active' | 'suspended' | 'archived')` is platform-admin only.
 
 **What suspension does.** Members of a suspended or archived school can still see their membership and the school's row, so the app can show "this school is suspended, contact Hamrash". All other school data is hidden, and claim codes for that school stop working.

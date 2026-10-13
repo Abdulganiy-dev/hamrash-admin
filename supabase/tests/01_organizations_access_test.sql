@@ -63,12 +63,12 @@ begin
         and v_member.clerk_user_id = 'test_owner' and v_member.claim_code is null and v_member.joined_at is not null
         then 'PASS' else 'FAIL' end || ' 03 owner redeems claim code (lowercase, with dash)';
 
-  -- 04 code cannot be reused
+  -- 04 code cannot be reused (a used code returns NULL since migration 13)
   begin
-    perform public.redeem_claim_code(v_claim);
-    v_log := v_log || E'\nFAIL 04 claim code reused';
+    v_member := public.redeem_claim_code(v_claim);
+    v_log := v_log || E'\n' || case when v_member.id is null then 'PASS' else 'FAIL' end || ' 04 claim code cannot be reused';
   exception when others then
-    v_log := v_log || E'\n' || case when sqlerrm like '%invalid or has already been used%' then 'PASS' else 'FAIL' end || ' 04 claim code cannot be reused [' || sqlerrm || ']';
+    v_log := v_log || E'\nFAIL 04 reused code raised instead of returning NULL [' || sqlerrm || ']';
   end;
 
   -- 05 owner sees only their own school
@@ -191,8 +191,9 @@ begin
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);
   execute 'set local role authenticated';
-  select count(*) into v_n from public.organizations;
-  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 20a platform admin sees all schools [' || v_n || ' rows]';
+  -- only the two test schools: real schools in the database don't affect the result
+  select count(*) into v_n from public.organizations o where o.id in (v_org, v_org2);
+  v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 20a platform admin sees both test schools [' || v_n || ' rows]';
   perform public.set_organization_status(v_org, 'suspended');
   v_log := v_log || E'\nPASS 20b platform admin suspends school';
 

@@ -394,7 +394,8 @@ begin
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);
   execute 'set local role authenticated';
-  select count(*) into v_n from public.subjects;
+  -- only the test schools: real schools in the database don't affect the result
+  select count(*) into v_n from public.subjects s where s.organization_id in (v_org, v_org2);
   v_log := v_log || E'\n' || case when v_n = 40 then 'PASS' else 'FAIL' end || ' 18 platform admin reads subjects in every school [' || v_n || ']';
 
   -- 19 anon has no access
