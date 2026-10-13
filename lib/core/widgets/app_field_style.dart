@@ -27,13 +27,13 @@ class AppFieldStyle {
       return isLight ? AppPalette.stone100 : DarkColors.backgroundSurfaceMute;
     }
     if (active) {
-      return isLight ? AppPalette.cream : DarkColors.backgroundSurfaceLayer;
+      return isLight ? AppPalette.white : DarkColors.backgroundSurfaceLayer;
     }
     if (!isLight) return DarkColors.backgroundSurfaceLayer;
-    // Cream on the bone page; stone-50 on cream cards, sheets, dialogs.
+    // White on the linen page; stone-50 on white cards, sheets, dialogs.
     return AppSurfaceScope.of(context) == AppSurface.card
         ? AppPalette.stone50
-        : AppPalette.cream;
+        : AppPalette.white;
   }
 
   static Color restBorder(BuildContext context) =>

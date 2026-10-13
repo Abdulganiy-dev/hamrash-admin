@@ -25,7 +25,7 @@ enum AppSheetSize {
 
 /// Route for every sheet in the app. Built on `stupid_simple_sheet`'s plain
 /// route, so it keeps the spring motion and scroll-to-drag hand-off, and
-/// draws our own solid cream surface and espresso scrim.
+/// draws our own solid white surface and espresso scrim.
 ///
 /// Usually you call [AppSheet.show]; push this directly when the sheet needs
 /// its own state (see the pickers in this folder).
@@ -85,7 +85,7 @@ class _AppSheetFrame extends StatelessWidget {
                 boxShadow: AppShadows.overlay,
               ),
               child: SheetBackground(
-                backgroundColor: AppPalette.cream,
+                backgroundColor: AppPalette.white,
                 extensionAtBottom: 0,
                 shape: RoundedSuperellipseBorder(
                   borderRadius: BorderRadius.circular(32),
@@ -101,7 +101,7 @@ class _AppSheetFrame extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.only(top: 10),
             child: SheetBackground(
-              backgroundColor: AppPalette.cream,
+              backgroundColor: AppPalette.white,
               shape: const RoundedSuperellipseBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),

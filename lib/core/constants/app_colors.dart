@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Raw color scales. Widgets should use [LightColors] / [DarkColors] tokens;
 /// reach for these only when a token doesn't exist for the job.
 ///
-/// Main colors: aubergine, warm stone and cream on a bone page. Category
+/// Main colors: aubergine, warm stone and white on a linen page. Category
 /// colors tell classes and groups apart; supporting colors (success,
 /// warning, error, accent) are only used when the color carries meaning.
 /// Mirrors the "Design System" page of the Hamrash Paper file.
@@ -35,14 +35,12 @@ class AppPalette {
   static const stone900 = Color(0xFF2A1712);
   static const stone950 = Color(0xFF170D0A);
 
-  /// Cards, sheets, dialogs and fields on the page.
-  static const cream = Color(0xFFFFFDF8);
+  // Page: soft linen behind every screen — a hint of warmth, so cards stand
+  // off it without the page reading beige.
+  static const linen = Color(0xFFF6F5F2);
 
-  // Page: warm bone behind every screen, so cream cards stand off it.
-  static const bone = Color(0xFFF3F0E8);
-
-  /// One step deeper than [bone], for placeholder shapes straight on the page.
-  static const boneDeep = Color(0xFFE6DFD2);
+  /// One step deeper than [linen], for placeholder shapes straight on the page.
+  static const linenDeep = Color(0xFFE9E7E2);
 
   // Category colors — classes, groups and quick stats. Never for status.
   static const tangerine = Color(0xFFE8733A);
@@ -94,8 +92,8 @@ class LightColors {
   static const textDisabled = AppPalette.stone400; // unavailable controls
 
   // Background
-  static const backgroundPage = AppPalette.bone; // behind every screen
-  static const backgroundSurfacePrimaryBG = AppPalette.cream;
+  static const backgroundPage = AppPalette.linen; // behind every screen
+  static const backgroundSurfacePrimaryBG = AppPalette.white;
   static const backgroundSurfaceLayer = AppPalette.stone100;
   static const backgroundSurfaceMute = AppPalette.stone50;
   static const backgroundSurfaceMild = AppPalette.stone200;
@@ -108,9 +106,9 @@ class LightColors {
   static const strokeColourStrokeStrong = Color(0x332A1712);
   static const strokeColourStrokePrimary = AppPalette.aubergine500;
 
-  /// Card edge on the page: espresso at 8%, with [AppShadows.floating]
-  /// (card study C2).
-  static const strokeColourStrokeCard = Color(0x142A1712);
+  /// Card edge on the page: espresso at 6%, with [AppShadows.floating]
+  /// (card study B2).
+  static const strokeColourStrokeCard = Color(0x0F2A1712);
 
   // On-color / neutral
   static const primaryOncolorBlack = Colors.black;

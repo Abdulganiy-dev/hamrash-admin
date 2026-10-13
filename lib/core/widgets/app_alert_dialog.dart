@@ -203,7 +203,7 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppPalette.cream,
+              color: AppPalette.white,
               borderRadius: BorderRadius.circular(24),
               boxShadow: AppShadows.overlay,
             ),

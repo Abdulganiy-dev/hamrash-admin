@@ -15,7 +15,7 @@ class AppScrollFade extends StatefulWidget {
   const AppScrollFade({
     super.key,
     required this.child,
-    this.color = AppPalette.cream,
+    this.color = AppPalette.white,
     this.extent = 24,
   });
 

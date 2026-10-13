@@ -12,24 +12,24 @@ import 'package:hamrash_admin/core/widgets/app_surface.dart';
 class AppShadows {
   AppShadows._();
 
-  /// Cards on the page (card study C2): a tight contact shadow plus a wide,
-  /// soft espresso halo. Paired with the 8% espresso edge
+  /// Cards on the page (card study B2): a tight contact shadow plus a short,
+  /// soft espresso halo. Paired with the 6% espresso edge
   /// ([LightColors.strokeColourStrokeCard]).
   static const List<BoxShadow> floating = [
     BoxShadow(color: Color(0x0A2A1712), offset: Offset(0, 1), blurRadius: 2),
     BoxShadow(
-      color: Color(0x142A1712),
-      offset: Offset(0, 14),
-      blurRadius: 36,
-      spreadRadius: -8,
+      color: Color(0x0F2A1712),
+      offset: Offset(0, 8),
+      blurRadius: 24,
+      spreadRadius: -4,
     ),
   ];
 
-  /// Cards are lit from above: near-white fading to warm cream at the foot.
+  /// B2 cards are flat white.
   static const LinearGradient cardFill = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFFFFEFB), Color(0xFFFFFCF5)],
+    colors: [Color(0xFFFFFFFF), Color(0xFFFFFFFF)],
   );
 
   /// Menus, sheets and dialogs that sit above everything.
@@ -45,7 +45,7 @@ class AppShadows {
   ];
 }
 
-/// Cream card that floats on the bone page (card study C2).
+/// White card that floats on the linen page (card study B2).
 ///
 /// Holds content only: put a section title above it with [AppSectionHeader]
 /// and any action button below it, outside the card.

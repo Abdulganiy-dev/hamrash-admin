@@ -22,7 +22,7 @@ class AppRowGroup extends StatelessWidget {
   /// Floating white card, for rows on the page.
   const AppRowGroup({super.key, required this.children}) : _inset = false;
 
-  /// Flat stone-50 block, for rows inside a cream sheet or card.
+  /// Flat stone-50 block, for rows inside a white sheet or card.
   const AppRowGroup.inset({super.key, required this.children}) : _inset = true;
 
   final List<Widget> children;

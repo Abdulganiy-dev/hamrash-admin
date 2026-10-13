@@ -7,21 +7,21 @@ import 'package:shimmer/shimmer.dart';
 /// inside it; their opaque pixels take the stone-100 → stone-50 sweep.
 ///
 /// Wrap only the placeholder shapes, not the card around them, so the card
-/// itself stays cream.
+/// itself stays white.
 class AppShimmer extends StatelessWidget {
   const AppShimmer({super.key, required this.child, this.onPage = false});
 
   final Widget child;
 
-  /// Shapes sitting straight on the bone page (not inside a card) use
-  /// a deeper bone so they show: bone-deep → a lighter bone.
+  /// Shapes sitting straight on the linen page (not inside a card) use
+  /// a deeper linen so they show: linen-deep → a lighter linen.
   final bool onPage;
 
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: onPage ? AppPalette.boneDeep : AppPalette.stone100,
-      highlightColor: onPage ? const Color(0xFFEFEADF) : AppPalette.stone50,
+      baseColor: onPage ? AppPalette.linenDeep : AppPalette.stone100,
+      highlightColor: onPage ? const Color(0xFFF0EFEB) : AppPalette.stone50,
       period: const Duration(milliseconds: 1400),
       child: child,
     );

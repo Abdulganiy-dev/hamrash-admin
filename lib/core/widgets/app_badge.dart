@@ -215,7 +215,7 @@ class AppFilterChip extends StatelessWidget {
       border = LightColors.primaryPrimaryThin;
       text = LightColors.primaryPrimaryText;
     } else {
-      fill = AppPalette.cream;
+      fill = AppPalette.white;
       border = AppPalette.stone200;
       text = AppPalette.stone700;
     }

@@ -295,7 +295,7 @@ class _EndBox extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: active ? AppPalette.cream : AppPalette.stone50,
+          color: active ? AppPalette.white : AppPalette.stone50,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: active
