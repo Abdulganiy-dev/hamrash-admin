@@ -7,7 +7,9 @@ class RealmConfig {
   static const String _databaseName = 'hamrash_admin.realm';
 
   static Configuration getConfiguration() {
-    AppLogger.info('Initializing Realm with schema version $_currentSchemaVersion');
+    AppLogger.info(
+      'Initializing Realm with schema version $_currentSchemaVersion',
+    );
 
     return Configuration.local(
       [

@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-
 /// A reusable cached network image widget with customizable properties
 ///
 /// This widget provides:
@@ -231,4 +230,3 @@ class CachedNetworkImageWidget extends StatelessWidget {
     return imageWidget;
   }
 }
-

@@ -13,11 +13,7 @@ class CloudflareException implements Exception {
   final String? message;
   final int? statusCode;
 
-  CloudflareException({
-    required this.type,
-    this.message,
-    this.statusCode,
-  });
+  CloudflareException({required this.type, this.message, this.statusCode});
 
   /// Creates a CloudflareException for no HTTP response
   factory CloudflareException.noHTTPResponse() {
@@ -68,4 +64,3 @@ class CloudflareException implements Exception {
     return 'CloudflareException: ${type.name}';
   }
 }
-

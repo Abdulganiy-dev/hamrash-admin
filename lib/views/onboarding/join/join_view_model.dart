@@ -42,6 +42,7 @@ class JoinViewModel extends BaseViewModel {
     this.onJoin,
     this.onDifferentCode,
     this.onSignOut,
+    this.canLeave = false,
   }) : _service = service ?? locator<OrganizationMemberService>(),
        code = TextEditingController(text: initialCode ?? ''),
        fullName = TextEditingController(text: initialName ?? ''),
@@ -71,6 +72,9 @@ class JoinViewModel extends BaseViewModel {
   final VoidCallback? onDifferentCode;
   final VoidCallback? onSignOut;
 
+  /// Opened from the school picker: back always leaves.
+  final bool canLeave;
+
   ClaimCodeCheck? _checkedCode;
   String? _checkedInput;
   Timer? _lockTimer;
@@ -79,17 +83,18 @@ class JoinViewModel extends BaseViewModel {
   String? nameError;
   String? phoneError;
 
-  bool get showBackButton => switch (phase) {
-    JoinPhase.confirmStaff ||
-    JoinPhase.confirmOwner ||
-    JoinPhase.codeForAnotherApp => true,
-    _ => false,
-  };
+  bool get showBackButton =>
+      canLeave ||
+      switch (phase) {
+        JoinPhase.confirmStaff ||
+        JoinPhase.confirmOwner ||
+        JoinPhase.codeForAnotherApp => true,
+        _ => false,
+      };
 
-  String? get codeError =>
-      phase == JoinPhase.wrongCode
-          ? "We couldn't find that code. Check it with whoever sent it to you."
-          : null;
+  String? get codeError => phase == JoinPhase.wrongCode
+      ? "We couldn't find that code. Check it with whoever sent it to you."
+      : null;
 
   bool get isCodeLocked => phase == JoinPhase.tooManyTries;
 
@@ -101,10 +106,9 @@ class JoinViewModel extends BaseViewModel {
   String? get codeAttemptsMessage {
     if (!isCodeLocked) return null;
     final remaining = retryAt?.difference(DateTime.now());
-    final minutes =
-        remaining == null
-            ? null
-            : (remaining.inSeconds / 60).ceil().clamp(1, 60);
+    final minutes = remaining == null
+        ? null
+        : (remaining.inSeconds / 60).ceil().clamp(1, 60);
     return 'Too many tries\nFor your school\'s safety, codes are paused. '
         'Try again in ${minutes == null ? 'an hour' : '$minutes minutes'}.';
   }
@@ -161,10 +165,9 @@ class JoinViewModel extends BaseViewModel {
     retryAt = result.retryAt;
     if (result.schoolName != null) schoolName = result.schoolName!;
     if (result.schoolCode != null) schoolCode = result.schoolCode!;
-    location =
-        result.schoolAddress?.trim().isNotEmpty == true
-            ? result.schoolAddress!
-            : result.schoolState ?? '';
+    location = result.schoolAddress?.trim().isNotEmpty == true
+        ? result.schoolAddress!
+        : result.schoolState ?? '';
     if (result.role != null) role = result.role!.displayName;
 
     switch (result.status) {

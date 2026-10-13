@@ -6,13 +6,13 @@ class CloudflareDioClient {
   final Dio _dio;
 
   CloudflareDioClient()
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: 'https://api.cloudflare.com/client/v4',
-            connectTimeout: const Duration(seconds: 30),
-            receiveTimeout: const Duration(seconds: 60),
-          ),
-        );
+    : _dio = Dio(
+        BaseOptions(
+          baseUrl: 'https://api.cloudflare.com/client/v4',
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 60),
+        ),
+      );
 
   /// User API tokens (`cfut_` / `cfuu_`) use Bearer auth. Global API keys use
   /// `X-Auth-Email` + `X-Auth-Key`. See Cloudflare API fundamentals.
@@ -28,10 +28,7 @@ class CloudflareDioClient {
     }
     final email = secrets.email;
     if (email != null && email.isNotEmpty) {
-      return {
-        'X-Auth-Email': email,
-        'X-Auth-Key': token,
-      };
+      return {'X-Auth-Email': email, 'X-Auth-Key': token};
     }
     return {'Authorization': 'Bearer $token'};
   }
@@ -86,4 +83,3 @@ class CloudflareDioClient {
     );
   }
 }
-

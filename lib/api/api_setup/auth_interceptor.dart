@@ -8,7 +8,6 @@ import '../../services/error_logger_service.dart';
 /// Interceptor that adds Clerk authentication token to requests
 /// when the route has `extra: {'Authorize': true}`
 class AuthInterceptor extends Interceptor {
-
   @override
   void onRequest(
     RequestOptions options,
@@ -47,12 +46,12 @@ class AuthInterceptor extends Interceptor {
       // Get the Clerk session token
       final clerkAuth = ClerkAuth.of(context);
       final session = clerkAuth.session;
-      
+
       if (session != null) {
         // The session has a lastActiveToken property with a jwt field
         final clerk_auth.Session? sessionObj = session as clerk_auth.Session?;
         final token = sessionObj?.lastActiveToken?.jwt;
-        
+
         if (token != null && token.isNotEmpty) {
           // Add Authorization header
           options.headers['Authorization'] = 'Bearer $token';
@@ -82,4 +81,3 @@ class AuthInterceptor extends Interceptor {
     }
   }
 }
-

@@ -157,18 +157,15 @@ class _Wheel extends StatefulWidget {
   );
 
   static TextStyle style(int distance) => switch (distance) {
-    0 => _nunito(AppTypography.h2).copyWith(
-      fontWeight: FontWeight.w800,
-      color: LightColors.textStrong,
-    ),
-    1 => _nunito(AppTypography.h3).copyWith(
-      fontWeight: FontWeight.w600,
-      color: AppPalette.stone400,
-    ),
-    _ => _nunito(AppTypography.h4).copyWith(
-      fontWeight: FontWeight.w600,
-      color: AppPalette.stone300,
-    ),
+    0 => _nunito(
+      AppTypography.h2,
+    ).copyWith(fontWeight: FontWeight.w800, color: LightColors.textStrong),
+    1 => _nunito(
+      AppTypography.h3,
+    ).copyWith(fontWeight: FontWeight.w600, color: AppPalette.stone400),
+    _ => _nunito(
+      AppTypography.h4,
+    ).copyWith(fontWeight: FontWeight.w600, color: AppPalette.stone300),
   };
 
   final int count;
@@ -202,9 +199,7 @@ class _WheelState extends State<_Wheel> {
       duration: const Duration(milliseconds: 140),
       curve: Curves.easeOutCubic,
       style: _Wheel.style(distance),
-      child: Center(
-        child: AppText(widget.label(raw % widget.count)),
-      ),
+      child: Center(child: AppText(widget.label(raw % widget.count))),
     );
   }
 

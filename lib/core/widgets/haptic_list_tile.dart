@@ -1,7 +1,6 @@
 import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:flutter/material.dart';
 
-
 /// A [ListTile] that automatically triggers [HapticHelpers.vibrate] on tap.
 ///
 /// Use this anywhere you'd reach for a [ListTile] and want the tap to feel

@@ -36,11 +36,16 @@ class AppTabShell extends StatefulWidget {
     required this.tabs,
     this.initialIndex = 0,
     this.onTabChanged,
+    this.canSelect,
   });
 
   final List<AppTab> tabs;
   final int initialIndex;
   final ValueChanged<int>? onTabChanged;
+
+  /// Return false to keep the current tab, e.g. for a tab that isn't built
+  /// yet (show a toast instead).
+  final bool Function(int index)? canSelect;
 
   @override
   State<AppTabShell> createState() => _AppTabShellState();
@@ -54,6 +59,7 @@ class _AppTabShellState extends State<AppTabShell> {
 
   void _select(int index) {
     if (index == _index) return;
+    if (widget.canSelect?.call(index) == false) return;
     setState(() {
       _index = index;
       _opened.add(index);

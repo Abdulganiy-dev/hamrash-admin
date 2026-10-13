@@ -79,10 +79,7 @@ class StandardAppBar extends StatelessWidget {
     final align = centerTitle ? TextAlign.center : TextAlign.start;
     final titleStyle = centerTitle
         ? AppTypography.title.copyWith(fontWeight: FontWeight.w800)
-        : AppTypography.h4.copyWith(
-            height: 22 / 18,
-            letterSpacing: -0.18,
-          );
+        : AppTypography.h4.copyWith(height: 22 / 18, letterSpacing: -0.18);
 
     return Column(
       mainAxisSize: MainAxisSize.min,

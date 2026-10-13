@@ -8,6 +8,14 @@ enum OrganizationStatus {
 
   final String value;
 
+  /// How the status reads in the app. Hamrash calls a suspended school paused.
+  String get label => switch (this) {
+    OrganizationStatus.trial => 'Trial',
+    OrganizationStatus.active => 'Active',
+    OrganizationStatus.suspended => 'Paused',
+    OrganizationStatus.archived => 'Archived',
+  };
+
   static OrganizationStatus fromJson(String value) =>
       OrganizationStatus.values.firstWhere(
         (status) => status.value == value,
@@ -30,6 +38,8 @@ class Organization {
     required this.createdBy,
     required this.numberPrefix,
     this.logoId,
+    this.detailsConfirmedAt,
+    this.detailsConfirmedBy,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -46,6 +56,12 @@ class Organization {
   final String createdBy;
   final String numberPrefix;
   final String? logoId;
+
+  /// When an owner or admin tapped "Looks good" on Check your school.
+  final DateTime? detailsConfirmedAt;
+
+  /// Clerk user id of whoever confirmed the details.
+  final String? detailsConfirmedBy;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -62,6 +78,11 @@ class Organization {
     createdBy: json['created_by'] as String,
     numberPrefix: json['number_prefix'] as String,
     logoId: json['logo_id'] as String?,
+    detailsConfirmedAt: switch (json['details_confirmed_at']) {
+      final String value => DateTime.parse(value),
+      _ => null,
+    },
+    detailsConfirmedBy: json['details_confirmed_by'] as String?,
     createdAt: DateTime.parse(json['created_at'] as String),
     updatedAt: DateTime.parse(json['updated_at'] as String),
   );
@@ -79,6 +100,8 @@ class Organization {
     'created_by': createdBy,
     'number_prefix': numberPrefix,
     'logo_id': logoId,
+    'details_confirmed_at': detailsConfirmedAt?.toIso8601String(),
+    'details_confirmed_by': detailsConfirmedBy,
     'created_at': createdAt.toIso8601String(),
     'updated_at': updatedAt.toIso8601String(),
   };

@@ -33,7 +33,7 @@ class APIClient implements BaseAPIClient {
   APIClient(this.options, {this.isCard = false}) {
     instance = Dio(options);
     instance.options.listFormat = ListFormat.multi;
-    
+
     // Ensure JSON responses are parsed automatically
     instance.options.responseType = ResponseType.json;
 
@@ -93,7 +93,6 @@ class APIClient implements BaseAPIClient {
             ),
           );
 
-    
       dynamic responseData = response.data;
       if (responseData is String) {
         try {
@@ -102,10 +101,7 @@ class APIClient implements BaseAPIClient {
           AppLogger.error('Failed to parse JSON response', error: e);
           return ResponseWrapper.onError(
             create: create,
-            data: {
-              "status": "50",
-              "message": "Invalid response format",
-            },
+            data: {"status": "50", "message": "Invalid response format"},
           );
         }
       }
@@ -152,11 +148,9 @@ class APIClient implements BaseAPIClient {
     }
   }
 
- 
   Future<(String, String)> _getAppVersion() async {
     return ('1.0.0', '1');
   }
-
 
   String _buildQueryString(Map<String, dynamic> params) {
     final List<String> queryParts = [];

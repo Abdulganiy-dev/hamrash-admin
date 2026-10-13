@@ -36,7 +36,7 @@ class _StepIndicatorState extends State<StepIndicator>
   double _previousValue = 0.0;
   double _targetValue = 0.0;
 
-  double get _progress => (widget.currentStep ) / widget.totalSteps;
+  double get _progress => (widget.currentStep) / widget.totalSteps;
 
   @override
   void initState() {
@@ -95,8 +95,7 @@ class _StepIndicatorState extends State<StepIndicator>
           color: widget.activeColor ?? primary,
           value: _animation.value,
           minHeight: widget.height,
-          borderRadius:
-              widget.borderRadius ?? AppRadius.brBadge,
+          borderRadius: widget.borderRadius ?? AppRadius.brBadge,
         );
       },
     );

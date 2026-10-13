@@ -45,17 +45,18 @@ class ErrorLoggerService {
     for (final entry in params.entries) {
       final keyLower = entry.key.toLowerCase().replaceAll('_', '');
 
-      final isSensitive = _sensitiveKeys.any((sensitiveKey) =>
-        keyLower.contains(sensitiveKey.toLowerCase())
+      final isSensitive = _sensitiveKeys.any(
+        (sensitiveKey) => keyLower.contains(sensitiveKey.toLowerCase()),
       );
 
       if (isSensitive) {
         sanitized[entry.key] = '[REDACTED]';
       } else {
         if (entry.value is Map<String, dynamic>) {
-          sanitized[entry.key] = _sanitizeParams(entry.value as Map<String, dynamic>);
-        }
-        else if (entry.value is List) {
+          sanitized[entry.key] = _sanitizeParams(
+            entry.value as Map<String, dynamic>,
+          );
+        } else if (entry.value is List) {
           sanitized[entry.key] = _sanitizeList(entry.value as List);
         } else {
           sanitized[entry.key] = entry.value;
@@ -119,19 +120,13 @@ class ErrorLoggerService {
     try {
       final sanitizedParams = _sanitizeParams(customParams);
 
-      final warningMessage = context != null
-          ? '[$context] $message'
-          : message;
+      final warningMessage = context != null ? '[$context] $message' : message;
 
       final logMessage = sanitizedParams.isNotEmpty
           ? '$warningMessage\nCustom params: $sanitizedParams'
           : warningMessage;
 
-      developer.log(
-        logMessage,
-        name: 'ErrorLogger',
-        level: 900,
-      );
+      developer.log(logMessage, name: 'ErrorLogger', level: 900);
     } catch (loggingError) {
       developer.log(
         'Failed to log warning: $loggingError',
@@ -141,20 +136,11 @@ class ErrorLoggerService {
     }
   }
 
-  static Future<void> logInfo(
-    String message, {
-    String? context,
-  }) async {
+  static Future<void> logInfo(String message, {String? context}) async {
     try {
-      final infoMessage = context != null
-          ? '[$context] $message'
-          : message;
+      final infoMessage = context != null ? '[$context] $message' : message;
 
-      developer.log(
-        infoMessage,
-        name: 'ErrorLogger',
-        level: 800,
-      );
+      developer.log(infoMessage, name: 'ErrorLogger', level: 800);
     } catch (loggingError) {
       developer.log(
         'Failed to log info: $loggingError',
@@ -228,4 +214,3 @@ class ErrorLoggerService {
     );
   }
 }
-

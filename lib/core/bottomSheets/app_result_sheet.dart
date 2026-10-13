@@ -184,10 +184,10 @@ class _AppResultSheetState extends State<AppResultSheet> {
             AppText(
               widget.title!,
               textAlign: TextAlign.center,
-              style: AppTypography.serif(22, lineHeight: 28).copyWith(
-                letterSpacing: -0.22,
-                color: LightColors.textStrong,
-              ),
+              style: AppTypography.serif(
+                22,
+                lineHeight: 28,
+              ).copyWith(letterSpacing: -0.22, color: LightColors.textStrong),
             ),
             const SizedBox(height: 6),
           ],

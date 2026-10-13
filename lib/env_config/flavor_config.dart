@@ -1,13 +1,10 @@
 import 'env.dart';
 
-
 enum Flavor { dev, prod }
 
 class FlavorConfig {
-  FlavorConfig({
-    required this.flavor,
-    required this.values,
-  }) : name = flavor == Flavor.dev ? 'Dev' : 'Prod' {
+  FlavorConfig({required this.flavor, required this.values})
+    : name = flavor == Flavor.dev ? 'Dev' : 'Prod' {
     instance = this;
   }
 
@@ -22,4 +19,3 @@ class FlavorConfig {
 
   Env envConfig() => values;
 }
-

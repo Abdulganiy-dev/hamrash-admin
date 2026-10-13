@@ -32,6 +32,7 @@ class JoinScreen extends StatelessWidget {
     this.onDifferentCode,
     this.onSignOut,
     this.onBack,
+    this.canLeave = false,
   });
 
   final JoinPhase initialPhase;
@@ -53,31 +54,34 @@ class JoinScreen extends StatelessWidget {
   final VoidCallback? onSignOut;
   final VoidCallback? onBack;
 
+  /// Show a back button on every step, e.g. when opened from the picker.
+  final bool canLeave;
+
   @override
   Widget build(BuildContext context) =>
       ViewModelBuilder<JoinViewModel>.reactive(
-        viewModelBuilder:
-            () => JoinViewModel(
-              phase: initialPhase,
-              email: email,
-              initialName: initialName,
-              schoolName: schoolName,
-              location: location,
-              role: role,
-              schoolCode: schoolCode,
-              targetApp: targetApp,
-              currentRole: currentRole,
-              newRole: newRole,
-              coveredRole: coveredRole,
-              initialCode: initialCode,
-              memberships: memberships,
-              onUseAnotherAccount: onUseAnotherAccount,
-              onJoin: onJoin,
-              onDifferentCode: onDifferentCode,
-              onSignOut: onSignOut,
-            ),
-        builder:
-            (context, model, _) => _JoinContent(model: model, onBack: onBack),
+        viewModelBuilder: () => JoinViewModel(
+          phase: initialPhase,
+          email: email,
+          initialName: initialName,
+          schoolName: schoolName,
+          location: location,
+          role: role,
+          schoolCode: schoolCode,
+          targetApp: targetApp,
+          currentRole: currentRole,
+          newRole: newRole,
+          coveredRole: coveredRole,
+          initialCode: initialCode,
+          memberships: memberships,
+          onUseAnotherAccount: onUseAnotherAccount,
+          onJoin: onJoin,
+          onDifferentCode: onDifferentCode,
+          onSignOut: onSignOut,
+          canLeave: canLeave,
+        ),
+        builder: (context, model, _) =>
+            _JoinContent(model: model, onBack: onBack),
       );
 }
 
@@ -130,10 +134,9 @@ class _JoinContent extends StatelessWidget {
         controller: model.code,
         enabled: !model.isCodeLocked,
         errorMessage: model.codeError,
-        helperMessage:
-            model.codeError == null && !model.isCodeLocked
-                ? 'Letters and numbers only. The dash is added for you.'
-                : null,
+        helperMessage: model.codeError == null && !model.isCodeLocked
+            ? 'Letters and numbers only. The dash is added for you.'
+            : null,
       ),
       if (model.phase == JoinPhase.wrongCode && model.triesLeft != null) ...[
         const SizedBox(height: AppSpacing.sm),

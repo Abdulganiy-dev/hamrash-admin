@@ -1,59 +1,42 @@
-
-
-
 import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:flutter/material.dart';
 
-
 extension WidgetExtension on Widget {
-  Widget padding(
-      {double left = 0, double right = 0, double top = 0, double bottom = 0}) {
+  Widget padding({
+    double left = 0,
+    double right = 0,
+    double top = 0,
+    double bottom = 0,
+  }) {
     return Padding(
-        padding:
-            EdgeInsets.only(bottom: bottom, top: top, left: left, right: right),
-        child: this);
+      padding: EdgeInsets.only(
+        bottom: bottom,
+        top: top,
+        left: left,
+        right: right,
+      ),
+      child: this,
+    );
   }
 
   Widget headerBottomPadding() {
-    return Padding(
-        padding: EdgeInsets.only(
-          bottom: 40,
-        ),
-        child: this);
+    return Padding(padding: EdgeInsets.only(bottom: 40), child: this);
   }
 
   Widget paddingBtwButtonsFromBelow() {
-    return Padding(
-        padding: EdgeInsets.only(
-          top: 16,
-        ),
-        child: this);
+    return Padding(padding: EdgeInsets.only(top: 16), child: this);
   }
 
   Widget buttonTopPadding() {
-    return Padding(
-        padding: EdgeInsets.only(
-          top: 32,
-        ),
-        child: this);
+    return Padding(padding: EdgeInsets.only(top: 32), child: this);
   }
 
-  Widget underFormFieldPadding(){
-     return Padding(
-        padding: EdgeInsets.only(
-          bottom: 16,
-        ),
-        child: this);
-
+  Widget underFormFieldPadding() {
+    return Padding(padding: EdgeInsets.only(bottom: 16), child: this);
   }
 
-    Widget underListItemPadding(){
-     return Padding(
-        padding: EdgeInsets.only(
-          bottom: 8,
-        ),
-        child: this);
-
+  Widget underListItemPadding() {
+    return Padding(padding: EdgeInsets.only(bottom: 8), child: this);
   }
 
   Widget paddingAll(double value) {
@@ -84,12 +67,7 @@ extension WidgetExtension on Widget {
   }
 
   Widget greyOut() {
-    return AbsorbPointer(
-      child: Opacity(
-        opacity: 0.5,
-        child: this,
-      ),
-    );
+    return AbsorbPointer(child: Opacity(opacity: 0.5, child: this));
   }
 
   Widget hapticFeedback([VibrationType type = VibrationType.light]) {

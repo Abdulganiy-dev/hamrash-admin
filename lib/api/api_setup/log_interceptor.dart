@@ -26,19 +26,24 @@ class APILogInterceptor extends InterceptorsWrapper {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    if (kDebugMode && FlavorConfig.instance?.envConfig().enableVerboseLogs == true) {
+    if (kDebugMode &&
+        FlavorConfig.instance?.envConfig().enableVerboseLogs == true) {
       final sanitizedOptions = _sanitizeData(options.data);
       final headers = _sanitizeHeaders(options.headers);
-      
+
       final message = StringBuffer();
-      message.writeln('┌─────────────────────────────────────────────────────────');
+      message.writeln(
+        '┌─────────────────────────────────────────────────────────',
+      );
       message.writeln('│ REQUEST: ${options.method} ${options.uri}');
       message.writeln('│ Headers: $headers');
       if (sanitizedOptions != null) {
         message.writeln('│ Data: $sanitizedOptions');
       }
-      message.writeln('└─────────────────────────────────────────────────────────');
-      
+      message.writeln(
+        '└─────────────────────────────────────────────────────────',
+      );
+
       ErrorLoggerService.logInfo(
         message.toString(),
         context: 'APILogInterceptor.onRequest',
@@ -49,15 +54,22 @@ class APILogInterceptor extends InterceptorsWrapper {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    if (kDebugMode && FlavorConfig.instance?.envConfig().enableVerboseLogs == true) {
+    if (kDebugMode &&
+        FlavorConfig.instance?.envConfig().enableVerboseLogs == true) {
       final sanitizedData = _sanitizeData(response.data);
-      
+
       final message = StringBuffer();
-      message.writeln('┌─────────────────────────────────────────────────────────');
-      message.writeln('│ RESPONSE: ${response.statusCode} ${response.requestOptions.uri}');
+      message.writeln(
+        '┌─────────────────────────────────────────────────────────',
+      );
+      message.writeln(
+        '│ RESPONSE: ${response.statusCode} ${response.requestOptions.uri}',
+      );
       message.writeln('│ Data: $sanitizedData');
-      message.writeln('└─────────────────────────────────────────────────────────');
-      
+      message.writeln(
+        '└─────────────────────────────────────────────────────────',
+      );
+
       ErrorLoggerService.logInfo(
         message.toString(),
         context: 'APILogInterceptor.onResponse',
@@ -68,11 +80,12 @@ class APILogInterceptor extends InterceptorsWrapper {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    if (kDebugMode && FlavorConfig.instance?.envConfig().enableVerboseLogs == true) {
-      final sanitizedResponse = err.response != null 
-          ? _sanitizeData(err.response?.data) 
+    if (kDebugMode &&
+        FlavorConfig.instance?.envConfig().enableVerboseLogs == true) {
+      final sanitizedResponse = err.response != null
+          ? _sanitizeData(err.response?.data)
           : null;
-      
+
       ErrorLoggerService.logNetworkError(
         err,
         endpoint: err.requestOptions.uri.toString(),
@@ -80,17 +93,21 @@ class APILogInterceptor extends InterceptorsWrapper {
         statusCode: err.response?.statusCode,
         stackTrace: err.stackTrace,
       );
-      
+
       final message = StringBuffer();
-      message.writeln('┌─────────────────────────────────────────────────────────');
+      message.writeln(
+        '┌─────────────────────────────────────────────────────────',
+      );
       message.writeln('│ ERROR: ${err.type} ${err.requestOptions.uri}');
       message.writeln('│ Message: ${err.message}');
       if (err.response != null) {
         message.writeln('│ Status Code: ${err.response?.statusCode}');
         message.writeln('│ Response: $sanitizedResponse');
       }
-      message.writeln('└─────────────────────────────────────────────────────────');
-      
+      message.writeln(
+        '└─────────────────────────────────────────────────────────',
+      );
+
       ErrorLoggerService.logWarning(
         message.toString(),
         context: 'APILogInterceptor.onError',
@@ -141,4 +158,3 @@ class APILogInterceptor extends InterceptorsWrapper {
     return sanitized;
   }
 }
-

@@ -39,7 +39,9 @@ abstract class BaseViewModel extends ChangeNotifier {
     );
 
     if (showSnackBar) {
-      ViewUtil.showErrorSnackBar(userMessage ?? ErrorMessages.somethingWentWrong);
+      ViewUtil.showErrorSnackBar(
+        userMessage ?? ErrorMessages.somethingWentWrong,
+      );
     }
 
     if (showErrorModal) {

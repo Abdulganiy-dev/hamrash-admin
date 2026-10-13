@@ -35,7 +35,7 @@ class AuthScreenFrame extends StatelessWidget {
       backgroundColor: AppPalette.linen,
       showBackButton: showBackButton,
       onBackPressed: onBack,
-  
+
       bottomNavigationBar: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
         switchInCurve: Curves.easeOutCubic,
@@ -156,10 +156,16 @@ class AuthTermsCopy extends StatelessWidget {
 }
 
 class AuthAccountLine extends StatelessWidget {
-  const AuthAccountLine({super.key, required this.email, this.onTap});
+  const AuthAccountLine({
+    super.key,
+    required this.email,
+    this.onTap,
+    this.actionLabel = 'Use another account',
+  });
 
   final String email;
   final VoidCallback? onTap;
+  final String actionLabel;
 
   @override
   Widget build(BuildContext context) => Wrap(
@@ -183,8 +189,8 @@ class AuthAccountLine extends StatelessWidget {
           minimumSize: Size.zero,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
-        child: const AppText(
-          'Use another account',
+        child: AppText(
+          actionLabel,
           variant: AppTextVariant.caption,
           fontWeight: FontWeight.bold,
           colorType: AppTextColor.textBrand,

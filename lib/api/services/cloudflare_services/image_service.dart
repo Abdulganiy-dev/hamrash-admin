@@ -10,7 +10,6 @@ import '../../../api/models/cloudflare_models/image_response.dart';
 import '../../../singleton_locator/locator.dart';
 import 'cloudflare_dio_client.dart';
 
-
 /// Service for managing images on Cloudflare Images
 class ImageService {
   final SecretService _secretsService = locator<SecretService>();
@@ -32,12 +31,8 @@ class ImageService {
       // Build FormData
       final formData = FormData.fromMap({
         'requireSignedURLs': 'false',
-        'file': MultipartFile.fromBytes(
-          imageData,
-          filename: '$filename.png',
-        ),
-        if (metadata != null)
-          'metadata': jsonEncode(metadata),
+        'file': MultipartFile.fromBytes(imageData, filename: '$filename.png'),
+        if (metadata != null) 'metadata': jsonEncode(metadata),
       });
 
       // Make request
@@ -57,7 +52,7 @@ class ImageService {
         final imageResponse = ImageResponse().fromJson(
           response.data as Map<String, dynamic>,
         );
-        
+
         // Check if Cloudflare returned an error
         if (imageResponse.success == false && imageResponse.errors != null) {
           final errorResponse = CloudflareErrorResponse.fromJson(
@@ -67,7 +62,7 @@ class ImageService {
             errorResponse.getErrorMessage(),
           );
         }
-        
+
         return imageResponse;
       }
 
@@ -149,4 +144,3 @@ class ImageService {
     }
   }
 }
-

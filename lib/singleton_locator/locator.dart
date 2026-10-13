@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hamrash_admin/api/api_setup/api_client.dart';
 import 'package:hamrash_admin/api/services/supabase_services/organization_member_service.dart';
+import 'package:hamrash_admin/api/services/supabase_services/school_service.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/cloudflare_dio_client.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/image_service.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/secret_service.dart';
@@ -38,6 +39,10 @@ void setupLocator() {
 
   locator.registerLazySingleton<OrganizationMemberService>(
     () => OrganizationMemberService(locator<SupabaseClient>()),
+  );
+
+  locator.registerLazySingleton<SchoolService>(
+    () => SchoolService(locator<SupabaseClient>()),
   );
 
   locator.registerLazySingleton<RealmService>(() => RealmService());

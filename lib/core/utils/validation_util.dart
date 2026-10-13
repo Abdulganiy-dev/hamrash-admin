@@ -1,5 +1,3 @@
-
-
 class ValidationUtil {
   static String? validateFullName(String value) {
     final trimmed = value.trim();
@@ -59,8 +57,9 @@ class ValidationUtil {
     // - +234XXXXXXXXXX
     // - 234XXXXXXXXXX
     // - 0(7|8|9)(0|1)XXXXXXXX
-    final naijaPhoneRegex =
-        RegExp(r'^(\+234[0-9]{10}|234[0-9]{10}|0(7|8|9)(0|1)[0-9]{8})$');
+    final naijaPhoneRegex = RegExp(
+      r'^(\+234[0-9]{10}|234[0-9]{10}|0(7|8|9)(0|1)[0-9]{8})$',
+    );
 
     if (!naijaPhoneRegex.hasMatch(trimmed)) {
       return "Enter a valid Nigerian phone number";

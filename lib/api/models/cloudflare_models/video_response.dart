@@ -1,4 +1,3 @@
-
 import 'package:hamrash_admin/api/api_setup/from_json.dart';
 
 /// Response model for Cloudflare Stream API
@@ -58,4 +57,3 @@ class VideoResponse implements FromJson<VideoResponse> {
     return data;
   }
 }
-

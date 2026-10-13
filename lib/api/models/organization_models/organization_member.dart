@@ -29,13 +29,12 @@ enum OrganizationMemberRole {
     _ => false,
   };
 
-  static OrganizationMemberRole fromJson(
-    String value,
-  ) => OrganizationMemberRole.values.firstWhere(
-    (role) => role.value == value,
-    orElse:
-        () => throw FormatException('Unknown organization member role: $value'),
-  );
+  static OrganizationMemberRole fromJson(String value) =>
+      OrganizationMemberRole.values.firstWhere(
+        (role) => role.value == value,
+        orElse: () =>
+            throw FormatException('Unknown organization member role: $value'),
+      );
 }
 
 enum OrganizationMemberStatus {
@@ -50,11 +49,8 @@ enum OrganizationMemberStatus {
   static OrganizationMemberStatus fromJson(String value) =>
       OrganizationMemberStatus.values.firstWhere(
         (status) => status.value == value,
-        orElse:
-            () =>
-                throw FormatException(
-                  'Unknown organization member status: $value',
-                ),
+        orElse: () =>
+            throw FormatException('Unknown organization member status: $value'),
       );
 }
 
@@ -99,12 +95,11 @@ class OrganizationMember {
       joinedAt: _dateTimeOrNull(json['joined_at']),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
-      organization:
-          organizationJson == null
-              ? null
-              : Organization.fromJson(
-                Map<String, dynamic>.from(organizationJson as Map),
-              ),
+      organization: organizationJson == null
+          ? null
+          : Organization.fromJson(
+              Map<String, dynamic>.from(organizationJson as Map),
+            ),
     );
   }
 

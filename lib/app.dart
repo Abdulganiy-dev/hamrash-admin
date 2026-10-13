@@ -13,7 +13,10 @@ import 'package:hamrash_admin/services/error_logger_service.dart';
 import 'package:hamrash_admin/views/onboarding/join/join_screen.dart';
 import 'package:hamrash_admin/views/onboarding/member_access_view_model.dart';
 import 'package:hamrash_admin/views/onboarding/sign_in/sign_in_screen.dart';
-import 'package:hamrash_admin/views/template.dart/template.dart';
+import 'package:hamrash_admin/views/home/home_shell.dart';
+import 'package:hamrash_admin/views/schools/confirm_school/confirm_school_screen.dart';
+import 'package:hamrash_admin/views/schools/pick_school_screen.dart';
+import 'package:hamrash_admin/views/schools/school_paused_screen.dart';
 import 'package:stacked/stacked.dart';
 
 import 'env_config/flavor_config.dart';
@@ -33,11 +36,8 @@ class MyApp extends StatelessWidget {
       config: ClerkAuthConfig(publishableKey: env.clerkPublishableKey),
 
       child: ClerkErrorListener(
-        handler:
-            (context, error) => ErrorLoggerService.logError(
-              error,
-              context: 'ClerkErrorListener',
-            ),
+        handler: (context, error) =>
+            ErrorLoggerService.logError(error, context: 'ClerkErrorListener'),
         child: MaterialApp(
           navigatorKey: ViewUtil.navigatorKey,
           debugShowCheckedModeBanner: env.enableVerboseLogs,
@@ -84,12 +84,85 @@ class _OnboardingAuthGate extends StatelessWidget {
             );
           }
 
-          if (model.hasMembership) {
-            return const Template();
+          final email = user.email ?? '';
+          final school = model.selected;
+
+          if (model.hasMembership && school == null) {
+            return PickSchoolScreen(
+              schools: model.schools,
+              email: email,
+              onPick: model.selectSchool,
+              onSignOut: signOut,
+              onJoinAnother: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (route) => JoinScreen(
+                    email: email,
+                    initialName: user.name,
+                    memberships: model.memberships,
+                    canLeave: true,
+                    onUseAnotherAccount: signOut,
+                    onSignOut: signOut,
+                    onBack: () => Navigator.of(route).pop(),
+                    onJoin: () {
+                      Navigator.of(route).pop();
+                      model.check();
+                    },
+                  ),
+                ),
+              ),
+            );
+          }
+
+          if (school != null) {
+            final switchSchool = model.canSwitchSchool
+                ? model.switchSchool
+                : null;
+
+            if (school.isPaused) {
+              return SchoolPausedScreen(
+                school: school,
+                onSwitchSchool: switchSchool,
+                onSignOut: signOut,
+              );
+            }
+
+            if (school.needsDetailsCheck) {
+              return ConfirmSchoolScreen(
+                key: ValueKey('confirm/${school.id}'),
+                organization: school.organization,
+                clerkUserId: user.id,
+                firstName: user.firstName,
+                onConfirmed: model.updateSchool,
+              );
+            }
+
+            return HomeShell(
+              key: ValueKey('home/${school.id}'),
+              school: school,
+              userName: user.name,
+              email: email,
+              userImageUrl: user.imageUrl,
+              onSwitchSchool: switchSchool,
+              onSignOut: signOut,
+              onOpenSchoolDetails: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (route) => ConfirmSchoolScreen(
+                    organization: school.organization,
+                    clerkUserId: user.id,
+                    firstName: user.firstName,
+                    onBack: () => Navigator.of(route).pop(),
+                    onConfirmed: (organization) {
+                      Navigator.of(route).pop();
+                      model.updateSchool(organization);
+                    },
+                  ),
+                ),
+              ),
+            );
           }
 
           return JoinScreen(
-            email: user.email ?? '',
+            email: email,
             initialName: user.name,
             memberships: model.memberships,
             onUseAnotherAccount: signOut,

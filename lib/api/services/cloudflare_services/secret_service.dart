@@ -10,7 +10,7 @@ class SecretService {
   final FlutterSecureStorage _secureStorage;
 
   SecretService({FlutterSecureStorage? secureStorage})
-      : _secureStorage = secureStorage ?? const FlutterSecureStorage();
+    : _secureStorage = secureStorage ?? const FlutterSecureStorage();
 
   /// Returns Cloudflare credentials from [FlavorConfig] / [Env] when
   /// [CloudflareSecrets.hasAccountAndToken] is satisfied; otherwise reads

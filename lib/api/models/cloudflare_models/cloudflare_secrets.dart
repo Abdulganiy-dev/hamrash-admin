@@ -10,9 +10,9 @@ class CloudflareSecrets implements FromJson<CloudflareSecrets> {
 
   /// Maps flavor [Env] values into this model (empty strings become null).
   CloudflareSecrets.fromEnv(Env env)
-      : email = _trimToNull(env.cloudflareEmail),
-        apiToken = _trimToNull(env.cloudflareApiToken),
-        accountId = _trimToNull(env.cloudflareAccountId);
+    : email = _trimToNull(env.cloudflareEmail),
+      apiToken = _trimToNull(env.cloudflareApiToken),
+      accountId = _trimToNull(env.cloudflareAccountId);
 
   static String? _trimToNull(String value) {
     final t = value.trim();
@@ -35,10 +35,6 @@ class CloudflareSecrets implements FromJson<CloudflareSecrets> {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'email': email,
-      'api_token': apiToken,
-      'account_id': accountId,
-    };
+    return {'email': email, 'api_token': apiToken, 'account_id': accountId};
   }
 }

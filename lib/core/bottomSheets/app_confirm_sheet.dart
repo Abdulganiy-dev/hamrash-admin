@@ -164,10 +164,10 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
             ],
             AppText(
               widget.title,
-              style: AppTypography.serif(22, lineHeight: 28).copyWith(
-                letterSpacing: -0.22,
-                color: LightColors.textStrong,
-              ),
+              style: AppTypography.serif(
+                22,
+                lineHeight: 28,
+              ).copyWith(letterSpacing: -0.22, color: LightColors.textStrong),
             ),
             if (widget.message != null) ...[
               const SizedBox(height: 6),

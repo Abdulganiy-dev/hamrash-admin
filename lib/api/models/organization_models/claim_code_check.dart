@@ -14,8 +14,8 @@ enum ClaimCodeStatus {
   static ClaimCodeStatus fromJson(String value) =>
       ClaimCodeStatus.values.firstWhere(
         (status) => status.value == value,
-        orElse:
-            () => throw FormatException('Unknown claim code status: $value'),
+        orElse: () =>
+            throw FormatException('Unknown claim code status: $value'),
       );
 }
 
@@ -56,16 +56,14 @@ class ClaimCodeCheck {
     schoolAddress: json['school_address'] as String?,
     schoolState: json['school_state'] as String?,
     schoolLogoUrl: json['school_logo_url'] as String?,
-    role:
-        json['role'] == null
-            ? null
-            : OrganizationMemberRole.fromJson(json['role'] as String),
+    role: json['role'] == null
+        ? null
+        : OrganizationMemberRole.fromJson(json['role'] as String),
     app: json['app'] as String?,
     needsName: json['needs_name'] as bool?,
     triesLeft: (json['tries_left'] as num).toInt(),
-    retryAt:
-        json['retry_at'] == null
-            ? null
-            : DateTime.parse(json['retry_at'] as String),
+    retryAt: json['retry_at'] == null
+        ? null
+        : DateTime.parse(json['retry_at'] as String),
   );
 }

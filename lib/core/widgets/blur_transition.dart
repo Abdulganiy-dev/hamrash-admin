@@ -60,11 +60,11 @@ class BlurTransition extends AnimatedWidget {
     bool fade = true,
   }) {
     return (Widget child, Animation<double> animation) => BlurTransition(
-          animation: animation,
-          maxBlur: maxBlur,
-          fade: fade,
-          child: child,
-        );
+      animation: animation,
+      maxBlur: maxBlur,
+      fade: fade,
+      child: child,
+    );
   }
 
   @override

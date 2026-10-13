@@ -1,4 +1,3 @@
-
 import 'package:hamrash_admin/api/api_setup/from_json.dart';
 
 /// Response model for Cloudflare Images API
@@ -62,4 +61,3 @@ class ImageResponse implements FromJson<ImageResponse> {
     return data;
   }
 }
-

@@ -4,7 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 
 /// Custom cache manager for images with optimized settings
-/// 
+///
 /// This cache manager provides:
 /// - 30 days cache duration
 /// - 200MB max cache size
@@ -38,7 +38,7 @@ class AppImageCacheManager {
   static Future<int> getCacheSize() async {
     final cacheDir = await _getCacheDirectory();
     if (cacheDir == null) return 0;
-    
+
     int totalSize = 0;
     try {
       final files = cacheDir.listSync(recursive: true);
@@ -73,4 +73,3 @@ class AppImageCacheManager {
     _instance = null;
   }
 }
-

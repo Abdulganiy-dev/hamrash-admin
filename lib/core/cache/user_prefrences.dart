@@ -19,9 +19,19 @@ class UserPreference {
 
   static const _canUseHapticFeedback = 'canUseHapticFeedback';
 
-  bool get canUseHapticFeedback => preferences.getBool(_canUseHapticFeedback) ?? true;
+  bool get canUseHapticFeedback =>
+      preferences.getBool(_canUseHapticFeedback) ?? true;
 
   void setCanUseHapticFeedback(bool value) {
     preferences.setBool(_canUseHapticFeedback, value);
   }
+
+  static const _lastSchoolId = 'lastSchoolId';
+
+  /// The school opened last, so it opens again next time.
+  String? get lastSchoolId => preferences.getString(_lastSchoolId);
+
+  Future<void> setLastSchoolId(String? id) => id == null
+      ? preferences.remove(_lastSchoolId)
+      : preferences.setString(_lastSchoolId, id);
 }

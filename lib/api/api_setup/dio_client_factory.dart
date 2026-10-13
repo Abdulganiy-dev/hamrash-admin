@@ -27,8 +27,12 @@ class DioClientFactory {
     final dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
-        connectTimeout: connectTimeout ?? env?.connectTimeout ?? const Duration(seconds: 10),
-        receiveTimeout: receiveTimeout ?? env?.readTimeout ?? const Duration(seconds: 15),
+        connectTimeout:
+            connectTimeout ??
+            env?.connectTimeout ??
+            const Duration(seconds: 10),
+        receiveTimeout:
+            receiveTimeout ?? env?.readTimeout ?? const Duration(seconds: 15),
       ),
     );
 
@@ -63,4 +67,3 @@ class DioClientFactory {
     _clients.clear();
   }
 }
-

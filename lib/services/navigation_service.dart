@@ -1,4 +1,3 @@
-
 import 'package:hamrash_admin/core/utils/view_util.dart';
 import 'package:hamrash_admin/services/error_logger_service.dart';
 import 'package:flutter/cupertino.dart';
@@ -53,7 +52,6 @@ class NavigationService {
       );
       return Future.value(null);
     }
-
 
     final Route<T> route = transition == PageTransition.slide
         ? CupertinoPageRoute<T>(builder: (_) => screen)

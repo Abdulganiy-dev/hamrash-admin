@@ -13,9 +13,7 @@ class CloudflareErrorResponse {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'errors': errors.map((e) => e.toJson()).toList(),
-    };
+    return {'errors': errors.map((e) => e.toJson()).toList()};
   }
 
   /// Gets the first error message, or a default message
@@ -48,4 +46,3 @@ class CloudflareErrorItem {
     };
   }
 }
-
