@@ -80,7 +80,7 @@ Status key used below: **Schema** = tables exist, UI not built · **New** = noth
 **To discuss**
 - Which payment gateway (Paystack, Flutterwave, Remita, other)? Does each school bring its own merchant account?
 - Should we also track school expenses (a basic ledger), or only fee income?
-- Should there be a dedicated **bursar/accountant** role that can see finance but not academics? Today's roles are `super_admin`, `admin`, `principal`, `vice_principal`.
+- ~~Should there be a dedicated **bursar/accountant** role?~~ Settled: `bursar` is an admin-app role. See the permission matrix in section 8.
 
 ---
 
@@ -155,7 +155,7 @@ The portal is a separate app. The admin app only controls what feeds it:
 
 | Admin capability | Status |
 |------------------|--------|
-| **Admin roles:** `super_admin`, `admin`, `principal`, `vice_principal` | Schema |
+| **Admin roles:** `owner`, `admin` (shown as "School administrator"), `principal`, `vice_principal`, `bursar` | Schema |
 | **Permission matrix:** what each role can see and do, module by module | New |
 | **Admin user management:** invite, change role, deactivate admin users | Schema (partly) |
 | **Secure login:** Clerk sign-in, MFA for admins, session timeout | Partly (Clerk) |
@@ -163,19 +163,52 @@ The portal is a separate app. The admin app only controls what feeds it:
 | **Audit log:** who changed what and when, especially for results, fees and payroll | New |
 | **Backup & export:** scheduled backups (Supabase), on-demand data export for the school | New |
 
-**To discuss**
-- Fixed roles, or configurable permissions per role? Fixed roles are faster to build; configurable ones suit schools whose structures differ.
-- Draft permission matrix to fill in together:
+**Roles**
 
-| Module | super_admin | admin | principal | vice_principal | bursar (new?) |
+| Role | Who it is | In one line |
+|------|-----------|-------------|
+| `owner` | The proprietor | Owns the school: its details, and everyone's access. Created by Hamrash platform admin. |
+| `admin` | School administrator (registrar, manager) | Runs operations and access for the owner: records, people, clean-up. Shown as "School administrator" so it isn't confused with the app's name. |
+| `principal` | Head of the school | Runs academics: calendar, classes, subjects, grading, results. |
+| `vice_principal` | Deputy head | Same as principal today. |
+| `bursar` | Accounts | Runs fees; sees what fees work needs, changes nothing else. |
+
+Several roles at one school add up (no role switcher). Teachers, staff, parents and students use the other apps.
+
+**Permission matrix** (fixed roles; settled 2026-10-13)
+
+Key: **Full** = add, edit, delete · **Edit** = add and edit, no delete · **View** = read only · **—** = no access · *italics* = proposed, no tables yet
+
+| Module | owner | admin | principal | vice_principal | bursar |
 |--------|:-:|:-:|:-:|:-:|:-:|
-| Students | | | | | |
-| Academics & results | | | | | |
-| Finance | | | | | |
-| Staff & payroll | | | | | |
-| Communication | | | | | |
-| Reports | | | | | |
-| Settings & admin users | | | | | |
+| School details (name, address, logo, number prefix; confirming them) | Edit | View | View | View | View |
+| Academic setup (sessions, terms, sections, classes, arms, class teachers) | Full | Full | Edit⁴ | Edit⁴ | View |
+| Subjects (subjects, which arms take them, student subjects) | Full | Full | Edit¹ | Edit¹ | View |
+| Grading setup (score columns, grade boundaries) | Full | Full | Full | Full | View |
+| Students and parents (records, placements, parent links) | Full | Full | Edit² | Edit² | View³ |
+| Staff records | Full | Full | Edit | Edit | View |
+| Results (approve, publish, report cards) | *View* | *View* | *Full* | *Edit* | *—* |
+| Finance (fee structure, invoices, payments, debtors) | *Full* | *View* | *View* | *View* | *Full* |
+| Payroll | *Full* | *—* | *—* | *—* | *Full* |
+| Communication (announcements) | *Full* | *Full* | *Full* | *Full* | *Fees notices only* |
+| Reports | *All* | *All but payroll* | *Academic* | *Academic* | *Finance* |
+| Invite the team | Any role but owner | Any role but owner | Principal, VP, bursar, teacher, staff | Principal, VP, bursar, teacher, staff | — |
+| Cancel an unclaimed invite | Any | Any | Roles they can invite | Roles they can invite | — |
+| Change someone's role, suspend someone | Yes | Yes | — | — | — |
+
+¹ Can also link and unlink subjects to arms and enrol or remove students from subjects; only deleting a subject is owner/admin.
+² Can also move students between classes and link parents; only deleting a student or parent is owner/admin.
+³ Bursars see parent private details (for fees) but not student private details.
+⁴ Can also unassign class teachers; deleting sessions, terms, sections, classes or arms is owner/admin.
+
+Rows in plain text are enforced by RLS today (migrations 03–08 and 17; tests in `supabase/tests`). Rows in italics are proposals to confirm when those modules get their tables.
+
+**Setup checklist on Home:** owner, admin, principal and VP all get it; bursar sees how far it has got. Step 1 (school details) is the owner's alone.
+
+**To discuss**
+- Results: does the VP approve first and then the principal, or the principal only? (The italic row assumes the principal publishes.)
+- Finance: should the admin be able to record payments, or only view them?
+- Should the owner be able to hand over ownership, or have a second owner?
 
 ---
 
