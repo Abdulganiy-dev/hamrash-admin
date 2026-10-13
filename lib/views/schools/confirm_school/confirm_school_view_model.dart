@@ -83,7 +83,7 @@ enum SchoolField {
   }
 }
 
-/// 10 · Check your school. The first owner or admin in checks the details
+/// 10 · Check your school. The owner checks the details
 /// Hamrash filled in, fixes any, then taps "Looks good".
 class ConfirmSchoolViewModel extends BaseViewModel {
   ConfirmSchoolViewModel({

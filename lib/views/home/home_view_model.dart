@@ -66,14 +66,14 @@ class HomeViewModel extends BaseViewModel {
     return '$start/${((start + 1) % 100).toString().padLeft(2, '0')}';
   }
 
-  /// School details and inviting the team stay with owners and admins.
+  /// School details stay with the owner; every other step is for all
+  /// school leaders.
   bool canOpen(SetupStep step) =>
       school.canRunSetup &&
-      (school.canEditSchool ||
-          (step != SetupStep.schoolDetails && step != SetupStep.team));
+      (step != SetupStep.schoolDetails || school.canEditSchool);
 
   String hintFor(SetupStep step) => switch (step) {
-    _ when !canOpen(step) => 'The owner or an admin does this',
+    _ when !canOpen(step) => 'The owner does this',
     SetupStep.academicCalendar =>
       'Add $currentSessionName and the current term',
     _ => step.hint,

@@ -20,7 +20,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:stacked/stacked.dart';
 
 /// Home tab: school header and, while the school is being set up, the setup
-/// card (11 for owners and admins, 12 for everyone else).
+/// card (11 for owners, admins, principals and VPs; 12 for bursars).
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
     super.key,

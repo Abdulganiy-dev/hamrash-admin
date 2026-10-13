@@ -57,7 +57,7 @@ class Organization {
   final String numberPrefix;
   final String? logoId;
 
-  /// When an owner or admin tapped "Looks good" on Check your school.
+  /// When the owner tapped "Looks good" on Check your school.
   final DateTime? detailsConfirmedAt;
 
   /// Clerk user id of whoever confirmed the details.

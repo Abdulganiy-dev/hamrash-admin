@@ -13,7 +13,7 @@ class SchoolService {
   final SupabaseClient _supabase;
 
   /// Saves edited details (name, address, phone, email, number_prefix,
-  /// logo_id, logo_url) and returns the school as stored. Owners and admins
+  /// logo_id, logo_url) and returns the school as stored. The owner
   /// only; the database refuses status, code and creator changes.
   Future<Organization> updateDetails(
     String organizationId,

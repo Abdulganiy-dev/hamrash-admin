@@ -129,10 +129,10 @@ void main() {
       expect(schools, isEmpty);
     });
 
-    test('only owners and admins check details, and only once', () {
-      final principal = MemberSchool(
+    test('only the owner checks details, and only once', () {
+      final admin = MemberSchool(
         organization: kings,
-        roles: const [OrganizationMemberRole.principal],
+        roles: const [OrganizationMemberRole.admin],
       );
       final owner = MemberSchool(
         organization: kings,
@@ -146,7 +146,7 @@ void main() {
         ),
         roles: const [OrganizationMemberRole.owner],
       );
-      expect(principal.needsDetailsCheck, isFalse);
+      expect(admin.needsDetailsCheck, isFalse);
       expect(owner.needsDetailsCheck, isTrue);
       expect(checked.needsDetailsCheck, isFalse);
     });
@@ -249,8 +249,9 @@ void main() {
       );
     });
 
-    test('principals and VPs run setup, except details and invites', () {
+    test('admins, principals and VPs run every step but school details', () {
       for (final role in [
+        OrganizationMemberRole.admin,
         OrganizationMemberRole.principal,
         OrganizationMemberRole.vicePrincipal,
       ]) {
@@ -261,23 +262,28 @@ void main() {
         );
         expect(model.school.canRunSetup, isTrue);
         expect(model.canOpen(SetupStep.academicCalendar), isTrue);
-        expect(model.canOpen(SetupStep.grading), isTrue);
+        expect(model.canOpen(SetupStep.team), isTrue);
         expect(model.canOpen(SetupStep.schoolDetails), isFalse);
-        expect(model.canOpen(SetupStep.team), isFalse);
-        expect(
-          model.hintFor(SetupStep.team),
-          'The owner or an admin does this',
-        );
+        expect(model.hintFor(SetupStep.schoolDetails), 'The owner does this');
       }
     });
 
-    test('owners and admins can open every step', () {
+    test('owners can open every step', () {
       final model = HomeViewModel(
         signedInName: 'Signed In',
-        school: school(OrganizationMemberRole.admin),
+        school: school(OrganizationMemberRole.owner),
         service: _Schools(const SetupProgress({})),
       );
       expect(SetupStep.values.every(model.canOpen), isTrue);
+    });
+
+    test('only owners and admins invite admins', () {
+      MemberSchool at(OrganizationMemberRole role) =>
+          MemberSchool(organization: kings, roles: [role]);
+      expect(at(OrganizationMemberRole.owner).canInviteAdmins, isTrue);
+      expect(at(OrganizationMemberRole.admin).canInviteAdmins, isTrue);
+      expect(at(OrganizationMemberRole.principal).canInviteAdmins, isFalse);
+      expect(at(OrganizationMemberRole.vicePrincipal).canInviteAdmins, isFalse);
     });
 
     test('bursars see who is setting the school up', () async {

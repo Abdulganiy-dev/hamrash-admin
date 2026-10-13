@@ -37,9 +37,12 @@ class MemberSchool {
       roles.contains(OrganizationMemberRole.principal) ||
       roles.contains(OrganizationMemberRole.vicePrincipal);
 
-  /// Owners and admins also edit the school's details and invite the team;
-  /// the database keeps those two to them.
-  bool get canEditSchool =>
+  /// Only the owner edits and confirms the school's details.
+  bool get canEditSchool => roles.contains(OrganizationMemberRole.owner);
+
+  /// Owners and admins invite any role except owner; principals and VPs
+  /// invite up to their own level (principal, VP, bursar, teacher, staff).
+  bool get canInviteAdmins =>
       roles.contains(OrganizationMemberRole.owner) ||
       roles.contains(OrganizationMemberRole.admin);
 
