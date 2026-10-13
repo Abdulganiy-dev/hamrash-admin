@@ -48,8 +48,22 @@ class OrganizationMemberService {
           .single();
 
       final result = ClaimCodeCheck.fromJson(Map<String, dynamic>.from(row));
+      final logResult = {
+        'status': result.status.value,
+        'organization_id': result.organizationId,
+        'school_name': result.schoolName,
+        'school_code': result.schoolCode,
+        'school_address': result.schoolAddress,
+        'school_state': result.schoolState,
+        'school_logo_url': result.schoolLogoUrl,
+        'role': result.role?.value,
+        'app': result.app,
+        'needs_name': result.needsName,
+        'tries_left': result.triesLeft,
+        'retry_at': result.retryAt?.toIso8601String(),
+      };
       AppLogger.info(
-        'Supabase checkClaimCode result: ${jsonEncode({'status': result.status.value, 'organization_id': result.organizationId, 'school_name': result.schoolName, 'school_code': result.schoolCode, 'school_address': result.schoolAddress, 'school_state': result.schoolState, 'school_logo_url': result.schoolLogoUrl, 'role': result.role?.value, 'app': result.app, 'needs_name': result.needsName, 'tries_left': result.triesLeft, 'retry_at': result.retryAt?.toIso8601String()})}',
+        'Supabase checkClaimCode result: ${jsonEncode(logResult)}',
       );
       return result;
     } catch (error, stackTrace) {
