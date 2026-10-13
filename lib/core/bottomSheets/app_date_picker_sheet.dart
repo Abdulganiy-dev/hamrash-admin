@@ -62,6 +62,8 @@ abstract final class AppDatePickerSheet {
     DateTime? initialDate,
     List<AppDateQuickPick> quickPicks = const [],
   }) {
+    // Date pickers can open over a text form. Close that form's keyboard first.
+    FocusManager.instance.primaryFocus?.unfocus();
     final first = AppDateFormat.dateOnly(firstDate);
     final last = AppDateFormat.dateOnly(lastDate);
     final picks = quickPicks
@@ -138,6 +140,7 @@ abstract final class AppDateRangePickerSheet {
     DateTimeRange? initialRange,
     String saveLabel = 'Save',
   }) {
+    FocusManager.instance.primaryFocus?.unfocus();
     return Navigator.of(context).push<DateTimeRange>(
       AppSheetRoute<DateTimeRange>(
         size: AppSheetSize.floating,

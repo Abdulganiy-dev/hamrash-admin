@@ -15,6 +15,7 @@ import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_metrics.dart';
 import 'package:hamrash_admin/views/home/home_view_model.dart';
+import 'package:hamrash_admin/views/academic_calendar/create_session/create_session_screen.dart';
 import 'package:hamrash_admin/views/schools/widgets/school_logo.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:stacked/stacked.dart';
@@ -264,7 +265,23 @@ class _SetupCard extends StatelessWidget {
                         ? _StepState.current
                         : _StepState.todo,
                     onTap: model.canOpen(step)
-                        ? () => model.openStep(step)
+                        ? () async {
+                            if (step == SetupStep.academicCalendar &&
+                                !progress.isDone(step)) {
+                              final created = await Navigator.of(context)
+                                  .push<bool>(
+                                    MaterialPageRoute(
+                                      builder: (_) => CreateSessionScreen(
+                                        organizationId:
+                                            model.school.organization.id,
+                                      ),
+                                    ),
+                                  );
+                              if (created == true) await model.refresh();
+                            } else {
+                              model.openStep(step);
+                            }
+                          }
                         : null,
                   ),
                   const SizedBox(height: 2),
