@@ -58,6 +58,7 @@ class HomeScreen extends StatelessWidget {
 
           customAppBar: _Header(
             model: model,
+            onSchoolLogoTapped:onOpenSchoolDetails,
             onAvatarTap: () => onAvatarTap(model.displayName, model.photoUrl),
           ),
           body: AppRefreshScrollView.children(
@@ -79,10 +80,11 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.model, required this.onAvatarTap});
+  const _Header({required this.model, required this.onAvatarTap,required this.onSchoolLogoTapped});
 
   final HomeViewModel model;
   final VoidCallback onAvatarTap;
+  final VoidCallback? onSchoolLogoTapped;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -91,10 +93,13 @@ class _Header extends StatelessWidget {
     ),
     child: Row(
       children: [
-        SchoolLogo(
-          logoUrl: model.school.organization.logoUrl,
-          size: 44,
-          radius: 22,
+        BouncyButton(
+          onPressed: onSchoolLogoTapped,
+          child: SchoolLogo(
+            logoUrl: model.school.organization.logoUrl,
+            size: 44,
+            radius: 22,
+          ),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -265,7 +270,8 @@ class _SetupCard extends StatelessWidget {
                         : step == current
                         ? _StepState.current
                         : _StepState.todo,
-                    onTap: model.canOpen(step)
+                    showChevronWhenDone: !progress.isDone(step),
+                    onTap: model.canOpen(step) && !progress.isDone(step)
                         ? () => _openStep(context, step)
                         : null,
                   ),
@@ -280,7 +286,7 @@ class _SetupCard extends StatelessWidget {
   }
 
   Future<void> _openStep(BuildContext context, SetupStep step) async {
-    if (step != SetupStep.academicCalendar || progress.isDone(step)) {
+    if (step != SetupStep.academicCalendar) {
       model.openStep(step);
       return;
     }
@@ -348,6 +354,7 @@ class _StepRow extends StatelessWidget {
     required this.title,
     required this.state,
     this.subtitle,
+    this.showChevronWhenDone = false,
     this.onTap,
   });
 
@@ -355,13 +362,14 @@ class _StepRow extends StatelessWidget {
   final String title;
   final String? subtitle;
   final _StepState state;
+  final bool showChevronWhenDone;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final current = state == _StepState.current;
     final done = state == _StepState.done;
-    final showChevron = onTap != null && !done;
+    final showChevron = onTap != null && (!done || showChevronWhenDone);
 
     final row = Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
