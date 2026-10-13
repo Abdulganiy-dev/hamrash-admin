@@ -15,6 +15,7 @@ class JoinViewModel extends BaseViewModel {
   JoinViewModel({
     this.phase = JoinPhase.enterCode,
     this.email = 'amina.bello@gmail.com',
+    String? initialName,
     this.schoolName = 'Kings College',
     this.location = 'Lekki, Lagos',
     this.role = 'Principal',
@@ -33,7 +34,7 @@ class JoinViewModel extends BaseViewModel {
                  ? 'KQ7M-2X9B'
                  : 'KQ7M-2X'),
        ),
-       fullName = TextEditingController(text: 'Amina Bello'),
+       fullName = TextEditingController(text: initialName ?? 'Amina Bello'),
        phoneNumber = TextEditingController(text: '803 000 0000') {
     code.addListener(notifyListeners);
   }
@@ -54,10 +55,9 @@ class JoinViewModel extends BaseViewModel {
   final VoidCallback? onDifferentCode;
   final VoidCallback? onSignOut;
 
-  String? get codeError =>
-      phase == JoinPhase.wrongCode
-          ? "We couldn't find that code. Check it with whoever sent it to you."
-          : null;
+  String? get codeError => phase == JoinPhase.wrongCode
+      ? "We couldn't find that code. Check it with whoever sent it to you."
+      : null;
 
   bool get isCodeLocked => phase == JoinPhase.tooManyTries;
 

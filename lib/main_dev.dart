@@ -1,4 +1,3 @@
-
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/app.dart';
@@ -12,12 +11,10 @@ import 'env_config/flavor_config.dart';
 
 import 'singleton_locator/locator.dart';
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-  
     FlavorConfig(flavor: Flavor.dev, values: DevEnv());
 
     final env = FlavorConfig.instance!.envConfig();
@@ -26,7 +23,7 @@ Future<void> main() async {
     // This ensures Supabase is available when services are registered
     await Supabase.initialize(
       url: env.supabaseUrl,
-      anonKey: env.supabaseAnonKey,
+      anonKey: env.supabasePublishableKey,
       debug: true,
       accessToken: () async {
         final context = ViewUtil.navigatorKey.currentContext;
@@ -49,7 +46,7 @@ Future<void> main() async {
     // Initialize dependency injection after Supabase is initialized
     setupLocator();
 
-       final realmService = locator<RealmService>();
+    final realmService = locator<RealmService>();
     realmService.initialize();
 
     AppLogger.info('[${FlavorConfig.instance!.name}] baseUrl=${env.baseUrl}');

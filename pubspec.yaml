@@ -47,6 +47,7 @@ dependencies:
   shared_preferences: ^2.2.2
   clerk_auth: ^0.0.13-beta
   app_links: ^6.3.2
+  flutter_web_auth_2: ^5.1.0
   url_launcher: ^6.3.2
   haptic_feedback: ^0.6.4+3
   uuid: ^4.5.1

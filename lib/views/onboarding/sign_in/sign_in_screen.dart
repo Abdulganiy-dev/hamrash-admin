@@ -1,3 +1,4 @@
+import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/assets_util.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
@@ -11,19 +12,14 @@ import 'package:hamrash_admin/views/onboarding/widgets/auth_onboarding_widgets.d
 import 'package:stacked/stacked.dart';
 
 class SignInScreen extends StatelessWidget {
-  const SignInScreen({super.key, this.onApplePressed, this.onGooglePressed});
-
-  final Future<void> Function()? onApplePressed;
-  final Future<void> Function()? onGooglePressed;
+  const SignInScreen({super.key});
 
   @override
   Widget build(
     BuildContext context,
   ) => ViewModelBuilder<SignInViewModel>.reactive(
-    viewModelBuilder: () => SignInViewModel(
-      onApplePressed: onApplePressed,
-      onGooglePressed: onGooglePressed,
-    ),
+    viewModelBuilder: () =>
+        SignInViewModel(ClerkAuth.of(context, listen: false)),
     builder: (context, model, _) => AuthScreenFrame(
       showBackButton: false,
       scrollContent: Column(
@@ -126,6 +122,16 @@ class SignInScreen extends StatelessWidget {
               ],
             ),
           ),
+          if (model.error != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: AppText(
+                model.error!,
+                variant: AppTextVariant.body,
+                colorType: AppTextColor.error,
+                textAlign: TextAlign.center,
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.sm,

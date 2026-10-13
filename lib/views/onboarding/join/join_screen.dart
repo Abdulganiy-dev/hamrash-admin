@@ -17,6 +17,7 @@ class JoinScreen extends StatelessWidget {
     super.key,
     this.initialPhase = JoinPhase.enterCode,
     this.email = 'amina.bello@gmail.com',
+    this.initialName,
     this.schoolName = 'Kings College',
     this.location = 'Lekki, Lagos',
     this.role = 'Principal',
@@ -33,6 +34,7 @@ class JoinScreen extends StatelessWidget {
 
   final JoinPhase initialPhase;
   final String email;
+  final String? initialName;
   final String schoolName;
   final String location;
   final String role;
@@ -49,24 +51,24 @@ class JoinScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       ViewModelBuilder<JoinViewModel>.reactive(
-        viewModelBuilder:
-            () => JoinViewModel(
-              phase: initialPhase,
-              email: email,
-              schoolName: schoolName,
-              location: location,
-              role: role,
-              schoolCode: schoolCode,
-              targetApp: targetApp,
-              initialCode: initialCode,
-              onContinue: onContinue,
-              onUseAnotherAccount: onUseAnotherAccount,
-              onJoin: onJoin,
-              onDifferentCode: onDifferentCode,
-              onSignOut: onSignOut,
-            ),
-        builder:
-            (context, model, _) => _JoinContent(model: model, onBack: onBack),
+        viewModelBuilder: () => JoinViewModel(
+          phase: initialPhase,
+          email: email,
+          initialName: initialName,
+          schoolName: schoolName,
+          location: location,
+          role: role,
+          schoolCode: schoolCode,
+          targetApp: targetApp,
+          initialCode: initialCode,
+          onContinue: onContinue,
+          onUseAnotherAccount: onUseAnotherAccount,
+          onJoin: onJoin,
+          onDifferentCode: onDifferentCode,
+          onSignOut: onSignOut,
+        ),
+        builder: (context, model, _) =>
+            _JoinContent(model: model, onBack: onBack),
       );
 }
 
@@ -118,10 +120,9 @@ class _JoinContent extends StatelessWidget {
         controller: model.code,
         enabled: !model.isCodeLocked,
         errorMessage: model.codeError,
-        helperMessage:
-            model.codeError == null && !model.isCodeLocked
-                ? 'Letters and numbers only. The dash is added for you.'
-                : null,
+        helperMessage: model.codeError == null && !model.isCodeLocked
+            ? 'Letters and numbers only. The dash is added for you.'
+            : null,
       ),
       if (model.phase == JoinPhase.wrongCode) ...[
         const SizedBox(height: AppSpacing.sm),

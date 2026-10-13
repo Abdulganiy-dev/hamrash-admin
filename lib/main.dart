@@ -14,7 +14,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-   
     FlavorConfig(flavor: Flavor.prod, values: ProdEnv());
 
     final env = FlavorConfig.instance!.envConfig();
@@ -23,7 +22,7 @@ Future<void> main() async {
     // This ensures Supabase is available when services are registered
     await Supabase.initialize(
       url: env.supabaseUrl,
-      anonKey: env.supabaseAnonKey,
+      anonKey: env.supabasePublishableKey,
       debug: false,
       accessToken: () async {
         final context = ViewUtil.navigatorKey.currentContext;

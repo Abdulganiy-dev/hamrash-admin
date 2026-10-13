@@ -60,15 +60,15 @@ Database conventions:
 
 ## 5. App code
 
-Already wired in the template:
-- **Packages:** `clerk_flutter`, `clerk_auth` and `app_links` in `pubspec.yaml`.
-- **`lib/app.dart`:** wraps the app in `ClerkAuth(config: ClerkAuthConfig(publishableKey: …))`. This only happens once a key is set (`env.hasClerk`).
-- **`lib/main.dart` and `lib/main_dev.dart`:** give Supabase Clerk's session token through `accessToken: … ClerkAuth.of(context).sessionToken()`, so Supabase requests carry the Clerk user.
+Wired in the app:
+- **Packages:** `clerk_flutter`, `clerk_auth`, `flutter_web_auth_2` and `package_info_plus` in `pubspec.yaml`.
+- **`lib/app.dart`:** wraps the app in `ClerkAuth` and routes signed-out users to sign-in. After sign-in it checks for an `organization_members` row with that Clerk user ID: existing members enter the current main-app template, and other users see the Join screen.
+- **`lib/views/onboarding/sign_in/sign_in_view_model.dart`:** starts Apple or Google OAuth in Clerk and completes the browser callback.
+- **`lib/main.dart` and `lib/main_dev.dart`:** pass Clerk's session JWT to Supabase through `accessToken`, so Supabase RLS sees the Clerk user.
+- **iOS:** `ios/Runner/Info.plist` registers the bundle ID as the OAuth callback scheme; Xcode substitutes the active flavor's bundle ID.
+- **Android:** `android/app/src/main/AndroidManifest.xml` registers the application ID as the OAuth callback scheme; Gradle substitutes the active flavor's application ID.
 
-Not yet in the template; add these when you need browser-based Google or Apple sign-in:
-- **iOS:** add the `<bundle id>` URL scheme to `CFBundleURLTypes` in `ios/Runner/Info.plist`, one per flavor.
-- **Android:** add an intent filter for `<package name>://callback` to `android/app/src/main/AndroidManifest.xml`.
-- **Clerk:** pass a `redirectionGenerator` and `deepLinkStream` (from `app_links`) to `ClerkAuth`, following the [clerk_flutter example](https://pub.dev/packages/clerk_flutter/example). Alternatively, use the SDK's in-app WebView option, which skips the redirect and the allowlist.
+The Clerk dashboard still needs the OAuth redirect allowlist entries from step 2, and the Google and Apple providers must be enabled in Clerk.
 
 ## Checklist
 

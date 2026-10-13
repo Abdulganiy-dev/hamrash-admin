@@ -8,8 +8,7 @@ abstract class Env {
 
   String get clerkPublishableKey;
   String get supabaseUrl;
-  String get supabaseAnonKey;
-
+  String get supabasePublishableKey;
 
   /// Cloudflare API (user token or global key). Prefer `--dart-define` for secrets.
   String get cloudflareEmail;
@@ -40,31 +39,29 @@ class DevEnv implements Env {
   String get supabaseUrl => 'https://ccvyhbyrtobdsecqvhcr.supabase.co';
 
   @override
-  String get supabaseAnonKey =>
+  String get supabasePublishableKey =>
       'sb_publishable_rsWnj5Dj89nS_AOcZk9Yfw_ucYGtrec';
-
-
 
   /// Optional for user API tokens (`cfut_`); required with a Global API key.
   @override
   String get cloudflareEmail => const String.fromEnvironment(
-        'CLOUDFLARE_EMAIL',
-        defaultValue: 'hamrashinternationalsch@gmail.com',
-      );
+    'CLOUDFLARE_EMAIL',
+    defaultValue: 'hamrashinternationalsch@gmail.com',
+  );
 
   /// Never commit a real token. Pass at build/run time, for example:
   /// `flutter run --dart-define=CLOUDFLARE_API_TOKEN=your_token`
   @override
   String get cloudflareApiToken => const String.fromEnvironment(
-        'CLOUDFLARE_API_TOKEN',
-        defaultValue: "cfut_HwGFbW1IIX41N2rcTlj6Hak040ECbWf57dgCnaWX92a69884",
-      );
+    'CLOUDFLARE_API_TOKEN',
+    defaultValue: "cfut_HwGFbW1IIX41N2rcTlj6Hak040ECbWf57dgCnaWX92a69884",
+  );
 
   @override
   String get cloudflareAccountId => const String.fromEnvironment(
-        'CLOUDFLARE_ACCOUNT_ID',
-        defaultValue: '82f79f2db37322491b27f7e8b0c0275d',
-      );
+    'CLOUDFLARE_ACCOUNT_ID',
+    defaultValue: '82f79f2db37322491b27f7e8b0c0275d',
+  );
 }
 
 class ProdEnv implements Env {
@@ -87,22 +84,17 @@ class ProdEnv implements Env {
   String get supabaseUrl => ''; // TODO: Add production Supabase URL
 
   @override
-  String get supabaseAnonKey => ''; // TODO: Add production Supabase anon key
+  String get supabasePublishableKey => ''; // TODO: Add production Supabase publishable key
 
   @override
-  String get cloudflareEmail => const String.fromEnvironment(
-        'CLOUDFLARE_EMAIL',
-      );
+  String get cloudflareEmail =>
+      const String.fromEnvironment('CLOUDFLARE_EMAIL');
 
   @override
-  String get cloudflareApiToken => const String.fromEnvironment(
-        'CLOUDFLARE_API_TOKEN',
-      );
+  String get cloudflareApiToken =>
+      const String.fromEnvironment('CLOUDFLARE_API_TOKEN');
 
   @override
-  String get cloudflareAccountId => const String.fromEnvironment(
-        'CLOUDFLARE_ACCOUNT_ID',
-      );
+  String get cloudflareAccountId =>
+      const String.fromEnvironment('CLOUDFLARE_ACCOUNT_ID');
 }
-
-
