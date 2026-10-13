@@ -34,33 +34,34 @@ class HomeShell extends StatelessWidget {
 
   static const _comingSoon = {1: 'People', 2: 'Fees', 3: 'More'};
 
-  void _openAccount(BuildContext context) => AppActionSheet.show(
-    context,
-    title: userName,
-    subtitle: '${school.rolesLabel} · ${school.name}',
-    leading: AppLeadingPicture(
-      leading: AppListLeading.network(userImageUrl ?? '', name: userName),
-      size: 44,
-    ),
-    groups: [
-      if (onSwitchSchool != null)
-        [
-          AppSheetAction(
-            label: 'Switch school',
-            icon: LucideIcons.arrowLeftRight,
-            onTap: onSwitchSchool!,
-          ),
-        ],
-      [
-        AppSheetAction(
-          label: 'Sign out',
-          icon: LucideIcons.logOut,
-          isDestructive: true,
-          onTap: onSignOut,
+  void _openAccount(BuildContext context, String name, String? photoUrl) =>
+      AppActionSheet.show(
+        context,
+        title: name,
+        subtitle: '${school.rolesLabel} · ${school.name}',
+        leading: AppLeadingPicture(
+          leading: AppListLeading.network(photoUrl ?? '', name: name),
+          size: 44,
         ),
-      ],
-    ],
-  );
+        groups: [
+          if (onSwitchSchool != null)
+            [
+              AppSheetAction(
+                label: 'Switch school',
+                icon: LucideIcons.arrowLeftRight,
+                onTap: onSwitchSchool!,
+              ),
+            ],
+          [
+            AppSheetAction(
+              label: 'Sign out',
+              icon: LucideIcons.logOut,
+              isDestructive: true,
+              onTap: onSignOut,
+            ),
+          ],
+        ],
+      );
 
   @override
   Widget build(BuildContext context) => AppTabShell(
@@ -83,7 +84,8 @@ class HomeShell extends StatelessWidget {
           school: school,
           userName: userName,
           userImageUrl: userImageUrl,
-          onAvatarTap: () => _openAccount(context),
+          onAvatarTap: (name, photoUrl) =>
+              _openAccount(context, name, photoUrl),
           onOpenSchoolDetails: onOpenSchoolDetails,
         ),
       ),

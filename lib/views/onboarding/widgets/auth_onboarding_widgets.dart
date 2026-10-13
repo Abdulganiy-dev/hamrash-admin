@@ -20,13 +20,14 @@ class AuthScreenFrame extends StatelessWidget {
     required this.footer,
     this.showBackButton = true,
     this.onBack,
+    this.shouldShowKeyBoardDone = true
   });
 
   final Widget scrollContent;
   final Widget footer;
   final bool showBackButton;
   final VoidCallback? onBack;
-
+  final bool shouldShowKeyBoardDone;
   static const _footerKey = ValueKey('footer');
 
   @override
@@ -57,7 +58,7 @@ class AuthScreenFrame extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           children: [...previousChildren, ?currentChild],
         ),
-        child: AppKeyboardBar.isKeyboardOpen(context)
+        child: AppKeyboardBar.isKeyboardOpen(context) && shouldShowKeyBoardDone
             ? const AppKeyboardBar(key: ValueKey('keyboard-bar'))
             : SafeArea(
                 key: _footerKey,

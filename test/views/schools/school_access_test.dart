@@ -3,6 +3,7 @@ import 'package:hamrash_admin/api/models/organization_models/member_school.dart'
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/models/organization_models/setup_progress.dart';
+import 'package:hamrash_admin/api/models/organization_models/staff_profile.dart';
 import 'package:hamrash_admin/api/services/supabase_services/organization_member_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/school_service.dart';
 import 'package:hamrash_admin/core/cache/user_prefrences.dart';
@@ -59,10 +60,21 @@ class _Members extends OrganizationMemberService {
 }
 
 class _Schools extends SchoolService {
-  _Schools(this.progress, {this.ownerName}) : super(_client());
+  _Schools(this.progress, {this.ownerName, this.me}) : super(_client());
 
   final SetupProgress progress;
   final String? ownerName;
+  final StaffProfile? me;
+  List<String>? askedMemberIds;
+
+  @override
+  Future<StaffProfile?> getMyStaffProfile(
+    String organizationId,
+    List<String> memberIds,
+  ) async {
+    askedMemberIds = memberIds;
+    return me;
+  }
 
   @override
   Future<SetupProgress> getSetupProgress(Organization organization) async =>
@@ -98,6 +110,7 @@ void main() {
       expect(schools[0].rolesLabel, 'Owner · Principal');
       expect(schools[1].rolesLabel, 'Admin · Bursar');
       expect(schools[1].isPaused, isTrue);
+      expect(schools[0].memberIds, ['kings-principal', 'kings-owner']);
     });
 
     test('leaves out archived schools, invites and non-admin roles', () {
@@ -214,11 +227,13 @@ void main() {
 
     test('session name follows the September start', () {
       final october = HomeViewModel(
+        signedInName: 'Signed In',
         school: school(OrganizationMemberRole.owner),
         service: _Schools(const SetupProgress({})),
         now: () => DateTime(2026, 10, 13),
       );
       final march = HomeViewModel(
+        signedInName: 'Signed In',
         school: school(OrganizationMemberRole.owner),
         service: _Schools(const SetupProgress({})),
         now: () => DateTime(2027, 3, 1),
@@ -233,6 +248,7 @@ void main() {
 
     test('principals see who is setting the school up', () async {
       final model = HomeViewModel(
+        signedInName: 'Signed In',
         school: school(OrganizationMemberRole.principal),
         service: _Schools(
           const SetupProgress({SetupStep.schoolDetails}),
@@ -245,6 +261,70 @@ void main() {
         model.beingSetUpMessage,
         startsWith('Amina Bello, the owner, is getting Kings College ready.'),
       );
+    });
+  });
+
+  group('own staff record', () {
+    final school = MemberSchool(
+      organization: kings,
+      roles: const [OrganizationMemberRole.owner],
+      memberIds: const ['kings-owner'],
+    );
+
+    test('Home shows the name the school knows them by', () async {
+      final service = _Schools(
+        const SetupProgress({}),
+        me: const StaffProfile(
+          id: 'staff-1',
+          firstName: 'Amina',
+          lastName: 'Bello',
+          photoUrl: 'https://example.com/amina.png',
+        ),
+      );
+      final model = HomeViewModel(
+        school: school,
+        signedInName: 'amina.b',
+        signedInImageUrl: 'https://example.com/google.png',
+        service: service,
+      );
+      expect(model.displayName, 'amina.b');
+
+      await model.load();
+      expect(service.askedMemberIds, ['kings-owner']);
+      expect(model.displayName, 'Amina Bello');
+      expect(model.photoUrl, 'https://example.com/amina.png');
+    });
+
+    test('falls back to the sign-in account without a staff record', () async {
+      final model = HomeViewModel(
+        school: school,
+        signedInName: 'Amina',
+        signedInImageUrl: 'https://example.com/google.png',
+        service: _Schools(const SetupProgress({})),
+      );
+      await model.load();
+      expect(model.displayName, 'Amina');
+      expect(model.photoUrl, 'https://example.com/google.png');
+    });
+
+    test('the welcome uses the staff first name', () async {
+      final model = ConfirmSchoolViewModel(
+        organization: kings,
+        firstName: null,
+        memberIds: const ['kings-owner'],
+        onConfirmed: (_) {},
+        service: _Schools(
+          const SetupProgress({}),
+          me: const StaffProfile(
+            id: 'staff-1',
+            firstName: 'Amina',
+            lastName: 'Bello',
+          ),
+        ),
+      );
+      expect(model.greeting, 'Welcome');
+      await model.load();
+      expect(model.greeting, 'Welcome, Amina');
     });
   });
 

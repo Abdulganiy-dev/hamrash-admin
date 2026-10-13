@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
+import 'package:hamrash_admin/api/models/organization_models/staff_profile.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/image_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/school_service.dart';
 import 'package:hamrash_admin/core/utils/validation_util.dart';
@@ -87,9 +88,9 @@ enum SchoolField {
 class ConfirmSchoolViewModel extends BaseViewModel {
   ConfirmSchoolViewModel({
     required Organization organization,
-    required this.clerkUserId,
     required this.firstName,
     required this.onConfirmed,
+    this.memberIds = const [],
     SchoolService? service,
     ImageService? imageService,
     ImagePicker? imagePicker,
@@ -98,23 +99,34 @@ class ConfirmSchoolViewModel extends BaseViewModel {
        _imageService = imageService,
        _imagePicker = imagePicker ?? ImagePicker();
 
-  final String clerkUserId;
+  /// From the sign-in account; their staff record's name wins once loaded.
   final String? firstName;
   final ValueChanged<Organization> onConfirmed;
+  final List<String> memberIds;
   final SchoolService _service;
   final ImageService? _imageService;
   final ImagePicker _imagePicker;
 
   Organization _organization;
   bool _uploadingLogo = false;
+  StaffProfile? _me;
 
   Organization get organization => _organization;
   bool get uploadingLogo => _uploadingLogo;
 
-  String get greeting => switch (firstName?.trim()) {
+  String get greeting => switch (_me?.firstName.trim() ?? firstName?.trim()) {
     final String name when name.isNotEmpty => 'Welcome, $name',
     _ => 'Welcome',
   };
+
+  /// Loads their staff record for the greeting. Quietly keeps the sign-in
+  /// name if it can't.
+  Future<void> load() async {
+    try {
+      _me = await _service.getMyStaffProfile(_organization.id, memberIds);
+      notifyListeners();
+    } catch (_) {}
+  }
 
   /// Saves one field. Returns the message to show under the field, or null
   /// once it's saved.
@@ -190,10 +202,7 @@ class ConfirmSchoolViewModel extends BaseViewModel {
     if (busy) return;
     setBusy(true);
     try {
-      final confirmed = await _service.confirmDetails(
-        _organization.id,
-        clerkUserId: clerkUserId,
-      );
+      final confirmed = await _service.confirmDetails(_organization.id);
       setBusy(false);
       onConfirmed(confirmed);
     } catch (error, stackTrace) {

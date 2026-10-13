@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/setup_progress.dart';
+import 'package:hamrash_admin/api/models/organization_models/staff_profile.dart';
 import 'package:hamrash_admin/core/app_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -31,13 +32,12 @@ class SchoolService {
   );
 
   /// Marks the details as checked, so "Check your school" doesn't come back.
-  Future<Organization> confirmDetails(
-    String organizationId, {
-    required String clerkUserId,
-  }) => updateDetails(organizationId, {
-    'details_confirmed_at': DateTime.now().toUtc().toIso8601String(),
-    'details_confirmed_by': clerkUserId,
-  });
+  /// The database stamps the real time and who did it, and keeps the first
+  /// confirmation if this runs again; the value sent here is ignored.
+  Future<Organization> confirmDetails(String organizationId) => updateDetails(
+    organizationId,
+    {'details_confirmed_at': DateTime.now().toUtc().toIso8601String()},
+  );
 
   /// Works out each checklist step from the school's own records.
   Future<SetupProgress> getSetupProgress(Organization organization) => _run(
@@ -101,6 +101,26 @@ class SchoolService {
       'organization_id': organization.id,
       'done': progress.done.map((step) => step.name).toList(),
     },
+  );
+
+  /// The caller's own staff record at this school, found through any of
+  /// their memberships there. Null when they have none yet.
+  Future<StaffProfile?> getMyStaffProfile(
+    String organizationId,
+    List<String> memberIds,
+  ) => _run(
+    'getMyStaffProfile',
+    () async {
+      if (memberIds.isEmpty) return null;
+      final rows = await _supabase
+          .from('staff')
+          .select(StaffProfile.columns)
+          .eq('organization_id', organizationId)
+          .inFilter('member_id', memberIds)
+          .limit(1);
+      return rows.isEmpty ? null : StaffProfile.fromJson(rows.first);
+    },
+    log: (staff) => {'organization_id': organizationId, 'found': staff != null},
   );
 
   /// "Amina Bello", or null when the owner has no staff record or the caller

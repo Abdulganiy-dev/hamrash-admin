@@ -99,7 +99,11 @@ class MemberAccessViewModel extends BaseViewModel {
   /// Swaps in the school as saved, e.g. after its details were checked.
   void updateSchool(Organization organization) {
     MemberSchool replace(MemberSchool school) => school.id == organization.id
-        ? MemberSchool(organization: organization, roles: school.roles)
+        ? MemberSchool(
+            organization: organization,
+            roles: school.roles,
+            memberIds: school.memberIds,
+          )
         : school;
     _schools = _schools.map(replace).toList(growable: false);
     if (_selected case final selected?) _selected = replace(selected);

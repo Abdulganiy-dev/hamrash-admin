@@ -31,9 +31,13 @@ class HomeScreen extends StatelessWidget {
   });
 
   final MemberSchool school;
+
+  /// From the sign-in account, until their staff record loads.
   final String userName;
   final String? userImageUrl;
-  final VoidCallback onAvatarTap;
+
+  /// Gets the name and photo shown in the header.
+  final void Function(String name, String? photoUrl) onAvatarTap;
   final VoidCallback? onOpenSchoolDetails;
 
   @override
@@ -41,6 +45,8 @@ class HomeScreen extends StatelessWidget {
       ViewModelBuilder<HomeViewModel>.reactive(
         viewModelBuilder: () => HomeViewModel(
           school: school,
+          signedInName: userName,
+          signedInImageUrl: userImageUrl,
           onOpenSchoolDetails: onOpenSchoolDetails,
         ),
         onViewModelReady: (model) => model.load(),
@@ -64,9 +70,8 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   _Header(
                     model: model,
-                    userName: userName,
-                    userImageUrl: userImageUrl,
-                    onAvatarTap: onAvatarTap,
+                    onAvatarTap: () =>
+                        onAvatarTap(model.displayName, model.photoUrl),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   if (model.error != null)
@@ -87,16 +92,9 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({
-    required this.model,
-    required this.userName,
-    required this.userImageUrl,
-    required this.onAvatarTap,
-  });
+  const _Header({required this.model, required this.onAvatarTap});
 
   final HomeViewModel model;
-  final String userName;
-  final String? userImageUrl;
   final VoidCallback onAvatarTap;
 
   @override
@@ -147,7 +145,10 @@ class _Header extends StatelessWidget {
           label: 'Your account',
           onTap: onAvatarTap,
           child: AppLeadingPicture(
-            leading: AppListLeading.network(userImageUrl ?? '', name: userName),
+            leading: AppListLeading.network(
+              model.photoUrl ?? '',
+              name: model.displayName,
+            ),
             size: 44,
           ),
         ),

@@ -5,12 +5,20 @@ import 'package:hamrash_admin/api/models/organization_models/organization_member
 /// admin-app role they hold there. Several roles at one school add up; there
 /// is no role switcher.
 class MemberSchool {
-  const MemberSchool({required this.organization, required this.roles});
+  const MemberSchool({
+    required this.organization,
+    required this.roles,
+    this.memberIds = const [],
+  });
 
   final Organization organization;
 
   /// Highest first: owner, admin, principal, vice principal, bursar.
   final List<OrganizationMemberRole> roles;
+
+  /// This person's membership rows here, one per role. Their staff record
+  /// points at one of them.
+  final List<String> memberIds;
 
   String get id => organization.id;
   String get name => organization.name;
@@ -34,7 +42,14 @@ class MemberSchool {
     List<OrganizationMember> memberships,
   ) {
     final bySchool =
-        <String, ({Organization org, Set<OrganizationMemberRole> roles})>{};
+        <
+          String,
+          ({
+            Organization org,
+            Set<OrganizationMemberRole> roles,
+            List<String> memberIds,
+          })
+        >{};
     for (final member in memberships) {
       final org = member.organization;
       if (org == null ||
@@ -43,16 +58,16 @@ class MemberSchool {
           !member.role.isAdminAppRole) {
         continue;
       }
-      bySchool
-          .putIfAbsent(org.id, () => (org: org, roles: {}))
-          .roles
-          .add(member.role);
+      bySchool.putIfAbsent(org.id, () => (org: org, roles: {}, memberIds: []))
+        ..roles.add(member.role)
+        ..memberIds.add(member.id);
     }
 
     return [
       for (final entry in bySchool.values)
         MemberSchool(
           organization: entry.org,
+          memberIds: List.unmodifiable(entry.memberIds),
           roles: OrganizationMemberRole.values
               .where(entry.roles.contains)
               .toList(growable: false),

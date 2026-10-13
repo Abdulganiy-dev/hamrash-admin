@@ -130,8 +130,8 @@ class _OnboardingAuthGate extends StatelessWidget {
               return ConfirmSchoolScreen(
                 key: ValueKey('confirm/${school.id}'),
                 organization: school.organization,
-                clerkUserId: user.id,
                 firstName: user.firstName,
+                memberIds: school.memberIds,
                 onConfirmed: model.updateSchool,
               );
             }
@@ -148,8 +148,8 @@ class _OnboardingAuthGate extends StatelessWidget {
                 MaterialPageRoute<void>(
                   builder: (route) => ConfirmSchoolScreen(
                     organization: school.organization,
-                    clerkUserId: user.id,
                     firstName: user.firstName,
+                    memberIds: school.memberIds,
                     onBack: () => Navigator.of(route).pop(),
                     onConfirmed: (organization) {
                       Navigator.of(route).pop();

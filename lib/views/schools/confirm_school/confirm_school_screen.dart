@@ -22,16 +22,18 @@ class ConfirmSchoolScreen extends StatelessWidget {
   const ConfirmSchoolScreen({
     super.key,
     required this.organization,
-    required this.clerkUserId,
     required this.onConfirmed,
     this.firstName,
+    this.memberIds = const [],
     this.onBack,
   });
 
   final Organization organization;
-  final String clerkUserId;
   final String? firstName;
   final ValueChanged<Organization> onConfirmed;
+
+  /// Their memberships at this school, to find their staff record.
+  final List<String> memberIds;
 
   /// Shown when reopened from the checklist, to leave without confirming.
   final VoidCallback? onBack;
@@ -42,12 +44,12 @@ class ConfirmSchoolScreen extends StatelessWidget {
   ) => ViewModelBuilder<ConfirmSchoolViewModel>.reactive(
     viewModelBuilder: () => ConfirmSchoolViewModel(
       organization: organization,
-      clerkUserId: clerkUserId,
       firstName: firstName,
       onConfirmed: onConfirmed,
     ),
     builder: (context, model, _) => AuthScreenFrame(
       showBackButton: onBack != null,
+      shouldShowKeyBoardDone: false,
       onBack: onBack,
       scrollContent: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -405,7 +407,7 @@ class _EditFieldSheetState extends State<_EditFieldSheet> {
             keyboardType: field.keyboardType,
             textCapitalization: field.capitalization,
             autocorrect: false,
-            textInputAction: TextInputAction.done,
+            // textInputAction: TextInputAction.done,
             onSubmitted: (_) => _save(),
           ),
         ],

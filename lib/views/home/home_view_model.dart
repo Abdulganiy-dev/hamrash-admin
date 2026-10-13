@@ -1,5 +1,6 @@
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/organization_models/setup_progress.dart';
+import 'package:hamrash_admin/api/models/organization_models/staff_profile.dart';
 import 'package:hamrash_admin/api/services/supabase_services/school_service.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
@@ -10,6 +11,8 @@ import 'package:hamrash_admin/viewModel/base_view_model.dart';
 class HomeViewModel extends BaseViewModel {
   HomeViewModel({
     required this.school,
+    required this.signedInName,
+    this.signedInImageUrl,
     this.onOpenSchoolDetails,
     SchoolService? service,
     DateTime Function()? now,
@@ -18,6 +21,10 @@ class HomeViewModel extends BaseViewModel {
 
   final MemberSchool school;
 
+  /// From the sign-in account; used until (or unless) a staff record loads.
+  final String signedInName;
+  final String? signedInImageUrl;
+
   /// Reopens "Check your school" from the checklist.
   final void Function()? onOpenSchoolDetails;
   final SchoolService _service;
@@ -25,7 +32,20 @@ class HomeViewModel extends BaseViewModel {
 
   SetupProgress? _progress;
   String? _ownerName;
+  StaffProfile? _me;
   Object? _error;
+
+  /// The name the school knows them by: their staff record, else the
+  /// sign-in account.
+  String get displayName => switch (_me?.fullName) {
+    final String name when name.isNotEmpty => name,
+    _ => signedInName,
+  };
+
+  String? get photoUrl => switch (_me?.photoUrl) {
+    final String url when url.isNotEmpty => url,
+    _ => signedInImageUrl,
+  };
 
   SetupProgress? get progress => _progress;
   Object? get error => _error;
@@ -63,13 +83,18 @@ class HomeViewModel extends BaseViewModel {
     _error = null;
     notifyListeners();
     try {
-      final results = await Future.wait([
+      final results = await Future.wait<Object?>([
         _service.getSetupProgress(school.organization),
+        // The header still works without these, so a failure isn't fatal.
+        _service
+            .getMyStaffProfile(school.id, school.memberIds)
+            .catchError((_) => null),
         if (!school.canManage)
           _service.getOwnerName(school.id).catchError((_) => null),
       ]);
-      _progress = results.first as SetupProgress;
-      if (results.length > 1) _ownerName = results[1] as String?;
+      _progress = results[0] as SetupProgress;
+      _me = results[1] as StaffProfile?;
+      if (results.length > 2) _ownerName = results[2] as String?;
     } catch (error, stackTrace) {
       _error = error;
       await handleError(
