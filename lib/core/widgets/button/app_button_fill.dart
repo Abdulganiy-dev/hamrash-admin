@@ -15,6 +15,7 @@ class AppButtonFill {
     required this.border,
     this.shadows = const [],
     this.highlight = const Color(0x00FFFFFF),
+    this.highlightEnd = 0.14,
     this.rim = const Color(0x00000000),
     this.textShadows = const [],
   });
@@ -26,6 +27,10 @@ class AppButtonFill {
 
   /// Light along the top inside edge.
   final Color highlight;
+
+  /// How far the top highlight fades across the button, as a fraction of its
+  /// height.
+  final double highlightEnd;
 
   /// Shade along the bottom inside edge.
   final Color rim;
@@ -43,7 +48,7 @@ class AppButtonFill {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [highlight, highlight.withAlpha(0), rim.withAlpha(0), rim],
-    stops: const [0, 0.14, 0.62, 1],
+    stops: [0, highlightEnd, 0.62, 1],
   );
 
   // Shared pieces
@@ -111,6 +116,7 @@ class AppButtonFill {
     stops: [0, 0.45, 1],
     border: Color(0xFF3B1F3A),
     highlight: Color(0x4DFFFFFF),
+    highlightEnd: 0.036,
     rim: Color(0x660D050C),
     textShadows: _aubergineText,
   );
