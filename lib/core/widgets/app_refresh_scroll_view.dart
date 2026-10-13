@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
@@ -30,7 +31,7 @@ class AppRefreshScrollView extends StatelessWidget {
     super.key,
     required this.onRefresh,
     required this.slivers,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+    this.padding = AppSpacing.screenPadding,
     this.controller,
     this.failureMessage = 'Couldn’t refresh. Check your connection.',
   });
@@ -40,7 +41,7 @@ class AppRefreshScrollView extends StatelessWidget {
     super.key,
     required this.onRefresh,
     required List<Widget> children,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+    this.padding = AppSpacing.screenPadding,
     this.controller,
     this.failureMessage = 'Couldn’t refresh. Check your connection.',
   }) : slivers = [SliverList.list(children: children)];

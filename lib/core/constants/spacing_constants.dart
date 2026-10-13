@@ -19,8 +19,9 @@ class AppSpacing {
   static const double xxxl = 64.0;
 
   // Roles
-  /// Horizontal padding at the edge of every screen.
-  static const double screen = md;
+  /// Horizontal padding at the edge of every screen. App bar buttons, titles,
+  /// cards, buttons and the tab bar all line up on it.
+  static const double screen = lg;
 
   /// Padding inside cards and sheets.
   static const double card = ml;

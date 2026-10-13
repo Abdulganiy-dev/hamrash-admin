@@ -1,3 +1,4 @@
+import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/services/supabase_services/organization_member_service.dart';
 import 'package:hamrash_admin/services/error_logger_service.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
@@ -11,21 +12,24 @@ class MemberAccessViewModel extends BaseViewModel {
   final OrganizationMemberService _service;
 
   bool _checked = false;
-  bool _hasMembership = false;
+  List<OrganizationMember> _memberships = [];
   Object? _error;
 
   bool get checked => _checked;
-  bool get hasMembership => _hasMembership;
+  List<OrganizationMember> get memberships => _memberships;
+  bool get hasMembership => _memberships.isNotEmpty;
   Object? get error => _error;
 
   Future<void> check() async {
     _checked = false;
-    _hasMembership = false;
+    _memberships = [];
     _error = null;
     notifyListeners();
 
     try {
-      _hasMembership = await _service.hasMembership(clerkUserId);
+      _memberships = await _service.getMembershipsWithOrganizations(
+        clerkUserId,
+      );
     } catch (error, stackTrace) {
       await ErrorLoggerService.logError(
         error,

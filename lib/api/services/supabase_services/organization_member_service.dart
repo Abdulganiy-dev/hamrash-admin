@@ -1,3 +1,4 @@
+import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OrganizationMemberService {
@@ -5,14 +6,18 @@ class OrganizationMemberService {
 
   final SupabaseClient _supabase;
 
-  Future<bool> hasMembership(String clerkUserId) async {
-    final row = await _supabase
+  Future<List<OrganizationMember>> getMembershipsWithOrganizations(
+    String clerkUserId,
+  ) async {
+    final rows = await _supabase
         .from('organization_members')
-        .select('id')
-        .eq('clerk_user_id', clerkUserId)
-        .limit(1)
-        .maybeSingle();
+        .select('*, organization:organizations(*)')
+        .eq('clerk_user_id', clerkUserId);
 
-    return row != null;
+    return rows
+        .map(
+          (row) => OrganizationMember.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
   }
 }

@@ -1,12 +1,16 @@
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
+
 /// Sizes shared by the app bar, the tab bar and the scaffolds around them.
 class AppNavMetrics {
   AppNavMetrics._();
 
-  /// App bar row height, below the status bar.
+  /// App bar row height, below the status bar. Screens without an app bar
+  /// still keep this space so their titles line up with screens that have one.
   static const double appBarHeight = 60;
 
-  /// Space between the app bar and the screen edges.
-  static const double appBarSideInset = 16;
+  /// Space between the app bar and the screen edges: the screen gutter, so the
+  /// back button lines up with the title and content below it.
+  static const double appBarSideInset = AppSpacing.screen;
 
   /// Floating buttons and pictures in the app bar.
   static const double buttonSize = 44;
@@ -18,7 +22,7 @@ class AppNavMetrics {
   static const double tabBarHeight = 52;
 
   /// Space between the tab bar and the screen edges.
-  static const double tabBarSideInset = 16;
+  static const double tabBarSideInset = AppSpacing.screen;
 
   /// How far below the app bar content fades out.
   static const double appBarFadeExtent = 32;
@@ -26,6 +30,11 @@ class AppNavMetrics {
   /// How far above the tab bar content fades out.
   static const double tabBarFadeExtent = 64;
 
-  /// Gap between a bar and the first or last piece of content.
+  /// Gap between the app bar row and the first piece of content, such as a
+  /// screen title.
+  static const double contentTopGap = AppSpacing.lg;
+
+  /// Gap between the last piece of content and the tab bar or the bottom
+  /// safe area.
   static const double contentGap = 16;
 }

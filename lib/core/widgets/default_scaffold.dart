@@ -1,4 +1,5 @@
 import 'package:hamrash_admin/core/constants/app_colors.dart';
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/utils/extensions.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_button.dart';
@@ -54,10 +55,10 @@ class ScaffoldInsets extends InheritedWidget {
   final double bottomInset;
 
   /// Total top space a body child should leave clear so it is not covered by
-  /// the app bar. The safe area is always included; the app bar and a small
-  /// gap are only included when an app bar exists.
+  /// the app bar. The app bar row is reserved even when there is no app bar,
+  /// so the first title sits at the same height on every screen.
   double get bodyTopInset =>
-      topInset + (hasAppBar ? appBarHeight + AppNavMetrics.contentGap : 0);
+      topInset + appBarHeight + AppNavMetrics.contentTopGap;
 
   /// Total bottom space a body child should leave clear.
   double get bodyBottomInset => bottomInset;
@@ -344,6 +345,11 @@ class ScaffoldColumn extends StatelessWidget {
       mainAxisAlignment: mainAxisAlignment,
       mainAxisSize: mainAxisSize,
       children: children,
-    ).padding(bottom: 10, left: 16, right: 16, top: 0);
+    ).padding(
+      bottom: 10,
+      left: AppSpacing.screen,
+      right: AppSpacing.screen,
+      top: 0,
+    );
   }
 }

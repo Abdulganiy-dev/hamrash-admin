@@ -5,6 +5,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/utils/view_util.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
@@ -216,8 +217,8 @@ class _ToastHostState extends State<_ToastHost>
     final top = MediaQuery.viewPaddingOf(context).top + 8;
 
     return Positioned(
-      left: 16,
-      right: 16,
+      left: AppSpacing.screen,
+      right: AppSpacing.screen,
       top: top,
       child: SingleMotionBuilder(
         motion: _leaving ? _exit : _enter,
