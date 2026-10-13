@@ -141,7 +141,7 @@ class _Tile extends StatelessWidget {
           height: 76,
           padding: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
-            color: AppPalette.slate50,
+            color: AppPalette.stone50,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -184,7 +184,7 @@ class _Group extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: ColoredBox(
-        color: danger ? AppBadgeTone.error.mute : AppPalette.slate50,
+        color: danger ? AppBadgeTone.error.mute : AppPalette.stone50,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -194,7 +194,7 @@ class _Group extends StatelessWidget {
                   height: 1,
                   // Line up with the label, past the icon.
                   margin: const EdgeInsets.only(left: 50, right: 16),
-                  color: danger ? AppBadgeTone.error.thin : AppPalette.slate200,
+                  color: danger ? AppBadgeTone.error.thin : AppPalette.stone200,
                 ),
               _ActionRow(
                 action: actions[i],
@@ -237,7 +237,7 @@ class _ActionRow extends StatelessWidget {
               Icon(
                 action.icon,
                 size: 20,
-                color: action.isDestructive ? color : AppPalette.slate600,
+                color: action.isDestructive ? color : AppPalette.stone600,
               ),
               const SizedBox(width: 14),
               Expanded(

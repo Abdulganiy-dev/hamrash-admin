@@ -19,13 +19,13 @@ enum AppToastType {
   warning(LucideIcons.triangleAlert500, Color(0xFFFBBF24)),
 
   /// Neutral note, e.g. "You're offline". Pass your own `icon`.
-  info(LucideIcons.info, AppPalette.slate300);
+  info(LucideIcons.info, AppPalette.stone300);
 
   const AppToastType(this.icon, this.color);
 
   final IconData icon;
 
-  /// Bright tones that read on the dark slate-900 toast.
+  /// Bright tones that read on the dark espresso toast.
   final Color color;
 }
 
@@ -301,17 +301,17 @@ class _ToastBody extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.fromLTRB(14, 12, hasAction ? 6 : 14, 12),
           decoration: BoxDecoration(
-            color: AppPalette.slate900,
+            color: AppPalette.stone900,
             borderRadius: BorderRadius.circular(16),
             // Lifted well off the page so it reads over any content.
             boxShadow: const [
               BoxShadow(
-                color: Color(0x1F0F172A),
+                color: Color(0x1F2A1712),
                 offset: Offset(0, 2),
                 blurRadius: 4,
               ),
               BoxShadow(
-                color: Color(0x380F172A),
+                color: Color(0x382A1712),
                 offset: Offset(0, 14),
                 blurRadius: 16,
                 spreadRadius: -4,
@@ -345,7 +345,7 @@ class _ToastBody extends StatelessWidget {
                       actionLabel!,
                       style: AppTypography.body.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: AppPalette.blue300,
+                        color: AppPalette.aubergine300,
                       ),
                     ),
                   ),

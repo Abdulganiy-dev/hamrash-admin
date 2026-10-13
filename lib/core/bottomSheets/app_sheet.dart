@@ -25,7 +25,7 @@ enum AppSheetSize {
 
 /// Route for every sheet in the app. Built on `stupid_simple_sheet`'s plain
 /// route, so it keeps the spring motion and scroll-to-drag hand-off, and
-/// draws our own solid white surface and slate scrim.
+/// draws our own solid cream surface and espresso scrim.
 ///
 /// Usually you call [AppSheet.show]; push this directly when the sheet needs
 /// its own state (see the pickers in this folder).
@@ -45,8 +45,8 @@ class AppSheetRoute<T> extends StupidSimpleSheetRoute<T> {
          child: _AppSheetFrame(size: size, child: child),
        );
 
-  /// Slate-900 at 36%.
-  static const _scrim = Color(0x5C0F172A);
+  /// Espresso at 36%.
+  static const _scrim = Color(0x5C2A1712);
 
   final AppSheetSize size;
 }
@@ -85,7 +85,7 @@ class _AppSheetFrame extends StatelessWidget {
                 boxShadow: AppShadows.overlay,
               ),
               child: SheetBackground(
-                backgroundColor: AppPalette.white,
+                backgroundColor: AppPalette.cream,
                 extensionAtBottom: 0,
                 shape: RoundedSuperellipseBorder(
                   borderRadius: BorderRadius.circular(32),
@@ -101,7 +101,7 @@ class _AppSheetFrame extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.only(top: 10),
             child: SheetBackground(
-              backgroundColor: AppPalette.white,
+              backgroundColor: AppPalette.cream,
               shape: const RoundedSuperellipseBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
@@ -279,7 +279,7 @@ class AppSheet extends StatelessWidget {
             decoration: BoxDecoration(
               border: floating
                   ? null
-                  : const Border(top: BorderSide(color: AppPalette.slate100)),
+                  : const Border(top: BorderSide(color: AppPalette.stone100)),
             ),
             child: Padding(
               padding: EdgeInsets.fromLTRB(
@@ -308,7 +308,7 @@ class _Grabber extends StatelessWidget {
           width: 36,
           height: 5,
           decoration: BoxDecoration(
-            color: AppPalette.slate300,
+            color: AppPalette.stone300,
             borderRadius: BorderRadius.circular(3),
           ),
         ),
@@ -354,7 +354,6 @@ class _Header extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.h3.copyWith(
-                        fontWeight: FontWeight.w800,
                         color: LightColors.textStrong,
                       ),
                     ),
@@ -381,7 +380,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// Round slate-100 close button used in sheet headers. 36 visible, 44 to
+/// Round stone-100 close button used in sheet headers. 36 visible, 44 to
 /// tap. Pops the sheet with no result.
 class AppSheetCloseButton extends StatelessWidget {
   const AppSheetCloseButton({super.key, this.onPressed});
@@ -404,13 +403,13 @@ class AppSheetCloseButton extends StatelessWidget {
               height: 36,
               alignment: Alignment.center,
               decoration: const BoxDecoration(
-                color: AppPalette.slate100,
+                color: AppPalette.stone100,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 LucideIcons.x500,
                 size: 18,
-                color: AppPalette.slate700,
+                color: AppPalette.stone700,
               ),
             ),
           ),

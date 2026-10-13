@@ -47,11 +47,11 @@ class AppButtonFill {
   );
 
   // Shared pieces
-  static const _navyText = [
-    Shadow(color: Color(0x400A2F66), offset: Offset(0, 1), blurRadius: 1),
+  static const _aubergineText = [
+    Shadow(color: Color(0x400D050C), offset: Offset(0, 1), blurRadius: 1),
   ];
-  static const _redText = [
-    Shadow(color: Color(0x406E1010), offset: Offset(0, 1), blurRadius: 1),
+  static const _rustText = [
+    Shadow(color: Color(0x405A160A), offset: Offset(0, 1), blurRadius: 1),
   ];
 
   /// Default fill for a button type. Returns flat transparent for types that
@@ -105,31 +105,31 @@ class AppButtonFill {
     );
   }
 
-  // Primary — brand blue
+  // Primary — aubergine
   static const _primary = AppButtonFill(
-    colors: [Color(0xFF4590F7), Color(0xFF0F6EF1), Color(0xFF0156C8)],
+    colors: [Color(0xFF4D2A4B), Color(0xFF3B1F3A), Color(0xFF2E172D)],
     stops: [0, 0.45, 1],
-    border: Color(0xFF014CB3),
-    highlight: Color(0x73FFFFFF),
-    rim: Color(0x5204245C),
-    textShadows: _navyText,
+    border: Color(0xFF3B1F3A),
+    highlight: Color(0x4DFFFFFF),
+    rim: Color(0x660D050C),
+    textShadows: _aubergineText,
   );
 
-  // Destructive — red
+  // Destructive — rust
   static const _destructive = AppButtonFill(
-    colors: [Color(0xFFF26363), Color(0xFFE02D2D), Color(0xFFBE1E1E)],
+    colors: [Color(0xFFC44A2C), Color(0xFFB23A1E), Color(0xFF962F17)],
     stops: [0, 0.45, 1],
-    border: Color(0xFFA81B1B),
+    border: Color(0xFF962F17),
     highlight: Color(0x66FFFFFF),
-    rim: Color(0x4D6E1010),
-    textShadows: _redText,
+    rim: Color(0x4D5A160A),
+    textShadows: _rustText,
   );
 
-  // Secondary — white to slate
+  // Secondary — cream to stone
   static const _secondary = AppButtonFill(
-    colors: [Color(0xFFFFFFFF), Color(0xFFF1F5F9)],
-    border: Color(0xFFCBD5E1),
-    rim: Color(0x0F0F172A),
+    colors: [Color(0xFFFFFDF8), Color(0xFFF3EEE4)],
+    border: Color(0xFFD3C9B8),
+    rim: Color(0x0F2A1712),
   );
   static const _secondaryDark = AppButtonFill(
     colors: [Color(0xFF26334A), Color(0xFF1E293B)],
@@ -138,12 +138,12 @@ class AppButtonFill {
     rim: Color(0x33000000),
   );
 
-  // Tinted — pale brand blue
+  // Tinted — pale aubergine
   static const _tinted = AppButtonFill(
-    colors: [Color(0xFFF5F9FF), Color(0xFFD9E8FE)],
-    border: Color(0xFFB3D1FD),
+    colors: [Color(0xFFFAF4F8), Color(0xFFEBDCE7)],
+    border: Color(0xFFD5B9CF),
     highlight: Color(0xE6FFFFFF),
-    rim: Color(0x140147A6),
+    rim: Color(0x1A3B1F3A),
   );
   static const _tintedDark = AppButtonFill(
     colors: [Color(0xFF14305A), Color(0xFF10264A)],

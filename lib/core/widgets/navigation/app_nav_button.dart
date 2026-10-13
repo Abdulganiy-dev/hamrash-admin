@@ -21,7 +21,7 @@ class AppNavIconButton extends StatelessWidget {
     this.count,
     this.showDot = false,
     this.iconSize = 20,
-    this.iconColor = AppPalette.slate700,
+    this.iconColor = AppPalette.stone700,
     this.semanticLabel,
   });
 
@@ -31,7 +31,7 @@ class AppNavIconButton extends StatelessWidget {
   /// Red alert count on the top-right. Hidden when null or 0.
   final int? count;
 
-  /// Small blue dot, e.g. when filters are applied. Ignored when [count]
+  /// Small aubergine dot, e.g. when filters are applied. Ignored when [count]
   /// shows.
   final bool showDot;
 

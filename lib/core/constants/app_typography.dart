@@ -5,8 +5,16 @@ import 'package:flutter/material.dart';
 ///
 /// Styles here carry no color — [AppTypography.textTheme] adds the colors
 /// for light/dark, and [AppTextVariant] picks a style from the theme.
+///
+/// Two families, one rule: Fraunces (serif) for display and H1–H4 — screen,
+/// sheet and dialog titles and big numbers; Nunito for everything else —
+/// titles, list names, body, buttons, labels. Section headers above cards
+/// are [title], not a heading.
 class AppTypography {
   static const String fontFamily = 'Nunito';
+
+  /// Bundled as a variable font; [_serif] pins its weight and optical size.
+  static const String serifFontFamily = 'Fraunces';
 
   static TextStyle _style(
     double size,
@@ -23,12 +31,38 @@ class AppTypography {
     );
   }
 
-  // Headings — tighter tracking on the large sizes.
-  static final display = _style(40, 48, FontWeight.w800, letterSpacing: -0.8);
-  static final h1 = _style(32, 40, FontWeight.w800, letterSpacing: -0.64);
-  static final h2 = _style(24, 32, FontWeight.w700, letterSpacing: -0.24);
-  static final h3 = _style(20, 28, FontWeight.w700);
-  static final h4 = _style(18, 26, FontWeight.w700);
+  /// Fraunces SemiBold. The weight and optical-size axes are set explicitly
+  /// so the variable font renders like the Paper specimens.
+  static TextStyle _serif(
+    double size,
+    double lineHeight, {
+    double letterSpacing = 0,
+  }) {
+    return TextStyle(
+      fontFamily: serifFontFamily,
+      fontSize: size,
+      height: lineHeight / size,
+      fontWeight: FontWeight.w600,
+      fontVariations: [
+        const FontVariation.weight(600),
+        FontVariation.opticalSize(size),
+      ],
+      letterSpacing: letterSpacing,
+    );
+  }
+
+  /// Fraunces at any size, for one-off big numbers (e.g. a stat value).
+  static TextStyle serif(double size, {double? lineHeight}) =>
+      _serif(size, lineHeight ?? (size * 1.25).roundToDouble());
+
+  // Headings — Fraunces 600, tighter tracking on the large sizes.
+  static final display = _serif(40, 48, letterSpacing: -0.8);
+  static final h1 = _serif(32, 40, letterSpacing: -0.64);
+  static final h2 = _serif(24, 32, letterSpacing: -0.24);
+  static final h3 = _serif(20, 28);
+  static final h4 = _serif(18, 26);
+
+  // Titles — Nunito, for list names and section headers above cards.
   static final title = _style(16, 24, FontWeight.w700);
   static final subtitle = _style(14, 20, FontWeight.w700);
 
@@ -52,10 +86,9 @@ class AppTypography {
     return TextTheme(
       displayLarge: display.copyWith(color: strong),
       displayMedium: h1.copyWith(color: strong),
-      displaySmall: _style(
+      displaySmall: _serif(
         28,
         36,
-        FontWeight.w800,
         letterSpacing: -0.42,
       ).copyWith(color: strong),
       headlineLarge: h2.copyWith(color: strong),

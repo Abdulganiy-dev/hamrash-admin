@@ -272,7 +272,7 @@ class _RangeSheetState extends State<_RangeSheet> {
 }
 
 /// "Starts" / "Ends" summary box at the top of the range sheet. The one the
-/// next tap sets has a blue border.
+/// next tap sets has a aubergine border.
 class _EndBox extends StatelessWidget {
   const _EndBox({
     required this.label,
@@ -295,12 +295,12 @@ class _EndBox extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: active ? AppPalette.white : AppPalette.slate50,
+          color: active ? AppPalette.cream : AppPalette.stone50,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: active
                 ? LightColors.primaryPrimaryDefault
-                : AppPalette.slate200,
+                : AppPalette.stone200,
             width: active ? 1.5 : 1,
           ),
         ),
@@ -319,7 +319,7 @@ class _EndBox extends StatelessWidget {
               style: AppTypography.title.copyWith(
                 fontWeight: FontWeight.w800,
                 color: date == null
-                    ? AppPalette.slate400
+                    ? AppPalette.stone400
                     : LightColors.textStrong,
               ),
             ),
@@ -334,8 +334,8 @@ class _EndBox extends StatelessWidget {
 /// swipe) to change month. Used inside [AppDatePickerSheet] and
 /// [AppDateRangePickerSheet].
 ///
-/// Shows [selected] as a filled blue circle; with [rangeEnd] too, the days
-/// between sit on a light blue band. Today is blue with a dot under it.
+/// Shows [selected] as a filled aubergine circle; with [rangeEnd] too, the days
+/// between sit on a pale aubergine band. Today is aubergine with a dot under it.
 class AppMonthCalendar extends StatefulWidget {
   const AppMonthCalendar({
     super.key,
@@ -506,13 +506,13 @@ class _MonthButton extends StatelessWidget {
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: enabled ? AppPalette.slate100 : AppPalette.slate50,
+          color: enabled ? AppPalette.stone100 : AppPalette.stone50,
           shape: BoxShape.circle,
         ),
         child: Icon(
           icon,
           size: 18,
-          color: enabled ? AppPalette.slate700 : AppPalette.slate300,
+          color: enabled ? AppPalette.stone700 : AppPalette.stone300,
         ),
       ),
     );
@@ -606,7 +606,7 @@ class _DayCell extends StatelessWidget {
   final bool enabled;
   final bool isToday;
 
-  /// The picked day, or either end of a range: a filled blue circle.
+  /// The picked day, or either end of a range: a filled aubergine circle.
   final bool isEndpoint;
 
   /// Strictly between the two ends of a range.
@@ -624,7 +624,7 @@ class _DayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const band = AppPalette.blue100;
+    const band = AppPalette.aubergine100;
     const radius = Radius.circular(20);
 
     final Color color;
@@ -633,7 +633,7 @@ class _DayCell extends StatelessWidget {
       color = AppPalette.white;
       weight = FontWeight.w800;
     } else if (!enabled) {
-      color = AppPalette.slate300;
+      color = AppPalette.stone300;
     } else if (inRange) {
       color = LightColors.primaryPrimaryText;
       weight = FontWeight.w700;

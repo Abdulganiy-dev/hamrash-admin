@@ -60,7 +60,7 @@ class AppEmptyState extends StatelessWidget {
   /// The likely reason or what to do, in plain words.
   final String? subtitle;
 
-  /// Defaults to brand blue, or slate-400 when [compact].
+  /// Defaults to aubergine, or stone-400 when [compact].
   final Color? iconColor;
 
   /// The one next step. A filled button, or a text link when [compact].
@@ -99,7 +99,7 @@ class AppEmptyState extends StatelessWidget {
                 color:
                     iconColor ??
                     (compact
-                        ? AppPalette.slate400
+                        ? AppPalette.stone400
                         : LightColors.primaryPrimaryDefault),
               ),
               SizedBox(height: compact ? 12 : 20),
@@ -107,8 +107,9 @@ class AppEmptyState extends StatelessWidget {
                 title,
                 textAlign: TextAlign.center,
                 colorType: AppTextColor.textStrong,
-                style: (compact ? AppTypography.title : AppTypography.h3)
-                    .copyWith(fontWeight: FontWeight.w800),
+                style: compact
+                    ? AppTypography.title.copyWith(fontWeight: FontWeight.w800)
+                    : AppTypography.h3,
               ),
               if (subtitle != null) ...[
                 SizedBox(height: compact ? 2 : 6),
@@ -170,7 +171,7 @@ class AppInlineState extends StatelessWidget {
     required this.icon,
     required this.title,
     this.message,
-    this.iconColor = AppPalette.slate500,
+    this.iconColor = AppPalette.stone500,
     this.actionLabel,
     this.actionIcon,
     this.onAction,
@@ -249,7 +250,7 @@ class _Hug extends StatelessWidget {
       Row(mainAxisSize: MainAxisSize.min, children: [child]);
 }
 
-/// Blue text action that shrinks a touch when pressed.
+/// Aubergine text action that shrinks a touch when pressed.
 class _TextLink extends StatelessWidget {
   const _TextLink({required this.label, required this.onTap, this.icon});
 

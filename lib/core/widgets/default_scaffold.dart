@@ -178,7 +178,7 @@ class DefaultScaffold extends StatelessWidget {
     return AppNavIconButton(
       icon: LucideIcons.chevronLeft500,
       iconSize: 22,
-      iconColor: AppPalette.slate900,
+      iconColor: AppPalette.stone900,
       semanticLabel: 'Back',
       onPressed: onBackPressed ?? () => _defaultPop(context),
     );

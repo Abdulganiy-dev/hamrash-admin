@@ -12,31 +12,32 @@ import 'package:hamrash_admin/core/widgets/app_surface.dart';
 class AppShadows {
   AppShadows._();
 
-  /// Cards on the page: a tight contact shadow plus a wide, soft navy halo.
-  /// Paired with the 10% navy edge ([LightColors.strokeColourStrokeCard]).
+  /// Cards on the page (card study C2): a tight contact shadow plus a wide,
+  /// soft espresso halo. Paired with the 8% espresso edge
+  /// ([LightColors.strokeColourStrokeCard]).
   static const List<BoxShadow> floating = [
-    BoxShadow(color: Color(0x0A0A2F66), offset: Offset(0, 1), blurRadius: 2),
+    BoxShadow(color: Color(0x0A2A1712), offset: Offset(0, 1), blurRadius: 2),
     BoxShadow(
-      color: Color(0x170A2F66),
+      color: Color(0x142A1712),
       offset: Offset(0, 14),
       blurRadius: 36,
       spreadRadius: -8,
     ),
   ];
 
-  /// Cards are lit from above: white fading to a hint of blue at the foot.
+  /// Cards are lit from above: near-white fading to warm cream at the foot.
   static const LinearGradient cardFill = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFFFFFFF), Color(0xFFFBFCFE)],
+    colors: [Color(0xFFFFFEFB), Color(0xFFFFFCF5)],
   );
 
   /// Menus, sheets and dialogs that sit above everything.
   static const List<BoxShadow> overlay = [
-    BoxShadow(color: Color(0x0F0F172A), offset: Offset(0, 2), blurRadius: 4),
-    BoxShadow(color: Color(0x140F172A), offset: Offset(0, 12), blurRadius: 20),
+    BoxShadow(color: Color(0x0F2A1712), offset: Offset(0, 2), blurRadius: 4),
+    BoxShadow(color: Color(0x142A1712), offset: Offset(0, 12), blurRadius: 20),
     BoxShadow(
-      color: Color(0x330F172A),
+      color: Color(0x332A1712),
       offset: Offset(0, 32),
       blurRadius: 52,
       spreadRadius: -16,
@@ -44,7 +45,7 @@ class AppShadows {
   ];
 }
 
-/// White card that floats on the page canvas.
+/// Cream card that floats on the bone page (card study C2).
 ///
 /// Holds content only: put a section title above it with [AppSectionHeader]
 /// and any action button below it, outside the card.
@@ -92,7 +93,7 @@ class AppCard extends StatelessWidget {
         ),
         boxShadow: isLight ? AppShadows.floating : null,
       ),
-      // Inputs inside a card switch to the slate-50 fill.
+      // Inputs inside a card switch to the stone-50 fill.
       child: AppSurfaceScope(surface: AppSurface.card, child: child),
     );
 
@@ -127,10 +128,10 @@ class AppFlatCard extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: isLight ? AppPalette.slate50 : DarkColors.backgroundSurfaceMute,
+        color: isLight ? AppPalette.stone50 : DarkColors.backgroundSurfaceMute,
         borderRadius: AppRadius.brControl,
         border: Border.all(
-          color: isLight ? AppPalette.slate200 : AppPalette.slate700,
+          color: isLight ? AppPalette.stone200 : AppPalette.stone700,
         ),
       ),
       child: child,

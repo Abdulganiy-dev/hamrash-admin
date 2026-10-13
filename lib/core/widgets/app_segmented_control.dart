@@ -16,7 +16,7 @@ class AppSegmentOption<T> {
   final IconData? icon;
 }
 
-/// Two to four views of the same thing: a slate-100 track with a white thumb
+/// Two to four views of the same thing: a stone-100 track with a white thumb
 /// that slides to the picked option.
 ///
 /// ```dart
@@ -47,8 +47,8 @@ class AppSegmentedControl<T> extends StatelessWidget {
   static const _padding = 4.0;
 
   static const _thumbShadow = [
-    BoxShadow(color: Color(0x0F0F172A), offset: Offset(0, 1), blurRadius: 1),
-    BoxShadow(color: Color(0x140F172A), offset: Offset(0, 2), blurRadius: 3),
+    BoxShadow(color: Color(0x0F2A1712), offset: Offset(0, 1), blurRadius: 1),
+    BoxShadow(color: Color(0x142A1712), offset: Offset(0, 2), blurRadius: 3),
   ];
 
   @override
@@ -59,7 +59,7 @@ class AppSegmentedControl<T> extends StatelessWidget {
       height: height,
       padding: const EdgeInsets.all(_padding),
       decoration: BoxDecoration(
-        color: AppPalette.slate100,
+        color: AppPalette.stone100,
         borderRadius: BorderRadius.circular(12),
       ),
       child: LayoutBuilder(

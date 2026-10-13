@@ -443,7 +443,7 @@ class _AppButtonState extends State<AppButton> {
             ? LightColors.primaryOncolorWhite
             : DarkColors.primaryOncolorBlack;
       case AppButtonType.secondary:
-        return isLight ? AppPalette.slate700 : AppPalette.slate200;
+        return isLight ? AppPalette.stone700 : AppPalette.stone200;
       case AppButtonType.tertiary:
         return isLight
             ? LightColors.primaryPrimaryText

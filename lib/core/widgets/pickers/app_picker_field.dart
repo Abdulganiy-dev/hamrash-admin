@@ -12,7 +12,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// The box every picker field draws: looks like [AppTextField] (label above,
 /// 48 tall, helper or error below) but opens a sheet when tapped.
 ///
-/// While the sheet from [onTap] is up the border turns blue and a chevron
+/// While the sheet from [onTap] is up the border turns aubergine and a chevron
 /// flips up, so it's clear which field is being changed. Errors clear when
 /// the field is tapped, like text fields.
 ///
@@ -534,7 +534,7 @@ class AppMultiSelectField<T> extends StatelessWidget {
   }
 }
 
-/// As many names as fit on one line, then a slate pill counting the rest.
+/// As many names as fit on one line, then a stone pill counting the rest.
 class _NamesThatFit extends StatelessWidget {
   const _NamesThatFit({required this.names, required this.style});
 
@@ -597,7 +597,7 @@ class _NamesThatFit extends StatelessWidget {
                   vertical: 2,
                 ),
                 decoration: BoxDecoration(
-                  color: AppPalette.slate100,
+                  color: AppPalette.stone100,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: AppText('+$rest', style: pillStyle),

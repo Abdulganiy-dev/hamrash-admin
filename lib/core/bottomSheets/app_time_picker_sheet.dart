@@ -84,7 +84,7 @@ class _TimeSheetState extends State<_TimeSheet> {
             Container(
               height: _Wheel.extent,
               decoration: BoxDecoration(
-                color: AppPalette.slate100,
+                color: AppPalette.stone100,
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
@@ -149,18 +149,25 @@ class _Wheel extends StatefulWidget {
   static const double extent = 44;
   static const double width = 64;
 
+  // Wheel digits stay in Nunito (sizes borrowed from H2–H4); Fraunces is
+  // for titles and big numbers.
+  static TextStyle _nunito(TextStyle heading) => heading.copyWith(
+    fontFamily: AppTypography.fontFamily,
+    fontVariations: const [],
+  );
+
   static TextStyle style(int distance) => switch (distance) {
-    0 => AppTypography.h2.copyWith(
+    0 => _nunito(AppTypography.h2).copyWith(
       fontWeight: FontWeight.w800,
       color: LightColors.textStrong,
     ),
-    1 => AppTypography.h3.copyWith(
+    1 => _nunito(AppTypography.h3).copyWith(
       fontWeight: FontWeight.w600,
-      color: AppPalette.slate400,
+      color: AppPalette.stone400,
     ),
-    _ => AppTypography.h4.copyWith(
+    _ => _nunito(AppTypography.h4).copyWith(
       fontWeight: FontWeight.w600,
-      color: AppPalette.slate300,
+      color: AppPalette.stone300,
     ),
   };
 

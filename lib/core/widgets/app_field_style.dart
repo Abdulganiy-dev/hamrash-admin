@@ -5,8 +5,8 @@ import 'package:hamrash_admin/core/widgets/app_surface.dart';
 
 /// Shared look for text inputs ([AppTextField], [AppSearchField]): at rest a
 /// hairline border with a fill that contrasts with what's underneath (white on
-/// the page, slate 50 inside a card — see [AppSurfaceScope]); white with a
-/// blue border when focused, red border on error. No rings or shadows.
+/// the page, stone 50 inside a card — see [AppSurfaceScope]); white with a
+/// aubergine border when focused, red border on error. No rings or shadows.
 class AppFieldStyle {
   AppFieldStyle._();
 
@@ -24,22 +24,22 @@ class AppFieldStyle {
   }) {
     final isLight = Theme.of(context).brightness == Brightness.light;
     if (!enabled) {
-      return isLight ? AppPalette.slate100 : DarkColors.backgroundSurfaceMute;
+      return isLight ? AppPalette.stone100 : DarkColors.backgroundSurfaceMute;
     }
     if (active) {
-      return isLight ? AppPalette.white : DarkColors.backgroundSurfaceLayer;
+      return isLight ? AppPalette.cream : DarkColors.backgroundSurfaceLayer;
     }
     if (!isLight) return DarkColors.backgroundSurfaceLayer;
-    // White on the slate-50 page; slate-50 on white cards, sheets, dialogs.
+    // Cream on the bone page; stone-50 on cream cards, sheets, dialogs.
     return AppSurfaceScope.of(context) == AppSurface.card
-        ? AppPalette.slate50
-        : AppPalette.white;
+        ? AppPalette.stone50
+        : AppPalette.cream;
   }
 
   static Color restBorder(BuildContext context) =>
       Theme.of(context).brightness == Brightness.light
-      ? AppPalette.slate200
-      : AppPalette.slate700;
+      ? AppPalette.stone200
+      : AppPalette.stone700;
 
   static Color focusBorder(BuildContext context) =>
       Theme.of(context).brightness == Brightness.light
@@ -61,13 +61,13 @@ class AppFieldStyle {
 
   static Color placeholder(BuildContext context) =>
       Theme.of(context).brightness == Brightness.light
-      ? AppPalette.slate400
-      : AppPalette.slate500;
+      ? AppPalette.stone400
+      : AppPalette.stone500;
 
   static Color icon(BuildContext context) =>
       Theme.of(context).brightness == Brightness.light
-      ? AppPalette.slate500
-      : AppPalette.slate400;
+      ? AppPalette.stone500
+      : AppPalette.stone400;
 
   static OutlineInputBorder border(Color color, {double width = 1}) {
     return OutlineInputBorder(

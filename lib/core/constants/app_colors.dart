@@ -3,95 +3,114 @@ import 'package:flutter/material.dart';
 /// Raw color scales. Widgets should use [LightColors] / [DarkColors] tokens;
 /// reach for these only when a token doesn't exist for the job.
 ///
-/// Main colors: brand blue (anchored on the app icon, #0168F0), slate gray
-/// and white. Supporting colors (success, warning, error, accent) are only
-/// used when the color carries meaning.
+/// Main colors: aubergine, warm stone and cream on a bone page. Category
+/// colors tell classes and groups apart; supporting colors (success,
+/// warning, error, accent) are only used when the color carries meaning.
+/// Mirrors the "Design System" page of the Hamrash Paper file.
 class AppPalette {
-  // Brand blue — 500 is the app icon color.
-  static const blue50 = Color(0xFFEEF5FF);
-  static const blue100 = Color(0xFFD9E8FE);
-  static const blue200 = Color(0xFFB3D1FD);
-  static const blue300 = Color(0xFF7AB0F9);
-  static const blue400 = Color(0xFF3C8BF5);
-  static const blue500 = Color(0xFF0168F0);
-  static const blue600 = Color(0xFF0157CC);
-  static const blue700 = Color(0xFF0147A6);
-  static const blue800 = Color(0xFF053A85);
-  static const blue900 = Color(0xFF0A2F66);
+  // Aubergine — 500 is the brand color.
+  static const aubergine50 = Color(0xFFF6EEF4);
+  static const aubergine100 = Color(0xFFEBDCE7);
+  static const aubergine200 = Color(0xFFD5B9CF);
+  static const aubergine300 = Color(0xFFB48DAC);
+  static const aubergine400 = Color(0xFF7E5577);
+  static const aubergine500 = Color(0xFF3B1F3A);
+  static const aubergine600 = Color(0xFF321A31);
+  static const aubergine700 = Color(0xFF2A1529);
+  static const aubergine800 = Color(0xFF211020);
+  static const aubergine900 = Color(0xFF180B17);
 
-  // Slate gray — cool-tinted so it sits well next to the blue.
+  // Stone — warm gray that ends in espresso (900), the heading color.
   static const white = Color(0xFFFFFFFF);
-  static const slate50 = Color(0xFFF8FAFC);
-  static const slate100 = Color(0xFFF1F5F9);
-  static const slate200 = Color(0xFFE2E8F0);
-  static const slate300 = Color(0xFFCBD5E1);
-  static const slate400 = Color(0xFF94A3B8);
-  static const slate500 = Color(0xFF64748B);
-  static const slate600 = Color(0xFF475569);
-  static const slate700 = Color(0xFF334155);
-  static const slate800 = Color(0xFF1E293B);
-  static const slate850 = Color(0xFF131C2E);
-  static const slate900 = Color(0xFF0F172A);
-  static const slate950 = Color(0xFF0B1120);
+  static const stone50 = Color(0xFFFBF9F4);
+  static const stone100 = Color(0xFFF3F0E8);
+  static const stone200 = Color(0xFFE6DFD2);
+  static const stone300 = Color(0xFFD3C9B8);
+  static const stone400 = Color(0xFFA39789);
+  static const stone500 = Color(0xFF8A7D72);
+  static const stone600 = Color(0xFF5C4E46);
+  static const stone700 = Color(0xFF45372F);
+  static const stone800 = Color(0xFF33241D);
+  static const stone850 = Color(0xFF241510);
+  static const stone900 = Color(0xFF2A1712);
+  static const stone950 = Color(0xFF170D0A);
 
-  // Page: a cool blue mist behind every screen, so white cards stand off it.
-  static const mist = Color(0xFFEAF1FB);
+  /// Cards, sheets, dialogs and fields on the page.
+  static const cream = Color(0xFFFFFDF8);
 
-  /// One step deeper than [mist], for placeholder shapes straight on the page.
-  static const mistDeep = Color(0xFFD6E2F3);
+  // Page: warm bone behind every screen, so cream cards stand off it.
+  static const bone = Color(0xFFF3F0E8);
+
+  /// One step deeper than [bone], for placeholder shapes straight on the page.
+  static const boneDeep = Color(0xFFE6DFD2);
+
+  // Category colors — classes, groups and quick stats. Never for status.
+  static const tangerine = Color(0xFFE8733A);
+  static const tangerineMute = Color(0xFFFBE3D6);
+  static const tangerineText = Color(0xFF8A3A14);
+  static const chartreuse = Color(0xFFB5D334);
+  static const chartreuseMute = Color(0xFFEEF5C9);
+  static const chartreuseText = Color(0xFF4A5A00);
+  static const honey = Color(0xFFF2C43D);
+  static const honeyMute = Color(0xFFFCEFC4);
+  static const honeyText = Color(0xFF6B4D00);
+  static const teal = Color(0xFF3D7A8A);
+  static const tealMute = Color(0xFFDCEBEE);
+  static const tealText = Color(0xFF1F4E5A);
 }
 
 class LightColors {
-  // Primary (brand blue)
-  static const primaryPrimaryMute = AppPalette.blue50;
-  static const primaryPrimaryThin = AppPalette.blue200;
-  static const primaryPrimaryDefault = AppPalette.blue500;
-  static const primaryPrimaryHover = AppPalette.blue600;
-  static const primaryPrimaryPressed = AppPalette.blue700;
-  static const primaryPrimaryText = AppPalette.blue700;
+  // Primary (aubergine)
+  static const primaryPrimaryMute = AppPalette.aubergine50;
+  static const primaryPrimaryThin = AppPalette.aubergine200;
+  static const primaryPrimaryDefault = AppPalette.aubergine500;
+  static const primaryPrimaryHover = AppPalette.aubergine600;
+  static const primaryPrimaryPressed = AppPalette.aubergine700;
+  static const primaryPrimaryText = AppPalette.aubergine500;
 
-  // Success
-  static const successSuccessMute = Color(0xFFECFDF3);
-  static const successSuccessThin = Color(0xFFABEFC6);
-  static const successSuccessDefault = Color(0xFF16A34A);
-  static const successSuccessText = Color(0xFF15803D);
+  // Success (moss)
+  static const successSuccessMute = Color(0xFFEEF3E2);
+  static const successSuccessThin = Color(0xFFCFE0A8);
+  static const successSuccessDefault = Color(0xFF4F7A28);
+  static const successSuccessText = Color(0xFF3F6620);
 
-  // Warning
-  static const warningWarningMute = Color(0xFFFFFAEB);
-  static const warningWarningThin = Color(0xFFFEDF89);
-  static const warningWarningDefault = Color(0xFFF59E0B);
-  static const warningWarningText = Color(0xFFB54708);
+  // Warning (amber)
+  static const warningWarningMute = Color(0xFFFCF1D6);
+  static const warningWarningThin = Color(0xFFF2D58C);
+  static const warningWarningDefault = Color(0xFFB7791F);
+  static const warningWarningText = Color(0xFF8A5A12);
 
-  // Error
-  static const errorErrorMute = Color(0xFFFEF3F2);
-  static const errorErrorThin = Color(0xFFFECDCA);
-  static const errorErrorDefault = Color(0xFFDC2626);
-  static const errorErrorText = Color(0xFFB42318);
+  // Error (rust)
+  static const errorErrorMute = Color(0xFFF8E1D9);
+  static const errorErrorThin = Color(0xFFEDBBA9);
+  static const errorErrorDefault = Color(0xFFB23A1E);
+  static const errorErrorText = Color(0xFF962F17);
 
   // Text
-  static const textBrand = AppPalette.blue500; // links, brand accents
-  static const textStrong = AppPalette.slate900; // headings, titles, labels
-  static const textBody = AppPalette.slate600; // running text
-  static const textMuted = AppPalette.slate500; // captions, hints, metadata
-  static const textDisabled = AppPalette.slate400; // unavailable controls
+  static const textBrand = AppPalette.aubergine500; // links, brand accents
+  static const textStrong = AppPalette.stone900; // headings, titles, labels
+  static const textBody = AppPalette.stone600; // running text
+  static const textMuted = AppPalette.stone500; // captions, hints, metadata
+  static const textDisabled = AppPalette.stone400; // unavailable controls
 
   // Background
-  static const backgroundPage = AppPalette.mist; // behind every screen
-  static const backgroundSurfacePrimaryBG = AppPalette.white;
-  static const backgroundSurfaceLayer = AppPalette.slate100;
-  static const backgroundSurfaceMute = AppPalette.slate50;
-  static const backgroundSurfaceMild = AppPalette.slate200;
+  static const backgroundPage = AppPalette.bone; // behind every screen
+  static const backgroundSurfacePrimaryBG = AppPalette.cream;
+  static const backgroundSurfaceLayer = AppPalette.stone100;
+  static const backgroundSurfaceMute = AppPalette.stone50;
+  static const backgroundSurfaceMild = AppPalette.stone200;
 
-  // Stroke (slate-900 at increasing opacity)
-  static const strokeColourStrokeSoft = Color(0x0A0F172A);
-  static const strokeColourStrokeSubtle = Color(0x140F172A);
-  static const strokeColourStrokeMild = Color(0x1F0F172A);
-  static const strokeColourStrokeWarm = Color(0x290F172A);
-  static const strokeColourStrokeStrong = Color(0x330F172A);
-  static const strokeColourStrokePrimary = AppPalette.blue500;
+  // Stroke (espresso at increasing opacity)
+  static const strokeColourStrokeSoft = Color(0x0A2A1712);
+  static const strokeColourStrokeSubtle = Color(0x142A1712);
+  static const strokeColourStrokeMild = Color(0x1F2A1712);
+  static const strokeColourStrokeWarm = Color(0x292A1712);
+  static const strokeColourStrokeStrong = Color(0x332A1712);
+  static const strokeColourStrokePrimary = AppPalette.aubergine500;
 
-  /// Card edge on the page: blue 900 at 10%, with [AppShadows.floating].
-  static const strokeColourStrokeCard = Color(0x1A0A2F66);
+  /// Card edge on the page: espresso at 8%, with [AppShadows.floating]
+  /// (card study C2).
+  static const strokeColourStrokeCard = Color(0x142A1712);
 
   // On-color / neutral
   static const primaryOncolorBlack = Colors.black;
@@ -100,33 +119,48 @@ class LightColors {
   static const primaryNeutralBlack = Colors.black;
 
   // Icon
-  static const iconIconPrimary = AppPalette.slate600;
-  static const iconIconInverted = AppPalette.slate900;
-  static const iconIconMute = AppPalette.slate500;
-  static const iconIconDisabled = AppPalette.slate400;
-  static const iconIconBrand = AppPalette.blue500;
+  static const iconIconPrimary = AppPalette.stone600;
+  static const iconIconInverted = AppPalette.stone900;
+  static const iconIconMute = AppPalette.stone500;
+  static const iconIconDisabled = AppPalette.stone400;
+  static const iconIconBrand = AppPalette.aubergine500;
 
-  // Backdrop (brand blue at increasing opacity)
-  static const backgroundBackdropSoft = Color(0x520168F0);
-  static const backgroundBackdropMild = Color(0xA30168F0);
-  static const backgroundBackdropWarm = Color(0xCC0168F0);
+  // Backdrop (aubergine at increasing opacity)
+  static const backgroundBackdropSoft = Color(0x523B1F3A);
+  static const backgroundBackdropMild = Color(0xA33B1F3A);
+  static const backgroundBackdropWarm = Color(0xCC3B1F3A);
 
-  // Extra (violet accent — charts and "new" tags only)
-  static const extraExtraDefault = Color(0xFF7C3AED);
-  static const extraExtraThin = Color(0xFFD9CCFF);
-  static const extraExtraMute = Color(0xFFF3F0FF);
-  static const extraExtraText = Color(0xFF6D28D9);
+  // Extra (chartreuse accent — charts and "new" tags only). Too light for
+  // white text: put [extraExtraText] on it.
+  static const extraExtraDefault = Color(0xFFB5D334);
+  static const extraExtraThin = Color(0xFFDDEB9A);
+  static const extraExtraMute = Color(0xFFF3F8DC);
+  static const extraExtraText = Color(0xFF4A5A00);
+
+  // Category — pick one per class or group and keep it everywhere.
+  static const categoryTangerine = AppPalette.tangerine;
+  static const categoryTangerineMute = AppPalette.tangerineMute;
+  static const categoryTangerineText = AppPalette.tangerineText;
+  static const categoryChartreuse = AppPalette.chartreuse;
+  static const categoryChartreuseMute = AppPalette.chartreuseMute;
+  static const categoryChartreuseText = AppPalette.chartreuseText;
+  static const categoryHoney = AppPalette.honey;
+  static const categoryHoneyMute = AppPalette.honeyMute;
+  static const categoryHoneyText = AppPalette.honeyText;
+  static const categoryTeal = AppPalette.teal;
+  static const categoryTealMute = AppPalette.tealMute;
+  static const categoryTealText = AppPalette.tealText;
 }
 
 class DarkColors {
-  // Primary (brand blue). Fills keep the brand blue so white labels stay
-  // readable; brand text, icons and strokes use the lighter blue-400.
+  // Primary (aubergine). Fills keep the brand aubergine so white labels stay
+  // readable; brand text, icons and strokes use the lighter aubergine-400.
   static const primaryPrimaryMute = Color(0xFF10264A);
-  static const primaryPrimaryThin = AppPalette.blue800;
-  static const primaryPrimaryDefault = AppPalette.blue500;
-  static const primaryPrimaryHover = AppPalette.blue400;
-  static const primaryPrimaryPressed = AppPalette.blue600;
-  static const primaryPrimaryText = AppPalette.blue300;
+  static const primaryPrimaryThin = AppPalette.aubergine800;
+  static const primaryPrimaryDefault = AppPalette.aubergine500;
+  static const primaryPrimaryHover = AppPalette.aubergine400;
+  static const primaryPrimaryPressed = AppPalette.aubergine600;
+  static const primaryPrimaryText = AppPalette.aubergine300;
 
   // Success
   static const successSuccessMute = Color(0xFF0B2A1A);
@@ -147,17 +181,17 @@ class DarkColors {
   static const errorErrorText = Color(0xFFF87171);
 
   // Text
-  static const textBrand = AppPalette.blue400; // links, brand accents
-  static const textStrong = AppPalette.slate100; // headings, titles, labels
-  static const textBody = AppPalette.slate300; // running text
-  static const textMuted = AppPalette.slate400; // captions, hints, metadata
-  static const textDisabled = AppPalette.slate600; // unavailable controls
+  static const textBrand = AppPalette.aubergine400; // links, brand accents
+  static const textStrong = AppPalette.stone100; // headings, titles, labels
+  static const textBody = AppPalette.stone300; // running text
+  static const textMuted = AppPalette.stone400; // captions, hints, metadata
+  static const textDisabled = AppPalette.stone600; // unavailable controls
 
   // Background
-  static const backgroundSurfacePrimaryBG = AppPalette.slate950;
-  static const backgroundSurfaceLayer = AppPalette.slate850;
-  static const backgroundSurfaceMute = AppPalette.slate800;
-  static const backgroundSurfaceMild = AppPalette.slate700;
+  static const backgroundSurfacePrimaryBG = AppPalette.stone950;
+  static const backgroundSurfaceLayer = AppPalette.stone850;
+  static const backgroundSurfaceMute = AppPalette.stone800;
+  static const backgroundSurfaceMild = AppPalette.stone700;
 
   // Stroke (white at increasing opacity)
   static const strokeColourStrokeSoft = Color(0x0AFFFFFF);
@@ -165,7 +199,7 @@ class DarkColors {
   static const strokeColourStrokeMild = Color(0x1FFFFFFF);
   static const strokeColourStrokeWarm = Color(0x29FFFFFF);
   static const strokeColourStrokeStrong = Color(0x33FFFFFF);
-  static const strokeColourStrokePrimary = AppPalette.blue400;
+  static const strokeColourStrokePrimary = AppPalette.aubergine400;
 
   // On-color / neutral
   static const primaryOncolorBlack = Colors.white;
@@ -174,16 +208,16 @@ class DarkColors {
   static const primaryNeutralBlack = Colors.black;
 
   // Icon
-  static const iconIconPrimary = AppPalette.slate300;
-  static const iconIconInverted = AppPalette.slate100;
-  static const iconIconMute = AppPalette.slate400;
-  static const iconIconDisabled = AppPalette.slate600;
-  static const iconIconBrand = AppPalette.blue400;
+  static const iconIconPrimary = AppPalette.stone300;
+  static const iconIconInverted = AppPalette.stone100;
+  static const iconIconMute = AppPalette.stone400;
+  static const iconIconDisabled = AppPalette.stone600;
+  static const iconIconBrand = AppPalette.aubergine400;
 
-  // Backdrop (brand blue at increasing opacity)
-  static const backgroundBackdropSoft = Color(0x520168F0);
-  static const backgroundBackdropMild = Color(0xA30168F0);
-  static const backgroundBackdropWarm = Color(0xCC0168F0);
+  // Backdrop (aubergine at increasing opacity)
+  static const backgroundBackdropSoft = Color(0x523B1F3A);
+  static const backgroundBackdropMild = Color(0xA33B1F3A);
+  static const backgroundBackdropWarm = Color(0xCC3B1F3A);
 
   // Extra (violet accent — charts and "new" tags only)
   static const extraExtraDefault = Color(0xFF8B5CF6);
@@ -192,4 +226,4 @@ class DarkColors {
   static const extraExtraText = Color(0xFFA78BFA);
 }
 
-const String primaryColorHex = '#0168F0';
+const String primaryColorHex = '#3B1F3A';

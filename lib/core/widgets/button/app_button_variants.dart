@@ -2,7 +2,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:flutter/material.dart';
 
-/// Primary call-to-action — lit brand-blue gradient; use [child] for the label.
+/// Primary call-to-action — lit aubergine gradient; use [child] for the label.
 class AppPrimaryButton extends StatelessWidget {
   const AppPrimaryButton({
     super.key,
@@ -80,7 +80,7 @@ class AppPrimaryButton extends StatelessWidget {
   }
 }
 
-/// Secondary action — white-to-slate fill, subtle border; use [child] for icon + text rows (e.g. Google).
+/// Secondary action — cream-to-stone fill, subtle border; use [child] for icon + text rows (e.g. Google).
 class AppSecondaryButton extends StatelessWidget {
   const AppSecondaryButton({
     super.key,
@@ -158,7 +158,7 @@ class AppSecondaryButton extends StatelessWidget {
   }
 }
 
-/// Tinted action — pale brand-blue fill, dark brand text (e.g. “View class”).
+/// Tinted action — pale aubergine fill, dark brand text (e.g. “View class”).
 class AppTertiaryButton extends StatelessWidget {
   const AppTertiaryButton({
     super.key,

@@ -4,24 +4,24 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:shimmer/shimmer.dart';
 
 /// Sweeps a soft light across [child]. Build skeletons from [ShimmerBox]es
-/// inside it; their opaque pixels take the slate-100 → slate-50 sweep.
+/// inside it; their opaque pixels take the stone-100 → stone-50 sweep.
 ///
 /// Wrap only the placeholder shapes, not the card around them, so the card
-/// itself stays white.
+/// itself stays cream.
 class AppShimmer extends StatelessWidget {
   const AppShimmer({super.key, required this.child, this.onPage = false});
 
   final Widget child;
 
-  /// Shapes sitting straight on the blue mist page (not inside a card) use
-  /// a deeper mist so they show: mist-deep → a lighter mist.
+  /// Shapes sitting straight on the bone page (not inside a card) use
+  /// a deeper bone so they show: bone-deep → a lighter bone.
   final bool onPage;
 
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: onPage ? AppPalette.mistDeep : AppPalette.slate100,
-      highlightColor: onPage ? const Color(0xFFE2EAF6) : AppPalette.slate50,
+      baseColor: onPage ? AppPalette.boneDeep : AppPalette.stone100,
+      highlightColor: onPage ? const Color(0xFFEFEADF) : AppPalette.stone50,
       period: const Duration(milliseconds: 1400),
       child: child,
     );

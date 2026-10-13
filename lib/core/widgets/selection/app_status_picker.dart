@@ -41,7 +41,7 @@ class AppStatusPicker<T extends BadgeStatus> extends StatelessWidget {
       height: 40,
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: AppPalette.slate100,
+        color: AppPalette.stone100,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -91,7 +91,7 @@ class AppStatusPicker<T extends BadgeStatus> extends StatelessWidget {
                   ? tone.strong
                   // Brighter letters while nothing is picked, so the row
                   // reads as "to do".
-                  : (value == null ? AppPalette.slate500 : AppPalette.slate400),
+                  : (value == null ? AppPalette.stone500 : AppPalette.stone400),
             ),
             child: AppText(text),
           ),

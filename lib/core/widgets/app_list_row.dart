@@ -236,7 +236,7 @@ class AppCompactList extends StatelessWidget {
                       left: shown[i].leading != null ? 68 : 16,
                       right: 16,
                     ),
-                    color: AppPalette.slate100,
+                    color: AppPalette.stone100,
                   ),
                 _CompactRow(item: shown[i]),
               ],
@@ -335,13 +335,13 @@ class _Chevron extends StatelessWidget {
       child: Icon(
         LucideIcons.chevronRight500,
         size: size + 4,
-        color: AppPalette.slate400,
+        color: AppPalette.stone400,
       ),
     );
   }
 }
 
-/// Bordered picture: 1px slate-200 border, 2px white gap, then the content.
+/// Bordered picture: 1px stone-200 border, 2px white gap, then the content.
 /// Used by list rows and the app bar ([AppNavPicture]).
 class AppLeadingPicture extends StatelessWidget {
   const AppLeadingPicture({
@@ -367,7 +367,7 @@ class AppLeadingPicture extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppPalette.white,
         borderRadius: BorderRadius.circular(outerRadius),
-        border: Border.all(color: AppPalette.slate200),
+        border: Border.all(color: AppPalette.stone200),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(innerRadius),

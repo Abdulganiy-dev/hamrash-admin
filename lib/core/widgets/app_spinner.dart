@@ -9,7 +9,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 /// instead, e.g. while a list is being pulled to refresh.
 ///
 /// ```dart
-/// const AppSpinner()                          // 20px, brand blue
+/// const AppSpinner()                          // 20px, aubergine
 /// AppSpinner(size: 24, color: Colors.white)
 /// AppSpinner(value: pullProgress)             // partly drawn, still
 /// ```

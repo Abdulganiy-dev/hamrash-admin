@@ -27,7 +27,7 @@ class AppTabItem {
 }
 
 /// Plain icon-only tab bar that sits on the page colour, with no
-/// background, border or shadow. The selected icon turns blue and heavier.
+/// background, border or shadow. The selected icon turns aubergine and heavier.
 /// Usually built for you by [AppTabShell], which also fades content out
 /// behind it.
 class AppTabBar extends StatelessWidget {
@@ -75,7 +75,7 @@ class _Tab extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = selected
         ? LightColors.primaryPrimaryText
-        : AppPalette.slate500;
+        : AppPalette.stone500;
     final showCount = item.count != null && item.count! > 0;
 
     return Semantics(

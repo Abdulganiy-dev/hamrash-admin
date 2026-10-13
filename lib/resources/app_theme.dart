@@ -38,7 +38,7 @@ class AppTheme {
         onError: LightColors.primaryOncolorWhite,
         onSurface: LightColors.textBody,
       ),
-      // Blue mist page so white cards stand off it.
+      // Bone page so cream cards stand off it.
       scaffoldBackgroundColor: LightColors.backgroundPage,
       cardColor: LightColors.backgroundSurfacePrimaryBG,
       dividerColor: LightColors.strokeColourStrokeMild,

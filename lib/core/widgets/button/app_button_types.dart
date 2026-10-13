@@ -1,5 +1,5 @@
 /// Filled types (primary, secondary, tertiary, destructive) use the lit
-/// gradient surface; tertiary is the pale brand-blue "tinted" button.
+/// gradient surface; tertiary is the pale aubergine "tinted" button.
 enum AppButtonType {
   primary,
   secondary,

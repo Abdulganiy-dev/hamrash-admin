@@ -175,3 +175,9 @@ flutter:
         - asset: assets/fonts/Nunito-BlackItalic.ttf
           weight: 900
           style: italic
+    # Headings (display, H1–H4). Variable font: AppTypography pins the
+    # weight and optical-size axes.
+    - family: Fraunces
+      fonts:
+        - asset: assets/fonts/Fraunces-Variable.ttf
+          weight: 600

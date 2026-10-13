@@ -164,9 +164,7 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
             ],
             AppText(
               widget.title,
-              style: AppTypography.h3.copyWith(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
+              style: AppTypography.serif(22, lineHeight: 28).copyWith(
                 letterSpacing: -0.22,
                 color: LightColors.textStrong,
               ),

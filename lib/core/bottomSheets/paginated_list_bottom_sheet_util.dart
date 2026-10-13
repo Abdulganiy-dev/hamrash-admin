@@ -231,7 +231,7 @@ class _PaginatedSelectionBodyState<I>
           : Container(
               height: 1,
               margin: const EdgeInsets.symmetric(horizontal: 16),
-              color: AppPalette.slate100,
+              color: AppPalette.stone100,
             ),
       itemBuilder: (context, index) {
         if (index == items.length) return _moreStatus();
@@ -325,7 +325,7 @@ class _LoadingRow extends StatelessWidget {
             child: CircularProgressIndicator(
               strokeWidth: 2.5,
               color: LightColors.primaryPrimaryDefault,
-              backgroundColor: AppPalette.slate200,
+              backgroundColor: AppPalette.stone200,
             ),
           ),
           const SizedBox(width: 10),

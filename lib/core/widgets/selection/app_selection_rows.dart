@@ -22,7 +22,7 @@ class AppRowGroup extends StatelessWidget {
   /// Floating white card, for rows on the page.
   const AppRowGroup({super.key, required this.children}) : _inset = false;
 
-  /// Flat slate-50 block, for rows inside a white sheet or card.
+  /// Flat stone-50 block, for rows inside a cream sheet or card.
   const AppRowGroup.inset({super.key, required this.children}) : _inset = true;
 
   final List<Widget> children;
@@ -38,7 +38,7 @@ class AppRowGroup extends StatelessWidget {
             Container(
               height: 1,
               margin: const EdgeInsets.symmetric(horizontal: 16),
-              color: _inset ? AppPalette.slate200 : AppPalette.slate100,
+              color: _inset ? AppPalette.stone200 : AppPalette.stone100,
             ),
           children[i],
         ],
@@ -55,7 +55,7 @@ class AppRowGroup extends StatelessWidget {
       surface: AppSurface.inset,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: ColoredBox(color: AppPalette.slate50, child: rows),
+        child: ColoredBox(color: AppPalette.stone50, child: rows),
       ),
     );
   }
@@ -262,7 +262,7 @@ class _RowText extends StatelessWidget {
 }
 
 /// A whole card as one option of a single choice. The picked card gets a
-/// blue border. Stack them 12 apart.
+/// aubergine border. Stack them 12 apart.
 ///
 /// ```dart
 /// AppChoiceCard(
@@ -318,7 +318,7 @@ class AppChoiceCard<T> extends StatelessWidget {
             // Keep the content still while the border thickens.
             padding: EdgeInsets.all(picked ? 16 : 16.5),
             decoration: BoxDecoration(
-              color: enabled ? null : AppPalette.slate50,
+              color: enabled ? null : AppPalette.stone50,
               gradient: enabled ? AppShadows.cardFill : null,
               borderRadius: AppRadius.brCard,
               border: Border.all(

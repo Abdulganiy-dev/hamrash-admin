@@ -17,7 +17,7 @@ enum AppBadgeTone {
   /// Missed, failed, blocked.
   error,
 
-  /// Noted, in progress. Uses the brand blue.
+  /// Noted, in progress. Uses the aubergine.
   info,
 
   /// Not started, plain labels.
@@ -32,7 +32,7 @@ enum AppBadgeTone {
     warning => LightColors.warningWarningMute,
     error => LightColors.errorErrorMute,
     info => LightColors.primaryPrimaryMute,
-    neutral => AppPalette.slate100,
+    neutral => AppPalette.stone100,
     accent => LightColors.extraExtraMute,
   };
 
@@ -42,7 +42,7 @@ enum AppBadgeTone {
     warning => LightColors.warningWarningThin,
     error => LightColors.errorErrorThin,
     info => LightColors.primaryPrimaryThin,
-    neutral => AppPalette.slate200,
+    neutral => AppPalette.stone200,
     accent => LightColors.extraExtraThin,
   };
 
@@ -52,7 +52,7 @@ enum AppBadgeTone {
     warning => LightColors.warningWarningDefault,
     error => LightColors.errorErrorDefault,
     info => LightColors.primaryPrimaryDefault,
-    neutral => AppPalette.slate400,
+    neutral => AppPalette.stone400,
     accent => LightColors.extraExtraDefault,
   };
 
@@ -62,7 +62,7 @@ enum AppBadgeTone {
     warning => LightColors.warningWarningText,
     error => LightColors.errorErrorText,
     info => LightColors.primaryPrimaryText,
-    neutral => AppPalette.slate600,
+    neutral => AppPalette.stone600,
     accent => LightColors.extraExtraText,
   };
 }
@@ -135,7 +135,7 @@ class AppBadge extends StatelessWidget {
             label,
             style: AppTypography.body.copyWith(
               fontWeight: FontWeight.w600,
-              color: AppPalette.slate700,
+              color: AppPalette.stone700,
             ),
           ),
         ],
@@ -207,17 +207,17 @@ class AppFilterChip extends StatelessWidget {
     final Color border;
     final Color text;
     if (!enabled) {
-      fill = AppPalette.slate100;
-      border = AppPalette.slate200;
-      text = AppPalette.slate400;
+      fill = AppPalette.stone100;
+      border = AppPalette.stone200;
+      text = AppPalette.stone400;
     } else if (selected) {
       fill = LightColors.primaryPrimaryMute;
       border = LightColors.primaryPrimaryThin;
       text = LightColors.primaryPrimaryText;
     } else {
-      fill = AppPalette.white;
-      border = AppPalette.slate200;
-      text = AppPalette.slate700;
+      fill = AppPalette.cream;
+      border = AppPalette.stone200;
+      text = AppPalette.stone700;
     }
 
     final showCheck = selected && onRemove == null && enabled;
@@ -287,7 +287,7 @@ class AppCountBadge extends StatelessWidget {
     super.key,
     required this.count,
     this.tone = AppCountTone.neutral,
-    this.outlineColor = AppPalette.slate50,
+    this.outlineColor = AppPalette.stone50,
   });
 
   final int count;
@@ -330,21 +330,21 @@ class AppCountBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 7),
       alignment: Alignment.center,
       decoration: const BoxDecoration(
-        color: AppPalette.slate100,
+        color: AppPalette.stone100,
         borderRadius: AppRadius.brBadge,
       ),
       child: AppText(
         text,
         style: AppTypography.caption.copyWith(
           fontWeight: FontWeight.w700,
-          color: AppPalette.slate600,
+          color: AppPalette.stone600,
         ),
       ),
     );
   }
 }
 
-/// 8px blue dot: something new, no number.
+/// 8px aubergine dot: something new, no number.
 class AppUnreadDot extends StatelessWidget {
   const AppUnreadDot({super.key});
 

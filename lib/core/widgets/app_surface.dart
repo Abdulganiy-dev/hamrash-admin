@@ -1,15 +1,15 @@
 import 'package:flutter/widgets.dart';
 
 /// What a widget is sitting on. Lets inputs pick a fill that stands out:
-/// white on the slate-50 page, slate-50 on white cards, sheets and dialogs.
+/// cream on the bone page, stone-50 on cream cards, sheets and dialogs.
 enum AppSurface {
-  /// The slate-50 page.
+  /// The bone page.
   page,
 
-  /// White cards, sheets and dialogs.
+  /// Cream cards, sheets and dialogs.
   card,
 
-  /// A slate-50 group inside a card or sheet ([AppRowGroup.inset]).
+  /// A stone-50 group inside a card or sheet ([AppRowGroup.inset]).
   inset,
 }
 

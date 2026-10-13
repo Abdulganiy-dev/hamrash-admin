@@ -7,7 +7,7 @@ import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
 typedef ListBottomSheetItemBuilder<I> =
     Widget Function(BuildContext context, I item, int index);
 
-/// Sheet showing a short list of rows in one slate-50 group.
+/// Sheet showing a short list of rows in one stone-50 group.
 ///
 /// Up to [floatingLimit] items it floats and sizes to its content; longer
 /// lists open as a full sheet.

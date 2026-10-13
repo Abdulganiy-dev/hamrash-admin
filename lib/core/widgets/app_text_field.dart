@@ -8,7 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Text field with the label above, helper or error text below.
 ///
-/// Quiet at rest (soft fill, hairline border), white with a blue border when
+/// Quiet at rest (soft fill, hairline border), white with a aubergine border when
 /// focused, white with a red border on error. 48 tall, 12px corners.
 /// Validator and [errorText] messages clear on tap or when focus returns.
 ///

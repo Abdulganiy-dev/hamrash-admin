@@ -38,14 +38,14 @@ class AppCheckbox extends StatelessWidget {
     final Color fill;
     final Color border;
     if (!enabled) {
-      fill = AppPalette.slate100;
-      border = AppPalette.slate200;
+      fill = AppPalette.stone100;
+      border = AppPalette.stone200;
     } else if (on) {
       fill = LightColors.primaryPrimaryDefault;
       border = LightColors.primaryPrimaryDefault;
     } else {
       fill = AppPalette.white;
-      border = AppPalette.slate300;
+      border = AppPalette.stone300;
     }
 
     final box = AnimatedContainer(
@@ -68,7 +68,7 @@ class AppCheckbox extends StatelessWidget {
                 value == null ? LucideIcons.minus600 : LucideIcons.check600,
                 key: ValueKey(value),
                 size: 16,
-                color: enabled ? AppPalette.white : AppPalette.slate400,
+                color: enabled ? AppPalette.white : AppPalette.stone400,
               ),
       ),
     );
@@ -141,12 +141,12 @@ class AppRadio<T> extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: !enabled
-            ? AppPalette.slate100
+            ? AppPalette.stone100
             : (on ? LightColors.primaryPrimaryDefault : AppPalette.white),
         border: Border.all(
           color: !enabled
-              ? AppPalette.slate200
-              : (on ? LightColors.primaryPrimaryDefault : AppPalette.slate300),
+              ? AppPalette.stone200
+              : (on ? LightColors.primaryPrimaryDefault : AppPalette.stone300),
           width: 1.5,
         ),
       ),
@@ -193,17 +193,17 @@ class AppSwitch extends StatelessWidget {
   final bool enabled;
 
   static const _thumbShadow = [
-    BoxShadow(color: Color(0x1F0F172A), offset: Offset(0, 1), blurRadius: 1.5),
-    BoxShadow(color: Color(0x0F0F172A), offset: Offset(0, 2), blurRadius: 3),
+    BoxShadow(color: Color(0x1F2A1712), offset: Offset(0, 1), blurRadius: 1.5),
+    BoxShadow(color: Color(0x0F2A1712), offset: Offset(0, 2), blurRadius: 3),
   ];
 
   @override
   Widget build(BuildContext context) {
     final Color track;
     if (!enabled) {
-      track = AppPalette.slate100;
+      track = AppPalette.stone100;
     } else {
-      track = value ? LightColors.primaryPrimaryDefault : AppPalette.slate200;
+      track = value ? LightColors.primaryPrimaryDefault : AppPalette.stone200;
     }
 
     final control = AnimatedContainer(
@@ -224,7 +224,7 @@ class AppSwitch extends StatelessWidget {
           width: 24,
           height: 24,
           decoration: BoxDecoration(
-            color: enabled ? AppPalette.white : AppPalette.slate50,
+            color: enabled ? AppPalette.white : AppPalette.stone50,
             shape: BoxShape.circle,
             boxShadow: enabled ? _thumbShadow : null,
           ),

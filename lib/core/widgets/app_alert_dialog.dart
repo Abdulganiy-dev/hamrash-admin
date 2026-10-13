@@ -87,8 +87,8 @@ class AppAlertDialog extends StatefulWidget {
   /// dialog stays open with a spinner; it closes with `true` on success.
   final Future<void> Function()? onConfirm;
 
-  /// Slate-900 at 36%, the same scrim as sheets.
-  static const _scrim = Color(0x5C0F172A);
+  /// Espresso at 36%, the same scrim as sheets.
+  static const _scrim = Color(0x5C2A1712);
 
   static Future<bool?> show(
     BuildContext context, {
@@ -203,7 +203,7 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppPalette.white,
+              color: AppPalette.cream,
               borderRadius: BorderRadius.circular(24),
               boxShadow: AppShadows.overlay,
             ),
@@ -223,7 +223,6 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
                     widget.title,
                     textAlign: TextAlign.center,
                     style: AppTypography.h3.copyWith(
-                      fontWeight: FontWeight.w800,
                       color: LightColors.textStrong,
                     ),
                   ),
