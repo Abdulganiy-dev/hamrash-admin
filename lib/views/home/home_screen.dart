@@ -53,8 +53,7 @@ class HomeScreen extends StatelessWidget {
         onViewModelReady: (model) => model.load(),
         builder: (context, model, _) => DefaultScaffold(
           backgroundColor: AppPalette.linen,
-          // The school header is this screen's app bar: it stays pinned in
-          // the 60px slot and content fades out under it.
+
           customAppBar: _Header(
             model: model,
             onAvatarTap: () => onAvatarTap(model.displayName, model.photoUrl),
@@ -103,7 +102,7 @@ class _Header extends StatelessWidget {
             children: [
               AppText(
                 model.school.name,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.serif(
                   16,

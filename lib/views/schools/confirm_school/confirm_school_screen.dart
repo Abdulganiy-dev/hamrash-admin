@@ -225,7 +225,7 @@ class _LogoButton extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppPalette.white,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppPalette.stone200),
+                  border: Border.all(color: LightColors.strokeColourStrokeCard),
                   boxShadow: const [
                     BoxShadow(
                       color: Color(0x1F2A1712),
