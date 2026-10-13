@@ -6,8 +6,8 @@ import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 
-/// 11 / 12 · Home while the school is being set up. Owners and admins get
-/// the checklist; everyone else sees how far setup has got.
+/// 11 / 12 · Home while the school is being set up. School leaders get the
+/// checklist; bursars see how far setup has got.
 class HomeViewModel extends BaseViewModel {
   HomeViewModel({
     required this.school,
@@ -66,7 +66,14 @@ class HomeViewModel extends BaseViewModel {
     return '$start/${((start + 1) % 100).toString().padLeft(2, '0')}';
   }
 
+  /// School details and inviting the team stay with owners and admins.
+  bool canOpen(SetupStep step) =>
+      school.canRunSetup &&
+      (school.canEditSchool ||
+          (step != SetupStep.schoolDetails && step != SetupStep.team));
+
   String hintFor(SetupStep step) => switch (step) {
+    _ when !canOpen(step) => 'The owner or an admin does this',
     SetupStep.academicCalendar =>
       'Add $currentSessionName and the current term',
     _ => step.hint,
@@ -123,7 +130,7 @@ class HomeViewModel extends BaseViewModel {
       _service
           .getMyStaffProfile(school.id, school.memberIds)
           .catchError((_) => null),
-      if (!school.canManage)
+      if (!school.canRunSetup)
         _service.getOwnerName(school.id).catchError((_) => null),
     ]);
     _progress = results[0] as SetupProgress;
@@ -132,7 +139,7 @@ class HomeViewModel extends BaseViewModel {
   }
 
   void openStep(SetupStep step) {
-    if (!school.canManage) return;
+    if (!canOpen(step)) return;
     if (step == SetupStep.schoolDetails) {
       onOpenSchoolDetails?.call();
       return;

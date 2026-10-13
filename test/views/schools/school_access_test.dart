@@ -249,15 +249,48 @@ void main() {
       );
     });
 
-    test('principals see who is setting the school up', () async {
+    test('principals and VPs run setup, except details and invites', () {
+      for (final role in [
+        OrganizationMemberRole.principal,
+        OrganizationMemberRole.vicePrincipal,
+      ]) {
+        final model = HomeViewModel(
+          signedInName: 'Signed In',
+          school: school(role),
+          service: _Schools(const SetupProgress({})),
+        );
+        expect(model.school.canRunSetup, isTrue);
+        expect(model.canOpen(SetupStep.academicCalendar), isTrue);
+        expect(model.canOpen(SetupStep.grading), isTrue);
+        expect(model.canOpen(SetupStep.schoolDetails), isFalse);
+        expect(model.canOpen(SetupStep.team), isFalse);
+        expect(
+          model.hintFor(SetupStep.team),
+          'The owner or an admin does this',
+        );
+      }
+    });
+
+    test('owners and admins can open every step', () {
       final model = HomeViewModel(
         signedInName: 'Signed In',
-        school: school(OrganizationMemberRole.principal),
+        school: school(OrganizationMemberRole.admin),
+        service: _Schools(const SetupProgress({})),
+      );
+      expect(SetupStep.values.every(model.canOpen), isTrue);
+    });
+
+    test('bursars see who is setting the school up', () async {
+      final model = HomeViewModel(
+        signedInName: 'Signed In',
+        school: school(OrganizationMemberRole.bursar),
         service: _Schools(
           const SetupProgress({SetupStep.schoolDetails}),
           ownerName: 'Amina Bello',
         ),
       );
+      expect(model.school.canRunSetup, isFalse);
+      expect(model.canOpen(SetupStep.academicCalendar), isFalse);
       await model.load();
       expect(model.statusLine, 'Trial · Setting up');
       expect(

@@ -184,7 +184,7 @@ class _SetupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final manage = model.school.canManage;
+    final manage = model.school.canRunSetup;
     final current = progress.current;
     final steps = manage
         ? SetupStep.values
@@ -263,7 +263,9 @@ class _SetupCard extends StatelessWidget {
                         : step == current
                         ? _StepState.current
                         : _StepState.todo,
-                    onTap: manage ? () => model.openStep(step) : null,
+                    onTap: model.canOpen(step)
+                        ? () => model.openStep(step)
+                        : null,
                   ),
                   const SizedBox(height: 2),
                 ],

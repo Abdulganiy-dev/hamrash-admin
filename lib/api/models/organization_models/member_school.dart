@@ -28,13 +28,23 @@ class MemberSchool {
 
   bool get isPaused => organization.status == OrganizationStatus.suspended;
 
-  /// Owners and admins edit the school's details and run the setup checklist.
-  bool get canManage =>
+  /// School leaders — owner, admin, principal, vice principal — run the setup
+  /// checklist, matching the database's "leaders can add/edit" policies.
+  /// Bursars only see how far setup has got.
+  bool get canRunSetup =>
+      roles.contains(OrganizationMemberRole.owner) ||
+      roles.contains(OrganizationMemberRole.admin) ||
+      roles.contains(OrganizationMemberRole.principal) ||
+      roles.contains(OrganizationMemberRole.vicePrincipal);
+
+  /// Owners and admins also edit the school's details and invite the team;
+  /// the database keeps those two to them.
+  bool get canEditSchool =>
       roles.contains(OrganizationMemberRole.owner) ||
       roles.contains(OrganizationMemberRole.admin);
 
   bool get needsDetailsCheck =>
-      canManage && organization.detailsConfirmedAt == null;
+      canEditSchool && organization.detailsConfirmedAt == null;
 
   /// Active admin-app memberships grouped by school. Archived schools and
   /// non-admin roles are left out. Sorted by name.
