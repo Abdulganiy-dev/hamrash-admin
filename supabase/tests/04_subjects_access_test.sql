@@ -5,7 +5,7 @@
 -- It acts as several fake users, checks every rule, then raises an exception on
 -- purpose so EVERYTHING is rolled back. The "error" at the end is the report.
 --
--- Requires migrations 01–07 and the dummy platform admin 'user_dummy_platform_admin'.
+-- Requires migrations 01–07.
 
 do $test$
 declare
@@ -32,6 +32,13 @@ declare
   v_p1_code text; v_s1_code text;
   v_r record;
 begin
+  -- The test platform admin exists only inside this test; it's rolled back
+  -- with everything else, so the live database needs no fake admin.
+  execute 'reset role';
+  insert into public.platform_admins (clerk_user_id, full_name)
+  values ('user_dummy_platform_admin', 'Dummy Platform Admin')
+  on conflict (clerk_user_id) do nothing;
+
   -- ── setup ──────────────────────────────────────────────────
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);

@@ -7,9 +7,8 @@
 --
 -- Uses create_organization(name, number_prefix, ...) as changed in migration 03.
 --
--- Requires the dummy platform admin row:
---   insert into public.platform_admins (clerk_user_id, full_name, email)
---   values ('user_dummy_platform_admin', 'Dummy Platform Admin', 'dummy-platform-admin@example.com');
+-- Creates its own test platform admin ('user_dummy_platform_admin') and rolls it
+-- back with everything else.
 
 do $test$
 declare
@@ -26,6 +25,13 @@ declare
   v_member public.organization_members;
   v_n      int;
 begin
+  -- The test platform admin exists only inside this test; it's rolled back
+  -- with everything else, so the live database needs no fake admin.
+  execute 'reset role';
+  insert into public.platform_admins (clerk_user_id, full_name)
+  values ('user_dummy_platform_admin', 'Dummy Platform Admin')
+  on conflict (clerk_user_id) do nothing;
+
   -- 01 outsider cannot create a school
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_outsider","role":"authenticated"}', true);

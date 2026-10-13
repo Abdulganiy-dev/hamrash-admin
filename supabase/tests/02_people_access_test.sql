@@ -7,8 +7,7 @@
 -- Requires migrations 03, 05 (staff_private_details), 07 (student and parent
 -- private details)
 -- and 06 (teachers see only
--- the students they teach; this test gives the teacher no classes) and the dummy
--- platform admin 'user_dummy_platform_admin'.
+-- the students they teach; this test gives the teacher no classes).
 
 do $test$
 declare
@@ -41,6 +40,13 @@ declare
   v_num  text;
   v_year text := extract(year from (now() at time zone 'Africa/Lagos')::date)::text;
 begin
+  -- The test platform admin exists only inside this test; it's rolled back
+  -- with everything else, so the live database needs no fake admin.
+  execute 'reset role';
+  insert into public.platform_admins (clerk_user_id, full_name)
+  values ('user_dummy_platform_admin', 'Dummy Platform Admin')
+  on conflict (clerk_user_id) do nothing;
+
   -- ── setup: two schools, two owners ─────────────────────────
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);

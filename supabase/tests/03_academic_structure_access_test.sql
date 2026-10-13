@@ -6,7 +6,7 @@
 -- It acts as several fake users, checks every rule, then raises an exception on
 -- purpose so EVERYTHING is rolled back. The "error" at the end is the report.
 --
--- Requires the dummy platform admin 'user_dummy_platform_admin'.
+-- Creates its own test platform admin and rolls it back with everything else.
 
 do $test$
 declare
@@ -37,6 +37,13 @@ declare
   -- structure in School B
   v_b_class uuid;
 begin
+  -- The test platform admin exists only inside this test; it's rolled back
+  -- with everything else, so the live database needs no fake admin.
+  execute 'reset role';
+  insert into public.platform_admins (clerk_user_id, full_name)
+  values ('user_dummy_platform_admin', 'Dummy Platform Admin')
+  on conflict (clerk_user_id) do nothing;
+
   -- ── setup ──────────────────────────────────────────────────
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);

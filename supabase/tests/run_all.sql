@@ -21,6 +21,13 @@ declare
   v_n      int;
 begin
   begin
+  -- The test platform admin exists only inside this test; it's rolled back
+  -- with everything else, so the live database needs no fake admin.
+  execute 'reset role';
+  insert into public.platform_admins (clerk_user_id, full_name)
+  values ('user_dummy_platform_admin', 'Dummy Platform Admin')
+  on conflict (clerk_user_id) do nothing;
+
   -- 01 outsider cannot create a school
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_outsider","role":"authenticated"}', true);
@@ -273,6 +280,13 @@ declare
   v_year text := extract(year from (now() at time zone 'Africa/Lagos')::date)::text;
 begin
   begin
+  -- The test platform admin exists only inside this test; it's rolled back
+  -- with everything else, so the live database needs no fake admin.
+  execute 'reset role';
+  insert into public.platform_admins (clerk_user_id, full_name)
+  values ('user_dummy_platform_admin', 'Dummy Platform Admin')
+  on conflict (clerk_user_id) do nothing;
+
   -- ── setup: two schools, two owners ─────────────────────────
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);
@@ -691,6 +705,13 @@ declare
   v_b_class uuid;
 begin
   begin
+  -- The test platform admin exists only inside this test; it's rolled back
+  -- with everything else, so the live database needs no fake admin.
+  execute 'reset role';
+  insert into public.platform_admins (clerk_user_id, full_name)
+  values ('user_dummy_platform_admin', 'Dummy Platform Admin')
+  on conflict (clerk_user_id) do nothing;
+
   -- ── setup ──────────────────────────────────────────────────
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);
@@ -1097,6 +1118,13 @@ declare
   v_r record;
 begin
   begin
+  -- The test platform admin exists only inside this test; it's rolled back
+  -- with everything else, so the live database needs no fake admin.
+  execute 'reset role';
+  insert into public.platform_admins (clerk_user_id, full_name)
+  values ('user_dummy_platform_admin', 'Dummy Platform Admin')
+  on conflict (clerk_user_id) do nothing;
+
   -- ── setup ──────────────────────────────────────────────────
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);
@@ -1491,6 +1519,13 @@ declare
   v_s1 uuid; v_p1 uuid; v_p_code text;
 begin
   begin
+  -- The test platform admin exists only inside this test; it's rolled back
+  -- with everything else, so the live database needs no fake admin.
+  execute 'reset role';
+  insert into public.platform_admins (clerk_user_id, full_name)
+  values ('user_dummy_platform_admin', 'Dummy Platform Admin')
+  on conflict (clerk_user_id) do nothing;
+
   -- ── setup ──────────────────────────────────────────────────
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);
@@ -1682,6 +1717,13 @@ declare
   v_owner3_code text;
 begin
   begin
+  -- The test platform admin exists only inside this test; it's rolled back
+  -- with everything else, so the live database needs no fake admin.
+  execute 'reset role';
+  insert into public.platform_admins (clerk_user_id, full_name)
+  values ('user_dummy_platform_admin', 'Dummy Platform Admin')
+  on conflict (clerk_user_id) do nothing;
+
   -- ── setup: one school ──────────────────────────────────────
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);
@@ -1810,6 +1852,13 @@ declare
   v_status  text;
 begin
   begin
+  -- The test platform admin exists only inside this test; it's rolled back
+  -- with everything else, so the live database needs no fake admin.
+  execute 'reset role';
+  insert into public.platform_admins (clerk_user_id, full_name)
+  values ('user_dummy_platform_admin', 'Dummy Platform Admin')
+  on conflict (clerk_user_id) do nothing;
+
   -- ── setup: the dummy platform admin creates a code ─────────
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);

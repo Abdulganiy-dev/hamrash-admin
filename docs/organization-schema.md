@@ -50,7 +50,22 @@ Membership is kept separate from the people tables because not every person reco
 | `full_name`, `email` | |
 | `is_active` | Turn off instead of deleting |
 
-Managed only by Hamrash through the SQL editor or service role. Clients can read it, so the app can ask "am I a platform admin?".
+Clients can read their own row, so an app can ask "am I a platform admin?". Rows are added in two ways: the **first** admin by hand in the SQL editor, and everyone after that by redeeming a **platform invite code** (see below). Turning someone off (`is_active = false`) is SQL only.
+
+### Platform invite codes *(added in migration 12)*
+
+How a new Hamrash team member joins, used by Hamrash Platform Admin.
+
+| Piece | Notes |
+|-------|-------|
+| `private.platform_invite_codes` | One row per code: `code_hash` (SHA-256 of the 12-character code), `code_hint` (last 4 characters), `note`, `created_by`, `expires_at` (7 days), `redeemed_by/at`, `revoked_by/at`. The code itself is never stored. |
+| `private.platform_invite_attempts` | Wrong-code attempts per Clerk user, for the 5-per-hour limit. Pruned after a day. |
+| `create_platform_invite(note)` | Platform admins only. Returns `(invite_id, code, expires_at)`; this is the only time the code is seen. |
+| `list_platform_invites()` | Platform admins only. Latest 100 codes with `status`: `pending`, `used`, `expired`, `cancelled`. |
+| `revoke_platform_invite(invite_id)` | Platform admins only. Cancels an unused code. |
+| `redeem_platform_invite(code, full_name, email)` | Any signed-in user. Valid code → inserts their `platform_admins` row and marks the code used. Wrong, used, cancelled or expired code → returns NULL and records an attempt. Already-active admins get their row back without using the code; turned-off admins are refused. |
+
+Both tables are in `private` (not exposed by the Data API) with RLS on and no grants; only the four security-definer RPCs touch them. Tested by `supabase/tests/07_platform_invites_access_test.sql`.
 
 ### `organizations`
 
@@ -167,7 +182,7 @@ with check (organization_id in (select private.my_org_ids(array['owner','admin']
 
 - The Supabase project has the **Clerk third-party auth integration** enabled (Dashboard → Authentication → Third-party).
 - Clerk session tokens include `"role": "authenticated"`, otherwise Supabase treats requests as `anon`.
-- After applying, the first platform admin is added by hand in the SQL editor:
+- After applying, the **first** platform admin is added by hand in the SQL editor (everyone after that joins with a platform invite code from Hamrash Platform Admin):
   ```sql
   insert into public.platform_admins (clerk_user_id, full_name, email)
   values ('<your Clerk user id>', '<name>', '<email>');
