@@ -58,7 +58,7 @@ class AppNavIconButton extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppPalette.white,
                 shape: BoxShape.circle,
-                border: Border.all(color: LightColors.strokeColourStrokeSoft),
+                border: Border.all(color: LightColors.strokeColourStrokeCard),
                 boxShadow: AppShadows.floating,
               ),
               child: Icon(icon, size: iconSize, color: iconColor),

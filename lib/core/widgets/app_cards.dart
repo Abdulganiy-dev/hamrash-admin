@@ -12,17 +12,24 @@ import 'package:hamrash_admin/core/widgets/app_surface.dart';
 class AppShadows {
   AppShadows._();
 
-  /// Cards on the page: a tight contact shadow plus a soft blue-slate float
-  /// pooled under the card. Paired with the 1px slate border on [AppCard].
+  /// Cards on the page: a tight contact shadow plus a wide, soft navy halo.
+  /// Paired with the 10% navy edge ([LightColors.strokeColourStrokeCard]).
   static const List<BoxShadow> floating = [
-    BoxShadow(color: Color(0x080F172A), offset: Offset(0, 1), blurRadius: 2),
+    BoxShadow(color: Color(0x0A0A2F66), offset: Offset(0, 1), blurRadius: 2),
     BoxShadow(
-      color: Color(0x1A25488C),
+      color: Color(0x170A2F66),
       offset: Offset(0, 14),
-      blurRadius: 27,
-      spreadRadius: -10,
+      blurRadius: 36,
+      spreadRadius: -8,
     ),
   ];
+
+  /// Cards are lit from above: white fading to a hint of blue at the foot.
+  static const LinearGradient cardFill = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFFFFFFF), Color(0xFFFBFCFE)],
+  );
 
   /// Menus, sheets and dialogs that sit above everything.
   static const List<BoxShadow> overlay = [
@@ -75,11 +82,12 @@ class AppCard extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: isLight ? AppPalette.white : DarkColors.backgroundSurfaceLayer,
+        color: isLight ? null : DarkColors.backgroundSurfaceLayer,
+        gradient: isLight ? AppShadows.cardFill : null,
         borderRadius: AppRadius.brCard,
         border: Border.all(
           color: isLight
-              ? LightColors.strokeColourStrokeSoft
+              ? LightColors.strokeColourStrokeCard
               : const Color(0x0FFFFFFF),
         ),
         boxShadow: isLight ? AppShadows.floating : null,

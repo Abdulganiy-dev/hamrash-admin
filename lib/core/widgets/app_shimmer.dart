@@ -13,15 +13,15 @@ class AppShimmer extends StatelessWidget {
 
   final Widget child;
 
-  /// Shapes sitting straight on the slate-50 page (not inside a card) need
-  /// one shade darker to show: slate-200 → slate-100.
+  /// Shapes sitting straight on the blue mist page (not inside a card) use
+  /// a deeper mist so they show: mist-deep → a lighter mist.
   final bool onPage;
 
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: onPage ? AppPalette.slate200 : AppPalette.slate100,
-      highlightColor: onPage ? AppPalette.slate100 : AppPalette.slate50,
+      baseColor: onPage ? AppPalette.mistDeep : AppPalette.slate100,
+      highlightColor: onPage ? const Color(0xFFE2EAF6) : AppPalette.slate50,
       period: const Duration(milliseconds: 1400),
       child: child,
     );

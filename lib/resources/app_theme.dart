@@ -38,8 +38,8 @@ class AppTheme {
         onError: LightColors.primaryOncolorWhite,
         onSurface: LightColors.textBody,
       ),
-      // Slate 50 canvas so white cards can float on it.
-      scaffoldBackgroundColor: LightColors.backgroundSurfaceMute,
+      // Blue mist page so white cards stand off it.
+      scaffoldBackgroundColor: LightColors.backgroundPage,
       cardColor: LightColors.backgroundSurfacePrimaryBG,
       dividerColor: LightColors.strokeColourStrokeMild,
       textTheme: AppTypography.textTheme(
@@ -130,12 +130,12 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.brCard,
-          side: const BorderSide(color: LightColors.strokeColourStrokeSoft),
+          side: const BorderSide(color: LightColors.strokeColourStrokeCard),
         ),
       ),
       // AppBar theme
       appBarTheme: const AppBarTheme(
-        backgroundColor: LightColors.backgroundSurfaceMute,
+        backgroundColor: LightColors.backgroundPage,
         surfaceTintColor: Colors.transparent,
         foregroundColor: LightColors.textBody,
         elevation: 0,

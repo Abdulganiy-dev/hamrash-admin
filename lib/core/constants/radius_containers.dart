@@ -24,8 +24,8 @@ class AppRadius {
   /// Buttons, text fields, dropdowns, segmented controls.
   static const double control = md;
 
-  /// Cards, list groups, image thumbnails.
-  static const double card = lg;
+  /// White cards on the page.
+  static const double card = xl;
 
   /// Dialogs, bottom sheets (top corners), large tiles.
   static const double dialog = xl;
@@ -46,7 +46,7 @@ class AppRadius {
   static const BorderRadius brCheckbox = brXs;
   static const BorderRadius brChip = brSm;
   static const BorderRadius brControl = brMd;
-  static const BorderRadius brCard = brLg;
+  static const BorderRadius brCard = brXl;
   static const BorderRadius brDialog = brXl;
   static const BorderRadius brBadge = brPill;
 

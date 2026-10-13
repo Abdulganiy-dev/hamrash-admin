@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_surface.dart';
@@ -317,12 +318,13 @@ class AppChoiceCard<T> extends StatelessWidget {
             // Keep the content still while the border thickens.
             padding: EdgeInsets.all(picked ? 16 : 16.5),
             decoration: BoxDecoration(
-              color: enabled ? AppPalette.white : AppPalette.slate50,
-              borderRadius: BorderRadius.circular(16),
+              color: enabled ? null : AppPalette.slate50,
+              gradient: enabled ? AppShadows.cardFill : null,
+              borderRadius: AppRadius.brCard,
               border: Border.all(
                 color: picked
                     ? LightColors.primaryPrimaryDefault
-                    : LightColors.strokeColourStrokeSoft,
+                    : LightColors.strokeColourStrokeCard,
                 width: picked ? 1.5 : 1,
               ),
               boxShadow: enabled ? AppShadows.floating : null,

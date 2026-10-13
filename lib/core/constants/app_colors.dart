@@ -33,6 +33,12 @@ class AppPalette {
   static const slate850 = Color(0xFF131C2E);
   static const slate900 = Color(0xFF0F172A);
   static const slate950 = Color(0xFF0B1120);
+
+  // Page: a cool blue mist behind every screen, so white cards stand off it.
+  static const mist = Color(0xFFEAF1FB);
+
+  /// One step deeper than [mist], for placeholder shapes straight on the page.
+  static const mistDeep = Color(0xFFD6E2F3);
 }
 
 class LightColors {
@@ -70,6 +76,7 @@ class LightColors {
   static const textDisabled = AppPalette.slate400; // unavailable controls
 
   // Background
+  static const backgroundPage = AppPalette.mist; // behind every screen
   static const backgroundSurfacePrimaryBG = AppPalette.white;
   static const backgroundSurfaceLayer = AppPalette.slate100;
   static const backgroundSurfaceMute = AppPalette.slate50;
@@ -82,6 +89,9 @@ class LightColors {
   static const strokeColourStrokeWarm = Color(0x290F172A);
   static const strokeColourStrokeStrong = Color(0x330F172A);
   static const strokeColourStrokePrimary = AppPalette.blue500;
+
+  /// Card edge on the page: blue 900 at 10%, with [AppShadows.floating].
+  static const strokeColourStrokeCard = Color(0x1A0A2F66);
 
   // On-color / neutral
   static const primaryOncolorBlack = Colors.black;
