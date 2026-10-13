@@ -9,18 +9,23 @@ enum JoinPhase {
   confirmStaff,
   codeForAnotherApp,
   confirmOwner,
+  addRole,
+  roleAlreadyCovered,
 }
 
 class JoinViewModel extends BaseViewModel {
   JoinViewModel({
     this.phase = JoinPhase.enterCode,
-    this.email = 'amina.bello@gmail.com',
+    this.email = '',
     String? initialName,
-    this.schoolName = 'Kings College',
-    this.location = 'Lekki, Lagos',
-    this.role = 'Principal',
-    this.schoolCode = 'HMR-7K2Q9P',
-    this.targetApp = 'Teacher',
+    this.schoolName = '',
+    this.location = '',
+    this.role = '',
+    this.schoolCode = '',
+    this.targetApp = '',
+    this.currentRole = 'Owner',
+    this.newRole = 'Principal',
+    this.coveredRole = 'Admin',
     String? initialCode,
     this.onContinue,
     this.onUseAnotherAccount,
@@ -30,12 +35,10 @@ class JoinViewModel extends BaseViewModel {
   }) : code = TextEditingController(
          text:
              initialCode ??
-             (phase == JoinPhase.wrongCode || phase == JoinPhase.tooManyTries
-                 ? 'KQ7M-2X9B'
-                 : 'KQ7M-2X'),
+             '',
        ),
-       fullName = TextEditingController(text: initialName ?? 'Amina Bello'),
-       phoneNumber = TextEditingController(text: '803 000 0000') {
+       fullName = TextEditingController(text: initialName ?? ''),
+       phoneNumber = TextEditingController() {
     code.addListener(notifyListeners);
   }
 
@@ -46,6 +49,9 @@ class JoinViewModel extends BaseViewModel {
   final String role;
   final String schoolCode;
   final String targetApp;
+  final String currentRole;
+  final String newRole;
+  final String coveredRole;
   final TextEditingController code;
   final TextEditingController fullName;
   final TextEditingController phoneNumber;
@@ -54,6 +60,13 @@ class JoinViewModel extends BaseViewModel {
   final VoidCallback? onJoin;
   final VoidCallback? onDifferentCode;
   final VoidCallback? onSignOut;
+
+  bool get showBackButton => switch (phase) {
+    JoinPhase.confirmStaff ||
+    JoinPhase.confirmOwner ||
+    JoinPhase.codeForAnotherApp => true,
+    _ => false,
+  };
 
   String? get codeError => phase == JoinPhase.wrongCode
       ? "We couldn't find that code. Check it with whoever sent it to you."
@@ -101,6 +114,8 @@ class JoinViewModel extends BaseViewModel {
   }
 
   void joinSchool() => onJoin?.call();
+
+  void skipAdditionalRole() => onJoin?.call();
 
   void useAnotherAccount() => onUseAnotherAccount?.call();
 

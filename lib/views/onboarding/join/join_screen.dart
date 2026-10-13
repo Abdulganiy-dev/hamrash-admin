@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
-import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_text_field.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
@@ -16,13 +14,16 @@ class JoinScreen extends StatelessWidget {
   const JoinScreen({
     super.key,
     this.initialPhase = JoinPhase.enterCode,
-    this.email = 'amina.bello@gmail.com',
+    this.email = '',
     this.initialName,
-    this.schoolName = 'Kings College',
-    this.location = 'Lekki, Lagos',
-    this.role = 'Principal',
-    this.schoolCode = 'HMR-7K2Q9P',
-    this.targetApp = 'Teacher',
+    this.schoolName = '',
+    this.location = '',
+    this.role = '',
+    this.schoolCode = '',
+    this.targetApp = '',
+    this.currentRole = 'Owner',
+    this.newRole = 'Principal',
+    this.coveredRole = 'Admin',
     this.initialCode,
     this.onContinue,
     this.onUseAnotherAccount,
@@ -40,6 +41,9 @@ class JoinScreen extends StatelessWidget {
   final String role;
   final String schoolCode;
   final String targetApp;
+  final String currentRole;
+  final String newRole;
+  final String coveredRole;
   final String? initialCode;
   final Future<JoinPhase?> Function(String code)? onContinue;
   final VoidCallback? onUseAnotherAccount;
@@ -60,6 +64,9 @@ class JoinScreen extends StatelessWidget {
           role: role,
           schoolCode: schoolCode,
           targetApp: targetApp,
+          currentRole: currentRole,
+          newRole: newRole,
+          coveredRole: coveredRole,
           initialCode: initialCode,
           onContinue: onContinue,
           onUseAnotherAccount: onUseAnotherAccount,
@@ -80,6 +87,9 @@ class _JoinContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AuthScreenFrame(
+    reserveHeaderSpace: true,
+    contentTopPadding: AppSpacing.lg,
+    showBackButton: model.showBackButton,
     onBack: () => model.handleBack(context, onBack),
     scrollContent: switch (model.phase) {
       JoinPhase.enterCode ||
@@ -88,6 +98,8 @@ class _JoinContent extends StatelessWidget {
       JoinPhase.confirmStaff => _buildStaffConfirmation(),
       JoinPhase.codeForAnotherApp => _buildWrongApp(),
       JoinPhase.confirmOwner => _buildOwnerConfirmation(),
+      JoinPhase.addRole => _buildAddRole(),
+      JoinPhase.roleAlreadyCovered => _buildRoleAlreadyCovered(),
     },
     footer: switch (model.phase) {
       JoinPhase.enterCode ||
@@ -96,24 +108,23 @@ class _JoinContent extends StatelessWidget {
       JoinPhase.confirmStaff => _buildStaffFooter(),
       JoinPhase.codeForAnotherApp => _buildWrongAppFooter(),
       JoinPhase.confirmOwner => _buildOwnerFooter(),
+      JoinPhase.addRole => _buildAddRoleFooter(),
+      JoinPhase.roleAlreadyCovered => _buildRoleAlreadyCoveredFooter(),
     },
   );
 
   Widget _buildCodeEntry() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const SizedBox(height: AppSpacing.lg),
       const AppText(
         'Join your school',
         variant: AppTextVariant.h1,
-        textAlign: TextAlign.center,
       ),
-      const SizedBox(height: AppSpacing.sm),
+      const SizedBox(height: AppSpacing.ms),
       const AppText(
         'Enter the 8-character code you were given. Owners get theirs from Hamrash; everyone else from their school.',
-        variant: AppTextVariant.body,
+        variant: AppTextVariant.bodyLarge,
         colorType: AppTextColor.textBody,
-        textAlign: TextAlign.center,
       ),
       const SizedBox(height: AppSpacing.xl),
       JoinCodeEntryField(
@@ -156,20 +167,17 @@ class _JoinContent extends StatelessWidget {
   Widget _buildStaffConfirmation() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const SizedBox(height: AppSpacing.lg),
       const AppText(
         'Is this your school?',
         variant: AppTextVariant.h1,
-        textAlign: TextAlign.center,
       ),
-      const SizedBox(height: AppSpacing.sm),
+      const SizedBox(height: AppSpacing.ms),
       const AppText(
         'Check the details before you join. Your code is only used once you tap Join.',
-        variant: AppTextVariant.body,
+        variant: AppTextVariant.bodyLarge,
         colorType: AppTextColor.textBody,
-        textAlign: TextAlign.center,
       ),
-      const SizedBox(height: AppSpacing.xl),
+      const SizedBox(height: 28),
       SchoolConfirmationCard(
         name: model.schoolName,
         location: model.location,
@@ -201,37 +209,21 @@ class _JoinContent extends StatelessWidget {
   Widget _buildWrongApp() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const SizedBox(height: AppSpacing.lg),
       AppText(
         'This code is for the ${model.targetApp} app',
         variant: AppTextVariant.h1,
-        textAlign: TextAlign.center,
       ),
-      const SizedBox(height: AppSpacing.sm),
+      const SizedBox(height: AppSpacing.ms),
       AppText(
         "Hamrash Admin is for owners, admins, principals, vice principals and bursars. We haven't used your code, so it still works in the ${model.targetApp} app.",
-        variant: AppTextVariant.body,
+        variant: AppTextVariant.bodyLarge,
         colorType: AppTextColor.textBody,
-        textAlign: TextAlign.center,
       ),
-      const SizedBox(height: AppSpacing.xl),
-      AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SchoolIdentity(name: model.schoolName, location: model.location),
-            const SizedBox(height: AppSpacing.lg),
-            const Divider(height: 1, color: LightColors.strokeColourStrokeMild),
-            const SizedBox(height: AppSpacing.md),
-            const AppText(
-              'Code is for',
-              variant: AppTextVariant.caption,
-              colorType: AppTextColor.textMuted,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            AppBadge(model.targetApp, tone: AppBadgeTone.info),
-          ],
-        ),
+      const SizedBox(height: 28),
+      SchoolConfirmationCard(
+        name: model.schoolName,
+        location: model.location,
+        codeRole: model.targetApp,
       ),
     ],
   );
@@ -266,20 +258,17 @@ class _JoinContent extends StatelessWidget {
   Widget _buildOwnerConfirmation() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const SizedBox(height: AppSpacing.lg),
       const AppText(
         'Welcome, owner',
         variant: AppTextVariant.h1,
-        textAlign: TextAlign.center,
       ),
-      const SizedBox(height: AppSpacing.sm),
+      const SizedBox(height: AppSpacing.ms),
       const AppText(
         "Hamrash set up your school. Check it's right and tell us your name for the staff list.",
-        variant: AppTextVariant.body,
+        variant: AppTextVariant.bodyLarge,
         colorType: AppTextColor.textBody,
-        textAlign: TextAlign.center,
       ),
-      const SizedBox(height: AppSpacing.xl),
+      const SizedBox(height: 28),
       SchoolConfirmationCard(
         name: model.schoolName,
         location: model.location,
@@ -305,6 +294,86 @@ class _JoinContent extends StatelessWidget {
     ],
   );
 
+  Widget _buildAddRole() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const AppText('Add a new role', variant: AppTextVariant.h1),
+      const SizedBox(height: AppSpacing.ms),
+      AppText(
+        "You're already the ${model.currentRole.toLowerCase()} here. This code makes you the ${model.newRole.toLowerCase()} too, and you keep everything you can do now.",
+        variant: AppTextVariant.bodyLarge,
+        colorType: AppTextColor.textBody,
+      ),
+      const SizedBox(height: AppSpacing.xl),
+      SchoolConfirmationCard(
+        name: model.schoolName,
+        location: model.location,
+        role: model.currentRole,
+        roleLabel: 'Your role now',
+        additionalRole: model.newRole,
+      ),
+    ],
+  );
+
+  Widget _buildRoleAlreadyCovered() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const AppText(
+        'You already have admin access',
+        variant: AppTextVariant.h1,
+      ),
+      const SizedBox(height: AppSpacing.ms),
+      AppText(
+        "You're the ${model.currentRole.toLowerCase()} of ${model.schoolName}, and owners can do everything an admin can. We haven't used this code, so whoever sent it can cancel it.",
+        variant: AppTextVariant.bodyLarge,
+        colorType: AppTextColor.textBody,
+      ),
+      const SizedBox(height: 28),
+      SchoolConfirmationCard(
+        name: model.schoolName,
+        location: model.location,
+        role: model.currentRole,
+        roleLabel: 'Your role',
+        codeRole: model.coveredRole,
+      ),
+    ],
+  );
+
+  Widget _buildAddRoleFooter() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      AppPrimaryButton(
+        size: AppButtonSize.large,
+        onPressed: model.joinSchool,
+        child: AppText(
+          'Add ${model.newRole.toLowerCase()} role',
+          variant: AppTextVariant.button,
+        ),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      AuthTextLink(label: 'Not now', onTap: model.skipAdditionalRole),
+    ],
+  );
+
+  Widget _buildRoleAlreadyCoveredFooter() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      AppPrimaryButton(
+        size: AppButtonSize.large,
+        onPressed: model.joinSchool,
+        child: AppText(
+          'Open ${model.schoolName}',
+          variant: AppTextVariant.button,
+        ),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      AuthTextLink(
+        label: 'Use a different code',
+        onTap: model.useDifferentCode,
+      ),
+    ],
+  );
+
   Widget _buildOwnerFooter() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
@@ -320,4 +389,5 @@ class _JoinContent extends StatelessWidget {
       ),
     ],
   );
+
 }

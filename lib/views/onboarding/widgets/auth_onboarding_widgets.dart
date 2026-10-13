@@ -6,7 +6,9 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_field_style.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class AuthScreenFrame extends StatelessWidget {
   const AuthScreenFrame({
@@ -14,85 +16,161 @@ class AuthScreenFrame extends StatelessWidget {
     required this.scrollContent,
     required this.footer,
     this.showBackButton = true,
+    this.reserveHeaderSpace = false,
+    this.contentTopPadding = AppSpacing.lg,
     this.onBack,
   });
 
   final Widget scrollContent;
   final Widget footer;
   final bool showBackButton;
+  final bool reserveHeaderSpace;
+  final double contentTopPadding;
   final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppPalette.linen,
     body: SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.screen,
-          AppSpacing.md,
-          AppSpacing.screen,
-          AppSpacing.sm,
-        ),
-        child: Column(
-          children: [
-            if (showBackButton) ...[
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppPalette.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: LightColors.strokeColourStrokeMild,
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x1F2A1712),
-                        offset: Offset(0, 4),
-                        blurRadius: 12,
-                        spreadRadius: -4,
+      child:
+          reserveHeaderSpace
+              ? _buildPaperLayout(context)
+              : Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screen,
+                  AppSpacing.md,
+                  AppSpacing.screen,
+                  AppSpacing.sm,
+                ),
+                child: Column(
+                  children: [
+                    if (showBackButton) ...[
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppPalette.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: LightColors.strokeColourStrokeMild,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x1F2A1712),
+                                offset: Offset(0, 4),
+                                blurRadius: 12,
+                                spreadRadius: -4,
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            tooltip: 'Back',
+                            onPressed:
+                                onBack ??
+                                () {
+                                  if (Navigator.of(context).canPop()) {
+                                    Navigator.of(context).pop();
+                                  }
+                                },
+                            icon: const Icon(
+                              LucideIcons.arrowLeft,
+                              size: 20,
+                            ),
+                            color: AppPalette.stone900,
+                            padding: EdgeInsets.zero,
+                          ),
+                        ),
                       ),
+                      const SizedBox(height: AppSpacing.md),
                     ],
-                  ),
-                  child: IconButton(
-                    tooltip: 'Back',
-                    onPressed:
-                        onBack ??
-                        () {
-                          if (Navigator.of(context).canPop()) {
-                            Navigator.of(context).pop();
-                          }
-                        },
-                    icon: const Icon(Icons.arrow_back_rounded, size: 20),
-                    color: AppPalette.stone900,
-                    padding: EdgeInsets.zero,
-                  ),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder:
+                            (context, constraints) => SingleChildScrollView(
+                              keyboardDismissBehavior:
+                                  ScrollViewKeyboardDismissBehavior.onDrag,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: constraints.maxHeight,
+                                ),
+                                child: scrollContent,
+                              ),
+                            ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    footer,
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
-            ],
-            Expanded(
-              child: LayoutBuilder(
-                builder:
-                    (context, constraints) => SingleChildScrollView(
-                      keyboardDismissBehavior:
-                          ScrollViewKeyboardDismissBehavior.onDrag,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight,
-                        ),
-                        child: scrollContent,
-                      ),
-                    ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            footer,
-          ],
+    ),
+  );
+
+  Widget _buildPaperLayout(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
+    child: Column(
+      children: [
+        SizedBox(
+          height: 60,
+          child:
+              showBackButton
+                  ? Align(
+                    alignment: Alignment.centerLeft,
+                    child: _backButton(context),
+                  )
+                  : null,
         ),
-      ),
+        Expanded(
+          child: LayoutBuilder(
+            builder:
+                (context, constraints) => SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Padding(
+                    padding: EdgeInsets.only(top: contentTopPadding),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: (constraints.maxHeight - contentTopPadding)
+                            .clamp(0, double.infinity),
+                      ),
+                      child: scrollContent,
+                    ),
+                  ),
+                ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: footer,
+        ),
+      ],
+    ),
+  );
+
+  Widget _backButton(BuildContext context) => Container(
+    width: 44,
+    height: 44,
+    decoration: BoxDecoration(
+      color: AppPalette.white,
+      shape: BoxShape.circle,
+      border: Border.all(color: LightColors.strokeColourStrokeMild),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x1F2A1712),
+          offset: Offset(0, 4),
+          blurRadius: 12,
+          spreadRadius: -4,
+        ),
+      ],
+    ),
+    child: IconButton(
+      tooltip: 'Back',
+      onPressed: onBack ?? () => Navigator.of(context).maybePop(),
+      icon: const Icon(LucideIcons.arrowLeft, size: 20),
+      color: AppPalette.stone900,
+      padding: EdgeInsets.zero,
     ),
   );
 }
@@ -159,6 +237,7 @@ class AuthAccountLine extends StatelessWidget {
         email,
         variant: AppTextVariant.caption,
         colorType: AppTextColor.textMuted,
+                
       ),
       const AppText(
         '  ·  ',
@@ -175,6 +254,7 @@ class AuthAccountLine extends StatelessWidget {
         child: const AppText(
           'Use another account',
           variant: AppTextVariant.caption,
+          fontWeight: FontWeight.bold,
           colorType: AppTextColor.textBrand,
         ),
       ),
@@ -230,83 +310,130 @@ class JoinCodeEntryField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isError = errorMessage != null;
-    final border =
+    final restBorder =
         isError
-            ? LightColors.errorErrorDefault
-            : LightColors.strokeColourStrokeMild;
+            ? AppFieldStyle.errorBorder(context)
+            : AppFieldStyle.restBorder(context);
+    final focusedBorder =
+        isError
+            ? AppFieldStyle.errorBorder(context)
+            : AppFieldStyle.focusBorder(context);
+    final codeStyle = AppTypography.title.copyWith(
+      color:
+          enabled
+              ? AppFieldStyle.text(context, enabled: true)
+              : AppFieldStyle.text(context, enabled: false),
+      fontSize: 24,
+      fontWeight: FontWeight.w800,
+      height: 32 / 24,
+      letterSpacing: 3.84,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AppText('Join code', variant: AppTextVariant.label),
+        const AppText('Join code', variant: AppTextVariant.subtitle),
         const SizedBox(height: AppSpacing.sm),
-        Container(
+        SizedBox(
           height: 64,
-          decoration: BoxDecoration(
-            color: enabled ? AppPalette.white : AppPalette.stone100,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: border, width: isError ? 1.5 : 1),
-          ),
-          padding: const EdgeInsets.only(
-            left: AppSpacing.md,
-            right: AppSpacing.sm,
-          ),
-          child: Row(
-            children: [
-              if (!enabled) ...[
-                const Icon(
-                  Icons.lock_outline,
-                  size: 20,
-                  color: AppPalette.stone500,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-              ],
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  enabled: enabled,
-                  maxLength: 9,
-                  keyboardType: TextInputType.visiblePassword,
-                  textCapitalization: TextCapitalization.characters,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  inputFormatters: [JoinCodeInputFormatter()],
-                  style: AppTypography.title.copyWith(
-                    color: enabled ? AppPalette.stone900 : AppPalette.stone500,
-                    letterSpacing: 1.5,
-                  ),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    counterText: '',
-                    contentPadding: EdgeInsets.zero,
-                    hintText: 'KQ7M-2X9B',
-                  ),
-                ),
+          child: TextField(
+            controller: controller,
+            enabled: enabled,
+            maxLength: 9,
+            keyboardType: TextInputType.visiblePassword,
+            textCapitalization: TextCapitalization.characters,
+            autocorrect: false,
+            enableSuggestions: false,
+            inputFormatters: [JoinCodeInputFormatter()],
+            style: codeStyle,
+            decoration: InputDecoration(
+              isDense: true,
+              counterText: '',
+              hintText: 'KQ7M-2X9B',
+              hintStyle: codeStyle.copyWith(
+                color: AppFieldStyle.placeholder(context),
               ),
-              if (enabled)
-                TextButton(
-                  onPressed: _paste,
-                  style: TextButton.styleFrom(
-                    minimumSize: const Size(64, 40),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                    ),
-                    foregroundColor: AppPalette.aubergine500,
-                  ),
-                  child: const AppText(
-                    'Paste',
-                    variant: AppTextVariant.subtitle,
-                    colorType: AppTextColor.textBrand,
-                  ),
-                ),
-            ],
+              prefixIcon:
+                  enabled
+                      ? null
+                      : Icon(
+                        LucideIcons.lock,
+                        size: AppFieldStyle.iconSize,
+                        color: AppFieldStyle.icon(context),
+                      ),
+              prefixIconConstraints: const BoxConstraints(minWidth: 48),
+              suffixIcon:
+                  enabled
+                      ? Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: TextButton(
+                          onPressed: _paste,
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(0, 40),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.ms,
+                            ),
+                            foregroundColor: AppPalette.aubergine500,
+                            backgroundColor: LightColors.primaryPrimaryMute,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(LucideIcons.clipboardPaste, size: 16),
+                              SizedBox(width: 6),
+                              AppText(
+                                'Paste',
+                                variant: AppTextVariant.subtitle,
+                                colorType: AppTextColor.textBrand,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      : null,
+              suffixIconConstraints: const BoxConstraints(
+                minWidth: 0,
+                minHeight: 40,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.md,
+              ),
+              filled: true,
+              fillColor: AppFieldStyle.fill(
+                context,
+                enabled: enabled,
+                active: false,
+              ),
+              border: AppFieldStyle.border(restBorder),
+              enabledBorder: AppFieldStyle.border(restBorder),
+              disabledBorder: AppFieldStyle.border(restBorder),
+              focusedBorder: AppFieldStyle.border(focusedBorder, width: 1.5),
+            ),
           ),
         ),
         if (errorMessage case final message?) ...[
           const SizedBox(height: AppSpacing.sm),
-          AppText(
-            message,
-            variant: AppTextVariant.caption,
-            colorType: AppTextColor.error,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                LucideIcons.circleAlert500,
+                size: 14,
+                color: LightColors.errorErrorDefault,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: AppText(
+                  message,
+                  variant: AppTextVariant.caption,
+                  colorType: AppTextColor.error,
+                ),
+              ),
+            ],
           ),
         ] else if (helperMessage != null) ...[
           const SizedBox(height: AppSpacing.sm),
@@ -365,8 +492,10 @@ class AuthWarningBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.info_outline,
+          Icon(
+            parts.first == 'Too many tries'
+                ? LucideIcons.timer
+                : LucideIcons.info,
             size: 20,
             color: LightColors.warningWarningText,
           ),
@@ -402,53 +531,162 @@ class SchoolConfirmationCard extends StatelessWidget {
     super.key,
     required this.name,
     required this.location,
-    required this.role,
+    this.role,
     this.code,
+    this.roleLabel = "You'll join as",
+    this.additionalRole,
+    this.additionalRoleLabel = 'This code adds',
+    this.additionalRoleTone = AppBadgeTone.success,
+    this.codeRole,
+    this.codeRoleLabel = 'Code is for',
   });
 
   final String name;
   final String location;
-  final String role;
+  final String? role;
   final String? code;
+  final String roleLabel;
+  final String? additionalRole;
+  final String additionalRoleLabel;
+  final AppBadgeTone additionalRoleTone;
+  final String? codeRole;
+  final String codeRoleLabel;
 
   @override
   Widget build(BuildContext context) => AppCard(
+    padding: EdgeInsets.zero,
     child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SchoolIdentity(name: name, location: location),
-        const SizedBox(height: AppSpacing.lg),
-        const Divider(height: 1, color: LightColors.strokeColourStrokeMild),
-        const SizedBox(height: AppSpacing.md),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const AppText(
-              "You'll join as",
-              variant: AppTextVariant.caption,
-              colorType: AppTextColor.textMuted,
-            ),
-            AppBadge(role, tone: AppBadgeTone.info),
-          ],
+        Padding(
+          padding: const EdgeInsets.all(AppSpacing.ml),
+          child: SchoolIdentity(name: name, location: location),
         ),
-        if (code != null) ...[
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        const Divider(height: 1, thickness: 1, color: AppPalette.stone200),
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.ml,
+            vertical: AppSpacing.xs,
+          ),
+          child: Column(
             children: [
-              const AppText(
-                'School code',
-                variant: AppTextVariant.caption,
-                colorType: AppTextColor.textMuted,
-              ),
-              AppText(
-                code!,
-                variant: AppTextVariant.label,
-                colorType: AppTextColor.textStrong,
-              ),
+              if (role != null)
+                _ConfirmationRow(label: roleLabel, value: role!),
+              if (role != null &&
+                  (code != null || additionalRole != null || codeRole != null))
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: AppPalette.stone100,
+                ),
+              if (additionalRole != null)
+                _ConfirmationRow(
+                  label: additionalRoleLabel,
+                  value: additionalRole!,
+                  tone: additionalRoleTone,
+                  showPlus: true,
+                ),
+              if (codeRole != null)
+                _ConfirmationRow(
+                  label: codeRoleLabel,
+                  value: codeRole!,
+                  tone:
+                      codeRole == 'Teacher'
+                          ? AppBadgeTone.info
+                          : AppBadgeTone.neutral,
+                ),
+              if (code != null)
+                _ConfirmationRow(
+                  label: 'School code',
+                  value: code!,
+                  isPlainValue: true,
+                ),
             ],
           ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ConfirmationRow extends StatelessWidget {
+  const _ConfirmationRow({
+    required this.label,
+    required this.value,
+    this.tone = AppBadgeTone.info,
+    this.showPlus = false,
+    this.isPlainValue = false,
+  });
+
+  final String label;
+  final String value;
+  final AppBadgeTone tone;
+  final bool showPlus;
+  final bool isPlainValue;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 52,
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: AppText(
+            label,
+            variant: AppTextVariant.body,
+            colorType: AppTextColor.textMuted,
+          ),
+        ),
+        if (isPlainValue)
+          AppText(
+            value,
+            variant: AppTextVariant.subtitle,
+            colorType: AppTextColor.textStrong,
+            letterSpacing: 0.56,
+          )
+        else
+          _RolePill(label: value, tone: tone, showPlus: showPlus),
+      ],
+    ),
+  );
+}
+
+class _RolePill extends StatelessWidget {
+  const _RolePill({
+    required this.label,
+    required this.tone,
+    this.showPlus = false,
+  });
+
+  final String label;
+  final AppBadgeTone tone;
+  final bool showPlus;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 28,
+    padding: EdgeInsets.only(left: showPlus ? 9 : 12, right: 12),
+    decoration: BoxDecoration(
+      color: tone.mute,
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: tone.thin),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (showPlus) ...[
+          Icon(LucideIcons.plus, size: 14, color: tone.strong),
+          const SizedBox(width: AppSpacing.xs),
         ],
+        AppText(
+          label,
+          style: AppTypography.body.copyWith(
+            fontSize: 13,
+            height: 16 / 13,
+            fontWeight: FontWeight.w700,
+            color: tone.strong,
+          ),
+        ),
       ],
     ),
   );
@@ -468,10 +706,10 @@ class SchoolIdentity extends StatelessWidget {
         height: 56,
         decoration: BoxDecoration(
           color: AppPalette.aubergine500,
-          shape: BoxShape.circle,
+          borderRadius: BorderRadius.circular(16),
         ),
         child: const Icon(
-          Icons.school_outlined,
+          LucideIcons.school,
           color: AppPalette.white,
           size: 26,
         ),
@@ -481,11 +719,19 @@ class SchoolIdentity extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AppText(name, variant: AppTextVariant.title),
+            AppText(
+              name,
+              style: AppTypography.h3.copyWith(
+                fontSize: 22,
+                height: 28 / 22,
+                letterSpacing: -0.22,
+                color: AppPalette.stone900,
+              ),
+            ),
             const SizedBox(height: AppSpacing.xxs),
             AppText(
               location,
-              variant: AppTextVariant.caption,
+              variant: AppTextVariant.body,
               colorType: AppTextColor.textMuted,
             ),
           ],
