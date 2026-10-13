@@ -7,7 +7,9 @@ import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_field_style.dart';
+import 'package:hamrash_admin/core/widgets/app_keyboard_bar.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
+import 'package:hamrash_admin/core/widgets/blur_transition.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -25,47 +27,55 @@ class AuthScreenFrame extends StatelessWidget {
   final bool showBackButton;
   final VoidCallback? onBack;
 
+  static const _footerKey = ValueKey('footer');
+
   @override
   Widget build(BuildContext context) {
-    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
-
     return DefaultScaffold(
       backgroundColor: AppPalette.linen,
       showBackButton: showBackButton,
       onBackPressed: onBack,
-      bottomNavigationBar: keyboardOpen
-          ? Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.viewInsetsOf(context).bottom,
-              ),
-              child: SizedBox(
-                height: 48,
+  
+      bottomNavigationBar: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) => BlurTransition(
+          animation: animation,
+          maxBlur: 4,
+          child: child.key == _footerKey
+              ? SlideTransition(
+                  position: Tween(
+                    begin: const Offset(0, 0.12),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                )
+              : child,
+        ),
+        layoutBuilder: (currentChild, previousChildren) => Stack(
+          alignment: Alignment.bottomCenter,
+          children: [...previousChildren, ?currentChild],
+        ),
+        child: AppKeyboardBar.isKeyboardOpen(context)
+            ? const AppKeyboardBar(key: ValueKey('keyboard-bar'))
+            : SafeArea(
+                key: _footerKey,
+                top: false,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.screen,
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.screen,
+                    0,
+                    AppSpacing.screen,
+                    AppSpacing.md,
                   ),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () => FocusManager.instance.primaryFocus?.unfocus(),
-                      child: const Text('Done'),
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [footer],
                   ),
                 ),
               ),
-            )
-          : SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.screen,
-                  0,
-                  AppSpacing.screen,
-                  AppSpacing.md,
-                ),
-                child: Column(mainAxisSize: MainAxisSize.min, children: [footer]),
-              ),
-            ),
+      ),
       body: Builder(
         builder: (context) {
           final topInset = ScaffoldInsets.bodyTopInsetOf(context);
