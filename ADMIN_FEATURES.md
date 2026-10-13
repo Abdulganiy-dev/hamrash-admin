@@ -199,9 +199,9 @@ Key: **Full** = add, edit, delete · **Edit** = add and edit, no delete · **Vie
 ¹ Can also link and unlink subjects to arms and enrol or remove students from subjects; only deleting a subject is owner/admin.
 ² Can also move students between classes and link parents; only deleting a student or parent is owner/admin.
 ³ Bursars see parent private details (for fees) but not student private details.
-⁴ Can also unassign class teachers; deleting sessions, terms, sections, classes or arms is owner/admin.
+⁴ Can also delete sessions and terms (migration 18) and unassign class teachers; deleting sections, classes or arms is owner/admin.
 
-Rows in plain text are enforced by RLS today (migrations 03–08 and 17; tests in `supabase/tests`). Rows in italics are proposals to confirm when those modules get their tables.
+Rows in plain text are enforced by RLS today (migrations 03–08, 17 and 18; tests in `supabase/tests`). Rows in italics are proposals to confirm when those modules get their tables.
 
 **Setup checklist on Home:** owner, admin, principal and VP all get it; bursar sees how far it has got. Step 1 (school details) is the owner's alone.
 
