@@ -184,7 +184,7 @@ class _AppResultSheetState extends State<AppResultSheet> {
             AppText(
               widget.title!,
               textAlign: TextAlign.center,
-              style: AppTypography.serif(
+              style: AppTypography.heading(
                 22,
                 lineHeight: 28,
               ).copyWith(letterSpacing: -0.22, color: LightColors.textStrong),

@@ -104,7 +104,7 @@ class _Header extends StatelessWidget {
                 model.school.name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.serif(
+                style: AppTypography.heading(
                   16,
                   lineHeight: 22,
                 ).copyWith(letterSpacing: -0.16, color: AppPalette.stone900),
@@ -227,7 +227,7 @@ class _SetupCard extends StatelessWidget {
                       : manage
                       ? 'Get ${model.school.name} ready'
                       : 'Your school is being set up',
-                  style: AppTypography.serif(
+                  style: AppTypography.heading(
                     24,
                     lineHeight: 30,
                   ).copyWith(letterSpacing: -0.24, color: AppPalette.stone900),

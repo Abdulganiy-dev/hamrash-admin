@@ -149,23 +149,19 @@ class _Wheel extends StatefulWidget {
   static const double extent = 44;
   static const double width = 64;
 
-  // Wheel digits stay in Nunito (sizes borrowed from H2–H4); Fraunces is
-  // for titles and big numbers.
-  static TextStyle _nunito(TextStyle heading) => heading.copyWith(
-    fontFamily: AppTypography.fontFamily,
-    fontVariations: const [],
-  );
-
   static TextStyle style(int distance) => switch (distance) {
-    0 => _nunito(
-      AppTypography.h2,
-    ).copyWith(fontWeight: FontWeight.w800, color: LightColors.textStrong),
-    1 => _nunito(
-      AppTypography.h3,
-    ).copyWith(fontWeight: FontWeight.w600, color: AppPalette.stone400),
-    _ => _nunito(
-      AppTypography.h4,
-    ).copyWith(fontWeight: FontWeight.w600, color: AppPalette.stone300),
+    0 => AppTypography.h2.copyWith(
+      fontWeight: FontWeight.w800,
+      color: LightColors.textStrong,
+    ),
+    1 => AppTypography.h3.copyWith(
+      fontWeight: FontWeight.w600,
+      color: AppPalette.stone400,
+    ),
+    _ => AppTypography.h4.copyWith(
+      fontWeight: FontWeight.w600,
+      color: AppPalette.stone300,
+    ),
   };
 
   final int count;
