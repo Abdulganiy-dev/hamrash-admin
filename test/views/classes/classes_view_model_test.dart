@@ -4,6 +4,7 @@ import 'package:hamrash_admin/api/models/organization_models/member_school.dart'
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/services/supabase_services/class_structure_service.dart';
+import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/views/classes/classes_view_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -199,9 +200,7 @@ void main() {
 
   test('shows the database reason when the standard structure fails', () async {
     final (model, service) = await _loaded(sections: []);
-    service.failWith = const ClassStructureException(
-      ClassStructureService.leadersOnly,
-    );
+    service.failWith = const SupabaseRefusal(ClassStructureService.leadersOnly);
 
     expect(await model.useStandardStructure(), isFalse);
     expect(model.startError, ClassStructureService.leadersOnly);
@@ -211,9 +210,7 @@ void main() {
     final (model, service) = await _loaded();
     final nursery1 = model.sections[0].classes[0];
 
-    service.failWith = const ClassStructureException(
-      'Nursery 1B has students in it.',
-    );
+    service.failWith = const SupabaseRefusal('Nursery 1B has students in it.');
     expect(
       await model.saveClass(
         nursery1,
@@ -239,9 +236,7 @@ void main() {
 
   test('a refused removal keeps the confirmation open', () async {
     final (model, service) = await _loaded();
-    service.failWith = const ClassStructureException(
-      ClassStructureService.leadersOnly,
-    );
+    service.failWith = const SupabaseRefusal(ClassStructureService.leadersOnly);
 
     await expectLater(
       model.deleteClass(model.sections[0].classes[0]),

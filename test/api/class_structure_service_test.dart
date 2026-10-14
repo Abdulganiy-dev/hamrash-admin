@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/api/models/class_structure/class_structure.dart';
 import 'package:hamrash_admin/api/services/supabase_services/class_structure_service.dart';
+import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -142,7 +143,7 @@ void main() {
           ),
         ),
         throwsA(
-          isA<ClassStructureException>().having(
+          isA<SupabaseRefusal>().having(
             (error) => error.message,
             'message',
             ClassStructureService.leadersOnly,
@@ -168,7 +169,7 @@ void main() {
           arms: ['A'],
         ),
         throwsA(
-          isA<ClassStructureException>().having(
+          isA<SupabaseRefusal>().having(
             (error) => error.message,
             'message',
             contains('Primary 1B has students in it'),
@@ -189,7 +190,7 @@ void main() {
           arms: const [],
         ),
         throwsA(
-          isA<ClassStructureException>().having(
+          isA<SupabaseRefusal>().having(
             (error) => error.message,
             'message',
             "There's already a class called Primary 1.",
@@ -208,7 +209,7 @@ void main() {
 
       await expectLater(
         service.deleteClass(_primary1),
-        throwsA(isA<ClassStructureException>()),
+        throwsA(isA<SupabaseRefusal>()),
       );
       expect(requests, hasLength(1));
     });

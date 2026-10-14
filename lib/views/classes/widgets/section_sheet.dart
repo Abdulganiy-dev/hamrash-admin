@@ -118,7 +118,7 @@ class _SectionSheetState extends State<SectionSheet> {
             child: Text(saved == null ? 'Add section' : 'Save section'),
           ),
           if (saved != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             AppSheetLinkAction(
               icon: saved.isActive ? LucideIcons.eyeOff : LucideIcons.eye,
               label: saved.isActive

@@ -1,6 +1,7 @@
 import 'package:hamrash_admin/api/models/class_structure/class_structure.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/services/supabase_services/class_structure_service.dart';
+import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
@@ -294,5 +295,5 @@ class ClassesViewModel extends BaseViewModel {
       sections.firstWhere((section) => section.id == schoolClass.sectionId);
 
   static String messageFor(Object error, String fallback) =>
-      error is ClassStructureException ? error.message : fallback;
+      error is SupabaseRefusal ? error.message : fallback;
 }

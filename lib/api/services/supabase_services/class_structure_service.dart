@@ -1,25 +1,13 @@
-import 'dart:convert';
-
 import 'package:hamrash_admin/api/models/class_structure/class_structure.dart';
-import 'package:hamrash_admin/core/app_logger.dart';
+import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-/// A change the database refused, with a reason the person can act on.
-class ClassStructureException implements Exception {
-  const ClassStructureException(this.message);
-
-  final String message;
-
-  @override
-  String toString() => 'ClassStructureException: $message';
-}
 
 /// Sections, classes and arms. School leaders (owner, admins, principal,
 /// vice principals) change them; everyone else can only read. The database
 /// keeps anything in use: a section with classes, and an arm with students
 /// placed in it.
 ///
-/// Refusals come back as [ClassStructureException] with a readable message.
+/// Refusals come back as [SupabaseRefusal] with a readable message.
 /// Row-level security doesn't raise on a blocked update or delete, it just
 /// touches no rows, so those calls read back what they changed and treat
 /// nothing as a refusal.
@@ -198,7 +186,7 @@ class ClassStructureService {
             .eq('class_id', schoolClass.id)
             .select('id');
         if (removed.length < schoolClass.arms.length) {
-          throw const ClassStructureException(leadersOnly);
+          throw const SupabaseRefusal(leadersOnly);
         }
       }
       await _delete('classes', schoolClass.id);
@@ -251,7 +239,7 @@ class ClassStructureService {
         .update(values)
         .eq('id', id)
         .select('id');
-    if (changed.isEmpty) throw const ClassStructureException(leadersOnly);
+    refuseIfNothingChanged(changed, leadersOnly);
   }
 
   Future<void> _delete(String table, String id) async {
@@ -260,42 +248,22 @@ class ClassStructureService {
         .delete()
         .eq('id', id)
         .select('id');
-    if (removed.isEmpty) throw const ClassStructureException(leadersOnly);
+    refuseIfNothingChanged(removed, leadersOnly);
   }
 
-  /// Logs the call and turns the database's refusals into
-  /// [ClassStructureException]s. [duplicate] is for a name that's taken,
-  /// [inUse] for a row something else still points at.
   Future<T> _run<T>(
     String name,
     Future<T> Function() body, {
     required Map<String, Object?> Function(T result) log,
     String? duplicate,
     String? inUse,
-  }) async {
-    try {
-      final result = await body();
-      AppLogger.info('Supabase $name result: ${jsonEncode(log(result))}');
-      return result;
-    } on ClassStructureException {
-      rethrow;
-    } catch (error, stackTrace) {
-      AppLogger.error(
-        'Supabase $name failed',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      if (error is! PostgrestException) rethrow;
-      final message = switch (error.code) {
-        '23505' => duplicate,
-        '23503' => inUse,
-        '42501' => leadersOnly,
-        '23514' => 'Every name needs at least one letter or number.',
-        'P0001' => error.message,
-        _ => null,
-      };
-      if (message == null) rethrow;
-      throw ClassStructureException(message);
-    }
-  }
+  }) => runRefusable(
+    name,
+    body,
+    log: log,
+    forbidden: leadersOnly,
+    duplicate: duplicate,
+    inUse: inUse,
+    invalid: 'Every name needs at least one letter or number.',
+  );
 }

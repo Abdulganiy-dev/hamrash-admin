@@ -194,7 +194,7 @@ class _ClassSheetState extends State<ClassSheet> {
             child: Text(saved == null ? 'Add class' : 'Save class'),
           ),
           if (saved != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             AppSheetLinkAction(
               icon: saved.isActive ? LucideIcons.eyeOff : LucideIcons.eye,
               label: saved.isActive
