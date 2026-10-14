@@ -70,7 +70,7 @@ class MoreScreen extends StatelessWidget {
                 onSwitch: onSwitchSchool,
               ),
               const SizedBox(height: AppSpacing.lg),
-              const AppSectionHeader(title: 'Run your school'),
+              AppSectionHeader(title: model.areasTitle),
               const SizedBox(height: AppSpacing.ms),
               if (model.error != null)
                 LoadErrorView(onRetry: model.load)

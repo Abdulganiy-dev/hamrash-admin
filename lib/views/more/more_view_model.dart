@@ -30,6 +30,10 @@ class MoreViewModel extends BaseViewModel {
 
   AreaAccess accessTo(SchoolArea area) => school.accessTo(area);
 
+  /// School leaders run these areas; everyone else can only look at them.
+  String get areasTitle =>
+      school.canRunSetup ? 'Run your school' : 'About your school';
+
   bool get calendarSetUp =>
       _progress?.isDone(SetupStep.academicCalendar) ?? false;
 

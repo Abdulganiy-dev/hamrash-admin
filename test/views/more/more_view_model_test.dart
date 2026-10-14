@@ -90,6 +90,7 @@ void main() {
       await model.load();
 
       expect(model.areas, SchoolArea.values);
+      expect(model.areasTitle, 'Run your school');
       expect(model.calendarSetUp, isTrue);
       expect(
         model.statusFor(SchoolArea.academicCalendar),
@@ -113,6 +114,7 @@ void main() {
       await model.load();
 
       expect(model.areas, isNot(contains(SchoolArea.team)));
+      expect(model.areasTitle, 'About your school');
       expect(service.askedForTeam, isFalse);
       expect(model.blockedReason(SchoolArea.academicCalendar), isNotNull);
       expect(model.statusFor(SchoolArea.academicCalendar), 'Not set up yet');
