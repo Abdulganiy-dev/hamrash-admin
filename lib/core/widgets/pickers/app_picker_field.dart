@@ -155,6 +155,7 @@ class _AppPickerFieldState extends State<AppPickerField> {
                 alignment: Alignment.topCenter,
                 child: AnimatedSwitcher(
                   duration: _changeDuration(context),
+                  layoutBuilder: _startAligned,
                   child: KeyedSubtree(
                     key: ValueKey((
                       error,
@@ -275,6 +276,7 @@ class _Box extends StatelessWidget {
             child: animateChanges
                 ? AnimatedSwitcher(
                     duration: _changeDuration(context),
+                    layoutBuilder: _startAligned,
                     child: KeyedSubtree(
                       key: ValueKey(valueText ?? placeholder ?? ''),
                       child: value,
@@ -289,6 +291,13 @@ class _Box extends StatelessWidget {
     );
   }
 }
+
+/// AnimatedSwitcher centres its children by default; field values and the
+/// lines under them read from the start.
+Widget _startAligned(Widget? current, List<Widget> previous) => Stack(
+  alignment: AlignmentDirectional.centerStart,
+  children: [...previous, ?current],
+);
 
 Duration _changeDuration(BuildContext context) =>
     MediaQuery.disableAnimationsOf(context)
