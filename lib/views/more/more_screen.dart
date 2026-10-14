@@ -12,6 +12,7 @@ import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_button.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/academic_calendar/sessions/academic_sessions_screen.dart';
+import 'package:hamrash_admin/views/classes/classes_screen.dart';
 import 'package:hamrash_admin/views/more/more_view_model.dart';
 import 'package:hamrash_admin/views/more/widgets/more_account_card.dart';
 import 'package:hamrash_admin/views/more/widgets/more_school_card.dart';
@@ -83,7 +84,7 @@ class MoreScreen extends StatelessWidget {
                 ),
               const SizedBox(height: AppSpacing.lg),
               MoreAccountCard(onSignOut: onSignOut),
-              SizedBox(height: AppSpacing.xl,)
+              SizedBox(height: AppSpacing.xl),
             ],
           ),
         ),
@@ -102,14 +103,25 @@ class MoreScreen extends StatelessWidget {
       case SchoolArea.schoolDetails:
         onOpenSchoolDetails();
       case SchoolArea.academicCalendar:
-        final changed = await NavigationService.animatedNavigation<bool>(
-          screen: AcademicSessionsScreen(school: school),
-        );
-        if (changed == true && context.mounted) {
-          await model.refresh().catchError((_) {});
-        }
+        await _openPage(context, model, AcademicSessionsScreen(school: school));
+      case SchoolArea.classes:
+        await _openPage(context, model, ClassesScreen(school: school));
       default:
         AppToast.show('${area.title} is coming soon');
+    }
+  }
+
+  /// Opens an area's page and refreshes the tiles if it saved something.
+  Future<void> _openPage(
+    BuildContext context,
+    MoreViewModel model,
+    Widget screen,
+  ) async {
+    final changed = await NavigationService.animatedNavigation<bool>(
+      screen: screen,
+    );
+    if (changed == true && context.mounted) {
+      await model.refresh().catchError((_) {});
     }
   }
 }

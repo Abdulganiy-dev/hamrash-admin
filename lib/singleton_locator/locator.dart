@@ -4,6 +4,7 @@ import 'package:hamrash_admin/api/api_setup/api_client.dart';
 import 'package:hamrash_admin/api/services/supabase_services/organization_member_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/school_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/academic_calendar_service.dart';
+import 'package:hamrash_admin/api/services/supabase_services/class_structure_service.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/cloudflare_dio_client.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/image_service.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/secret_service.dart';
@@ -48,6 +49,10 @@ void setupLocator() {
 
   locator.registerLazySingleton<AcademicCalendarService>(
     () => AcademicCalendarService(locator<SupabaseClient>()),
+  );
+
+  locator.registerLazySingleton<ClassStructureService>(
+    () => ClassStructureService(locator<SupabaseClient>()),
   );
 
   locator.registerLazySingleton<RealmService>(() => RealmService());

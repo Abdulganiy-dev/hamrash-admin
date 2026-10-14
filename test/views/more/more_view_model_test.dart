@@ -104,22 +104,26 @@ void main() {
       );
     });
 
-    test("bursars only view the calendar and never load the team", () async {
-      final service = _Schools();
-      final model = MoreViewModel(
-        school: _school(OrganizationMemberRole.bursar),
-        service: service,
-      );
-      await model.load();
+    test(
+      "bursars only view the calendar and classes, and never load the team",
+      () async {
+        final service = _Schools();
+        final model = MoreViewModel(
+          school: _school(OrganizationMemberRole.bursar),
+          service: service,
+        );
+        await model.load();
 
-      expect(model.areas, isNot(contains(SchoolArea.team)));
-      expect(model.areasTitle, 'About your school');
-      expect(service.askedForTeam, isFalse);
-      // The calendar has a read-only view; the other areas don't yet.
-      expect(model.blockedReason(SchoolArea.academicCalendar), isNull);
-      expect(model.blockedReason(SchoolArea.classes), isNotNull);
-      expect(model.statusFor(SchoolArea.academicCalendar), 'Not set up yet');
-    });
+        expect(model.areas, isNot(contains(SchoolArea.team)));
+        expect(model.areasTitle, 'About your school');
+        expect(service.askedForTeam, isFalse);
+        // The calendar and classes have read-only views; the others don't yet.
+        expect(model.blockedReason(SchoolArea.academicCalendar), isNull);
+        expect(model.blockedReason(SchoolArea.classes), isNull);
+        expect(model.blockedReason(SchoolArea.subjects), isNotNull);
+        expect(model.statusFor(SchoolArea.academicCalendar), 'Not set up yet');
+      },
+    );
   });
 
   test('TeamCount reads naturally', () {

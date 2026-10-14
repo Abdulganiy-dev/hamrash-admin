@@ -182,7 +182,7 @@ Key: **Full** = add, edit, delete · **Edit** = add and edit, no delete · **Vie
 | Module | owner | admin | principal | vice_principal | bursar |
 |--------|:-:|:-:|:-:|:-:|:-:|
 | School details (name, address, logo, number prefix; confirming them) | Edit | View | View | View | View |
-| Academic setup (sessions, terms, sections, classes, arms, class teachers) | Full | Full | Edit⁴ | Edit⁴ | View |
+| Academic setup (sessions, terms, sections, classes, arms, class teachers) | Full | Full | Full⁴ | Full⁴ | View |
 | Subjects (subjects, which arms take them, student subjects) | Full | Full | Edit¹ | Edit¹ | View |
 | Grading setup (score columns, grade boundaries) | Full | Full | Full | Full | View |
 | Students and parents (records, placements, parent links) | Full | Full | Edit² | Edit² | View³ |
@@ -199,7 +199,7 @@ Key: **Full** = add, edit, delete · **Edit** = add and edit, no delete · **Vie
 ¹ Can also link and unlink subjects to arms and enrol or remove students from subjects; only deleting a subject is owner/admin.
 ² Can also move students between classes and link parents; only deleting a student or parent is owner/admin.
 ³ Bursars see parent private details (for fees) but not student private details.
-⁴ Can also delete sessions and terms (migration 18) and unassign class teachers; deleting sections, classes or arms is owner/admin. A current term must be replaced before removal (migration 20).
+⁴ Delete came with migration 18 (sessions and terms) and migration 21 (sections, classes and arms). For every role, removal still fails while something depends on it: a current term must be replaced first (migration 20), a section with classes stays, and an arm with students placed in it stays (switch it off instead). Removing an arm also removes its class teachers, subjects and teaching assignments.
 
 When adding attendance, score, result or fee tables that reference terms or sessions, use `ON DELETE RESTRICT` or `NO ACTION` for those references. Historical records must prevent calendar deletion rather than disappear through `CASCADE`.
 

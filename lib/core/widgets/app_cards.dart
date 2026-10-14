@@ -144,6 +144,7 @@ class AppSectionHeader extends StatelessWidget {
   const AppSectionHeader({
     super.key,
     required this.title,
+    this.caption,
     this.actionLabel,
     this.onAction,
     this.trailing,
@@ -153,6 +154,9 @@ class AppSectionHeader extends StatelessWidget {
        );
 
   final String title;
+
+  /// Muted note right after the title, e.g. "3 classes".
+  final String? caption;
 
   /// Text link on the right, e.g. "See all".
   final String? actionLabel;
@@ -183,7 +187,28 @@ class AppSectionHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       child: Row(
         children: [
-          Expanded(child: AppText(title, variant: AppTextVariant.title)),
+          Expanded(
+            child: caption == null
+                ? AppText(title, variant: AppTextVariant.title)
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Flexible(
+                        child: AppText(title, variant: AppTextVariant.title),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      AppText(
+                        caption!,
+                        style: AppTypography.caption.copyWith(
+                          fontSize: 13,
+                          height: 18 / 13,
+                          color: AppPalette.stone500,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
           ?end,
         ],
       ),

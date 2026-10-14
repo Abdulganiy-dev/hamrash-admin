@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/utils/app_date_format.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_text_field.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
+import 'package:hamrash_admin/core/widgets/button/app_sheet_link_action.dart';
 import 'package:hamrash_admin/core/widgets/pickers/app_date_fields.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
 import 'package:hamrash_admin/views/academic_calendar/session_draft_model.dart';
@@ -156,7 +156,9 @@ class _EditSessionSheetState extends State<EditSessionSheet> {
           ),
           if (widget.showRemove) ...[
             const SizedBox(height: 16),
-            _SheetRemoveAction(
+            AppSheetLinkAction(
+              icon: LucideIcons.trash2,
+              isDestructive: true,
               label: 'Remove session',
               helper: widget.removeBlockedReason,
               onPressed:
@@ -292,7 +294,9 @@ class _EditTermSheetState extends State<EditTermSheet> {
           ),
           if (!_adding) ...[
             const SizedBox(height: 16),
-            _SheetRemoveAction(
+            AppSheetLinkAction(
+              icon: LucideIcons.trash2,
+              isDestructive: true,
               label: 'Remove term',
               helper: _isCurrent
                   ? 'Make another term current before removing this one.'
@@ -311,107 +315,10 @@ class _EditTermSheetState extends State<EditTermSheet> {
   }
 }
 
-class _SheetRemoveAction extends StatelessWidget {
-  const _SheetRemoveAction({required this.label, this.helper, this.onPressed});
-
-  final String label;
-  final String? helper;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = onPressed == null
-        ? AppPalette.stone400
-        : LightColors.errorErrorText;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        BouncyButton(
-          isDisabled: onPressed == null,
-          onPressed: onPressed,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(LucideIcons.trash2, size: 14, color: color),
-                const SizedBox(width: 6),
-                AppText(
-                  label,
-                  style: AppTypography.button.copyWith(color: color),
-                ),
-              ],
-            ),
-          ),
-        ),
-        _AnimatedValue(
-          value: helper ?? '',
-          child: helper == null
-              ? const SizedBox.shrink()
-              : Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: AppText(
-                    helper!,
-                    textAlign: TextAlign.center,
-                    style: AppTypography.caption.copyWith(
-                      color: AppPalette.stone500,
-                    ),
-                  ),
-                ),
-        ),
-      ],
-    );
-  }
-}
-
 String _paperDateRange(DateTimeRange range) {
   final start = DateFormat(
     range.start.year == range.end.year ? 'EEE d MMM' : 'EEE d MMM y',
   ).format(range.start);
   final end = DateFormat('EEE d MMM y').format(range.end);
   return '$start – $end';
-}
-
-/// Moves changed values in and out while allowing their height to settle.
-class _AnimatedValue extends StatelessWidget {
-  const _AnimatedValue({required this.value, required this.child});
-
-  final String value;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final duration = MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : const Duration(milliseconds: 220);
-    return AnimatedSize(
-      duration: duration,
-      curve: Curves.easeOutCubic,
-      alignment: Alignment.topCenter,
-      child: AnimatedSwitcher(
-        duration: duration,
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeInCubic,
-        layoutBuilder: (currentChild, previousChildren) => Stack(
-          alignment: Alignment.topCenter,
-          children: [
-            for (final previous in previousChildren)
-              IgnorePointer(child: previous),
-            ?currentChild,
-          ],
-        ),
-        transitionBuilder: (child, animation) => FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.08),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          ),
-        ),
-        child: KeyedSubtree(key: ValueKey(value), child: child),
-      ),
-    );
-  }
 }
