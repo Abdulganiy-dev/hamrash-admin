@@ -6,7 +6,6 @@ import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
-import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
@@ -17,6 +16,7 @@ import 'package:hamrash_admin/views/more/more_view_model.dart';
 import 'package:hamrash_admin/views/more/widgets/more_account_card.dart';
 import 'package:hamrash_admin/views/more/widgets/more_school_card.dart';
 import 'package:hamrash_admin/views/more/widgets/school_area_grid.dart';
+import 'package:hamrash_admin/views/more/widgets/school_area_grid_skeleton.dart';
 import 'package:stacked/stacked.dart';
 
 /// 5.1 · More tab: the school card, the areas that run it (shown and opened
@@ -75,10 +75,7 @@ class MoreScreen extends StatelessWidget {
               if (model.error != null)
                 LoadErrorView(onRetry: model.load)
               else if (model.loading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                  child: Center(child: AppSpinner()),
-                )
+                const SchoolAreaGridSkeleton()
               else
                 SchoolAreaGrid(
                   model: model,

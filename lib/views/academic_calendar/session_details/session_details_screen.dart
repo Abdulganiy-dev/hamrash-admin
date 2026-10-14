@@ -5,7 +5,6 @@ import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button.dart';
@@ -18,6 +17,7 @@ import 'package:hamrash_admin/views/academic_calendar/session_details/session_de
 import 'package:hamrash_admin/views/academic_calendar/session_details/widgets/closed_session_note.dart';
 import 'package:hamrash_admin/views/academic_calendar/session_details/widgets/last_session_card.dart';
 import 'package:hamrash_admin/views/academic_calendar/widgets/session_sheets.dart';
+import 'package:hamrash_admin/views/academic_calendar/widgets/session_skeletons.dart';
 import 'package:hamrash_admin/views/academic_calendar/widgets/session_summary_card.dart';
 import 'package:hamrash_admin/views/academic_calendar/widgets/session_terms_section.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -51,7 +51,7 @@ class SessionDetailsScreen extends StatelessWidget {
           body: model.error != null
               ? LoadErrorView(onRetry: model.load)
               : model.loading
-              ? const Center(child: AppSpinner())
+              ? const _Loading()
               : _Body(model: model),
           bottomNavigationBar: model.hasChanges && !model.readOnly
               ? _SaveBar(model: model)
@@ -233,6 +233,25 @@ class _SaveBar extends StatelessWidget {
             isDisabled: model.saving,
             onPressed: model.discardChanges,
           ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// [SessionDetailsSkeleton] where the page's content starts.
+class _Loading extends StatelessWidget {
+  const _Loading();
+
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+    physics: const NeverScrollableScrollPhysics(),
+    child: Builder(
+      builder: (context) => ScaffoldColumn(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
+          const SessionDetailsSkeleton(),
         ],
       ),
     ),

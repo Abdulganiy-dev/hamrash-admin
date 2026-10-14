@@ -7,7 +7,6 @@ import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
-import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -16,6 +15,7 @@ import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_metrics.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/home/home_view_model.dart';
+import 'package:hamrash_admin/views/home/widgets/setup_card_skeleton.dart';
 import 'package:hamrash_admin/views/academic_calendar/create_session/create_session_screen.dart';
 import 'package:hamrash_admin/views/schools/widgets/school_logo.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -69,10 +69,7 @@ class HomeScreen extends StatelessWidget {
               else if (model.progress case final progress?)
                 _SetupCard(model: model, progress: progress)
               else
-                const Padding(
-                  padding: EdgeInsets.only(top: AppSpacing.xxl),
-                  child: Center(child: AppSpinner()),
-                ),
+                const SetupCardSkeleton(),
             ],
           ),
         ),

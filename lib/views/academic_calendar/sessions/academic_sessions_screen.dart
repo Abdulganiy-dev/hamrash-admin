@@ -8,7 +8,6 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
-import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
@@ -19,6 +18,7 @@ import 'package:hamrash_admin/views/academic_calendar/session_details/session_de
 import 'package:hamrash_admin/views/academic_calendar/sessions/academic_sessions_view_model.dart';
 import 'package:hamrash_admin/views/academic_calendar/sessions/widgets/current_session_card.dart';
 import 'package:hamrash_admin/views/academic_calendar/sessions/widgets/session_dates.dart';
+import 'package:hamrash_admin/views/academic_calendar/widgets/session_skeletons.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:stacked/stacked.dart';
 
@@ -58,7 +58,7 @@ class _AcademicSessionsScreenState extends State<AcademicSessionsScreen> {
           body: model.error != null
               ? LoadErrorView(onRetry: model.load)
               : model.loading
-              ? const Center(child: AppSpinner())
+              ? const _Loading(child: SessionsListSkeleton())
               : model.isEmpty
               ? AppEmptyState(
                   icon: LucideIcons.calendar,
@@ -154,4 +154,25 @@ class _List extends StatelessWidget {
     SessionStatus.toClose => AppBadge(status.label, tone: AppBadgeTone.warning),
     SessionStatus.open || SessionStatus.closed => AppBadge(status.label),
   };
+}
+
+/// A skeleton placed where the page's content starts, below the app bar.
+class _Loading extends StatelessWidget {
+  const _Loading({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+    physics: const NeverScrollableScrollPhysics(),
+    child: Builder(
+      builder: (context) => ScaffoldColumn(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
+          child,
+        ],
+      ),
+    ),
+  );
 }
