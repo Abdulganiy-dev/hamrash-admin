@@ -250,9 +250,8 @@ class _ClassesActions {
       isDestructive: true,
       title: 'Remove $name?',
       message: schoolClass.hasArms
-          ? 'The class and its arms will be removed for good, with their '
-                "class teachers and subjects. If students sit in any arm, it "
-                'stays.'
+          ? 'The class and its arms will be removed for good, with the '
+                'subjects they take.'
           : 'The class will be removed for good.',
       confirmLabel: 'Remove class',
       onConfirm: () => model.deleteClass(schoolClass),

@@ -105,7 +105,7 @@ void main() {
     });
 
     test(
-      "bursars only view the calendar and classes, and never load the team",
+      "bursars only view the calendar, classes and subjects, and never load the team",
       () async {
         final service = _Schools();
         final model = MoreViewModel(
@@ -117,10 +117,11 @@ void main() {
         expect(model.areas, isNot(contains(SchoolArea.team)));
         expect(model.areasTitle, 'About your school');
         expect(service.askedForTeam, isFalse);
-        // The calendar and classes have read-only views; the others don't yet.
+        // These have read-only views; grading doesn't yet.
         expect(model.blockedReason(SchoolArea.academicCalendar), isNull);
         expect(model.blockedReason(SchoolArea.classes), isNull);
-        expect(model.blockedReason(SchoolArea.subjects), isNotNull);
+        expect(model.blockedReason(SchoolArea.subjects), isNull);
+        expect(model.blockedReason(SchoolArea.grading), isNotNull);
         expect(model.statusFor(SchoolArea.academicCalendar), 'Not set up yet');
       },
     );

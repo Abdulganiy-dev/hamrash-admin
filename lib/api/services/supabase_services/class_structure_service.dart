@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Sections, classes and arms. School leaders (owner, admins, principal,
 /// vice principals) change them; everyone else can only read. The database
 /// keeps anything in use: a section with classes, and an arm with students
-/// placed in it.
+/// placed in it or a class teacher.
 ///
 /// Refusals come back as [SupabaseRefusal] with a readable message.
 /// Row-level security doesn't raise on a blocked update or delete, it just
@@ -147,8 +147,8 @@ class ClassStructureService {
           () => _delete('class_arms', arm.id),
           log: (_) => {'id': arm.id},
           inUse:
-              '${original.armLabel(arm.name)} has students in it, so it '
-              "can't be removed. Move them to another arm first.",
+              '${original.armLabel(arm.name)} has students or a class '
+              "teacher, so it can't be removed.",
         );
       }
 
@@ -173,9 +173,9 @@ class ClassStructureService {
     log: (_) => {'id': schoolClass.id, 'is_active': isActive},
   );
 
-  /// Removes a class and its arms (their class teachers and subjects go
-  /// with them). The arms go in one statement, so if students sit in any
-  /// of them nothing is removed.
+  /// Removes a class and its arms (their subjects go with them). The arms
+  /// go in one statement, so if any has students or a class teacher,
+  /// nothing is removed.
   Future<void> deleteClass(SchoolClass schoolClass) => _run(
     'deleteClass',
     () async {
@@ -193,8 +193,8 @@ class ClassStructureService {
     },
     log: (_) => {'id': schoolClass.id},
     inUse:
-        "${schoolClass.name} has students in its arms, so it can't be "
-        'removed. Switch it off instead.',
+        '${schoolClass.name} has students or class teachers in its arms, so '
+        "it can't be removed. Switch it off instead.",
   );
 
   /// Gives each of [classes] the same [arms], all in one insert. Returns

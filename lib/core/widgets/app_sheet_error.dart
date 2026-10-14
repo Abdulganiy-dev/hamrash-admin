@@ -5,8 +5,8 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Why a sheet's save didn't work, above its button.
-class SheetError extends StatelessWidget {
-  const SheetError(this.message, {super.key});
+class AppSheetError extends StatelessWidget {
+  const AppSheetError(this.message, {super.key});
 
   final String message;
 

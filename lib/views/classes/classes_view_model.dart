@@ -105,6 +105,19 @@ class ClassesViewModel extends BaseViewModel {
     return null;
   }
 
+  /// Why [schoolClass] can't be removed, or null when it can: an arm has
+  /// students placed in it or a class teacher.
+  String? removeClassBlockedReason(SchoolClass schoolClass) {
+    final arm = schoolClass.busyArm;
+    if (arm == null) return null;
+    final label = schoolClass.armLabel(arm.name);
+    final why = arm.students > 0
+        ? 'Students are placed in $label'
+        : '$label has a class teacher';
+    return "$why, so ${schoolClass.name} can't be removed. Switch it off "
+        'instead.';
+  }
+
   /// Why [section] can't be removed, or null when it can.
   String? removeSectionBlockedReason(SchoolSection section) =>
       section.classes.isEmpty

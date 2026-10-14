@@ -8,7 +8,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
 import 'package:hamrash_admin/views/classes/classes_view_model.dart';
 import 'package:hamrash_admin/views/classes/widgets/arms_editor.dart';
-import 'package:hamrash_admin/views/classes/widgets/sheet_error.dart';
+import 'package:hamrash_admin/core/widgets/app_sheet_error.dart';
 
 /// 6.4 · The same arms for every class that has none yet, picked by
 /// section. Pops the number of arms added.
@@ -111,7 +111,7 @@ class _AddArmsSheetState extends State<AddArmsSheet> {
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (_error case final message?) SheetError(message),
+          if (_error case final message?) AppSheetError(message),
           AppPrimaryButton(
             height: 52,
             isLoading: _saving,

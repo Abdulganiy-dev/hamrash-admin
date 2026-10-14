@@ -7,7 +7,7 @@ import 'package:hamrash_admin/core/widgets/button/app_sheet_link_action.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
 import 'package:hamrash_admin/views/classes/classes_view_model.dart';
 import 'package:hamrash_admin/views/classes/widgets/arms_editor.dart';
-import 'package:hamrash_admin/views/classes/widgets/sheet_error.dart';
+import 'package:hamrash_admin/core/widgets/app_sheet_error.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// 6.3 · Add a class to [section], or edit [schoolClass]: its name, arms
@@ -85,8 +85,8 @@ class _ClassSheetState extends State<ClassSheet> {
     if (removed.isEmpty) return null;
     final names = removed.join(', ');
     return removed.length == 1
-        ? 'Saving removes arm $names, with its class teacher and subjects.'
-        : 'Saving removes arms $names, with their class teachers and subjects.';
+        ? 'Saving removes arm $names and the subjects it takes.'
+        : 'Saving removes arms $names and the subjects they take.';
   }
 
   Future<void> _save() async {
@@ -133,6 +133,9 @@ class _ClassSheetState extends State<ClassSheet> {
         _className.isNotEmpty &&
         _nameProblem == null &&
         _hasChanges;
+    final removeBlocked = saved == null
+        ? null
+        : widget.model.removeClassBlockedReason(saved);
 
     return AppSheet(
       title: saved?.name ?? 'Add a class',
@@ -160,6 +163,10 @@ class _ClassSheetState extends State<ClassSheet> {
                 ? 'None yet'
                 : _arms.map((arm) => fullArmName(name, arm)).join(', '),
             note: _removalNote,
+            locked: {
+              for (final arm in saved?.arms ?? const <ClassArm>[])
+                arm.name: ?arm.removeBlockedReason(saved!.name),
+            },
             onChanged: (arms) => setState(() {
               _arms = arms;
               _error = null;
@@ -184,7 +191,7 @@ class _ClassSheetState extends State<ClassSheet> {
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (_error case final message?) SheetError(message),
+          if (_error case final message?) AppSheetError(message),
           AppPrimaryButton(
             height: 52,
             isLoading: _saving,
@@ -209,7 +216,9 @@ class _ClassSheetState extends State<ClassSheet> {
               icon: LucideIcons.trash2,
               label: 'Remove class',
               isDestructive: true,
-              onPressed: _saving || widget.onRemove == null
+              helper: removeBlocked,
+              onPressed:
+                  _saving || removeBlocked != null || widget.onRemove == null
                   ? null
                   : () => _closeThen(widget.onRemove!),
             ),

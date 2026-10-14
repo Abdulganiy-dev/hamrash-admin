@@ -17,6 +17,7 @@ class ArmsEditor extends StatefulWidget {
     required this.onChanged,
     this.preview,
     this.note,
+    this.locked = const {},
   });
 
   /// "Arms", or "Each class gets" when adding to many classes.
@@ -31,6 +32,10 @@ class ArmsEditor extends StatefulWidget {
   /// Warning under the arms, e.g. what removing one takes with it.
   final String? note;
 
+  /// Arms that can't be removed, by name, with the reason. Their chips show
+  /// a lock, and tapping one shows the reason.
+  final Map<String, String> locked;
+
   @override
   State<ArmsEditor> createState() => _ArmsEditorState();
 }
@@ -38,6 +43,9 @@ class ArmsEditor extends StatefulWidget {
 class _ArmsEditorState extends State<ArmsEditor> {
   final _custom = TextEditingController();
   String? _customError;
+
+  /// Why the last locked chip tapped can't go.
+  String? _lockedReason;
 
   static const _letters = ['A', 'B', 'C', 'D', 'E', 'F'];
   static const _words = ['Gold', 'Blue', 'Red'];
@@ -112,8 +120,22 @@ class _ArmsEditorState extends State<ArmsEditor> {
             runSpacing: 8,
             children: [
               for (final arm in widget.arms)
-                _ArmChip(label: arm, onRemove: () => _remove(arm)),
+                if (widget.locked[arm] case final why?)
+                  _ArmChip(
+                    label: arm,
+                    locked: true,
+                    onTap: () => setState(() => _lockedReason = why),
+                  )
+                else
+                  _ArmChip(label: arm, onTap: () => _remove(arm)),
             ],
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (_lockedReason case final why?) ...[
+          AppText(
+            '$why Switch the class off instead, or move what uses it first.',
+            style: AppTypography.caption.copyWith(color: LightColors.textMuted),
           ),
           const SizedBox(height: 10),
         ],
@@ -166,20 +188,26 @@ class _ArmsEditorState extends State<ArmsEditor> {
   }
 }
 
-/// A chosen arm. Tapping it removes it.
+/// A chosen arm. Tapping it removes it, or for a [locked] arm says why it
+/// can't go.
 class _ArmChip extends StatelessWidget {
-  const _ArmChip({required this.label, required this.onRemove});
+  const _ArmChip({
+    required this.label,
+    required this.onTap,
+    this.locked = false,
+  });
 
   final String label;
-  final VoidCallback onRemove;
+  final VoidCallback onTap;
+  final bool locked;
 
   @override
   Widget build(BuildContext context) => Semantics(
     button: true,
-    label: 'Remove arm $label',
+    label: locked ? 'Arm $label, in use' : 'Remove arm $label',
     excludeSemantics: true,
     child: BouncyButton(
-      onPressed: onRemove,
+      onPressed: onTap,
       child: Container(
         height: 34,
         padding: const EdgeInsets.only(left: 14, right: 10),
@@ -199,7 +227,11 @@ class _ArmChip extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            const Icon(LucideIcons.x600, size: 14, color: AppPalette.white),
+            Icon(
+              locked ? LucideIcons.lock : LucideIcons.x600,
+              size: locked ? 12 : 14,
+              color: locked ? AppPalette.aubergine200 : AppPalette.white,
+            ),
           ],
         ),
       ),

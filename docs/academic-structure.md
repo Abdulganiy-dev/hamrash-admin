@@ -60,9 +60,9 @@ Every link uses the two-column `(organization_id, id)` pattern, so nothing can p
 ### What can be deleted
 | Deleting… | Result |
 |---|---|
-| a section that has classes, a class that has arms, or an arm that has placements | **Blocked.** Deactivate it instead (`is_active = false`). |
+| a section that has classes, or an arm that has placements or a class teacher (migration 23) | **Blocked.** Deactivate it instead (`is_active = false`). |
 | a session that has terms or placements | **Blocked** |
-| an arm, a staff member or a session | That arm's or person's **class-teacher assignments** are removed with it |
+| a staff member or a session | Their **class-teacher assignments** are removed with them |
 | a student | Their placements are removed with them |
 | a staff member who heads a section | The section stays and its head is cleared |
 
@@ -87,7 +87,7 @@ Only leaders of the school can call them. Anyone else gets the same "not found, 
 
 | | Read | Add / edit | Delete |
 |---|---|---|---|
-| sections, classes, arms, sessions, terms, class teachers | **every member of the school**, including parents and students (they need class names and the current term), plus platform admins | leaders | owner and admin. Class teachers: leaders. |
+| sections, classes, arms, sessions, terms, class teachers | **every member of the school**, including parents and students (they need class names and the current term), plus platform admins | leaders | leaders (migrations 18 and 21) |
 | student placements | leaders, the bursar, **the student's teachers** (current session), **the child's parents**, the student, platform admins | leaders | leaders |
 
 Since migration 06, teachers see only the students they teach in the current session. See [subjects.md](subjects.md).

@@ -50,7 +50,10 @@ class Subject {
   /// "MTH", or the first three letters when there's no code.
   String get shortLabel =>
       code ??
-      name.replaceAll(RegExp('[^A-Za-z]'), '').padRight(3).substring(0, 3)
+      name
+          .replaceAll(RegExp('[^A-Za-z]'), '')
+          .padRight(3)
+          .substring(0, 3)
           .trim()
           .toUpperCase();
 

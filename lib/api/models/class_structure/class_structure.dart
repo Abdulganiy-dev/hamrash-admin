@@ -22,7 +22,8 @@ class SchoolSection {
   static const columns =
       'id,name,sort_order,is_active,'
       'classes!classes_section_fkey(id,section_id,name,sort_order,is_graduating_class,is_active,'
-      'class_arms!class_arms_class_fkey(id,class_id,name,is_active,created_at))';
+      'class_arms!class_arms_class_fkey(id,class_id,name,is_active,created_at,'
+      'student_placements(count),class_teachers(count)))';
 
   factory SchoolSection.fromJson(Map<String, dynamic> json) {
     final classes =
@@ -90,6 +91,17 @@ class SchoolClass {
 
   bool get hasArms => arms.isNotEmpty;
 
+  /// The first arm with students placed in it, or else with a class teacher.
+  ClassArm? get busyArm {
+    for (final arm in arms) {
+      if (arm.students > 0) return arm;
+    }
+    for (final arm in arms) {
+      if (arm.classTeachers > 0) return arm;
+    }
+    return null;
+  }
+
   /// "Primary 1A" for [arm] "A", "Primary 1 Gold" for "Gold".
   String armLabel(String arm) => fullArmName(name, arm);
 }
@@ -101,6 +113,8 @@ class ClassArm {
     required this.name,
     required this.isActive,
     required this.createdAt,
+    this.students = 0,
+    this.classTeachers = 0,
   });
 
   final String id;
@@ -109,13 +123,39 @@ class ClassArm {
   final bool isActive;
   final DateTime createdAt;
 
+  /// Student placements in it, in any session.
+  final int students;
+
+  /// Class teachers assigned to it, in any session.
+  final int classTeachers;
+
+  /// Why this arm can't be removed, or null when it can.
+  String? removeBlockedReason(String className) {
+    final label = fullArmName(className, name);
+    if (students > 0) {
+      return "$label has students in it, so it can't be removed.";
+    }
+    if (classTeachers > 0) {
+      return "$label has a class teacher, so it can't be removed.";
+    }
+    return null;
+  }
+
   factory ClassArm.fromJson(Map<String, dynamic> json) => ClassArm(
     id: json['id'] as String,
     classId: json['class_id'] as String,
     name: json['name'] as String,
     isActive: json['is_active'] as bool,
     createdAt: DateTime.parse(json['created_at'] as String),
+    students: _count(json['student_placements']),
+    classTeachers: _count(json['class_teachers']),
   );
+
+  /// `[{count: 3}]` from an embedded count, or 0 when it's missing.
+  static int _count(Object? embedded) => switch (embedded) {
+    [{'count': final int count}, ...] => count,
+    _ => 0,
+  };
 }
 
 /// How an arm reads with its class: single letters and numbers join the

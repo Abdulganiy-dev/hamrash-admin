@@ -172,7 +172,7 @@ void main() {
           isA<SupabaseRefusal>().having(
             (error) => error.message,
             'message',
-            contains('Primary 1B has students in it'),
+            contains('Primary 1B has students or a class teacher'),
           ),
         ),
       );

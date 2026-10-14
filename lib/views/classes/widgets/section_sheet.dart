@@ -5,7 +5,7 @@ import 'package:hamrash_admin/core/widgets/app_text_field.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/app_sheet_link_action.dart';
 import 'package:hamrash_admin/views/classes/classes_view_model.dart';
-import 'package:hamrash_admin/views/classes/widgets/sheet_error.dart';
+import 'package:hamrash_admin/core/widgets/app_sheet_error.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Add a section, or rename, switch off or remove [section]. Pops `true`
@@ -108,7 +108,7 @@ class _SectionSheetState extends State<SectionSheet> {
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (_error case final message?) SheetError(message),
+          if (_error case final message?) AppSheetError(message),
           AppPrimaryButton(
             height: 52,
             isLoading: _saving,

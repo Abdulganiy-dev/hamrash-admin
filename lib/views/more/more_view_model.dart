@@ -50,8 +50,8 @@ class MoreViewModel extends BaseViewModel {
       (_progress?.isDone(step) ?? false) ? 'Set up' : _notSetUp;
 
   /// Why this person can't open [area], or null when they can. The academic
-  /// calendar and classes have read-only views, so seeing them is enough;
-  /// the other area pages are for changing things and need
+  /// calendar, classes and subjects have read-only views, so seeing them is
+  /// enough; the other area pages are for changing things and need
   /// [AreaAccess.manage].
   String? blockedReason(SchoolArea area) {
     final access = accessTo(area);
@@ -70,6 +70,7 @@ class MoreViewModel extends BaseViewModel {
   static const _hasReadOnlyPage = {
     SchoolArea.academicCalendar,
     SchoolArea.classes,
+    SchoolArea.subjects,
   };
 
   /// First load: shows the spinner, then the page or an error view.
