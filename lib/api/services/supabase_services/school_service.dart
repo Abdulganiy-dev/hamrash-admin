@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
+import 'package:hamrash_admin/api/models/organization_models/school_snapshot.dart';
 import 'package:hamrash_admin/api/models/organization_models/setup_progress.dart';
 import 'package:hamrash_admin/api/models/organization_models/staff_profile.dart';
 import 'package:hamrash_admin/core/app_logger.dart';
@@ -141,6 +142,52 @@ class SchoolService {
       return '${row['first_name']} ${row['last_name']}'.trim();
     },
     log: (name) => {'organization_id': organizationId, 'found': name != null},
+  );
+
+  /// The current session and term, or null before the calendar is set up.
+  Future<CurrentTerm?> getCurrentTerm(String organizationId) => _run(
+    'getCurrentTerm',
+    () async {
+      final rows = await _supabase
+          .from('academic_terms')
+          .select(
+            'name, session:academic_sessions!academic_terms_session_fkey(name)',
+          )
+          .eq('organization_id', organizationId)
+          .eq('is_current', true)
+          .limit(1);
+      return rows.isEmpty ? null : CurrentTerm.fromJson(rows.first);
+    },
+    log: (term) => {'organization_id': organizationId, 'found': term != null},
+  );
+
+  /// Admin-app members, joined and invited. Only school leaders can see
+  /// other members, so call this for them only.
+  Future<TeamCount> getTeamCount(String organizationId) => _run(
+    'getTeamCount',
+    () async {
+      final rows = await _supabase
+          .from('organization_members')
+          .select('status')
+          .eq('organization_id', organizationId)
+          .inFilter('role', [
+            'owner',
+            'admin',
+            'principal',
+            'vice_principal',
+            'bursar',
+          ])
+          .inFilter('status', ['active', 'invited']);
+      return TeamCount(
+        active: rows.where((row) => row['status'] == 'active').length,
+        invited: rows.where((row) => row['status'] == 'invited').length,
+      );
+    },
+    log: (team) => {
+      'organization_id': organizationId,
+      'active': team.active,
+      'invited': team.invited,
+    },
   );
 
   Future<T> _run<T>(

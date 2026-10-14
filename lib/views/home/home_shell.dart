@@ -6,10 +6,11 @@ import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_tab_bar.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_tab_shell.dart';
 import 'package:hamrash_admin/views/home/home_screen.dart';
+import 'package:hamrash_admin/views/more/more_screen.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// The signed-in app for one school: Home, People, Fees and More. Only Home
-/// is built so far; the other tabs say so.
+/// The signed-in app for one school: Home, People, Fees and More. People and
+/// Fees aren't built yet; their tabs say so.
 class HomeShell extends StatelessWidget {
   const HomeShell({
     super.key,
@@ -32,7 +33,7 @@ class HomeShell extends StatelessWidget {
   /// Null when this is their only school.
   final VoidCallback? onSwitchSchool;
 
-  static const _comingSoon = {1: 'People', 2: 'Fees', 3: 'More'};
+  static const _comingSoon = {1: 'People', 2: 'Fees'};
 
   void _openAccount(BuildContext context, String name, String? photoUrl) =>
       AppActionSheet.show(
@@ -92,15 +93,24 @@ class HomeShell extends StatelessWidget {
       for (final MapEntry(value: label) in _comingSoon.entries)
         AppTab(
           item: AppTabItem(
-            icon: switch (label) {
-              'People' => LucideIcons.users,
-              'Fees' => LucideIcons.wallet,
-              _ => LucideIcons.layoutGrid,
-            },
+            icon: label == 'People' ? LucideIcons.users : LucideIcons.wallet,
             label: label,
           ),
           builder: (_) => const SizedBox.shrink(),
         ),
+      AppTab(
+        item: const AppTabItem(icon: LucideIcons.layoutGrid, label: 'More'),
+        builder: (context) => MoreScreen(
+          key: ValueKey('more/${school.id}/${school.organization.updatedAt}'),
+          school: school,
+          userName: userName,
+          userImageUrl: userImageUrl,
+          onAvatarTap: () => _openAccount(context, userName, userImageUrl),
+          onSignOut: onSignOut,
+          onOpenSchoolDetails: onOpenSchoolDetails,
+          onSwitchSchool: onSwitchSchool,
+        ),
+      ),
     ],
   );
 }

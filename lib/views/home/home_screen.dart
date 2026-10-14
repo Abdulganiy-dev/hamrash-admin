@@ -58,7 +58,7 @@ class HomeScreen extends StatelessWidget {
 
           customAppBar: _Header(
             model: model,
-            onSchoolLogoTapped:onOpenSchoolDetails,
+            onSchoolLogoTapped: onOpenSchoolDetails,
             onAvatarTap: () => onAvatarTap(model.displayName, model.photoUrl),
           ),
           body: AppRefreshScrollView.children(
@@ -80,7 +80,11 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.model, required this.onAvatarTap,required this.onSchoolLogoTapped});
+  const _Header({
+    required this.model,
+    required this.onAvatarTap,
+    required this.onSchoolLogoTapped,
+  });
 
   final HomeViewModel model;
   final VoidCallback onAvatarTap;
@@ -270,7 +274,7 @@ class _SetupCard extends StatelessWidget {
                         : step == current
                         ? _StepState.current
                         : _StepState.todo,
-                    showChevronWhenDone: !progress.isDone(step),
+                    // A finished step isn't reopened from here.
                     onTap: model.canOpen(step) && !progress.isDone(step)
                         ? () => _openStep(context, step)
                         : null,
@@ -354,7 +358,6 @@ class _StepRow extends StatelessWidget {
     required this.title,
     required this.state,
     this.subtitle,
-    this.showChevronWhenDone = false,
     this.onTap,
   });
 
@@ -362,14 +365,13 @@ class _StepRow extends StatelessWidget {
   final String title;
   final String? subtitle;
   final _StepState state;
-  final bool showChevronWhenDone;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final current = state == _StepState.current;
     final done = state == _StepState.done;
-    final showChevron = onTap != null && (!done || showChevronWhenDone);
+    final showChevron = onTap != null && !done;
 
     final row = Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

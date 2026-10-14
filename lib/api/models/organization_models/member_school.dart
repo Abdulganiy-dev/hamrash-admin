@@ -1,5 +1,6 @@
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
+import 'package:hamrash_admin/api/models/organization_models/school_area.dart';
 
 /// A school the signed-in person can open in Hamrash Admin, with every
 /// admin-app role they hold there. Several roles at one school add up; there
@@ -45,6 +46,21 @@ class MemberSchool {
   bool get canInviteAdmins =>
       roles.contains(OrganizationMemberRole.owner) ||
       roles.contains(OrganizationMemberRole.admin);
+
+  /// Mirrors the database's row-level rules:
+  /// - calendar, classes, subjects and grading: every member reads them,
+  ///   school leaders change them;
+  /// - the team: only leaders can see other members (bursars see themselves);
+  /// - school details: everyone reads them, only the owner changes them.
+  AreaAccess accessTo(SchoolArea area) => switch (area) {
+    SchoolArea.academicCalendar ||
+    SchoolArea.classes ||
+    SchoolArea.subjects ||
+    SchoolArea.grading => canRunSetup ? AreaAccess.manage : AreaAccess.view,
+    SchoolArea.team => canRunSetup ? AreaAccess.manage : AreaAccess.none,
+    SchoolArea.schoolDetails =>
+      canEditSchool ? AreaAccess.manage : AreaAccess.view,
+  };
 
   bool get needsDetailsCheck =>
       canEditSchool && organization.detailsConfirmedAt == null;
