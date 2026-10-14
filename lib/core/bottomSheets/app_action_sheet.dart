@@ -28,6 +28,7 @@ class AppSheetAction {
     required this.icon,
     required this.onTap,
     this.isDestructive = false,
+    this.disabledReason,
   });
 
   final String label;
@@ -39,6 +40,10 @@ class AppSheetAction {
   /// Red text and icon. A group made only of destructive actions also gets
   /// a pale red background — keep those in their own group, last.
   final bool isDestructive;
+
+  /// Greys the row out and shows this under the label, e.g. why something
+  /// can't be removed yet. The row can't be tapped.
+  final String? disabledReason;
 }
 
 /// Floating menu of things you can do to one item: optional quick [tiles]
@@ -179,7 +184,9 @@ class _Group extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final danger = actions.every((a) => a.isDestructive);
+    final danger = actions.every(
+      (a) => a.isDestructive && a.disabledReason == null,
+    );
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -216,42 +223,69 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = action.isDestructive
+    final reason = action.disabledReason;
+    final color = reason != null
+        ? AppPalette.stone400
+        : action.isDestructive
         ? AppBadgeTone.error.strong
         : LightColors.textStrong;
+    final iconColor = reason != null || action.isDestructive
+        ? color
+        : AppPalette.stone600;
 
     return Semantics(
       button: true,
-      label: action.label,
+      enabled: reason == null,
+      label: reason == null ? action.label : '${action.label}. $reason',
       excludeSemantics: true,
       // Shrinks a touch while pressed, like every other button; no tint.
       child: BouncyButton(
-        onPressed: onTap,
+        onPressed: reason == null ? onTap : null,
+        isDisabled: reason != null,
         pressedScale: 0.98,
         child: Container(
-          height: 52,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          constraints: const BoxConstraints(minHeight: 52),
+          padding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: reason == null ? 0 : 12,
+          ),
           color: Colors.transparent,
           child: Row(
+            crossAxisAlignment: reason == null
+                ? CrossAxisAlignment.center
+                : CrossAxisAlignment.start,
             children: [
-              Icon(
-                action.icon,
-                size: 20,
-                color: action.isDestructive ? color : AppPalette.stone600,
-              ),
+              Icon(action.icon, size: 20, color: iconColor),
               const SizedBox(width: 14),
               Expanded(
-                child: AppText(
-                  action.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.body.copyWith(
-                    fontSize: 15,
-                    fontWeight: action.isDestructive
-                        ? FontWeight.w700
-                        : FontWeight.w600,
-                    color: color,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppText(
+                      action.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.body.copyWith(
+                        fontSize: 15,
+                        fontWeight: action.isDestructive
+                            ? FontWeight.w700
+                            : FontWeight.w600,
+                        color: color,
+                      ),
+                    ),
+                    if (reason != null) ...[
+                      const SizedBox(height: 2),
+                      AppText(
+                        reason,
+                        style: AppTypography.caption.copyWith(
+                          fontSize: 13,
+                          height: 18 / 13,
+                          color: AppPalette.stone500,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],

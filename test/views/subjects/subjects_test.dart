@@ -114,6 +114,24 @@ class _Subjects extends SubjectService {
       links;
 
   @override
+  Future<List<ArmSubjectUsage>> listArmSubjectUsage(
+    String organizationId,
+  ) async => const [
+    ArmSubjectUsage(
+      armId: 'jss1b',
+      subjectId: 'mth',
+      teacherName: 'Ada Bello',
+      choices: 0,
+    ),
+    ArmSubjectUsage(
+      armId: 'sci',
+      subjectId: 'phy',
+      teacherName: null,
+      choices: 3,
+    ),
+  ];
+
+  @override
   Future<void> addToArms({
     required String organizationId,
     required List<String> armIds,
@@ -275,6 +293,25 @@ void main() {
 
       await model.removeSubject(_subjects[2]);
       expect(service.lastArms, ['sci']);
+    });
+
+    test('says why a subject in use can\'t come off', () async {
+      final (jss1, _) = await loaded('jss1');
+      expect(
+        jss1.removeBlockedReason(_subjects[1]),
+        'Ada Bello teaches Mathematics in JSS 1B. Unassign them first.',
+      );
+      expect(jss1.removeBlockedReason(_subjects[0]), isNull);
+
+      // Only the arm being edited counts.
+      jss1.pickArm('jss1a');
+      expect(jss1.removeBlockedReason(_subjects[1]), isNull);
+
+      final (ss1, _) = await loaded('ss1');
+      expect(
+        ss1.removeBlockedReason(_subjects[2]),
+        '3 students in SS 1 Science chose Physics. Remove their choice first.',
+      );
     });
 
     test('a refused removal keeps the confirmation open', () async {

@@ -27,6 +27,7 @@ Student subjects     Chidi takes French in 2026/2027                            
 |---|---|
 | a subject that is taught (has assignments) or chosen as an elective | **Blocked.** Deactivate it instead (`is_active = false`). |
 | a subject that's only on the curriculum | Allowed, and its curriculum links go with it |
+| a subject from one arm's curriculum, while a teacher is assigned to it there or students there chose it, in a session that isn't closed (migration 24) | **Blocked**, with the teacher or the number of students named. Unassign or remove the choices first. `arm_subject_usage(school_id)` lists these links so the app can say so ahead of time. |
 | an arm or subject | Its curriculum links are removed |
 | an arm, session or staff member | Their teaching assignments are removed |
 | a student | Their electives are removed |

@@ -47,6 +47,24 @@ class SubjectService {
     log: (links) => {'organization_id': organizationId, 'count': links.length},
   );
 
+  /// Subjects arms take that are taught or chosen this session, so the app
+  /// can say why one can't come off an arm before anyone tries.
+  Future<List<ArmSubjectUsage>> listArmSubjectUsage(
+    String organizationId,
+  ) => _run(
+    'listArmSubjectUsage',
+    () async {
+      final rows = await _supabase.rpc(
+        'arm_subject_usage',
+        params: {'p_organization_id': organizationId},
+      );
+      return (rows as List<dynamic>)
+          .map((row) => ArmSubjectUsage.fromJson(row as Map<String, dynamic>))
+          .toList();
+    },
+    log: (usage) => {'organization_id': organizationId, 'count': usage.length},
+  );
+
   /// 41 common Nigerian subjects, and the usual list for its level on every
   /// existing arm of a standard-named class. Only for a school with no
   /// subjects yet. Returns how many subjects it made.

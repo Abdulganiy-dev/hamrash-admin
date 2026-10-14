@@ -27,6 +27,7 @@ class ClassSubjectsViewModel extends BaseViewModel {
   final ClassStructureService _structure;
 
   Curriculum? _curriculum;
+  List<ArmSubjectUsage> _usage = const [];
   Object? _error;
   bool _changed = false;
   bool _picked = false;
@@ -116,6 +117,36 @@ class ClassSubjectsViewModel extends BaseViewModel {
         ? 'Changes here apply to $targetLabel only.'
         : "${c.name}'s arms take different subjects. Changes here apply to "
               '$targetLabel only.';
+  }
+
+  /// Why [subject] can't come off the arms being edited, or null when it
+  /// can: a teacher is assigned to it there this session, or students
+  /// there chose it.
+  String? removeBlockedReason(Subject subject) {
+    final c = schoolClass;
+    if (c == null) return null;
+    final labels = {for (final each in arms) each.id: c.armLabel(each.name)};
+    final inUse = [
+      for (final usage in _usage)
+        if (usage.subjectId == subject.id && targetArmIds.contains(usage.armId))
+          usage,
+    ];
+    for (final usage in inUse) {
+      if (usage.teacherName case final teacher?) {
+        return '$teacher teaches ${subject.name} in ${labels[usage.armId]}. '
+            'Unassign them first.';
+      }
+    }
+    for (final usage in inUse) {
+      if (usage.choices > 0) {
+        final students = usage.choices == 1
+            ? '1 student'
+            : '${usage.choices} students';
+        return '$students in ${labels[usage.armId]} chose ${subject.name}. '
+            'Remove their choice first.';
+      }
+    }
+    return null;
   }
 
   /// Other arms [arm]'s subjects can be copied to.
@@ -266,17 +297,28 @@ class ClassSubjectsViewModel extends BaseViewModel {
   }
 
   Future<void> _fetch() async {
-    final results = await Future.wait<Object>([
+    final results = await Future.wait<Object?>([
       _structure.getStructure(school.id),
       _subjects.listSubjects(school.id),
       _subjects.listArmSubjects(school.id),
+      // The page still works without it; the database refuses anyway.
+      _optional(_subjects.listArmSubjectUsage(school.id)),
     ]);
     _curriculum = Curriculum(
-      sections: results[0] as List<SchoolSection>,
-      subjects: results[1] as List<Subject>,
-      links: results[2] as List<ArmSubject>,
+      sections: results[0]! as List<SchoolSection>,
+      subjects: results[1]! as List<Subject>,
+      links: results[2]! as List<ArmSubject>,
     );
+    _usage = results[3] as List<ArmSubjectUsage>? ?? const [];
     _keepArmValid();
+  }
+
+  static Future<T?> _optional<T>(Future<T> request) async {
+    try {
+      return await request;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Starts on "All arms" when the arms match, else on the first arm; and

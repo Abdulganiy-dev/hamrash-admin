@@ -310,6 +310,7 @@ class _ClassSubjectsActions {
             label: 'Remove from $_where',
             icon: LucideIcons.circleMinus,
             isDestructive: true,
+            disabledReason: model.removeBlockedReason(subject),
             onTap: () => _remove(context, subject),
           ),
         ],

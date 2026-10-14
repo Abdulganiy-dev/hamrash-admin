@@ -85,3 +85,32 @@ class ArmSubject {
     isCompulsory: json['is_compulsory'] as bool,
   );
 }
+
+/// A subject an arm takes that's in use this session: a teacher is assigned
+/// to it there, or students there chose it. While it is, the database won't
+/// take the subject off the arm (migration 24).
+class ArmSubjectUsage {
+  const ArmSubjectUsage({
+    required this.armId,
+    required this.subjectId,
+    required this.teacherName,
+    required this.choices,
+  });
+
+  final String armId;
+  final String subjectId;
+
+  /// One teacher assigned to it there, if any.
+  final String? teacherName;
+
+  /// Students there who chose it as an optional subject.
+  final int choices;
+
+  factory ArmSubjectUsage.fromJson(Map<String, dynamic> json) =>
+      ArmSubjectUsage(
+        armId: json['arm_id'] as String,
+        subjectId: json['subject_id'] as String,
+        teacherName: json['teacher_name'] as String?,
+        choices: json['choices'] as int,
+      );
+}
