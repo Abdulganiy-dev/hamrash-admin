@@ -265,7 +265,7 @@ class AppSheet extends StatelessWidget {
         if (showGrabber) const _Grabber() else const SizedBox(height: 8),
         if (hasHeader)
           Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16,0),
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: _Header(
               title: title,
               subtitle: subtitle,

@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/academic_calendar/calendar_draft.dart';
 import 'package:hamrash_admin/api/services/supabase_services/academic_calendar_service.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
-import 'package:hamrash_admin/viewModel/base_view_model.dart';
+import 'package:hamrash_admin/views/academic_calendar/session_draft_model.dart';
 
-class CreateSessionViewModel extends BaseViewModel {
+/// Creates a session from a suggested calendar: the school's first one from
+/// setup step 2, or the next year's from the sessions list.
+class CreateSessionViewModel extends SessionDraftModel {
   CreateSessionViewModel({
     required this.organizationId,
+    this.startYear,
     DateTime? now,
     AcademicCalendarService? service,
   }) : _service = service ?? locator<AcademicCalendarService>(),
        _now = now ?? DateTime.now() {
-    final year = _now.month >= 9 ? _now.year : _now.year - 1;
+    final year = startYear ?? (_now.month >= 9 ? _now.year : _now.year - 1);
     draft = CalendarDraft(
       name: '$year/${((year + 1) % 100).toString().padLeft(2, '0')}',
       dates: DateTimeRange(
@@ -41,7 +44,9 @@ class CreateSessionViewModel extends BaseViewModel {
           ),
         ),
       ],
-      currentTermIndex: 0,
+      // The school's first session needs a current term; a later one only
+      // gets one if today falls inside it.
+      currentTermIndex: startYear == null ? 0 : null,
     );
     for (var i = 0; i < draft.terms.length; i++) {
       final dates = draft.terms[i].dates;
@@ -53,78 +58,22 @@ class CreateSessionViewModel extends BaseViewModel {
   }
 
   final String organizationId;
+
+  /// The year the suggested session starts in, e.g. 2027 for 2027/28.
+  /// Null for the school's first session, which follows today's date.
+  final int? startYear;
+
   final AcademicCalendarService _service;
   final DateTime _now;
+  @override
   late final CalendarDraft draft;
   bool saving = false;
   String? saveError;
 
-  int get teachingWeeks => draft.terms.fold(
-    0,
-    (sum, term) => sum + (term.dates.duration.inDays / 7).ceil(),
-  );
-
-  String? get problem {
-    if (draft.name.trim().isEmpty) return 'Add a session name';
-    if (draft.dates.end.isBefore(draft.dates.start) ||
-        draft.dates.end.isAtSameMomentAs(draft.dates.start)) {
-      return 'Session end must be after its start';
-    }
-    if (draft.terms.isEmpty) return 'Add at least one term';
-    if (draft.terms.length > 6) return 'A session can have up to 6 terms';
-    final names = <String>{};
-    for (var i = 0; i < draft.terms.length; i++) {
-      final term = draft.terms[i];
-      if (term.name.trim().isEmpty) return 'Name term ${i + 1}';
-      if (!names.add(term.name.trim().toLowerCase())) {
-        return 'Each term needs a different name';
-      }
-      if (!term.dates.end.isAfter(term.dates.start)) {
-        return '${term.name} needs at least two dates';
-      }
-      if (term.dates.start.isBefore(draft.dates.start) ||
-          term.dates.end.isAfter(draft.dates.end)) {
-        return '${term.name} must fit inside the session dates';
-      }
-      if (i > 0 && !term.dates.start.isAfter(draft.terms[i - 1].dates.end)) {
-        return '${term.name} starts before ${draft.terms[i - 1].name} ends';
-      }
-    }
-    return null;
-  }
-
-  void editSession(String name, DateTimeRange dates) {
-    draft.name = name.trim();
-    draft.dates = dates;
+  @override
+  void draftChanged() {
     saveError = null;
-    notifyListeners();
-  }
-
-  void editTerm(
-    int index,
-    String name,
-    DateTimeRange dates, {
-    required bool isCurrent,
-  }) {
-    draft.terms[index].name = name.trim();
-    draft.terms[index].dates = dates;
-    if (isCurrent) draft.currentTermIndex = index;
-    saveError = null;
-    notifyListeners();
-  }
-
-  void addTerm(String name, DateTimeRange dates) {
-    draft.terms.add(CalendarTermDraft(name: name.trim(), dates: dates));
-    saveError = null;
-    notifyListeners();
-  }
-
-  void removeTerm(int index) {
-    if (index == draft.currentTermIndex) return;
-    draft.terms.removeAt(index);
-    if (draft.currentTermIndex > index) draft.currentTermIndex--;
-    saveError = null;
-    notifyListeners();
+    super.draftChanged();
   }
 
   Future<bool> save() async {

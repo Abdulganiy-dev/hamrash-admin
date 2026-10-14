@@ -4,10 +4,12 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/utils/app_date_format.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:hamrash_admin/views/academic_calendar/create_session/create_session_view_model.dart';
+import 'package:hamrash_admin/views/academic_calendar/session_draft_model.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+/// One term: its number, name and dates, and for the current term "Now"
+/// and which week the school is in.
 class SessionTermRow extends StatelessWidget {
   const SessionTermRow({
     super.key,
@@ -16,8 +18,10 @@ class SessionTermRow extends StatelessWidget {
     required this.onTap,
   });
   final int index;
-  final CreateSessionViewModel model;
-  final VoidCallback onTap;
+  final SessionDraftModel model;
+
+  /// Null on a read-only page: no tap and no chevron.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -102,12 +106,14 @@ class SessionTermRow extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(width: 8),
-              Icon(
-                LucideIcons.chevronRight,
-                size: 18,
-                color: current ? AppPalette.stone900 : AppPalette.stone400,
-              ),
+              if (onTap != null) ...[
+                const SizedBox(width: 8),
+                Icon(
+                  LucideIcons.chevronRight,
+                  size: 18,
+                  color: current ? AppPalette.stone900 : AppPalette.stone400,
+                ),
+              ],
             ],
           ),
         ),

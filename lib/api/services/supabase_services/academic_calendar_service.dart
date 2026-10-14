@@ -1,13 +1,199 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:hamrash_admin/api/models/academic_calendar/academic_session.dart';
 import 'package:hamrash_admin/api/models/academic_calendar/calendar_draft.dart';
 import 'package:hamrash_admin/core/app_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Sessions and their terms. The database decides who may change what
+/// (school leaders), keeps terms inside their session, refuses to remove the
+/// current term, and keeps closed sessions read-only.
 class AcademicCalendarService {
   AcademicCalendarService(this._supabase);
 
   final SupabaseClient _supabase;
+
+  /// Every session at the school with its terms, newest first.
+  Future<List<AcademicSession>> listSessions(String organizationId) => _run(
+    'listSessions',
+    () async {
+      final rows = await _supabase
+          .from('academic_sessions')
+          .select(AcademicSession.columns)
+          .eq('organization_id', organizationId)
+          .order('starts_on', ascending: false);
+      return rows.map(AcademicSession.fromJson).toList();
+    },
+    log: (sessions) => {
+      'organization_id': organizationId,
+      'count': sessions.length,
+    },
+  );
+
+  Future<AcademicSession> getSession(String sessionId) => _run(
+    'getSession',
+    () async => AcademicSession.fromJson(
+      await _supabase
+          .from('academic_sessions')
+          .select(AcademicSession.columns)
+          .eq('id', sessionId)
+          .single(),
+    ),
+    log: (session) => {'id': session.id, 'terms': session.terms.length},
+  );
+
+  /// Saves the changes made to [original] on the details page.
+  ///
+  /// Not one transaction, so each step keeps the database's rules true on
+  /// its own: removed terms go first, the session is widened to hold old and
+  /// new term dates, terms are updated (lower sequences first, so numbers
+  /// never clash) and added, then the session gets its final name and
+  /// dates. A failure part-way leaves a valid calendar; reloading shows it.
+  Future<void> saveSession(AcademicSession original, CalendarDraft draft) =>
+      _run('saveSession', () async {
+        final keptIds = {for (final term in draft.terms) ?term.id};
+        for (final term in original.terms) {
+          if (!keptIds.contains(term.id)) {
+            await _supabase.from('academic_terms').delete().eq('id', term.id);
+          }
+        }
+
+        final wide = DateTimeRange(
+          start: _earlier(original.dates.start, draft.dates.start),
+          end: _later(original.dates.end, draft.dates.end),
+        );
+        if (wide != original.dates) {
+          await _updateSession(original.id, {
+            'starts_on': _day(wide.start),
+            'ends_on': _day(wide.end),
+          });
+        }
+
+        final savedById = {for (final term in original.terms) term.id: term};
+        final ids = <String>[];
+        for (var i = 0; i < draft.terms.length; i++) {
+          final term = draft.terms[i];
+          final values = {
+            'name': term.name,
+            'sequence': i + 1,
+            'starts_on': _day(term.dates.start),
+            'ends_on': _day(term.dates.end),
+          };
+          final saved = term.id == null ? null : savedById[term.id];
+          if (saved == null) {
+            final row = await _supabase
+                .from('academic_terms')
+                .insert({
+                  ...values,
+                  'organization_id': original.organizationId,
+                  'session_id': original.id,
+                })
+                .select('id')
+                .single();
+            ids.add(row['id'] as String);
+            continue;
+          }
+          ids.add(saved.id);
+          if (saved.name != term.name ||
+              saved.sequence != i + 1 ||
+              saved.dates != term.dates) {
+            await _supabase
+                .from('academic_terms')
+                .update(values)
+                .eq('id', saved.id);
+          }
+        }
+
+        final finalValues = <String, Object>{
+          if (draft.name != original.name) 'name': draft.name,
+          if (draft.dates != wide) ...{
+            'starts_on': _day(draft.dates.start),
+            'ends_on': _day(draft.dates.end),
+          },
+        };
+        if (finalValues.isNotEmpty) {
+          await _updateSession(original.id, finalValues);
+        }
+
+        if (draft.currentTermIndex case final index?) {
+          final currentId = ids[index];
+          final wasCurrent = original.terms.any(
+            (term) => term.id == currentId && term.isCurrent,
+          );
+          if (!wasCurrent) await _setCurrentTerm(currentId);
+        }
+      }, log: (_) => {'id': original.id, 'terms': draft.terms.length});
+
+  /// Removes a session and its terms. The database refuses while one of
+  /// them is current or anything else uses the session.
+  Future<void> deleteSession(AcademicSession session) =>
+      _run('deleteSession', () async {
+        await _supabase
+            .from('academic_terms')
+            .delete()
+            .eq('session_id', session.id);
+        await _supabase.from('academic_sessions').delete().eq('id', session.id);
+      }, log: (_) => {'id': session.id});
+
+  /// Seals an ended session: it and everything recorded against it become
+  /// read-only. Needs a newer session with a current term.
+  Future<void> closeSession(String sessionId) => _run('closeSession', () async {
+    await _supabase.rpc('close_session', params: {'p_session_id': sessionId});
+  }, log: (_) => {'id': sessionId});
+
+  /// Owner only.
+  Future<void> reopenSession(String sessionId) =>
+      _run('reopenSession', () async {
+        await _supabase.rpc(
+          'reopen_session',
+          params: {'p_session_id': sessionId},
+        );
+      }, log: (_) => {'id': sessionId});
+
+  Future<SessionUsage> getUsage(String sessionId) => _run('getUsage', () async {
+    final rows = await _supabase.rpc(
+      'session_usage',
+      params: {'p_session_id': sessionId},
+    );
+    return SessionUsage.fromJson(
+      (rows as List<dynamic>).first as Map<String, dynamic>,
+    );
+  }, log: (usage) => {'id': sessionId, 'empty': usage.isEmpty});
+
+  Future<void> _updateSession(String id, Map<String, Object> values) async {
+    await _supabase.from('academic_sessions').update(values).eq('id', id);
+  }
+
+  Future<void> _setCurrentTerm(String termId) async {
+    final result = await _supabase.rpc(
+      'set_current_term',
+      params: {'p_term_id': termId},
+    );
+    AppLogger.info('Supabase set_current_term result: ${jsonEncode(result)}');
+  }
+
+  static DateTime _earlier(DateTime a, DateTime b) => a.isBefore(b) ? a : b;
+  static DateTime _later(DateTime a, DateTime b) => a.isAfter(b) ? a : b;
+
+  Future<T> _run<T>(
+    String name,
+    Future<T> Function() body, {
+    required Map<String, Object?> Function(T result) log,
+  }) async {
+    try {
+      final result = await body();
+      AppLogger.info('Supabase $name result: ${jsonEncode(log(result))}');
+      return result;
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Supabase $name failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
 
   String _day(DateTime date) =>
       '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -95,14 +281,13 @@ class AcademicCalendarService {
         saved.add(inserted);
       }
 
-      final current = saved.singleWhere(
-        (row) => row['sequence'] == draft.currentTermIndex + 1,
-      );
-      final result = await _supabase.rpc(
-        'set_current_term',
-        params: {'p_term_id': current['id']},
-      );
-      AppLogger.info('Supabase set_current_term result: ${jsonEncode(result)}');
+      // Next year's session can be set up before any of its terms starts.
+      if (draft.currentTermIndex case final index?) {
+        final current = saved.singleWhere(
+          (row) => row['sequence'] == index + 1,
+        );
+        await _setCurrentTerm(current['id'] as String);
+      }
     } catch (error, stackTrace) {
       AppLogger.error(
         'Supabase createCalendar failed',

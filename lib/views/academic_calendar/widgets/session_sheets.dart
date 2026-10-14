@@ -9,15 +9,30 @@ import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/pickers/app_date_fields.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
-import 'package:hamrash_admin/views/academic_calendar/create_session/create_session_view_model.dart';
+import 'package:hamrash_admin/views/academic_calendar/session_draft_model.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Edit the session name and dates.
 class EditSessionSheet extends StatefulWidget {
-  const EditSessionSheet({super.key, required this.model});
+  const EditSessionSheet({
+    super.key,
+    required this.model,
+    this.showRemove = false,
+    this.removeBlockedReason,
+    this.onRemove,
+  });
 
-  final CreateSessionViewModel model;
+  final SessionDraftModel model;
+
+  /// Saved sessions only; a session being created has nothing to remove.
+  final bool showRemove;
+
+  /// Shown under a greyed-out Remove session.
+  final String? removeBlockedReason;
+
+  /// Runs after this sheet closes, e.g. to ask for confirmation.
+  final VoidCallback? onRemove;
 
   @override
   State<EditSessionSheet> createState() => _EditSessionSheetState();
@@ -139,11 +154,20 @@ class _EditSessionSheetState extends State<EditSessionSheet> {
             onPressed: _save,
             child: const Text('Save session'),
           ),
-          const SizedBox(height: 16),
-          _SheetRemoveAction(
-            label: 'Remove session',
-            helper: 'It has ${terms.length} terms. Remove them first.',
-          ),
+          if (widget.showRemove) ...[
+            const SizedBox(height: 16),
+            _SheetRemoveAction(
+              label: 'Remove session',
+              helper: widget.removeBlockedReason,
+              onPressed:
+                  widget.removeBlockedReason != null || widget.onRemove == null
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                      widget.onRemove!();
+                    },
+            ),
+          ],
         ],
       ),
     );
@@ -154,7 +178,7 @@ class _EditSessionSheetState extends State<EditSessionSheet> {
 class EditTermSheet extends StatefulWidget {
   const EditTermSheet({super.key, required this.model, required this.index});
 
-  final CreateSessionViewModel model;
+  final SessionDraftModel model;
   final int? index;
 
   @override

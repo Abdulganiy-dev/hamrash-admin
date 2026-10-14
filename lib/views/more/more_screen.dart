@@ -12,7 +12,7 @@ import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_button.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
-import 'package:hamrash_admin/views/academic_calendar/create_session/create_session_screen.dart';
+import 'package:hamrash_admin/views/academic_calendar/sessions/academic_sessions_screen.dart';
 import 'package:hamrash_admin/views/more/more_view_model.dart';
 import 'package:hamrash_admin/views/more/widgets/more_account_card.dart';
 import 'package:hamrash_admin/views/more/widgets/more_school_card.dart';
@@ -103,15 +103,13 @@ class MoreScreen extends StatelessWidget {
     switch (area) {
       case SchoolArea.schoolDetails:
         onOpenSchoolDetails();
-      case SchoolArea.academicCalendar when !model.calendarSetUp:
-        final created = await NavigationService.animatedNavigation<bool>(
-          screen: CreateSessionScreen(organizationId: school.id),
+      case SchoolArea.academicCalendar:
+        final changed = await NavigationService.animatedNavigation<bool>(
+          screen: AcademicSessionsScreen(school: school),
         );
-        if (created == true && context.mounted) {
+        if (changed == true && context.mounted) {
           await model.refresh().catchError((_) {});
         }
-      case SchoolArea.academicCalendar:
-        AppToast.show('Academic sessions are coming next');
       default:
         AppToast.show('${area.title} is coming soon');
     }

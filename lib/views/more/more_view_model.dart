@@ -34,9 +34,6 @@ class MoreViewModel extends BaseViewModel {
   String get areasTitle =>
       school.canRunSetup ? 'Run your school' : 'About your school';
 
-  bool get calendarSetUp =>
-      _progress?.isDone(SetupStep.academicCalendar) ?? false;
-
   /// The line under each tile's title.
   String statusFor(SchoolArea area) => switch (area) {
     SchoolArea.academicCalendar => _currentTerm?.label ?? _notSetUp,
@@ -52,17 +49,22 @@ class MoreViewModel extends BaseViewModel {
   String _doneOr(SetupStep step) =>
       (_progress?.isDone(step) ?? false) ? 'Set up' : _notSetUp;
 
-  /// Why this person can't open [area], or null when they can. Every area
-  /// page so far is for changing things, so entry needs [AreaAccess.manage].
-  String? blockedReason(SchoolArea area) => switch (accessTo(area)) {
-    AreaAccess.manage => null,
-    AreaAccess.none => "You don't have access to ${area.title.toLowerCase()}",
-    AreaAccess.view =>
-      area == SchoolArea.schoolDetails
-          ? "Only the owner can change the school's details"
-          : 'Only the owner, admins, the principal and vice principals can '
-                'change this',
-  };
+  /// Why this person can't open [area], or null when they can. The academic
+  /// calendar has a read-only view, so seeing it is enough; the other area
+  /// pages are for changing things and need [AreaAccess.manage].
+  String? blockedReason(SchoolArea area) {
+    final access = accessTo(area);
+    if (access == AreaAccess.none) {
+      return "You don't have access to ${area.title.toLowerCase()}";
+    }
+    if (access == AreaAccess.manage || area == SchoolArea.academicCalendar) {
+      return null;
+    }
+    return area == SchoolArea.schoolDetails
+        ? "Only the owner can change the school's details"
+        : 'Only the owner, admins, the principal and vice principals can '
+              'change this';
+  }
 
   /// First load: shows the spinner, then the page or an error view.
   Future<void> load() async {

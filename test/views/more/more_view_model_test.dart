@@ -91,7 +91,6 @@ void main() {
 
       expect(model.areas, SchoolArea.values);
       expect(model.areasTitle, 'Run your school');
-      expect(model.calendarSetUp, isTrue);
       expect(
         model.statusFor(SchoolArea.academicCalendar),
         '2026/27 · First term',
@@ -105,7 +104,7 @@ void main() {
       );
     });
 
-    test("bursars can't open setup areas and never load the team", () async {
+    test("bursars only view the calendar and never load the team", () async {
       final service = _Schools();
       final model = MoreViewModel(
         school: _school(OrganizationMemberRole.bursar),
@@ -116,7 +115,9 @@ void main() {
       expect(model.areas, isNot(contains(SchoolArea.team)));
       expect(model.areasTitle, 'About your school');
       expect(service.askedForTeam, isFalse);
-      expect(model.blockedReason(SchoolArea.academicCalendar), isNotNull);
+      // The calendar has a read-only view; the other areas don't yet.
+      expect(model.blockedReason(SchoolArea.academicCalendar), isNull);
+      expect(model.blockedReason(SchoolArea.classes), isNotNull);
       expect(model.statusFor(SchoolArea.academicCalendar), 'Not set up yet');
     });
   });
