@@ -83,6 +83,7 @@ class MoreScreen extends StatelessWidget {
                 ),
               const SizedBox(height: AppSpacing.lg),
               MoreAccountCard(onSignOut: onSignOut),
+              SizedBox(height: AppSpacing.xl,)
             ],
           ),
         ),
