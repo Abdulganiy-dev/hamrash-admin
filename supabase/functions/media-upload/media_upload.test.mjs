@@ -95,6 +95,11 @@ test('rejects unknown types, apps and kinds without calling Cloudflare', async (
     // each app only gets its own kinds
     { type: 'image', app: 'hamrash-platform', kind: 'staff-photos' },
     { type: 'image', app: 'hamrash-admin' },
+    // names that exist on every object must be "not on the list", not a crash
+    { type: 'image', app: '__proto__', kind: 'school-logos' },
+    { type: 'image', app: 'constructor', kind: 'school-logos' },
+    { type: 'image', app: 'toString', kind: 'school-logos' },
+    { type: 'image', app: ['hamrash-admin'], kind: 'school-logos' },
     {},
   ]) {
     assert.equal((await handleMediaUpload(post(body), deps)).status, 400, JSON.stringify(body));

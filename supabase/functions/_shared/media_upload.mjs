@@ -3,6 +3,8 @@
 // public URL. Kept free of Deno APIs so `node --test` can run it.
 // Ported from HireThem.
 
+import { authenticate, json } from './http.mjs';
+
 /**
  * Which media kinds each app may ask for. To let a new app upload, add it here,
  * give the app a `MediaKind` with the same `appName` and kinds, and extend the
@@ -13,14 +15,18 @@ export const ALLOWED_KINDS = {
   'hamrash-admin': ['school-logos', 'staff-photos', 'student-photos', 'parent-photos'],
 };
 
+/**
+ * Whether `app` may ask for `kind`. Looks the app up as an own property, so a
+ * name like `constructor` or `__proto__` is just "not on the list".
+ */
+export const isAllowed = (app, kind) =>
+  typeof app === 'string' &&
+  typeof kind === 'string' &&
+  Object.hasOwn(ALLOWED_KINDS, app) &&
+  ALLOWED_KINDS[app].includes(kind);
+
 const CLOUDFLARE = 'https://api.cloudflare.com/client/v4';
 const MAX_VIDEO_SECONDS = 300;
-
-const json = (status, body) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
 
 /**
  * deps:
@@ -31,15 +37,8 @@ const json = (status, body) =>
 export async function handleMediaUpload(request, deps) {
   if (request.method !== 'POST') return json(405, { error: 'method_not_allowed' });
 
-  const token = (request.headers.get('Authorization') ?? '').replace(/^Bearer /i, '');
-  if (!token) return json(401, { error: 'unauthorized' });
-  let claims;
-  try {
-    claims = await deps.verifyToken(token);
-  } catch {
-    return json(401, { error: 'unauthorized' });
-  }
-  if (!claims?.sub) return json(401, { error: 'unauthorized' });
+  const uploader = await authenticate(request, deps.verifyToken);
+  if (!uploader) return json(401, { error: 'unauthorized' });
 
   let body;
   try {
@@ -49,7 +48,7 @@ export async function handleMediaUpload(request, deps) {
   }
   const { type, app, kind } = body ?? {};
   if (type !== 'image' && type !== 'video') return json(400, { error: 'invalid_type' });
-  if (!ALLOWED_KINDS[app]?.includes(kind)) return json(400, { error: 'invalid_app_or_kind' });
+  if (!isAllowed(app, kind)) return json(400, { error: 'invalid_app_or_kind' });
 
   const { config } = deps;
   // Accepts the code or the whole `customer-<code>.cloudflarestream.com` address.
@@ -57,7 +56,7 @@ export async function handleMediaUpload(request, deps) {
     .replace(/^customer-/, '')
     .replace(/\.cloudflarestream\.com.*$/, '');
   const name = deps.uuid();
-  const labels = { app, env: config.env, kind, uploader: claims.sub };
+  const labels = { app, env: config.env, kind, uploader };
   const headers = { Authorization: `Bearer ${config.apiToken}` };
 
   try {
