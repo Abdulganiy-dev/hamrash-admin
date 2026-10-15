@@ -15,7 +15,7 @@ Read these in order. Each describes what's live, with its migrations and access 
 | Doc | Covers |
 |---|---|
 | [rls-guide.md](rls-guide.md) | **How we write tables, access rules, permissions and functions.** Start here before writing a migration. |
-| [../supabase/README.md](../supabase/README.md) | Every migration, how to apply them, and the access tests |
+| [../supabase/README.md](../supabase/README.md) | Every migration, how to apply them, the access tests, and the `media-upload` edge function (all image uploads go through it, with no Cloudflare token in the app) |
 | [Clerk_Setup_Guide.md](Clerk_Setup_Guide.md) | Setting up Clerk sign-in with Supabase |
 | [Supabase_Realm_Architecture_Guide.md](Supabase_Realm_Architecture_Guide.md) | General pattern: Supabase as the source of truth, Realm as the offline cache |
 | [project-folder-structure-replication-guide.md](project-folder-structure-replication-guide.md) | The `lib/` folder layout |

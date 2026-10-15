@@ -28,6 +28,31 @@ Migrations 03, 05, 07, 10 and 11 contain `drop` statements, which the Supabase c
 
 Before writing a new migration, read [`docs/rls-guide.md`](../docs/rls-guide.md).
 
+## Edge functions
+
+Server-side code for every Hamrash app lives here, next to the migrations.
+
+| Function | What it does | Allowed apps |
+|----------|--------------|--------------|
+| `media-upload` | Checks the caller's Clerk login, then reserves a one-time, labelled Cloudflare Images or Stream upload URL, so no app holds a Cloudflare token. All uploads go through it. | `hamrash-platform`, `hamrash-admin` (the allow-list is `ALLOWED_KINDS` in `functions/_shared/media_upload.mjs`) |
+
+Layout: `functions/_shared/media_upload.mjs` (the logic), `functions/media-upload/index.ts` (wiring and secrets only), `functions/media-upload/media_upload.test.mjs`, and `secrets.env.example`. Hamrash Admin's `test/api/media_kind_test.dart` reads the allow-list and fails if the app's `MediaKind` drifts from it. Both apps upload through it: `MediaUploadService` / `ImageService` in `lib/api/services/cloudflare_services/` (Hamrash Admin's school logo is the first user). Neither app holds a Cloudflare token.
+
+**Deploy:** needs `--no-verify-jwt`, because Supabase's gateway only recognises tokens Supabase signed and ours are Clerk's. The function rejects anything without a valid Clerk token itself.
+
+```bash
+supabase secrets set --env-file supabase/functions/media-upload/secrets.env --project-ref ccvyhbyrtobdsecqvhcr
+supabase functions deploy media-upload --no-verify-jwt --project-ref ccvyhbyrtobdsecqvhcr
+```
+
+`secrets.env` is git-ignored (copy it from `secrets.env.example`). Use a Cloudflare token with only *Images Edit* and *Stream Edit*. A missing secret stops the function at start-up and names it. More: [Hamrash Platform Admin's docs/media-uploads.md](../../hamrash-platform-admin/docs/media-uploads.md).
+
+**Test** (from this folder, no packages needed):
+
+```bash
+node --test supabase/functions/media-upload/media_upload.test.mjs
+```
+
 ## Tests
 
 | File | What it checks |

@@ -53,3 +53,6 @@ app.*.map.json
 
 # Supabase CLI cache
 supabase/.temp/
+
+# Edge function secrets (real Cloudflare token): never committed
+supabase/functions/**/secrets.env

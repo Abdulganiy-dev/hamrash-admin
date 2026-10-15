@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/staff_profile.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/image_service.dart';
+import 'package:hamrash_admin/api/services/cloudflare_services/media_kind.dart';
 import 'package:hamrash_admin/api/services/supabase_services/school_service.dart';
 import 'package:hamrash_admin/core/utils/validation_util.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
@@ -166,19 +167,15 @@ class ConfirmSchoolViewModel extends BaseViewModel {
     _uploadingLogo = true;
     notifyListeners();
     try {
-      final image = await (_imageService ?? locator<ImageService>())
+      final logo = await (_imageService ?? locator<ImageService>())
           .uploadImage(
             await picked.readAsBytes(),
             'school-logo-${_organization.id}',
-            metadata: {'organization_id': _organization.id},
+            kind: MediaKind.schoolLogo,
           );
-      final url = image.variants?.firstOrNull;
-      if (image.id == null || url == null) {
-        throw StateError('Logo upload returned no image');
-      }
       _organization = await _service.updateDetails(_organization.id, {
-        'logo_id': image.id,
-        'logo_url': url,
+        'logo_id': logo.id,
+        'logo_url': logo.url,
       });
       AppToast.show('Logo added', type: AppToastType.success);
     } catch (error, stackTrace) {

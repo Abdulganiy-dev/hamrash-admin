@@ -6,9 +6,8 @@ import 'package:hamrash_admin/api/services/supabase_services/school_service.dart
 import 'package:hamrash_admin/api/services/supabase_services/academic_calendar_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/class_structure_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/subject_service.dart';
-import 'package:hamrash_admin/api/services/cloudflare_services/cloudflare_dio_client.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/image_service.dart';
-import 'package:hamrash_admin/api/services/cloudflare_services/secret_service.dart';
+import 'package:hamrash_admin/api/services/cloudflare_services/media_upload_service.dart';
 import 'package:hamrash_admin/database/realm_service.dart';
 import 'package:hamrash_admin/env_config/flavor_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -62,11 +61,11 @@ void setupLocator() {
 
   locator.registerLazySingleton<RealmService>(() => RealmService());
 
-  locator.registerLazySingleton<CloudflareDioClient>(
-    () => CloudflareDioClient(),
+  // Uploads go through the `media-upload` edge function, so the app holds no
+  // Cloudflare credential.
+  locator.registerLazySingleton<MediaUploadService>(
+    () => MediaUploadService(locator<SupabaseClient>()),
   );
-
-  locator.registerLazySingleton<SecretService>(() => SecretService());
 
   locator.registerLazySingleton<ImageService>(() => ImageService());
 }

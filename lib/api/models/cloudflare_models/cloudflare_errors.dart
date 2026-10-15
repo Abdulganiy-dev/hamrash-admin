@@ -1,66 +1,44 @@
-/// Cloudflare-specific error types
+/// What went wrong while uploading media.
 enum CloudflareError {
+  /// No answer at all: offline, timeout or a dropped connection.
   noHTTPResponse,
-  cloudflareError,
+
+  /// The `media-upload` function or Cloudflare answered with an error status.
   httpError,
+
+  /// The `media-upload` function's answer wasn't what we expect.
   unableToParse,
-  unableToRetrieveSecrets,
 }
 
-/// Custom exception for Cloudflare API errors
+/// Thrown by `MediaUploadService` (and so by `ImageService` and
+/// `VideoService`). [friendlyError] turns it into a sentence for the user.
 class CloudflareException implements Exception {
+  const CloudflareException({required this.type, this.message, this.statusCode});
+
   final CloudflareError type;
   final String? message;
+
+  /// The HTTP status for [CloudflareError.httpError]: 401 means the sign-in
+  /// wasn't accepted, 400 means the app or kind isn't on the function's
+  /// allow-list, 502 means Cloudflare refused.
   final int? statusCode;
 
-  CloudflareException({required this.type, this.message, this.statusCode});
+  factory CloudflareException.noHTTPResponse() => const CloudflareException(
+    type: CloudflareError.noHTTPResponse,
+    message: 'No HTTP response received',
+  );
 
-  /// Creates a CloudflareException for no HTTP response
-  factory CloudflareException.noHTTPResponse() {
-    return CloudflareException(
-      type: CloudflareError.noHTTPResponse,
-      message: 'No HTTP response received',
-    );
-  }
+  factory CloudflareException.httpError(int statusCode) => CloudflareException(
+    type: CloudflareError.httpError,
+    message: 'HTTP error: $statusCode',
+    statusCode: statusCode,
+  );
 
-  /// Creates a CloudflareException for Cloudflare API errors
-  factory CloudflareException.cloudflareError(String message) {
-    return CloudflareException(
-      type: CloudflareError.cloudflareError,
-      message: message,
-    );
-  }
-
-  /// Creates a CloudflareException for HTTP errors
-  factory CloudflareException.httpError(int statusCode) {
-    return CloudflareException(
-      type: CloudflareError.httpError,
-      message: 'HTTP error: $statusCode',
-      statusCode: statusCode,
-    );
-  }
-
-  /// Creates a CloudflareException for parsing errors
-  factory CloudflareException.unableToParse() {
-    return CloudflareException(
-      type: CloudflareError.unableToParse,
-      message: 'Unable to parse response',
-    );
-  }
-
-  /// Creates a CloudflareException for secrets retrieval errors
-  factory CloudflareException.unableToRetrieveSecrets() {
-    return CloudflareException(
-      type: CloudflareError.unableToRetrieveSecrets,
-      message: 'Unable to retrieve Cloudflare secrets',
-    );
-  }
+  factory CloudflareException.unableToParse() => const CloudflareException(
+    type: CloudflareError.unableToParse,
+    message: 'Unable to parse response',
+  );
 
   @override
-  String toString() {
-    if (message != null) {
-      return 'CloudflareException: $message';
-    }
-    return 'CloudflareException: ${type.name}';
-  }
+  String toString() => 'CloudflareException: ${message ?? type.name}';
 }
