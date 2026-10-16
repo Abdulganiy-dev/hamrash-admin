@@ -66,6 +66,9 @@ class _Images implements ImageService {
           'https://imagedelivery.net/hash/hamrash-admin/dev/school-logos/uuid-1/public',
     );
   }
+
+  @override
+  Future<void> deleteImage(String id) async {}
 }
 
 class _Schools extends SchoolService {

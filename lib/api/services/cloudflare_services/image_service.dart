@@ -4,7 +4,7 @@ import 'package:hamrash_admin/api/services/cloudflare_services/media_kind.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/media_upload_service.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 
-/// Uploads images to Cloudflare Images.
+/// Uploads and deletes images on Cloudflare Images.
 ///
 /// ```dart
 /// final logo = await locator<ImageService>().uploadImage(
@@ -30,4 +30,9 @@ class ImageService {
       kind: kind,
     );
   }
+
+  /// Deletes an image by the [UploadedMedia.id] returned when it was uploaded.
+  /// Only the person who uploaded it can delete it; an image that's already
+  /// gone counts as deleted. Throws a `CloudflareException` otherwise.
+  Future<void> deleteImage(String id) => _uploads.delete(id);
 }

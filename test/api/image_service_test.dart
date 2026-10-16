@@ -38,15 +38,18 @@ class _Recorder implements HttpClientAdapter {
 void main() {
   late _Recorder upload;
   late List<Map<String, dynamic>> reservations;
+  late List<String> paths;
 
   setUp(() {
     upload = _Recorder();
     reservations = [];
+    paths = [];
     final client = SupabaseClient(
       'https://project.supabase.co',
       'sb_publishable_test',
       accessToken: () async => 'clerk-jwt',
       httpClient: MockClient((request) async {
+        paths.add(request.url.path);
         reservations.add(jsonDecode(request.body) as Map<String, dynamic>);
         return http.Response(
           jsonEncode({'id': 'id-1', 'uploadURL': 'https://u.example/1', 'url': 'https://cdn.example/1'}),
@@ -77,4 +80,11 @@ void main() {
     expect(upload.body, contains('filename="logo.png"'));
   });
 
+  test('deleteImage sends the id to media-delete', () async {
+    const id = 'hamrash-admin/dev/school-logos/uuid-1';
+    await ImageService().deleteImage(id);
+
+    expect(paths.single, '/functions/v1/media-delete');
+    expect(reservations.single, {'id': id});
+  });
 }

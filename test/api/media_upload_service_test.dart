@@ -191,4 +191,78 @@ void main() {
       expect(e.type, CloudflareError.noHTTPResponse);
     });
   });
+
+  group('delete', () {
+    http.Response json(int status, Object body) => http.Response(
+      jsonEncode(body),
+      status,
+      headers: {'content-type': 'application/json'},
+    );
+
+    const id = 'hamrash-admin/dev/school-logos/uuid-1';
+
+    Future<CloudflareException> failure(MediaUploadService s) async {
+      try {
+        await s.delete(id);
+      } on CloudflareException catch (e) {
+        return e;
+      }
+      fail('expected a CloudflareException');
+    }
+
+    test('asks media-delete to remove the id, as the signed-in user', () async {
+      final s = service(
+        function: (_) => json(200, {'id': id, 'deleted': true}),
+      );
+      await s.delete(id);
+
+      expect(functionCall.url.path, '/functions/v1/media-delete');
+      expect(functionCall.headers['Authorization'], 'Bearer clerk-jwt');
+      expect(jsonDecode(functionCall.body), {'id': id});
+    });
+
+    test('an image that is already gone counts as deleted', () async {
+      final s = service(function: (_) => json(404, {'error': 'not_found'}));
+      await s.delete(id);
+    });
+
+    test(
+      'Supabase saying the function is missing is NOT "already gone"',
+      () async {
+        // Same 404 status, but from the gateway: the image was not deleted.
+        final missing = await failure(
+          service(
+            function: (_) => json(404, {
+              'code': 'NOT_FOUND',
+              'message': 'Requested function was not found',
+            }),
+          ),
+        );
+        expect(missing.type, CloudflareError.httpError);
+        expect(missing.statusCode, 404);
+
+        final plain = await failure(
+          service(function: (_) => http.Response('Not Found', 404)),
+        );
+        expect(plain.statusCode, 404);
+      },
+    );
+
+    test('the function refusing keeps its status', () async {
+      for (final status in [400, 401, 403, 502]) {
+        final e = await failure(
+          service(function: (_) => json(status, {'error': 'x'})),
+        );
+        expect(e.type, CloudflareError.httpError);
+        expect(e.statusCode, status);
+      }
+    });
+
+    test('no connection', () async {
+      final e = await failure(
+        service(function: (_) => throw http.ClientException('offline')),
+      );
+      expect(e.type, CloudflareError.noHTTPResponse);
+    });
+  });
 }

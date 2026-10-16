@@ -17,10 +17,10 @@ class UploadedMedia {
   final String url;
 }
 
-/// Uploads images and videos to Cloudflare without the app ever holding a
-/// Cloudflare credential. The `media-upload` Supabase edge function checks the
+/// Uploads and deletes images and videos on Cloudflare without the app ever
+/// holding a Cloudflare credential. The `media-upload` Supabase edge function checks the
 /// Clerk login, reserves a labelled one-time upload URL, and the file goes
-/// straight to that URL.
+/// straight to that URL. `media-delete` removes an image the caller uploaded.
 ///
 /// This and [PlatformService] are the only code that talks to Supabase.
 /// Screens never use this directly: they go through `ImageService` or
@@ -55,11 +55,7 @@ class MediaUploadService {
       );
       reservation = response.data;
     } on FunctionException catch (e) {
-      // Newer Supabase versions report a request that never got an answer as a
-      // FunctionException with status 0; that isn't an HTTP error.
-      throw e.status == 0
-          ? CloudflareException.noHTTPResponse()
-          : CloudflareException.httpError(e.status);
+      throw _failure(e);
     } on Exception {
       throw CloudflareException.noHTTPResponse();
     }
@@ -91,4 +87,35 @@ class MediaUploadService {
     }
     return UploadedMedia(id: id, url: url);
   }
+
+  /// Deletes an image by the [id] that [upload] returned. Only the person who
+  /// uploaded it can delete it. An image that's already gone counts as deleted.
+  ///
+  /// Throws [CloudflareException]: `httpError` with 403 (not yours, or not
+  /// uploaded through `media-upload`), 400 (not one of our ids), 401 or 502,
+  /// and `noHTTPResponse` when there's no connection.
+  Future<void> delete(String id) async {
+    try {
+      await _supabase.functions.invoke('media-delete', body: {'id': id});
+    } on FunctionException catch (e) {
+      if (_isAlreadyGone(e)) return;
+      throw _failure(e);
+    } on Exception {
+      throw CloudflareException.noHTTPResponse();
+    }
+  }
+
+  /// Newer Supabase versions report a request that never got an answer as a
+  /// [FunctionException] with status 0; that isn't an HTTP error.
+  static CloudflareException _failure(FunctionException e) => e.status == 0
+      ? CloudflareException.noHTTPResponse()
+      : CloudflareException.httpError(e.status);
+
+  /// `media-delete` answers 404 `{"error": "not_found"}` for an image that no
+  /// longer exists. A 404 with any other body is Supabase saying the function
+  /// itself isn't there, which must not be mistaken for "already deleted".
+  static bool _isAlreadyGone(FunctionException e) =>
+      e.status == 404 &&
+      e.details is Map &&
+      (e.details as Map)['error'] == 'not_found';
 }

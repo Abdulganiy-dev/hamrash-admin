@@ -19,8 +19,9 @@ class CloudflareException implements Exception {
   final String? message;
 
   /// The HTTP status for [CloudflareError.httpError]: 401 means the sign-in
-  /// wasn't accepted, 400 means the app or kind isn't on the function's
-  /// allow-list, 502 means Cloudflare refused.
+  /// wasn't accepted, 400 means the app or kind (or the image id) isn't one the
+  /// functions accept, 403 means the image isn't theirs to delete, 502 means
+  /// Cloudflare refused.
   final int? statusCode;
 
   factory CloudflareException.noHTTPResponse() => const CloudflareException(
