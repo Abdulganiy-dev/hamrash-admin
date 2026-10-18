@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:motor/motor.dart';
+import 'package:hamrash_admin/core/widgets/app_spring_pager.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_metrics.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_tab_bar.dart';
 
@@ -91,15 +93,16 @@ class _AppTabShellState extends State<AppTabShell> {
           child: Stack(
             children: [
               Positioned.fill(
-                child: IndexedStack(
+                child: AppSpringPager(
+                  motion: Motion.snappySpring(
+                    duration: const Duration(milliseconds: 300),
+                    snapToEnd: true,
+                  ),
                   index: _index,
                   children: [
                     for (var i = 0; i < widget.tabs.length; i++)
                       _opened.contains(i)
-                          ? TickerMode(
-                              enabled: i == _index,
-                              child: widget.tabs[i].builder(context),
-                            )
+                          ? widget.tabs[i].builder(context)
                           : const SizedBox.shrink(),
                   ],
                 ),

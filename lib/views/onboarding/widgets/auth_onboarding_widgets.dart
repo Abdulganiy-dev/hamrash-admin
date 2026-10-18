@@ -125,40 +125,44 @@ class AuthProviderLabel extends StatelessWidget {
   final String label;
   final Color labelColor;
   final Color? tint;
+
+  /// Drawn height of the mark, e.g. 20. The width follows the asset's own
+  /// aspect ratio — see the note in [build].
   final double iconSize;
 
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      // Fixed 20 × 20 slot, matching the Paper design, so the mark's own
-      // aspect ratio can't nudge the label off the row's centre line.
-      SizedBox.square(
-        dimension: iconSize,
-        child: SvgPicture.asset(
+  Widget build(BuildContext context) {
+    // The mark is sized by height only and keeps its own aspect ratio, so the
+    // 10px gap is measured from the drawn edge. A square 20 × 20 slot would
+    // leave ~1.9px of empty space on each side of a tall mark (the Apple logo
+    // is 814 × 1000) and none beside a square one (the Google G is 48 × 48):
+    // the Apple button then reads as spaced wider and sitting left of centre.
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SvgPicture.asset(
           asset,
-          width: iconSize,
           height: iconSize,
           fit: BoxFit.contain,
           colorFilter: tint == null
               ? null
               : ColorFilter.mode(tint!, BlendMode.srcIn),
         ),
-      ),
-      const SizedBox(width: 10),
-      Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: AppTypography.title.copyWith(
-          color: labelColor,
-          fontSize: 17,
-          height: 24 / 17,
+        const SizedBox(width: 10),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.title.copyWith(
+            color: labelColor,
+            fontSize: 17,
+            height: 24 / 17,
+          ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }
 
 class AuthTermsCopy extends StatelessWidget {

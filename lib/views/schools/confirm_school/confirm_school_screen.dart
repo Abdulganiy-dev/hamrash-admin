@@ -72,12 +72,18 @@ class ConfirmSchoolScreen extends StatelessWidget {
           _DetailsCard(model: model),
         ],
       ),
-      footer: AppPrimaryButton(
-        size: AppButtonSize.large,
-        isLoading: model.busy,
-        isDisabled: model.uploadingLogo,
-        onPressed: model.confirm,
-        child: const AppText('Looks good'),
+      footer: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          
+          AppPrimaryButton(
+            size: AppButtonSize.large,
+            isLoading: model.busy,
+            isDisabled: model.uploadingLogo,
+            onPressed: model.confirm,
+            child: const AppText('Looks good'),
+          ),
+        ],
       ),
     ),
   );

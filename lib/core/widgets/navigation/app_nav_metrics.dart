@@ -21,6 +21,9 @@ class AppNavMetrics {
   /// Tab bar height. The bar has no background; it sits on the page.
   static const double tabBarHeight = 52;
 
+  /// Width of a tab slot, matching HireThem navigation.
+  static const double tabWidth = 80;
+
   /// Space between the tab bar and the screen edges.
   static const double tabBarSideInset = AppSpacing.screen;
 
