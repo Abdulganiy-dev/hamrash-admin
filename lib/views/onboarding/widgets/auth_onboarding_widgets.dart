@@ -112,10 +112,11 @@ class AuthScreenFrame extends StatelessWidget {
 }
 
 /// Apple's artwork is bottom-heavy: the apple body sits low in the 814 × 1000
-/// box and the leaf above it is light. Its visual mass therefore sits about
-/// 3px below the box centre at a 22px mark, so the paint is lifted to put the
-/// body level with the label. The slot and the row are untouched.
+/// box and the leaf above it is light, so its visual mass sits below the
+/// bounding-box centre. Lifting the paint puts the body level with the label;
+/// the slot and the row are untouched.
 const double kAppleMarkOffsetY = -2;
+
 class AuthProviderLabel extends StatelessWidget {
   const AuthProviderLabel({
     super.key,
@@ -144,10 +145,9 @@ class AuthProviderLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // The mark sits in a shared square slot so both rows have the same layout
-    // width, and the artwork keeps its own aspect ratio inside it. A tall mark
-    // (Apple, 814 × 1000) paints narrower than a square one (Google G), so
-    // [opticalScale] enlarges only the paint — the slot, the 10px gap and the
-    // label's position are unaffected.
+    // width, and the artwork keeps its own aspect ratio inside it. [markOffsetY]
+    // moves only the paint, so a bottom-heavy mark can be centred optically
+    // without shifting the slot, the 10px gap or the label.
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
