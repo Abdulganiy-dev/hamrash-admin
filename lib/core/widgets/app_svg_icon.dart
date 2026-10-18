@@ -122,26 +122,28 @@ class AppSvgIcon extends StatelessWidget {
   const AppSvgIcon(
     this.icon, {
     super.key,
-    this.size = 24,
+    this.size,
     this.color,
     this.semanticLabel,
   });
 
   final AppSvgIconData? icon;
-  final double size;
+  final double? size;
   final Color? color;
   final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
     final icon = this.icon;
-    if (icon == null) return SizedBox.square(dimension: size);
+    final iconTheme = IconTheme.of(context);
+    final iconSize = size ?? iconTheme.size ?? 24;
+    if (icon == null) return SizedBox.square(dimension: iconSize);
 
-    final resolvedColor = color ?? IconTheme.of(context).color;
+    final resolvedColor = color ?? iconTheme.color;
     return SvgPicture.asset(
       icon.assetPath,
-      width: size,
-      height: size,
+      width: iconSize,
+      height: iconSize,
       fit: BoxFit.contain,
       colorFilter: resolvedColor == null
           ? null
