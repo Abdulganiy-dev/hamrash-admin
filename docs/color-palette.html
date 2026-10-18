@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hamrash Admin — Colour Palette</title>
+<style>
+  :root {
+    --aubergine: #3B1F3A;
+    --aubergine-600: #321A31;
+    --aubergine-400: #7E5577;
+    --aubergine-200: #D5B9CF;
+    --aubergine-50: #F6EEF4;
+    --linen: #F6F5F2;
+    --white: #FFFFFF;
+    --stone-50: #FBF9F4;
+    --stone-100: #F3F0E8;
+    --stone-200: #E6DFD2;
+    --stone-300: #D3C9B8;
+    --stone-400: #A39789;
+    --stone-500: #8A7D72;
+    --stone-600: #5C4E46;
+    --stone-900: #2A1712;
+    --moss: #4F7A28;
+    --moss-mute: #EEF3E2;
+    --moss-text: #3F6620;
+    --amber: #B7791F;
+    --amber-mute: #FCF1D6;
+    --amber-text: #8A5A12;
+    --rust: #B23A1E;
+    --rust-mute: #F8E1D9;
+    --rust-text: #962F17;
+    --info: #2C5A7C;
+    --info-mute: #DDE8F2;
+    --info-text: #21445C;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--linen);
+    color: var(--stone-900);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 64px 40px 120px; }
+  header.hero { border-bottom: 1px solid rgba(42,23,18,.14); padding-bottom: 40px; margin-bottom: 48px; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--aubergine); font-weight: 700; margin-bottom: 18px;
+  }
+  h1 { font-size: 46px; line-height: 1.05; letter-spacing: -.02em; margin: 0 0 18px; font-weight: 700; }
+  h2 { font-size: 13px; letter-spacing: .13em; text-transform: uppercase; color: var(--aubergine);
+       margin: 64px 0 6px; font-weight: 700; }
+  h2 + .lede { margin: 0 0 28px; color: var(--stone-600); max-width: 68ch; font-size: 15px; }
+  h3 { font-size: 15px; margin: 32px 0 12px; font-weight: 650; }
+  p { max-width: 72ch; color: var(--stone-600); }
+  .meta { display: flex; gap: 28px; flex-wrap: wrap; color: var(--stone-500); font-size: 13px; }
+  .meta b { color: var(--stone-900); font-weight: 600; }
+
+  .grid { display: grid; gap: 14px; }
+  .g2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .g3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .g4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+  .g6 { grid-template-columns: repeat(6, minmax(0,1fr)); }
+  @media (max-width: 900px) { .g4, .g6 { grid-template-columns: repeat(2, minmax(0,1fr)); } .g3 { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) { .g2, .g4, .g6 { grid-template-columns: 1fr; } .wrap { padding: 40px 22px 80px; } h1 { font-size: 34px; } }
+
+  .swatch {
+    background: var(--white); border: 1px solid rgba(42,23,18,.08); border-radius: 14px;
+    overflow: hidden; box-shadow: 0 1px 2px rgba(42,23,18,.04);
+  }
+  .chip { height: 86px; display: flex; align-items: flex-end; justify-content: flex-end; padding: 9px 10px;
+          font-size: 10.5px; font-weight: 600; letter-spacing: .02em; }
+  .body { padding: 11px 12px 12px; }
+  .name { font-size: 13px; font-weight: 650; color: var(--stone-900); }
+  .hex { font: 11.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--stone-500); margin-top: 2px; }
+  .role { font-size: 11.5px; color: var(--stone-600); margin-top: 6px; line-height: 1.4; }
+  .aa { display: inline-block; margin-top: 7px; font-size: 10px; font-weight: 700; letter-spacing: .04em;
+        padding: 2px 6px; border-radius: 5px; background: var(--stone-100); color: var(--stone-600); }
+  .aa.pass { background: #EAF2DC; color: #3F6620; }
+  .aa.warn { background: #FCF1D6; color: #8A5A12; }
+  .aa.fail { background: #F8E1D9; color: #962F17; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--white);
+          border: 1px solid rgba(42,23,18,.08); border-radius: 12px; overflow: hidden; font-size: 13px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid rgba(42,23,18,.07); }
+  th { background: var(--stone-100); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--stone-600); }
+  tr:last-child td { border-bottom: 0; }
+  td.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .refs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 900px) { .refs { grid-template-columns: 1fr; } }
+  .ref { background: var(--white); border: 1px solid rgba(42,23,18,.08); border-radius: 14px; padding: 16px 17px; }
+  .ref .site { font-size: 12.5px; font-weight: 700; color: var(--stone-900); }
+  .ref .dots { display: flex; gap: 5px; margin: 10px 0 9px; }
+  .ref .dot { width: 18px; height: 18px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.07); }
+  .ref p { font-size: 12.5px; margin: 0; color: var(--stone-600); }
+
+  .status-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .pill { font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 999px; }
+  .block { background: var(--white); border: 1px solid rgba(42,23,18,.08); border-radius: 14px; padding: 18px 19px; }
+  .block h3 { margin-top: 0; }
+  .band { display: flex; height: 10px; border-radius: 99px; overflow: hidden; margin-top: 10px; }
+  .band span { flex: 1; }
+
+  .note { border-left: 3px solid var(--aubergine); background: var(--aubergine-50); padding: 16px 18px;
+          border-radius: 0 10px 10px 0; margin: 24px 0; }
+  .note p { margin: 0; color: var(--stone-700, #45372F); font-size: 14px; }
+  .note strong { color: var(--aubergine); }
+
+  .dir { background: var(--white); border: 1px solid rgba(42,23,18,.08); border-radius: 14px; overflow: hidden; }
+  .dir .top { height: 64px; display: flex; align-items: center; padding: 0 16px; }
+  .dir .btm { padding: 13px 16px 16px; }
+  .dir .btm b { font-size: 13px; }
+  .dir .btm p { font-size: 12.5px; margin: 5px 0 0; }
+
+  footer { margin-top: 72px; padding-top: 24px; border-top: 1px solid rgba(42,23,18,.14);
+           color: var(--stone-500); font-size: 12px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Hamrash Admin · Design System</div>
+    <h1>Colour palette<br>for a school back office</h1>
+    <p style="font-size:17px; max-width:62ch;">
+      Researched against admin, education and finance products on Mobbin, then reconciled with the
+      aubergine system already in <span class="mono">lib/core/constants/app_colors.dart</span>.
+      The result: keep the brand, fill the three real gaps — an info hue, accessible muted text, and a
+      chart ramp that survives white backgrounds.
+    </p>
+    <div class="meta">
+      <span><b>Source</b> Mobbin — 24 sections, 18 products</span>
+      <span><b>Brand</b> Aubergine #3B1F3A (locked)</span>
+      <span><b>Canvas</b> Linen #F6F5F2 (locked)</span>
+    </div>
+  </header>
+
+  <!-- ============ RESEARCH ============ -->
+  <h2>01 · What the research actually shows</h2>
+  <p class="lede">
+    School admin tools almost never lead with a "school" colour like blue or green. The pattern across the
+    references is more specific: a quiet, warm canvas; one deep authoritative brand colour; and saturated
+    colour reserved for status and data. Six recurring directions:
+  </p>
+
+  <div class="refs">
+    <div class="ref">
+      <div class="site">Warm paper neutral</div>
+      <div class="dots">
+        <span class="dot" style="background:#F5F0E6"></span>
+        <span class="dot" style="background:#E8E2D4"></span>
+        <span class="dot" style="background:#1C1C1C"></span>
+        <span class="dot" style="background:#5B5BD6"></span>
+      </div>
+      <p>Retool, Midday, Teak, Feather, Harvest. Cream or linen page, near-black type, one accent. Reads calm,
+         expensive and printable — the strongest fit for a records-heavy admin.</p>
+    </div>
+    <div class="ref">
+      <div class="site">Institutional navy / indigo</div>
+      <div class="dots">
+        <span class="dot" style="background:#0A2540"></span>
+        <span class="dot" style="background:#635BFF"></span>
+        <span class="dot" style="background:#3B82F6"></span>
+        <span class="dot" style="background:#F6F9FC"></span>
+      </div>
+      <p>Stripe, Deel, Linear, Dropbox. Navy sidebar, indigo primary. Signals trust, money and permissions —
+         what bursars and principals expect from a system of record.</p>
+    </div>
+    <div class="ref">
+      <div class="site">Education green</div>
+      <div class="dots">
+        <span class="dot" style="background:#0B3B2E"></span>
+        <span class="dot" style="background:#1F4D3F"></span>
+        <span class="dot" style="background:#58CC02"></span>
+        <span class="dot" style="background:#7CF0A0"></span>
+      </div>
+      <p>Sprout Learning Portal, Skillshare, Duolingo. Deep forest surfaces with a bright mint or lime action.
+         Friendly, but consumer-learner, not back-office.</p>
+    </div>
+    <div class="ref">
+      <div class="site">Friendly accent blocks</div>
+      <div class="dots">
+        <span class="dot" style="background:#F2C43D"></span>
+        <span class="dot" style="background:#FFB4A2"></span>
+        <span class="dot" style="background:#7C5CFC"></span>
+        <span class="dot" style="background:#3D7A8A"></span>
+      </div>
+      <p>Headspace, Uxcel, Canva, Upwork. Big pastel cards carrying illustration. Good for empty states and
+         module tiles; wrong for dense tables.</p>
+    </div>
+    <div class="ref">
+      <div class="site">Monochrome + data colour</div>
+      <div class="dots">
+        <span class="dot" style="background:#0E0E0E"></span>
+        <span class="dot" style="background:#1A1A1A"></span>
+        <span class="dot" style="background:#8B8B8B"></span>
+        <span class="dot" style="background:#B5D334"></span>
+      </div>
+      <p>Midday, Antimetal, Mora, Resend. Interface is greyscale; the only colour is a metric, a trend or a
+         state. Best model for the dashboard.</p>
+    </div>
+    <div class="ref">
+      <div class="site">Status-only saturation</div>
+      <div class="dots">
+        <span class="dot" style="background:#4F7A28"></span>
+        <span class="dot" style="background:#B7791F"></span>
+        <span class="dot" style="background:#B23A1E"></span>
+        <span class="dot" style="background:#3D7A8A"></span>
+      </div>
+      <p>Feather, Harvest, Stripe, Monarch. Tables stay neutral; green / amber / red pills carry every
+         meaningful signal. This is the rule Hamrash already follows — keep it.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><strong>Verdict.</strong> The existing aubergine + linen + warm stone direction is the right call and
+      matches the strongest references. Do not switch to education green or institutional navy. Instead
+      complete the system: one absent info hue, one contrast fix, and a proper chart ramp.</p>
+  </div>
+
+  <!-- ============ CORE ============ -->
+  <h2>02 · Brand &amp; canvas</h2>
+  <p class="lede">The identity layer. Aubergine for anything the school "owns"; linen for the page; white only for surfaces that float.</p>
+
+  <div class="grid g4">
+    <div class="swatch">
+      <div class="chip" style="background:#3B1F3A;color:#fff;">Aa 14.6:1</div>
+      <div class="body"><div class="name">Aubergine 500</div><div class="hex">#3B1F3A</div>
+        <div class="role">Primary. Sidebar, primary button, brand text, active nav.</div>
+        <span class="aa pass">AA · white text</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#321A31;color:#fff;">Hover</div>
+      <div class="body"><div class="name">Aubergine 600</div><div class="hex">#321A31</div>
+        <div class="role">Hover on filled brand controls.</div><span class="aa pass">AA</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#2A1529;color:#fff;">Pressed</div>
+      <div class="body"><div class="name">Aubergine 700</div><div class="hex">#2A1529</div>
+        <div class="role">Pressed state; dark hairline on light.</div><span class="aa pass">AA</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#F6EEF4;color:#3B1F3A;">12.8:1</div>
+      <div class="body"><div class="name">Aubergine 50</div><div class="hex">#F6EEF4</div>
+        <div class="role">Selected row, brand tint, quiet badge.</div><span class="aa pass">AA</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#D5B9CF;color:#3B1F3A;">Focus</div>
+      <div class="body"><div class="name">Aubergine 200</div><div class="hex">#D5B9CF</div>
+        <div class="role">Focus ring, disabled brand fill, chart grid tie-in.</div><span class="aa">decorative</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#F6F5F2;color:#8A7D72;border-bottom:1px solid #E6DFD2;">Page</div>
+      <div class="body"><div class="name">Linen</div><div class="hex">#F6F5F2</div>
+        <div class="role">Behind every screen. Warm enough that white cards lift off it.</div><span class="aa">canvas</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#FFFFFF;color:#8A7D72;border-bottom:1px solid #E6DFD2;">Surface</div>
+      <div class="body"><div class="name">White</div><div class="hex">#FFFFFF</div>
+        <div class="role">Cards, sheets, dialogs, table body.</div><span class="aa">canvas</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#F3F0E8;color:#5C4E46;">Layer</div>
+      <div class="body"><div class="name">Stone 100</div><div class="hex">#F3F0E8</div>
+        <div class="role">Table headers, nested panels, empty slots.</div><span class="aa pass">AA text</span></div>
+    </div>
+  </div>
+
+  <!-- ============ TEXT ============ -->
+  <h2>03 · Text &amp; strokes</h2>
+  <p class="lede">One fix required. Stone 500 at 3.66:1 fails AA for small text on linen; it is already used for captions and metadata throughout the app.</p>
+
+  <div class="grid g4">
+    <div class="swatch">
+      <div class="chip" style="background:#2A1712;color:#fff;">15.7:1</div>
+      <div class="body"><div class="name">Stone 900</div><div class="hex">#2A1712</div>
+        <div class="role">Headings, titles, table labels.</div><span class="aa pass">AAA</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#5C4E46;color:#fff;">7.3:1</div>
+      <div class="body"><div class="name">Stone 600</div><div class="hex">#5C4E46</div>
+        <div class="role">Body copy, descriptions, form values.</div><span class="aa pass">AAA</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#7A6E63;color:#fff;">4.5:1</div>
+      <div class="body"><div class="name">Stone 500 · new value</div><div class="hex">#7A6E63</div>
+        <div class="role">Metadata, captions, timestamps. Replaces #8A7D72 (3.7:1).</div><span class="aa pass">AA</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#A39789;color:#fff;">2.5:1</div>
+      <div class="body"><div class="name">Stone 400</div><div class="hex">#A39789</div>
+        <div class="role">Disabled labels only — never running text.</div><span class="aa fail">not for text</span></div>
+    </div>
+  </div>
+
+  <table style="margin-top:16px;">
+    <tr><th>Stroke token</th><th>Value</th><th>Use</th></tr>
+    <tr><td>Soft</td><td class="mono">#2A1712 @ 4%</td><td>Table row separators</td></tr>
+    <tr><td>Subtle</td><td class="mono">#2A1712 @ 8%</td><td>Card edge, input border</td></tr>
+    <tr><td>Mild</td><td class="mono">#2A1712 @ 12%</td><td>Divider on dense surfaces</td></tr>
+    <tr><td>Strong</td><td class="mono">#2A1712 @ 20%</td><td>Emphasised border, focus outline base</td></tr>
+    <tr><td>Brand</td><td class="mono">#3B1F3A</td><td>Active tab underline, selected control</td></tr>
+  </table>
+
+  <!-- ============ SEMANTIC ============ -->
+  <h2>04 · Semantic states</h2>
+  <p class="lede">Four meanings, four tones. Never use these as decoration — they are the only place saturated colour is allowed outside charts.</p>
+
+  <div class="grid g4">
+    <div class="swatch">
+      <div class="chip" style="background:#4F7A28;color:#fff;">Success</div>
+      <div class="body"><div class="name">Moss</div><div class="hex">#4F7A28 · mute #EEF3E2 · text #3F6620</div>
+        <div class="role">Paid, present, published, active, approved.</div></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#B7791F;color:#fff;">Warning</div>
+      <div class="body"><div class="name">Amber</div><div class="hex">#B7791F · mute #FCF1D6 · text #8A5A12</div>
+        <div class="role">Partial payment, late, pending review, expiring.</div></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#B23A1E;color:#fff;">Error</div>
+      <div class="body"><div class="name">Rust</div><div class="hex">#B23A1E · mute #F8E1D9 · text #962F17</div>
+        <div class="role">Overdue, absent, rejected, failed.</div></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#2C5A7C;color:#fff;">Info · new</div>
+      <div class="body"><div class="name">Harbour</div><div class="hex">#2C5A7C · mute #DDE8F2 · text #21445C</div>
+        <div class="role">Neutral notices, help, submitted, applications.</div></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><strong>Gap filled.</strong> There is no informational hue in the current system, so "submitted",
+      "in review" and "new application" all fall back to grey. Harbour is deliberately desaturated —
+      it sits beside aubergine without competing, and it is the one blue in the palette.</p>
+  </div>
+
+  <!-- ============ SCHOOL STATUS ============ -->
+  <h2>05 · School-specific status sets</h2>
+  <p class="lede">Same four tones, fixed meaning per module. Lock these now so a bursar, a teacher and a parent read the same colour the same way.</p>
+
+  <div class="grid g2">
+    <div class="block">
+      <h3>Attendance</h3>
+      <div class="status-row">
+        <span class="pill" style="background:#EEF3E2;color:#3F6620;">Present · moss</span>
+        <span class="pill" style="background:#FCF1D6;color:#8A5A12;">Late · amber</span>
+        <span class="pill" style="background:#F8E1D9;color:#962F17;">Absent · rust</span>
+        <span class="pill" style="background:#DCEBEE;color:#1F4E5A;">Excused · teal</span>
+      </div>
+      <div class="band">
+        <span style="background:#4F7A28"></span><span style="background:#4F7A28"></span><span style="background:#4F7A28"></span>
+        <span style="background:#B7791F"></span><span style="background:#4F7A28"></span><span style="background:#B23A1E"></span>
+        <span style="background:#4F7A28"></span><span style="background:#4F7A28"></span><span style="background:#DCEBEE"></span>
+      </div>
+      <p style="font-size:12px;margin:10px 0 0;">Attendance rate bars use the same three tones, so the chart and the register agree.</p>
+    </div>
+
+    <div class="block">
+      <h3>Fees</h3>
+      <div class="status-row">
+        <span class="pill" style="background:#EEF3E2;color:#3F6620;">Paid · moss</span>
+        <span class="pill" style="background:#FCF1D6;color:#8A5A12;">Part-paid · amber</span>
+        <span class="pill" style="background:#F8E1D9;color:#962F17;">Overdue · rust</span>
+        <span class="pill" style="background:#F3F0E8;color:#5C4E46;">Waived · stone</span>
+      </div>
+      <div class="band">
+        <span style="background:#4F7A28"></span><span style="background:#4F7A28"></span><span style="background:#4F7A28"></span>
+        <span style="background:#B7791F"></span><span style="background:#4F7A28"></span><span style="background:#B23A1E"></span>
+        <span style="background:#E6DFD2"></span>
+      </div>
+      <p style="font-size:12px;margin:10px 0 0;">Outstanding balances are never red on a dashboard — red is a per-student state, not a total.</p>
+    </div>
+
+    <div class="block">
+      <h3>Results</h3>
+      <div class="status-row">
+        <span class="pill" style="background:#F3F0E8;color:#5C4E46;">Draft · stone</span>
+        <span class="pill" style="background:#DDE8F2;color:#21445C;">Submitted · harbour</span>
+        <span class="pill" style="background:#DCEBEE;color:#1F4E5A;">Approved · teal</span>
+        <span class="pill" style="background:#EEF3E2;color:#3F6620;">Published · moss</span>
+      </div>
+      <p style="font-size:12px;margin:10px 0 0;">A four-step lifecycle, not a warning scale. Nothing here should be amber or rust.</p>
+    </div>
+
+    <div class="block">
+      <h3>Enrollment &amp; admissions</h3>
+      <div class="status-row">
+        <span class="pill" style="background:#DDE8F2;color:#21445C;">Applicant · harbour</span>
+        <span class="pill" style="background:#EEF3E2;color:#3F6620;">Active · moss</span>
+        <span class="pill" style="background:#F3F0E8;color:#5C4E46;">Withdrawn · stone</span>
+        <span class="pill" style="background:#F6EEF4;color:#3B1F3A;">Graduated · aubergine</span>
+      </div>
+      <p style="font-size:12px;margin:10px 0 0;">Graduated earns brand colour — it is an achievement, not an error.</p>
+    </div>
+  </div>
+
+  <!-- ============ CHART ============ -->
+  <h2>06 · Data &amp; category ramp</h2>
+  <p class="lede">
+    Two ramps, because they do different jobs. Category fills are large blocks and carry dark text.
+    Chart series are thin lines and must clear 3:1 against white on their own.
+  </p>
+
+  <h3>Category fills — chips, class tiles, avatars</h3>
+  <div class="grid g4">
+    <div class="swatch">
+      <div class="chip" style="background:#E8733A;color:#fff;">Tangerine</div>
+      <div class="body"><div class="name">Tangerine</div><div class="hex">#E8733A · text #8A3A14</div>
+        <div class="role">Class / group 1. Large fills only.</div><span class="aa warn">3:1 on white</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#B5D334;color:#4A5A00;">Chartreuse</div>
+      <div class="body"><div class="name">Chartreuse</div><div class="hex">#B5D334 · text #4A5A00</div>
+        <div class="role">Class / group 2, "new" tag.</div><span class="aa fail">1.7:1 · fills only</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#F2C43D;color:#6B4D00;">Honey</div>
+      <div class="body"><div class="name">Honey</div><div class="hex">#F2C43D · text #6B4D00</div>
+        <div class="role">Class / group 3.</div><span class="aa fail">1.7:1 · fills only</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#3D7A8A;color:#fff;">Teal</div>
+      <div class="body"><div class="name">Teal</div><div class="hex">#3D7A8A · text #1F4E5A</div>
+        <div class="role">Class / group 4.</div><span class="aa pass">4.8:1 on white</span></div>
+    </div>
+  </div>
+
+  <h3>Chart series — lines, bars, donut segments</h3>
+  <div class="grid g4">
+    <div class="swatch">
+      <div class="chip" style="background:#6B3F66;color:#fff;">8.3:1</div>
+      <div class="body"><div class="name">Aubergine 450</div><div class="hex">#6B3F66</div><div class="role">Series 1 · primary metric</div></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#3D7A8A;color:#fff;">4.8:1</div>
+      <div class="body"><div class="name">Teal</div><div class="hex">#3D7A8A</div><div class="role">Series 2 · comparison</div></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#4A6FA5;color:#fff;">5.1:1</div>
+      <div class="body"><div class="name">Slate blue</div><div class="hex">#4A6FA5</div><div class="role">Series 3 · boys / girls / cohort B</div></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#4F7A28;color:#fff;">5.1:1</div>
+      <div class="body"><div class="name">Moss</div><div class="hex">#4F7A28</div><div class="role">Series 4 · collected / good</div></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#C4551F;color:#fff;">4.5:1</div>
+      <div class="body"><div class="name">Deep tangerine</div><div class="hex">#C4551F</div><div class="role">Series 5 · attendee / enrolled</div></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#A87A0A;color:#fff;">3.9:1</div>
+      <div class="body"><div class="name">Deep gold</div><div class="hex">#A87A0A</div><div class="role">Series 6 · outstanding / partial</div></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#8A9E1C;color:#fff;">3.0:1</div>
+      <div class="body"><div class="name">Deep chartreuse</div><div class="hex">#8A9E1C</div><div class="role">Series 7 · secondary metric</div></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#8A7D72;color:#fff;">3.7:1</div>
+      <div class="body"><div class="name">Stone 500</div><div class="hex">#8A7D72</div><div class="role">Series 8 · "other", baseline</div></div>
+    </div>
+  </div>
+
+  <div class="block" style="margin-top:20px;">
+    <h3 style="margin-top:0;">Dark mode ramp</h3>
+    <p style="font-size:13px;margin:0 0 12px;">On Stone 950 (#170D0A) the series invert: lighten each hue, keep the order.</p>
+    <div class="grid g4">
+      <div class="swatch"><div class="chip" style="background:#170D0A;padding:0;"><span style="display:flex;height:100%;width:100%;"><span style="flex:1;background:#B48DAC;"></span><span style="flex:1;background:#6FA8C7;"></span><span style="flex:1;background:#8CA8D6;"></span><span style="flex:1;background:#A3C46A;"></span><span style="flex:1;background:#E89B6B;"></span><span style="flex:1;background:#F2C43D;"></span><span style="flex:1;background:#C9DC63;"></span><span style="flex:1;background:#A39789;"></span></span></div>
+        <div class="body"><div class="name">Dark series 1–8</div>
+        <div class="hex">#B48DAC · #6FA8C7 · #8CA8D6 · #A3C46A<br>#E89B6B · #F2C43D · #C9DC63 · #A39789</div>
+        <div class="role">All ≥ 3:1 on #170D0A.</div></div></div>
+    </div>
+  </div>
+
+  <!-- ============ ALTERNATES ============ -->
+  <h2>07 · If the brand were ever reopened</h2>
+  <p class="lede">Not a recommendation — three directions the research would support if aubergine were not already locked. Useful for the parent portal or teacher app if they should feel distinct but related.</p>
+
+  <div class="grid g3">
+    <div class="dir">
+      <div class="top" style="background:#0E2233;"><span style="color:#fff;font-weight:700;font-size:13px;">Institutional</span></div>
+      <div class="btm">
+        <b>Navy + brass</b>
+        <div class="dots" style="display:flex;gap:5px;margin:10px 0;">
+          <span style="width:20px;height:20px;border-radius:5px;background:#0E2233"></span>
+          <span style="width:20px;height:20px;border-radius:5px;background:#1F4E5A"></span>
+          <span style="width:20px;height:20px;border-radius:5px;background:#C8A24A"></span>
+          <span style="width:20px;height:20px;border-radius:5px;background:#F4F1E8"></span>
+        </div>
+        <p>For the owner/principal view. Prestige, board reports, printed documents.</p>
+      </div>
+    </div>
+    <div class="dir">
+      <div class="top" style="background:#0B3B2E;"><span style="color:#fff;font-weight:700;font-size:13px;">Academic</span></div>
+      <div class="btm">
+        <b>Forest + lime</b>
+        <div class="dots" style="display:flex;gap:5px;margin:10px 0;">
+          <span style="width:20px;height:20px;border-radius:5px;background:#0B3B2E"></span>
+          <span style="width:20px;height:20px;border-radius:5px;background:#2F6B4F"></span>
+          <span style="width:20px;height:20px;border-radius:5px;background:#B5D334"></span>
+          <span style="width:20px;height:20px;border-radius:5px;background:#FBF9F4"></span>
+        </div>
+        <p>For the teacher app. Calm, growth-oriented, low glare in a classroom.</p>
+      </div>
+    </div>
+    <div class="dir">
+      <div class="top" style="background:#B03A2E;"><span style="color:#fff;font-weight:700;font-size:13px;">Warm</span></div>
+      <div class="btm">
+        <b>Terracotta + sand</b>
+        <div class="dots" style="display:flex;gap:5px;margin:10px 0;">
+          <span style="width:20px;height:20px;border-radius:5px;background:#B03A2E"></span>
+          <span style="width:20px;height:20px;border-radius:5px;background:#E8733A"></span>
+          <span style="width:20px;height:20px;border-radius:5px;background:#F2C43D"></span>
+          <span style="width:20px;height:20px;border-radius:5px;background:#FBF9F4"></span>
+        </div>
+        <p>For the parent portal. Friendly without becoming a toy.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ IMPLEMENTATION ============ -->
+  <h2>08 · Implementation notes</h2>
+
+  <table>
+    <tr><th>Change</th><th>File</th><th>Why</th></tr>
+    <tr>
+      <td>Add <span class="mono">infoInfoDefault / Mute / Text</span></td>
+      <td class="mono">app_colors.dart</td>
+      <td>No informational hue exists; four states currently collapse to grey.</td>
+    </tr>
+    <tr>
+      <td>Change <span class="mono">AppPalette.stone500</span> → <span class="mono">#7A6E63</span></td>
+      <td class="mono">app_colors.dart</td>
+      <td>3.66:1 → 4.54:1 on linen. Fixes metadata and captions app-wide.</td>
+    </tr>
+    <tr>
+      <td>Add <span class="mono">chartSeries1–8</span> tokens</td>
+      <td class="mono">app_colors.dart</td>
+      <td>Category fills fail 3:1 as thin lines; charts need their own darker ramp.</td>
+    </tr>
+    <tr>
+      <td>Fix <span class="mono">DarkColors.primaryPrimaryMute</span></td>
+      <td class="mono">app_colors.dart:156</td>
+      <td>Currently <span class="mono">#10264A</span>, a navy — outside the aubergine family. Use <span class="mono">#31192F</span>.</td>
+    </tr>
+    <tr>
+      <td>Add status token sets</td>
+      <td class="mono">app_colors.dart</td>
+      <td>Attendance / fees / results / enrollment, so modules cannot drift.</td>
+    </tr>
+  </table>
+
+  <footer>
+    <span>Hamrash Admin · colour research · 18 Oct 2026</span>
+    <span>Contrast measured WCAG 2.1 · AA body = 4.5:1, AA large/UI = 3:1</span>
+  </footer>
+</div>
+</body>
+</html>

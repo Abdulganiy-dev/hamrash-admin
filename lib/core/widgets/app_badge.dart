@@ -4,7 +4,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// What a badge means. Colour follows meaning, never decoration.
 enum AppBadgeTone {
@@ -103,7 +103,7 @@ class AppBadge extends StatelessWidget {
     BadgeStatus status, {
     Key? key,
     AppBadgeStyle style = AppBadgeStyle.subtle,
-    IconData? icon,
+    AppSvgIconData? icon,
   }) : this(
          status.label,
          key: key,
@@ -117,7 +117,7 @@ class AppBadge extends StatelessWidget {
   final AppBadgeStyle style;
 
   /// Optional 12px leading icon (subtle and solid only).
-  final IconData? icon;
+  final AppSvgIconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -157,7 +157,7 @@ class AppBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 12, color: foreground),
+            AppSvgIcon(icon, size: 12, color: foreground),
             const SizedBox(width: 4),
           ],
           AppText(
@@ -238,7 +238,7 @@ class AppFilterChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (showCheck) ...[
-            Icon(LucideIcons.check600, size: 16, color: text),
+            AppSvgIcon(AppSvgIcons.check600, size: 16, color: text),
             const SizedBox(width: 6),
           ],
           AppText(
@@ -257,7 +257,7 @@ class AppFilterChip extends StatelessWidget {
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: enabled ? onRemove : null,
-              child: Icon(LucideIcons.x500, size: 18, color: text),
+              child: AppSvgIcon(AppSvgIcons.x500, size: 18, color: text),
             ),
           ],
         ],

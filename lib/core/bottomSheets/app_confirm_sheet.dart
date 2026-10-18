@@ -7,7 +7,7 @@ import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// Floating sheet that asks before doing something: a plain icon, a title,
 /// a message, then the confirm button with Cancel under it — both within
@@ -23,7 +23,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// ```dart
 /// final ok = await AppConfirmSheet.show(
 ///   context,
-///   icon: LucideIcons.userMinus,
 ///   isDestructive: true,
 ///   title: 'Withdraw Chiamaka?',
 ///   message: "She'll leave JSS 2 Gold and stop getting fee reminders. Her records stay, and you can re-admit her later.",
@@ -48,7 +47,7 @@ class AppConfirmSheet extends StatefulWidget {
   final String? message;
 
   /// Shown on its own above the title, in the tone colour.
-  final IconData? icon;
+  final AppSvgIconData? icon;
 
   /// Colours the icon. Defaults to [AppBadgeTone.info], or
   /// [AppBadgeTone.error] when [isDestructive].
@@ -69,7 +68,7 @@ class AppConfirmSheet extends StatefulWidget {
     required String title,
     required String confirmLabel,
     String? message,
-    IconData? icon,
+    AppSvgIconData? icon,
     AppBadgeTone? tone,
     String cancelLabel = 'Cancel',
     bool isDestructive = false,
@@ -137,12 +136,14 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
     final label = AppText(widget.confirmLabel);
     final confirm = widget.isDestructive
         ? AppDestructiveButton(
+            useGradient: true,
             width: double.infinity,
             isLoading: _isSubmitting,
             onPressed: _isSubmitting ? null : _confirm,
             child: label,
           )
         : AppPrimaryButton(
+            useGradient: true,
             width: double.infinity,
             isLoading: _isSubmitting,
             onPressed: _isSubmitting ? null : _confirm,
@@ -159,7 +160,7 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (widget.icon != null) ...[
-              Icon(widget.icon, size: 36, color: tone.base),
+              AppSvgIcon(widget.icon, size: 36, color: tone.base),
               const SizedBox(height: 14),
             ],
             AppText(
@@ -185,8 +186,8 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    LucideIcons.circleAlert500,
+                  AppSvgIcon(
+                    AppSvgIcons.circleAlert500,
                     size: 16,
                     color: AppBadgeTone.error.strong,
                   ),
@@ -214,6 +215,7 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
             confirm,
             const SizedBox(height: 8),
             AppSecondaryButton(
+              useGradient: true,
               width: double.infinity,
               onPressed: _isSubmitting
                   ? null

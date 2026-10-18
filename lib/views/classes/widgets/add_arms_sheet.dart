@@ -113,6 +113,7 @@ class _AddArmsSheetState extends State<AddArmsSheet> {
         children: [
           if (_error case final message?) AppSheetError(message),
           AppPrimaryButton(
+            useGradient: true,
             height: 52,
             isLoading: _saving,
             loadingText: 'Adding…',

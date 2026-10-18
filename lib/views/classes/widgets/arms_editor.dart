@@ -5,7 +5,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_field_style.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// Picks a class's arms: the chosen ones as dark chips (tap to remove),
 /// common names to add with one tap, and a field for anything else.
@@ -165,8 +165,8 @@ class _ArmsEditorState extends State<ArmsEditor> {
             children: [
               const Padding(
                 padding: EdgeInsets.only(top: 1),
-                child: Icon(
-                  LucideIcons.triangleAlert,
+                child: AppSvgIcon(
+                  AppSvgIcons.triangleAlert,
                   size: 14,
                   color: LightColors.warningWarningText,
                 ),
@@ -227,8 +227,8 @@ class _ArmChip extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            Icon(
-              locked ? LucideIcons.lock : LucideIcons.x600,
+            AppSvgIcon(
+              locked ? AppSvgIcons.lock : AppSvgIcons.x600,
               size: locked ? 12 : 14,
               color: locked ? AppPalette.aubergine200 : AppPalette.white,
             ),
@@ -264,8 +264,8 @@ class _SuggestionChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              LucideIcons.plus600,
+            const AppSvgIcon(
+              AppSvgIcons.plus600,
               size: 14,
               color: AppPalette.stone600,
             ),
@@ -356,8 +356,8 @@ class _CustomArmField extends StatelessWidget {
                     color: AppPalette.stone100,
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: const Icon(
-                    LucideIcons.plus600,
+                  child: const AppSvgIcon(
+                    AppSvgIcons.plus600,
                     size: 16,
                     color: LightColors.primaryPrimaryDefault,
                   ),

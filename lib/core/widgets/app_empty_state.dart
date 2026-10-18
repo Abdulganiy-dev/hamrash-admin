@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// Centred message for a screen or list with nothing to show: a plain icon
 /// (no background), a title, one line of explanation and one clear next step.
@@ -16,7 +16,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 ///
 /// ```dart
 /// AppEmptyState(
-///   icon: LucideIcons.users300,
+///   icon: AppSvgIcons.users300,
 ///   title: 'No students in JSS 2 Gold yet',
 ///   subtitle: 'Add them one by one, or import the class list from a spreadsheet.',
 ///   actionLabel: 'Add student',
@@ -27,7 +27,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 ///
 /// AppEmptyState(
 ///   compact: true,
-///   icon: LucideIcons.search300,
+///   icon: AppSvgIcons.search300,
 ///   title: 'No matches for “$query”',
 ///   subtitle: 'Check the spelling, or search by admission number.',
 ///   actionLabel: 'Clear search',
@@ -50,9 +50,9 @@ class AppEmptyState extends StatelessWidget {
     this.topPadding = AppSpacing.xxl,
   });
 
-  /// Shown on its own, no tile or circle behind it. Thin Lucide weights
-  /// (e.g. `LucideIcons.users300`) suit the large size.
-  final IconData icon;
+  /// Shown on its own, no tile or circle behind it. Thin SVG weights
+  /// (e.g. `AppSvgIcons.users300`) suit the large size.
+  final AppSvgIconData icon;
 
   /// What's missing or what failed, e.g. "No payments today".
   final String title;
@@ -93,7 +93,7 @@ class AppEmptyState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              AppSvgIcon(
                 icon,
                 size: compact ? 36 : 56,
                 color:
@@ -157,7 +157,7 @@ class AppEmptyState extends StatelessWidget {
 ///
 /// ```dart
 /// AppInlineState(
-///   icon: LucideIcons.wallet,
+///   icon: AppSvgIcons.wallet,
 ///   title: 'No payments today',
 ///   message: 'Payments you record show up here.',
 ///   actionLabel: 'Record',
@@ -183,20 +183,20 @@ class AppInlineState extends StatelessWidget {
     required this.title,
     this.message = 'The rest of the page still works.',
     VoidCallback? onRetry,
-  }) : icon = LucideIcons.circleAlert,
+  }) : icon = AppSvgIcons.circleAlert,
        iconColor = LightColors.errorErrorDefault,
        actionLabel = 'Retry',
-       actionIcon = LucideIcons.refreshCw500,
+       actionIcon = AppSvgIcons.refreshCw500,
        onAction = onRetry;
 
-  final IconData icon;
+  final AppSvgIconData icon;
   final Color iconColor;
   final String title;
   final String? message;
   final String? actionLabel;
 
   /// Small icon before [actionLabel], e.g. a refresh arrow.
-  final IconData? actionIcon;
+  final AppSvgIconData? actionIcon;
   final VoidCallback? onAction;
 
   @override
@@ -204,7 +204,7 @@ class AppInlineState extends StatelessWidget {
     return AppCard(
       child: Row(
         children: [
-          Icon(icon, size: 24, color: iconColor),
+          AppSvgIcon(icon, size: 24, color: iconColor),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -255,7 +255,7 @@ class _TextLink extends StatelessWidget {
   const _TextLink({required this.label, required this.onTap, this.icon});
 
   final String label;
-  final IconData? icon;
+  final AppSvgIconData? icon;
   final VoidCallback onTap;
 
   @override
@@ -268,7 +268,11 @@ class _TextLink extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 16, color: LightColors.primaryPrimaryDefault),
+              AppSvgIcon(
+                icon,
+                size: 16,
+                color: LightColors.primaryPrimaryDefault,
+              ),
               const SizedBox(width: 6),
             ],
             AppText(

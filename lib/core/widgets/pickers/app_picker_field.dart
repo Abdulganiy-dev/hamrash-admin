@@ -7,7 +7,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/widgets/app_field_style.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// The box every picker field draws: looks like [AppTextField] (label above,
 /// 48 tall, helper or error below) but opens a sheet when tapped.
@@ -26,7 +26,7 @@ class AppPickerField extends StatefulWidget {
     this.valueText,
     this.valueChild,
     this.placeholder,
-    this.icon = LucideIcons.chevronDown,
+    this.icon = AppSvgIcons.chevronDown,
     this.isOptional = false,
     this.helperText,
     this.warningText,
@@ -52,7 +52,7 @@ class AppPickerField extends StatefulWidget {
 
   /// Chevron for lists, calendar for dates, clock for times. Disabled
   /// fields show a lock instead.
-  final IconData icon;
+  final AppSvgIconData icon;
 
   /// Adds a muted "(optional)" after the label.
   final bool isOptional;
@@ -192,7 +192,7 @@ class _Box extends StatelessWidget {
   final bool hasError;
   final bool hasWarning;
   final bool enabled;
-  final IconData icon;
+  final AppSvgIconData icon;
   final String? valueText;
   final Widget? valueChild;
   final String? placeholder;
@@ -218,10 +218,10 @@ class _Box extends StatelessWidget {
       borderWidth = 1;
     }
 
-    final isChevron = icon == LucideIcons.chevronDown;
+    final isChevron = icon == AppSvgIcons.chevronDown;
     final Widget trailing = !enabled
-        ? Icon(
-            LucideIcons.lock,
+        ? AppSvgIcon(
+            AppSvgIcons.lock,
             size: AppFieldStyle.iconSize,
             color: AppFieldStyle.placeholder(context),
           )
@@ -229,7 +229,7 @@ class _Box extends StatelessWidget {
             turns: open && isChevron ? 0.5 : 0,
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOutCubic,
-            child: Icon(
+            child: AppSvgIcon(
               icon,
               size: AppFieldStyle.iconSize,
               color: open
@@ -377,7 +377,7 @@ class _Footer extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(LucideIcons.circleAlert500, size: 16, color: color),
+          AppSvgIcon(AppSvgIcons.circleAlert500, size: 16, color: color),
           const SizedBox(width: 6),
           Expanded(
             child: AppText(

@@ -12,9 +12,8 @@ import 'package:hamrash_admin/core/widgets/app_surface.dart';
 class AppShadows {
   AppShadows._();
 
-  /// Cards on the page (card study B2): a tight contact shadow plus a short,
-  /// soft espresso halo. Paired with the 6% espresso edge
-  /// ([LightColors.strokeColourStrokeCard]).
+  /// Small floating controls: a tight contact shadow plus a short, soft
+  /// espresso halo. Card surfaces stay flat.
   static const List<BoxShadow> floating = [
     BoxShadow(color: Color(0x0A2A1712), offset: Offset(0, 1), blurRadius: 2),
     BoxShadow(
@@ -45,7 +44,7 @@ class AppShadows {
   ];
 }
 
-/// White card that floats on the linen page (card study B2).
+/// White card that sits flat on the linen page (card study B2).
 ///
 /// Holds content only: put a section title above it with [AppSectionHeader]
 /// and any action button below it, outside the card.
@@ -91,7 +90,6 @@ class AppCard extends StatelessWidget {
               ? LightColors.strokeColourStrokeCard
               : const Color(0x0FFFFFFF),
         ),
-        boxShadow: isLight ? AppShadows.floating : null,
       ),
       // Inputs inside a card switch to the stone-50 fill.
       child: AppSurfaceScope(surface: AppSurface.card, child: child),

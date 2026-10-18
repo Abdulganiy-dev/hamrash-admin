@@ -1,8 +1,9 @@
 import 'package:hamrash_admin/core/widgets/button/app_button.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
-/// Primary call-to-action — lit aubergine gradient; use [child] for the label.
+/// Primary call-to-action — solid aubergine; use [child] for the label.
 class AppPrimaryButton extends StatelessWidget {
   const AppPrimaryButton({
     super.key,
@@ -16,8 +17,7 @@ class AppPrimaryButton extends StatelessWidget {
     this.size = AppButtonSize.medium,
     this.padding,
     this.enableHaptic = true,
-    this.haveGradient = false,
-    this.gradient,
+    this.useGradient = false,
     this.loadingIndicatorSize,
     this.loadingIndicatorColor,
     this.textStyle,
@@ -40,8 +40,7 @@ class AppPrimaryButton extends StatelessWidget {
   final AppButtonSize size;
   final EdgeInsetsGeometry? padding;
   final bool enableHaptic;
-  final bool haveGradient;
-  final LinearGradient? gradient;
+  final bool useGradient;
   final double? loadingIndicatorSize;
   final Color? loadingIndicatorColor;
   final TextStyle? textStyle;
@@ -65,8 +64,7 @@ class AppPrimaryButton extends StatelessWidget {
       size: size,
       padding: padding,
       enableHaptic: enableHaptic,
-      haveGradient: haveGradient,
-      gradient: gradient,
+      useGradient: useGradient,
       loadingIndicatorSize: loadingIndicatorSize,
       loadingIndicatorColor: loadingIndicatorColor,
       textStyle: textStyle,
@@ -94,6 +92,7 @@ class AppSecondaryButton extends StatelessWidget {
     this.size = AppButtonSize.medium,
     this.padding,
     this.enableHaptic = true,
+    this.useGradient = false,
     this.loadingIndicatorSize,
     this.loadingIndicatorColor,
     this.textStyle,
@@ -118,6 +117,7 @@ class AppSecondaryButton extends StatelessWidget {
   final AppButtonSize size;
   final EdgeInsetsGeometry? padding;
   final bool enableHaptic;
+  final bool useGradient;
   final double? loadingIndicatorSize;
   final Color? loadingIndicatorColor;
   final TextStyle? textStyle;
@@ -143,6 +143,7 @@ class AppSecondaryButton extends StatelessWidget {
       size: size,
       padding: padding,
       enableHaptic: enableHaptic,
+      useGradient: useGradient,
       loadingIndicatorSize: loadingIndicatorSize,
       loadingIndicatorColor: loadingIndicatorColor,
       textStyle: textStyle,
@@ -172,6 +173,7 @@ class AppTertiaryButton extends StatelessWidget {
     this.size = AppButtonSize.medium,
     this.padding,
     this.enableHaptic = true,
+    this.useGradient = false,
     this.loadingIndicatorSize,
     this.loadingIndicatorColor,
     this.textStyle,
@@ -194,6 +196,7 @@ class AppTertiaryButton extends StatelessWidget {
   final AppButtonSize size;
   final EdgeInsetsGeometry? padding;
   final bool enableHaptic;
+  final bool useGradient;
   final double? loadingIndicatorSize;
   final Color? loadingIndicatorColor;
   final TextStyle? textStyle;
@@ -217,6 +220,7 @@ class AppTertiaryButton extends StatelessWidget {
       size: size,
       padding: padding,
       enableHaptic: enableHaptic,
+      useGradient: useGradient,
       loadingIndicatorSize: loadingIndicatorSize,
       loadingIndicatorColor: loadingIndicatorColor,
       textStyle: textStyle,
@@ -230,7 +234,7 @@ class AppTertiaryButton extends StatelessWidget {
   }
 }
 
-/// Destructive action — lit red gradient for delete, remove, withdraw.
+/// Destructive action — solid rust for delete, remove, withdraw.
 class AppDestructiveButton extends StatelessWidget {
   const AppDestructiveButton({
     super.key,
@@ -244,6 +248,7 @@ class AppDestructiveButton extends StatelessWidget {
     this.size = AppButtonSize.medium,
     this.padding,
     this.enableHaptic = true,
+    this.useGradient = false,
     this.loadingIndicatorSize,
     this.loadingIndicatorColor,
     this.textStyle,
@@ -262,6 +267,7 @@ class AppDestructiveButton extends StatelessWidget {
   final AppButtonSize size;
   final EdgeInsetsGeometry? padding;
   final bool enableHaptic;
+  final bool useGradient;
   final double? loadingIndicatorSize;
   final Color? loadingIndicatorColor;
   final TextStyle? textStyle;
@@ -281,6 +287,7 @@ class AppDestructiveButton extends StatelessWidget {
       size: size,
       padding: padding,
       enableHaptic: enableHaptic,
+      useGradient: useGradient,
       loadingIndicatorSize: loadingIndicatorSize,
       loadingIndicatorColor: loadingIndicatorColor,
       textStyle: textStyle,
@@ -290,22 +297,20 @@ class AppDestructiveButton extends StatelessWidget {
   }
 }
 
-/// Icon-only control with Hugeicons stroke glyph and the same press scale as [AppButton].
-class AppHugeIconButton extends StatelessWidget {
-  const AppHugeIconButton({
+/// Icon-only control using an SVG glyph with the same press scale as [AppButton].
+class AppSvgIconButton extends StatelessWidget {
+  const AppSvgIconButton({
     super.key,
-    required this.lucidIcon,
+    required this.leadingSvgIcon,
     this.onPressed,
     this.isDisabled = false,
     this.isLoading = false,
     this.width,
     this.height,
     this.iconSize,
-    this.lucidIconSize,
+    this.leadingSvgIconSize,
     this.padding,
     this.enableHaptic = true,
-    this.haveGradient = false,
-    this.gradient,
     this.loadingIndicatorSize,
     this.loadingIndicatorColor,
     this.backgroundColor,
@@ -314,7 +319,7 @@ class AppHugeIconButton extends StatelessWidget {
     this.foregroundColorType,
   });
 
-  final IconData lucidIcon;
+  final AppSvgIconData leadingSvgIcon;
   final VoidCallback? onPressed;
   final bool isDisabled;
   final bool isLoading;
@@ -322,11 +327,9 @@ class AppHugeIconButton extends StatelessWidget {
   final double? height;
   final double? iconSize;
 
-  final double? lucidIconSize;
+  final double? leadingSvgIconSize;
   final EdgeInsetsGeometry? padding;
   final bool enableHaptic;
-  final bool haveGradient;
-  final LinearGradient? gradient;
   final double? loadingIndicatorSize;
   final Color? loadingIndicatorColor;
   final Color? backgroundColor;
@@ -339,8 +342,8 @@ class AppHugeIconButton extends StatelessWidget {
     return AppButton(
       type: AppButtonType.icon,
       text: '',
-      lucidIcon: lucidIcon,
-      lucidIconSize: lucidIconSize,
+      leadingSvgIcon: leadingSvgIcon,
+      leadingSvgIconSize: leadingSvgIconSize,
       onPressed: onPressed,
       isDisabled: isDisabled,
       isLoading: isLoading,
@@ -349,8 +352,6 @@ class AppHugeIconButton extends StatelessWidget {
       padding: padding,
       iconSize: iconSize,
       enableHaptic: enableHaptic,
-      haveGradient: haveGradient,
-      gradient: gradient,
       loadingIndicatorSize: loadingIndicatorSize,
       loadingIndicatorColor: loadingIndicatorColor,
       backgroundColor: backgroundColor,

@@ -3,6 +3,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_metrics.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// One tab in an [AppTabBar].
 class AppTabItem {
@@ -13,11 +14,11 @@ class AppTabItem {
     this.count,
   });
 
-  final IconData icon;
+  final AppSvgIconData icon;
 
-  /// Heavier icon for the selected tab, e.g. `LucideIcons.house500`.
+  /// Heavier icon for the selected tab, e.g. `AppSvgIcons.house500`.
   /// Falls back to [icon].
-  final IconData? activeIcon;
+  final AppSvgIconData? activeIcon;
 
   /// Not shown; read out by screen readers.
   final String label;
@@ -92,7 +93,7 @@ class _Tab extends StatelessWidget {
               TweenAnimationBuilder<Color?>(
                 tween: ColorTween(end: color),
                 duration: _duration,
-                builder: (context, value, _) => Icon(
+                builder: (context, value, _) => AppSvgIcon(
                   selected ? (item.activeIcon ?? item.icon) : item.icon,
                   size: 24,
                   color: value,

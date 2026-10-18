@@ -8,44 +8,30 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:motor/motor.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// Height of a medium button ([AppButtonSize.medium]).
 const double kAppButtonDefaultHeight = 48;
 
 /// A customizable button with haptic feedback and a spring press.
 ///
-/// Filled types (primary, secondary, tertiary, destructive) are painted with
-/// [AppButtonSurface]: a gradient lit from above, rounded to
-/// [AppRadius.control].
+/// Filled types use a solid fill by default. [useGradient] preserves the
+/// branded gradient treatment for sheet and alert actions.
 class AppButton extends StatefulWidget {
   /// The button type
   final AppButtonType type;
-
-  /// Whether the button should use a gradient background.
-  ///
-  /// When true, you must provide a [gradient].
-  final bool haveGradient;
-
-  /// The gradient to use when [haveGradient] is true.
-  final LinearGradient? gradient;
 
   /// The text to display (required for all types except icon)
   final String? text;
 
   /// The icon to display (required for icon type, optional for others)
-  final IconData? icon;
+  final AppSvgIconData? icon;
 
-  /// Stroke-based Hugeicons glyph; when set, used instead of [icon] for the
-  /// graphic. Do not pass both [icon] and [lucidIcon].
-  final IconData? lucidIcon;
+  /// Optional alternate SVG icon used in place of [icon].
+  final AppSvgIconData? leadingSvgIcon;
 
-  /// Stroke width for [lucidIcon] (ignored for [Icon]).
-  final double? hugeIconStrokeWidth;
-
-  /// Source size for [HugeIcon] when scaling with [FittedBox]. Defaults to 24.
-  /// Set [iconSize] to the desired on-screen size; when it differs from this
-  /// value, the glyph is rendered crisply then fitted to [iconSize].
-  final double? lucidIconSize;
+  /// Source size for the alternate SVG icon. Defaults to 24.
+  final double? leadingSvgIconSize;
 
   /// The callback when button is pressed
   final VoidCallback? onPressed;
@@ -68,7 +54,7 @@ class AppButton extends StatefulWidget {
   /// Custom text style
   final TextStyle? textStyle;
 
-  /// Custom icon size (Material [Icon] or outer box for [lucidIcon])
+  /// Custom icon size for the button icon.
   final double? iconSize;
 
   /// Custom background color (overrides default; cannot be used with backgroundColorType)
@@ -115,17 +101,18 @@ class AppButton extends StatefulWidget {
   /// Border radius for the button
   final double? radius;
 
+  /// Keeps the legacy gradient treatment for sheet and alert actions.
+  final bool useGradient;
+
   const AppButton({
     super.key,
     required this.type,
-    this.haveGradient = false,
-    this.gradient,
     this.text,
     this.radius,
+    this.useGradient = false,
     this.icon,
-    this.lucidIcon,
-    this.hugeIconStrokeWidth,
-    this.lucidIconSize,
+    this.leadingSvgIcon,
+    this.leadingSvgIconSize,
     this.onPressed,
     this.isDisabled = false,
     this.width,
@@ -148,21 +135,17 @@ class AppButton extends StatefulWidget {
     this.loadingIndicatorColor,
     this.child,
   }) : assert(
-         !haveGradient || gradient != null,
-         'When haveGradient is true, a LinearGradient must be provided.',
-       ),
-       assert(
-         icon == null || lucidIcon == null,
-         'Provide either icon or hugeIcon, not both.',
+         icon == null || leadingSvgIcon == null,
+         'Provide either icon or leadingSvgIcon, not both.',
        ),
        assert(
          type == AppButtonType.icon
              ? (icon != null ||
-                   lucidIcon != null ||
+                   leadingSvgIcon != null ||
                    customLabel != null ||
                    child != null)
              : (text != null || customLabel != null || child != null),
-         'Text, child, or customLabel is required for non-icon buttons; icon, hugeIcon, child, or customLabel for icon button',
+         'Text, child, or customLabel is required for non-icon buttons; icon, leadingSvgIcon, child, or customLabel for icon button',
        ),
        assert(
          backgroundColor == null || backgroundColorType == null,
@@ -613,31 +596,30 @@ class _AppButtonState extends State<AppButton> {
   }
 
   Widget _buildLeadingGraphic(Color fgColor, double outerSize) {
-    if (widget.lucidIcon != null) {
+    if (widget.leadingSvgIcon != null) {
       return Padding(
         padding: EdgeInsets.zero,
-        child: Icon(
-          widget.lucidIcon!,
-          size: widget.lucidIconSize ?? 24,
+        child: AppSvgIcon(
+          widget.leadingSvgIcon!,
+          size: widget.leadingSvgIconSize ?? 24,
           color: fgColor,
         ),
       );
     }
-    return Icon(widget.icon, size: outerSize, color: fgColor);
+    return AppSvgIcon(widget.icon, size: outerSize, color: fgColor);
   }
 
   /// Paint for filled types: disabled look first, then any caller-supplied
-  /// gradient or color, then the default for [AppButton.type].
+  /// solid color, then the default for [AppButton.type].
   AppButtonFill _resolveFill(BuildContext context, bool isEnabled) {
     final isLight = Theme.of(context).brightness == Brightness.light;
     if (!isEnabled) return AppButtonFill.disabled(isLight: isLight);
-    if (widget.haveGradient && widget.gradient != null) {
-      return AppButtonFill.fromGradient(widget.gradient!);
-    }
     if (widget.backgroundColor != null || widget.backgroundColorType != null) {
-      return AppButtonFill.flat(getBackgroundColor(context));
+      final fill = AppButtonFill.flat(getBackgroundColor(context));
+      return widget.useGradient ? fill.withGradient() : fill;
     }
-    return AppButtonFill.forType(widget.type, isLight: isLight);
+    final fill = AppButtonFill.forType(widget.type, isLight: isLight);
+    return widget.useGradient ? fill.withGradient() : fill;
   }
 
   @override
@@ -654,7 +636,7 @@ class _AppButtonState extends State<AppButton> {
     final shape = RoundedRectangleBorder(
       borderRadius: borderRadius,
       side: widget.type == AppButtonType.outline
-          ? BorderSide(color: borderColor, width: 1.5)
+          ? BorderSide(color: borderColor, width: 1)
           : widget.type == AppButtonType.secondary
           ? BorderSide(color: borderColor, width: 1)
           : BorderSide.none,
@@ -671,14 +653,14 @@ class _AppButtonState extends State<AppButton> {
         case AppButtonType.icon:
           buttonContent = _buildLeadingGraphic(
             fgColor,
-            widget.iconSize ?? widget.lucidIconSize ?? 24,
+            widget.iconSize ?? widget.leadingSvgIconSize ?? 24,
           );
           break;
         case AppButtonType.text:
           buttonContent = AppText(widget.text!, style: textStyle);
           break;
         default:
-          if (widget.icon != null || widget.lucidIcon != null) {
+          if (widget.icon != null || widget.leadingSvgIcon != null) {
             buttonContent = Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -727,9 +709,6 @@ class _AppButtonState extends State<AppButton> {
     // normal look; only [AppButton.isDisabled] greys it out.
     final isEnabled = !widget.isDisabled && !widget.isLoading;
     final looksEnabled = !widget.isDisabled;
-    final showGradient =
-        widget.haveGradient && widget.gradient != null && looksEnabled;
-
     switch (widget.type) {
       case AppButtonType.primary:
       case AppButtonType.secondary:
@@ -745,9 +724,7 @@ class _AppButtonState extends State<AppButton> {
           child: IconTheme.merge(
             data: IconThemeData(color: fgColor, size: 20),
             child: DefaultTextStyle.merge(
-              style: textStyle.shadows == null
-                  ? textStyle.copyWith(shadows: fill.textShadows)
-                  : textStyle,
+              style: textStyle.copyWith(shadows: const []),
               textAlign: TextAlign.center,
               child: buttonContent,
             ),
@@ -761,7 +738,7 @@ class _AppButtonState extends State<AppButton> {
               : null, // Empty callback to keep button enabled, actual logic in GestureDetector
           style: OutlinedButton.styleFrom(
             foregroundColor: fgColor,
-            side: BorderSide(color: borderColor, width: 1.5),
+            side: BorderSide(color: borderColor, width: 1),
             padding: defaultPadding,
             shape: shape,
             minimumSize: Size(widget.width ?? 0, resolvedHeight),
@@ -794,19 +771,6 @@ class _AppButtonState extends State<AppButton> {
           child: buttonContent,
         );
         break;
-    }
-
-    if (showGradient && widget.type == AppButtonType.icon) {
-      button = ClipRRect(
-        borderRadius: borderRadius,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: widget.gradient,
-            borderRadius: borderRadius,
-          ),
-          child: button,
-        ),
-      );
     }
 
     // Wrap button with GestureDetector for scale animation

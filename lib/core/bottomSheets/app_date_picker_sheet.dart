@@ -9,7 +9,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:intl/intl.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// A one-tap shortcut shown as a chip above the month, e.g. "Yesterday".
 /// Shortcuts that fall outside the sheet's first/last date are left out.
@@ -259,6 +259,7 @@ class _RangeSheetState extends State<_RangeSheet> {
         ],
       ),
       footer: AppPrimaryButton(
+        useGradient: true,
         width: double.infinity,
         isDisabled: range == null,
         onPressed: range == null
@@ -413,13 +414,13 @@ class _AppMonthCalendarState extends State<AppMonthCalendar> {
                 ),
               ),
               _MonthButton(
-                icon: LucideIcons.chevronLeft,
+                icon: AppSvgIcons.chevronLeft,
                 enabled: _canGoBack,
                 onTap: () => _go(-1),
               ),
               const SizedBox(width: 8),
               _MonthButton(
-                icon: LucideIcons.chevronRight,
+                icon: AppSvgIcons.chevronRight,
                 enabled: _canGoForward,
                 onTap: () => _go(1),
               ),
@@ -496,7 +497,7 @@ class _MonthButton extends StatelessWidget {
     required this.onTap,
   });
 
-  final IconData icon;
+  final AppSvgIconData icon;
   final bool enabled;
   final VoidCallback onTap;
 
@@ -512,7 +513,7 @@ class _MonthButton extends StatelessWidget {
           color: enabled ? AppPalette.stone100 : AppPalette.stone50,
           shape: BoxShape.circle,
         ),
-        child: Icon(
+        child: AppSvgIcon(
           icon,
           size: 18,
           color: enabled ? AppPalette.stone700 : AppPalette.stone300,

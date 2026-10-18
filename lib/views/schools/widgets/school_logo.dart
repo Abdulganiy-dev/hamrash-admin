@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/widgets/image_view.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// The school's logo, or a lit aubergine tile with a graduation cap until
 /// it has one.
@@ -35,8 +35,8 @@ class SchoolLogo extends StatelessWidget {
       ),
       child: SizedBox.square(
         dimension: size,
-        child: Icon(
-          LucideIcons.graduationCap,
+        child: AppSvgIcon(
+          AppSvgIcons.graduationCap,
           color: AppPalette.white,
           size: size * 0.46,
         ),

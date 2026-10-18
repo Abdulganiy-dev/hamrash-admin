@@ -125,6 +125,7 @@ class _TimeSheetState extends State<_TimeSheet> {
         ),
       ),
       footer: AppPrimaryButton(
+        useGradient: true,
         width: double.infinity,
         onPressed: () => Navigator.of(context).pop(_time),
         child: AppText(

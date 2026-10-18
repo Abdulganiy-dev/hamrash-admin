@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/views/more/more_view_model.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// The areas this person can see, two tiles per row. A lock marks the ones
 /// they can only view.
@@ -63,38 +63,39 @@ class _AreaTile extends StatelessWidget {
   final bool viewOnly;
   final VoidCallback onTap;
 
-  static (IconData, Color, Color) _look(SchoolArea area) => switch (area) {
-    SchoolArea.academicCalendar => (
-      LucideIcons.calendar,
-      LightColors.primaryPrimaryMute,
-      AppPalette.aubergine500,
-    ),
-    SchoolArea.classes => (
-      LucideIcons.layers,
-      AppPalette.tangerineMute,
-      AppPalette.tangerineText,
-    ),
-    SchoolArea.subjects => (
-      LucideIcons.bookOpen,
-      AppPalette.honeyMute,
-      AppPalette.honeyText,
-    ),
-    SchoolArea.grading => (
-      LucideIcons.award,
-      AppPalette.chartreuseMute,
-      AppPalette.chartreuseText,
-    ),
-    SchoolArea.team => (
-      LucideIcons.userPlus,
-      AppPalette.tealMute,
-      AppPalette.tealText,
-    ),
-    SchoolArea.schoolDetails => (
-      LucideIcons.school,
-      AppPalette.stone100,
-      AppPalette.stone700,
-    ),
-  };
+  static (AppSvgIconData, Color, Color) _look(SchoolArea area) =>
+      switch (area) {
+        SchoolArea.academicCalendar => (
+          AppSvgIcons.calendar,
+          LightColors.primaryPrimaryMute,
+          AppPalette.aubergine500,
+        ),
+        SchoolArea.classes => (
+          AppSvgIcons.layers,
+          AppPalette.tangerineMute,
+          AppPalette.tangerineText,
+        ),
+        SchoolArea.subjects => (
+          AppSvgIcons.bookOpen,
+          AppPalette.honeyMute,
+          AppPalette.honeyText,
+        ),
+        SchoolArea.grading => (
+          AppSvgIcons.award,
+          AppPalette.chartreuseMute,
+          AppPalette.chartreuseText,
+        ),
+        SchoolArea.team => (
+          AppSvgIcons.userPlus,
+          AppPalette.tealMute,
+          AppPalette.tealText,
+        ),
+        SchoolArea.schoolDetails => (
+          AppSvgIcons.school,
+          AppPalette.stone100,
+          AppPalette.stone700,
+        ),
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -117,12 +118,12 @@ class _AreaTile extends StatelessWidget {
                     color: fill,
                     borderRadius: BorderRadius.circular(11),
                   ),
-                  child: Icon(icon, size: 20, color: ink),
+                  child: AppSvgIcon(icon, size: 20, color: ink),
                 ),
                 const Spacer(),
                 if (viewOnly)
-                  const Icon(
-                    LucideIcons.lock,
+                  const AppSvgIcon(
+                    AppSvgIcons.lock,
                     size: 14,
                     color: AppPalette.stone400,
                   ),

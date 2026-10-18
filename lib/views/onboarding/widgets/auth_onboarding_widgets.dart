@@ -11,7 +11,7 @@ import 'package:hamrash_admin/core/widgets/app_keyboard_bar.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/blur_transition.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 class AuthScreenFrame extends StatelessWidget {
   const AuthScreenFrame({
@@ -293,8 +293,8 @@ class JoinCodeEntryField extends StatelessWidget {
               ),
               prefixIcon: enabled
                   ? null
-                  : Icon(
-                      LucideIcons.lock,
+                  : AppSvgIcon(
+                      AppSvgIcons.lock,
                       size: AppFieldStyle.iconSize,
                       color: AppFieldStyle.icon(context),
                     ),
@@ -319,7 +319,7 @@ class JoinCodeEntryField extends StatelessWidget {
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(LucideIcons.clipboardPaste, size: 16),
+                            AppSvgIcon(AppSvgIcons.clipboardPaste, size: 16),
                             SizedBox(width: 6),
                             AppText(
                               'Paste',
@@ -357,8 +357,8 @@ class JoinCodeEntryField extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                LucideIcons.circleAlert500,
+              const AppSvgIcon(
+                AppSvgIcons.circleAlert500,
                 size: 14,
                 color: LightColors.errorErrorDefault,
               ),
@@ -428,10 +428,10 @@ class AuthWarningBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
+          AppSvgIcon(
             parts.first == 'Too many tries'
-                ? LucideIcons.timer
-                : LucideIcons.info,
+                ? AppSvgIcons.timer
+                : AppSvgIcons.info,
             size: 20,
             color: LightColors.warningWarningText,
           ),
@@ -610,7 +610,7 @@ class _RolePill extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (showPlus) ...[
-          Icon(LucideIcons.plus, size: 14, color: tone.strong),
+          AppSvgIcon(AppSvgIcons.plus, size: 14, color: tone.strong),
           const SizedBox(width: AppSpacing.xs),
         ],
         AppText(
@@ -643,8 +643,8 @@ class SchoolIdentity extends StatelessWidget {
           color: AppPalette.aubergine500,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Icon(
-          LucideIcons.school,
+        child: const AppSvgIcon(
+          AppSvgIcons.school,
           color: AppPalette.white,
           size: 26,
         ),

@@ -5,6 +5,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// A big square shortcut at the top of an [AppActionSheet].
 class AppSheetTile {
@@ -15,7 +16,7 @@ class AppSheetTile {
   });
 
   final String label;
-  final IconData icon;
+  final AppSvgIconData icon;
 
   /// Runs after the sheet closes.
   final VoidCallback onTap;
@@ -32,7 +33,7 @@ class AppSheetAction {
   });
 
   final String label;
-  final IconData icon;
+  final AppSvgIconData icon;
 
   /// Runs after the sheet closes, so it can open another sheet or page.
   final VoidCallback onTap;
@@ -56,17 +57,13 @@ class AppSheetAction {
 ///   subtitle: '${student.className} · ${student.admissionNo}',
 ///   leading: AppLeadingPicture(leading: AppListLeading.initials(student.name), size: 44),
 ///   tiles: [
-///     AppSheetTile(label: 'Call parent', icon: LucideIcons.phone, onTap: callParent),
-///     AppSheetTile(label: 'Message', icon: LucideIcons.messageCircle, onTap: message),
-///     AppSheetTile(label: 'Record fee', icon: LucideIcons.wallet, onTap: recordFee),
+///     AppSheetTile(label: 'Record fee', icon: AppSvgIcons.wallet, onTap: recordFee),
 ///   ],
 ///   groups: [
 ///     [
-///       AppSheetAction(label: 'Edit details', icon: LucideIcons.pencil, onTap: edit),
-///       AppSheetAction(label: 'Move to another class', icon: LucideIcons.arrowRightLeft, onTap: move),
+///       AppSheetAction(label: 'Edit details', icon: AppSvgIcons.pencil, onTap: edit),
 ///     ],
 ///     [
-///       AppSheetAction(label: 'Withdraw student', icon: LucideIcons.userMinus, isDestructive: true, onTap: withdraw),
 ///     ],
 ///   ],
 /// );
@@ -152,7 +149,7 @@ class _Tile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              AppSvgIcon(
                 tile.icon,
                 size: 22,
                 color: LightColors.primaryPrimaryDefault,
@@ -255,7 +252,7 @@ class _ActionRow extends StatelessWidget {
                 ? CrossAxisAlignment.center
                 : CrossAxisAlignment.start,
             children: [
-              Icon(action.icon, size: 20, color: iconColor),
+              AppSvgIcon(action.icon, size: 20, color: iconColor),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(

@@ -20,8 +20,8 @@ import 'package:hamrash_admin/views/academic_calendar/create_session/create_sess
 import 'package:hamrash_admin/views/classes/classes_screen.dart';
 import 'package:hamrash_admin/views/subjects/subjects_screen.dart';
 import 'package:hamrash_admin/views/schools/widgets/school_logo.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:stacked/stacked.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// Home tab: school header and, while the school is being set up, the setup
 /// card (11 for owners, admins, principals and VPs; 12 for bursars).
@@ -131,8 +131,8 @@ class _Header extends StatelessWidget {
         _RoundButton(
           label: 'Notifications',
           onTap: () => AppToast.show('Notifications are coming soon'),
-          child: const Icon(
-            LucideIcons.bell,
+          child: const AppSvgIcon(
+            AppSvgIcons.bell,
             size: 20,
             color: AppPalette.stone700,
           ),
@@ -421,8 +421,8 @@ class _StepRow extends StatelessWidget {
           SizedBox.square(
             dimension: 24,
             child: showChevron
-                ? Icon(
-                    LucideIcons.chevronRight,
+                ? AppSvgIcon(
+                    AppSvgIcons.chevronRight,
                     size: 20,
                     color: current
                         ? AppPalette.aubergine500
@@ -460,7 +460,11 @@ class _StepMarker extends StatelessWidget {
           color: LightColors.successSuccessDefault,
           shape: BoxShape.circle,
         ),
-        child: const Icon(LucideIcons.check, size: 14, color: AppPalette.white),
+        child: const AppSvgIcon(
+          AppSvgIcons.check,
+          size: 14,
+          color: AppPalette.white,
+        ),
       ),
       _StepState.current => Container(
         width: 28,

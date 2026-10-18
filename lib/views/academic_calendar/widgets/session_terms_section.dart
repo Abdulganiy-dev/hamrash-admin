@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/views/academic_calendar/session_draft_model.dart';
 import 'package:hamrash_admin/views/academic_calendar/widgets/session_term_row.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// "Terms" with its Add a term link, then the terms in one card. Without
 /// [onAddTerm] and [onOpenTerm] (read-only) the link and chevrons go.
@@ -38,7 +38,7 @@ class SessionTermsSection extends StatelessWidget {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(LucideIcons.plus, size: 16),
+                    AppSvgIcon(AppSvgIcons.plus, size: 16),
                     SizedBox(width: 4),
                     AppText('Add a term', variant: AppTextVariant.subtitle),
                   ],

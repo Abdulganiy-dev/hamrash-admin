@@ -28,8 +28,8 @@ import 'package:hamrash_admin/views/subjects/subjects_view_model.dart';
 import 'package:hamrash_admin/views/subjects/widgets/subject_class_card.dart';
 import 'package:hamrash_admin/views/subjects/widgets/subject_list_card.dart';
 import 'package:hamrash_admin/views/subjects/widgets/subject_sheet.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:stacked/stacked.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// 7.1–7.2, 7.6–7.7 · Subjects, from setup step 4 or the More tab. Pops
 /// `true` when something was saved, so the page behind reloads.
@@ -54,7 +54,7 @@ class SubjectsScreen extends StatelessWidget {
             actions: [
               if (model.canChange && model.hasSubjects)
                 AppNavIconButton(
-                  icon: LucideIcons.plus,
+                  icon: AppSvgIcons.plus,
                   semanticLabel: 'Add a subject',
                   onPressed: () => actions.addSubject(context),
                 ),
@@ -65,7 +65,7 @@ class SubjectsScreen extends StatelessWidget {
                 ? const _Loading()
                 : model.needsArms
                 ? AppEmptyState(
-                    icon: LucideIcons.layers,
+                    icon: AppSvgIcons.layers,
                     title: 'Add arms first',
                     subtitle:
                         'Subjects are given to each arm, like JSS 1A. Set up '
@@ -81,7 +81,7 @@ class SubjectsScreen extends StatelessWidget {
                 ? _Start(model: model)
                 : !model.hasSubjects
                 ? const AppEmptyState(
-                    icon: LucideIcons.bookOpen,
+                    icon: AppSvgIcons.bookOpen,
                     title: 'No subjects yet',
                     subtitle: "The school's leaders will set up its subjects.",
                   )
@@ -120,7 +120,7 @@ class _Overview extends StatelessWidget {
         if (model.tab == SubjectsTab.byClass) ...[
           if (sections.isEmpty)
             const AppEmptyState(
-              icon: LucideIcons.layers,
+              icon: AppSvgIcons.layers,
               compact: true,
               title: 'No classes yet',
               subtitle: 'Add classes and arms to give them subjects.',
@@ -145,7 +145,7 @@ class _Overview extends StatelessWidget {
           const SizedBox(height: 10),
           if (subjects.isEmpty)
             AppEmptyState(
-              icon: LucideIcons.search,
+              icon: AppSvgIcons.search,
               compact: true,
               title: 'No subject matches "${model.query.trim()}"',
             )
@@ -232,7 +232,7 @@ class _SubjectsActions {
     final on = subject.isActive;
     final done = await AppConfirmSheet.show(
       context,
-      icon: on ? LucideIcons.eyeOff : LucideIcons.eye,
+      icon: on ? AppSvgIcons.eyeOff : AppSvgIcons.eye,
       tone: on ? AppBadgeTone.warning : AppBadgeTone.info,
       title: on ? 'Switch off ${subject.name}?' : 'Switch on ${subject.name}?',
       message: on
@@ -252,7 +252,7 @@ class _SubjectsActions {
   Future<void> _remove(BuildContext context, Subject subject) async {
     final removed = await AppConfirmSheet.show(
       context,
-      icon: LucideIcons.trash2,
+      icon: AppSvgIcons.trash2,
       isDestructive: true,
       title: 'Remove ${subject.name}?',
       message:
@@ -304,7 +304,7 @@ class _Start extends StatelessWidget {
                 ('SS', '24 subjects, 21 optional'),
               ],
               note: "Arms added later can copy another arm's subjects",
-              noteIcon: LucideIcons.copy,
+              noteIcon: AppSvgIcons.copy,
             ),
           ),
           const SizedBox(height: 12),

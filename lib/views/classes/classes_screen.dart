@@ -25,8 +25,8 @@ import 'package:hamrash_admin/views/classes/widgets/classes_skeleton.dart';
 import 'package:hamrash_admin/views/classes/widgets/section_card.dart';
 import 'package:hamrash_admin/views/classes/widgets/section_sheet.dart';
 import 'package:hamrash_admin/views/classes/widgets/structure_start.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:stacked/stacked.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// 6.1–6.4 · Classes and arms, from setup step 3 or the More tab. Pops
 /// `true` when something was saved, so the page behind reloads.
@@ -50,7 +50,7 @@ class ClassesScreen extends StatelessWidget {
             actions: [
               if (model.canChange && !model.loading && !model.isEmpty)
                 AppNavIconButton(
-                  icon: LucideIcons.plus,
+                  icon: AppSvgIcons.plus,
                   semanticLabel: 'Add a class or section',
                   onPressed: () => _ClassesActions(model).add(context),
                 ),
@@ -63,7 +63,7 @@ class ClassesScreen extends StatelessWidget {
                 ? _Start(model: model)
                 : model.isEmpty
                 ? const AppEmptyState(
-                    icon: LucideIcons.layers,
+                    icon: AppSvgIcons.layers,
                     title: 'No classes yet',
                     subtitle:
                         "The school's leaders will set up its classes and "
@@ -132,14 +132,14 @@ class _ClassesActions {
         for (final section in model.activeSections)
           AppSheetAction(
             label: 'A class in ${section.name}',
-            icon: LucideIcons.bookOpen,
+            icon: AppSvgIcons.bookOpen,
             onTap: () => addClass(context, section),
           ),
       ],
       [
         AppSheetAction(
           label: 'A section',
-          icon: LucideIcons.layers,
+          icon: AppSvgIcons.layers,
           onTap: () => addSection(context),
         ),
       ],
@@ -227,7 +227,7 @@ class _ClassesActions {
   }) async {
     final done = await AppConfirmSheet.show(
       context,
-      icon: isActive ? LucideIcons.eyeOff : LucideIcons.eye,
+      icon: isActive ? AppSvgIcons.eyeOff : AppSvgIcons.eye,
       tone: isActive ? AppBadgeTone.warning : AppBadgeTone.info,
       title: isActive ? 'Switch off $name?' : 'Switch on $name?',
       message: isActive ? offMessage : onMessage,
@@ -246,7 +246,7 @@ class _ClassesActions {
     final name = schoolClass.name;
     final removed = await AppConfirmSheet.show(
       context,
-      icon: LucideIcons.trash2,
+      icon: AppSvgIcons.trash2,
       isDestructive: true,
       title: 'Remove $name?',
       message: schoolClass.hasArms
@@ -265,7 +265,7 @@ class _ClassesActions {
   ) async {
     final removed = await AppConfirmSheet.show(
       context,
-      icon: LucideIcons.trash2,
+      icon: AppSvgIcons.trash2,
       isDestructive: true,
       title: 'Remove ${section.name}?',
       message: 'The section and its grading setup will be removed for good.',

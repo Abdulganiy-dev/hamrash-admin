@@ -3,7 +3,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// 4.8 · Under a closed session: it's kept as history. The owner can reopen
 /// it ([onReopen]); everyone else just sees the note.
@@ -30,7 +30,7 @@ class ClosedSessionNote extends StatelessWidget {
         const Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(LucideIcons.info, size: 18, color: AppPalette.stone600),
+            AppSvgIcon(AppSvgIcons.info, size: 18, color: AppPalette.stone600),
             SizedBox(width: 10),
             Expanded(
               child: AppText(

@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_text_field.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/app_sheet_link_action.dart';
 import 'package:hamrash_admin/core/widgets/app_sheet_error.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// 7.7 · Add a subject, or change one's name and code. Pops the subject's
 /// id once saved.
@@ -150,6 +150,7 @@ class _SubjectSheetState extends State<SubjectSheet> {
         children: [
           if (_error case final message?) AppSheetError(message),
           AppPrimaryButton(
+            useGradient: true,
             height: 52,
             isLoading: _saving,
             loadingText: 'Saving…',
@@ -161,7 +162,7 @@ class _SubjectSheetState extends State<SubjectSheet> {
             const SizedBox(height: 12),
             if (widget.onToggleActive case final toggle?)
               AppSheetLinkAction(
-                icon: saved.isActive ? LucideIcons.eyeOff : LucideIcons.eye,
+                icon: saved.isActive ? AppSvgIcons.eyeOff : AppSvgIcons.eye,
                 label: saved.isActive
                     ? 'Switch off this subject'
                     : 'Switch on this subject',
@@ -170,7 +171,7 @@ class _SubjectSheetState extends State<SubjectSheet> {
             if (widget.onRemove case final remove?) ...[
               const SizedBox(height: 12),
               AppSheetLinkAction(
-                icon: LucideIcons.trash2,
+                icon: AppSvgIcons.trash2,
                 label: 'Remove subject',
                 isDestructive: true,
                 helper: widget.removeBlockedReason,

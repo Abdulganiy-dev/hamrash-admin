@@ -3,7 +3,7 @@ import 'package:hamrash_admin/core/bottomSheets/app_date_picker_sheet.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_time_picker_sheet.dart';
 import 'package:hamrash_admin/core/utils/app_date_format.dart';
 import 'package:hamrash_admin/core/widgets/pickers/app_picker_field.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// Pick one day. Reads the way people say it ("Today, Mon 12 Oct") and
 /// opens [AppDatePickerSheet]; tapping a day picks it and closes.
@@ -59,7 +59,7 @@ class AppDateField extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppPickerField(
       label: label,
-      icon: LucideIcons.calendar,
+      icon: AppSvgIcons.calendar,
       valueText: value == null ? null : AppDateFormat.friendly(value!),
       placeholder: placeholder,
       isOptional: isOptional,
@@ -143,7 +143,7 @@ class AppDateRangeField extends StatelessWidget {
     final range = value;
     return AppPickerField(
       label: label,
-      icon: LucideIcons.calendar,
+      icon: AppSvgIcons.calendar,
       valueText: range == null
           ? null
           : (valueFormatter?.call(range) ?? AppDateFormat.range(range)),
@@ -215,7 +215,7 @@ class AppTimeField extends StatelessWidget {
     final time = value;
     return AppPickerField(
       label: label,
-      icon: LucideIcons.clock,
+      icon: AppSvgIcons.clock,
       valueText: time == null
           ? null
           : MaterialLocalizations.of(context).formatTimeOfDay(

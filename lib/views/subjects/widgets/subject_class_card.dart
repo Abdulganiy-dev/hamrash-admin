@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/subjects/subjects_view_model.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// 7.2 · A section's classes with what each takes.
 class SubjectClassCard extends StatelessWidget {
@@ -122,8 +122,8 @@ class _Row extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(
-            LucideIcons.chevronRight,
+          const AppSvgIcon(
+            AppSvgIcons.chevronRight,
             size: 18,
             color: AppPalette.stone400,
           ),

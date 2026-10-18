@@ -5,13 +5,13 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_metrics.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// Round floating button for the app bar: white circle, card border and
 /// floating shadow. Scales down when pressed.
 ///
 /// ```dart
-/// AppNavIconButton(icon: LucideIcons.bell, count: 4, onPressed: openInbox)
-/// AppNavIconButton(icon: LucideIcons.slidersHorizontal, showDot: hasFilters, onPressed: openFilters)
+/// AppNavIconButton(icon: AppSvgIcons.bell, count: 4, onPressed: openInbox)
 /// ```
 class AppNavIconButton extends StatelessWidget {
   const AppNavIconButton({
@@ -25,7 +25,7 @@ class AppNavIconButton extends StatelessWidget {
     this.semanticLabel,
   });
 
-  final IconData icon;
+  final AppSvgIconData icon;
   final VoidCallback? onPressed;
 
   /// Red alert count on the top-right. Hidden when null or 0.
@@ -61,7 +61,7 @@ class AppNavIconButton extends StatelessWidget {
                 border: Border.all(color: LightColors.strokeColourStrokeCard),
                 boxShadow: AppShadows.floating,
               ),
-              child: Icon(icon, size: iconSize, color: iconColor),
+              child: AppSvgIcon(icon, size: iconSize, color: iconColor),
             ),
             if (showCount)
               Positioned(

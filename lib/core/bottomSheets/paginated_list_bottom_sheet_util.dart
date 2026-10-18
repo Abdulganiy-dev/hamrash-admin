@@ -15,7 +15,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 export 'paginated_list_controller.dart';
 
@@ -161,6 +161,7 @@ class _PaginatedSelectionBodyState<I>
     bodyPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
     footer: _multi
         ? AppPrimaryButton(
+            useGradient: true,
             width: double.infinity,
             onPressed: () => Navigator.of(context).pop(),
             child: AppText(widget.doneLabel),
@@ -280,7 +281,7 @@ class _PaginatedSelectionBodyState<I>
     }
     return const AppEmptyState(
       compact: true,
-      icon: LucideIcons.search300,
+      icon: AppSvgIcons.search300,
       title: 'No options found',
       subtitle: 'Try a different search.',
     );
@@ -300,6 +301,7 @@ class _PaginatedSelectionBodyState<I>
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.sm),
       child: AppSecondaryButton(
+        useGradient: true,
         width: double.infinity,
         onPressed: () => _model.load(more: true),
         child: const AppText('Load more'),

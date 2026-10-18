@@ -7,7 +7,7 @@ import 'package:hamrash_admin/core/widgets/navigation/app_tab_bar.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_tab_shell.dart';
 import 'package:hamrash_admin/views/home/home_screen.dart';
 import 'package:hamrash_admin/views/more/more_screen.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// The signed-in app for one school: Home, People, Fees and More. People and
 /// Fees aren't built yet; their tabs say so.
@@ -49,14 +49,14 @@ class HomeShell extends StatelessWidget {
             [
               AppSheetAction(
                 label: 'Switch school',
-                icon: LucideIcons.arrowLeftRight,
+                icon: AppSvgIcons.arrowLeftRight,
                 onTap: onSwitchSchool!,
               ),
             ],
           [
             AppSheetAction(
               label: 'Sign out',
-              icon: LucideIcons.logOut,
+              icon: AppSvgIcons.logOut,
               isDestructive: true,
               onTap: onSignOut,
             ),
@@ -75,8 +75,8 @@ class HomeShell extends StatelessWidget {
     tabs: [
       AppTab(
         item: const AppTabItem(
-          icon: LucideIcons.house,
-          activeIcon: LucideIcons.house500,
+          icon: AppSvgIcons.house,
+          activeIcon: AppSvgIcons.house500,
           label: 'Home',
         ),
         builder: (context) => HomeScreen(
@@ -93,13 +93,13 @@ class HomeShell extends StatelessWidget {
       for (final MapEntry(value: label) in _comingSoon.entries)
         AppTab(
           item: AppTabItem(
-            icon: label == 'People' ? LucideIcons.users : LucideIcons.wallet,
+            icon: label == 'People' ? AppSvgIcons.users : AppSvgIcons.wallet,
             label: label,
           ),
           builder: (_) => const SizedBox.shrink(),
         ),
       AppTab(
-        item: const AppTabItem(icon: LucideIcons.layoutGrid, label: 'More'),
+        item: const AppTabItem(icon: AppSvgIcons.layoutGrid, label: 'More'),
         builder: (context) => MoreScreen(
           key: ValueKey('more/${school.id}/${school.organization.updatedAt}'),
           school: school,

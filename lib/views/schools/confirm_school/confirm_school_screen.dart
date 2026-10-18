@@ -14,8 +14,8 @@ import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/onboarding/widgets/auth_onboarding_widgets.dart';
 import 'package:hamrash_admin/views/schools/confirm_school/confirm_school_view_model.dart';
 import 'package:hamrash_admin/views/schools/widgets/school_logo.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:stacked/stacked.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// 10 · Check your school.
 class ConfirmSchoolScreen extends StatelessWidget {
@@ -234,8 +234,8 @@ class _LogoButton extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  LucideIcons.camera,
+                child: const AppSvgIcon(
+                  AppSvgIcons.camera,
                   size: 14,
                   color: AppPalette.stone700,
                 ),

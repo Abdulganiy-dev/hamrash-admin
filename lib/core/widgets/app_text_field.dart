@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_field_style.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// Text field with the label above, helper or error text below.
 ///
@@ -317,7 +317,7 @@ class _AppTextFieldState extends State<AppTextField> {
       icon = GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => setState(() => _obscured = !_obscured),
-        child: Icon(_obscured ? LucideIcons.eye : LucideIcons.eyeOff),
+        child: AppSvgIcon(_obscured ? AppSvgIcons.eye : AppSvgIcons.eyeOff),
       );
     }
     if (icon == null) return null;
@@ -370,7 +370,7 @@ class _AppTextFieldState extends State<AppTextField> {
       message = Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(LucideIcons.circleAlert500, size: 16, color: errorColor),
+          AppSvgIcon(AppSvgIcons.circleAlert500, size: 16, color: errorColor),
           const SizedBox(width: 6),
           Expanded(
             child: AppText(

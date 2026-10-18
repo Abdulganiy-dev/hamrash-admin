@@ -153,7 +153,7 @@ class LightColors {
 class DarkColors {
   // Primary (aubergine). Fills keep the brand aubergine so white labels stay
   // readable; brand text, icons and strokes use the lighter aubergine-400.
-  static const primaryPrimaryMute = Color(0xFF10264A);
+  static const primaryPrimaryMute = AppPalette.aubergine900;
   static const primaryPrimaryThin = AppPalette.aubergine800;
   static const primaryPrimaryDefault = AppPalette.aubergine500;
   static const primaryPrimaryHover = AppPalette.aubergine400;

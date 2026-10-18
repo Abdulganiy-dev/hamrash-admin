@@ -8,7 +8,7 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/image_view.dart';
 import 'package:hamrash_admin/core/widgets/local_image.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// Picture on the left of a list row. People are round (photos, initials);
 /// things are rounded squares (icon tiles).
@@ -36,14 +36,14 @@ class AppListLeading {
 
   /// Icon tile for things (fees, classes, exams). [tone] colours the tile.
   const AppListLeading.icon(
-    IconData icon, {
+    AppSvgIconData icon, {
     AppBadgeTone tone = AppBadgeTone.info,
   }) : this._(icon: icon, tone: tone);
 
   final String? url;
   final String? path;
   final String? name;
-  final IconData? icon;
+  final AppSvgIconData? icon;
   final AppBadgeTone tone;
 
   bool get _isPerson => icon == null;
@@ -257,8 +257,8 @@ class AppCompactList extends StatelessWidget {
                     colorType: AppTextColor.primary,
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
-                    LucideIcons.chevronRight500,
+                  const AppSvgIcon(
+                    AppSvgIcons.chevronRight500,
                     size: 18,
                     color: LightColors.primaryPrimaryDefault,
                   ),
@@ -332,8 +332,8 @@ class _Chevron extends StatelessWidget {
     return SizedBox(
       width: size + 4,
       height: size + 4,
-      child: Icon(
-        LucideIcons.chevronRight500,
+      child: AppSvgIcon(
+        AppSvgIcons.chevronRight500,
         size: size + 4,
         color: AppPalette.stone400,
       ),
@@ -383,7 +383,7 @@ class AppLeadingPicture extends StatelessWidget {
     if (leading.icon != null) {
       return ColoredBox(
         color: leading.tone.mute,
-        child: Icon(
+        child: AppSvgIcon(
           leading.icon,
           size: size >= 52 ? 24 : 20,
           color: leading.tone.strong,

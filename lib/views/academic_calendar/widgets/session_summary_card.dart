@@ -5,7 +5,7 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/academic_calendar/session_draft_model.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// The session at the top of the page: its label (e.g. CURRENT SESSION),
 /// name, and how many terms and weeks it has. [onEdit] shows the Edit pill;
@@ -62,7 +62,7 @@ class SessionSummaryCard extends StatelessWidget {
           ),
         ),
         if (readOnly)
-          const _Pill(icon: LucideIcons.lock, label: 'Read-only')
+          const _Pill(icon: AppSvgIcons.lock, label: 'Read-only')
         else if (onEdit != null)
           BouncyButton(
             onPressed: onEdit,
@@ -77,7 +77,7 @@ class _Pill extends StatelessWidget {
   const _Pill({required this.label, this.icon});
 
   final String label;
-  final IconData? icon;
+  final AppSvgIconData? icon;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -90,7 +90,7 @@ class _Pill extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (icon != null) ...[
-          Icon(icon, size: 14, color: AppPalette.stone700),
+          AppSvgIcon(icon, size: 14, color: AppPalette.stone700),
           const SizedBox(width: 6),
         ],
         AppText(

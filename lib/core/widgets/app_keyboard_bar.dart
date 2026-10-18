@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// Bar that rides on top of the keyboard while a field has focus.
 ///
@@ -103,7 +103,7 @@ class AppKeyboardBar extends StatelessWidget {
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(LucideIcons.chevronDown, size: 16),
+                AppSvgIcon(AppSvgIcons.chevronDown, size: 16),
                 SizedBox(width: 6),
                 Text('Done'),
               ],
@@ -121,7 +121,7 @@ class AppKeyboardBar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _StepArrow(
-          icon: LucideIcons.chevronUp,
+          icon: AppSvgIcons.chevronUp,
           label: 'Previous field',
           onPressed: index > 0
               ? onPrevious ??
@@ -130,7 +130,7 @@ class AppKeyboardBar extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.xs),
         _StepArrow(
-          icon: LucideIcons.chevronDown,
+          icon: AppSvgIcons.chevronDown,
           label: 'Next field',
           onPressed: index < count - 1
               ? onNext ?? () => FocusManager.instance.primaryFocus?.nextFocus()
@@ -162,7 +162,7 @@ class AppKeyboardBar extends StatelessWidget {
             width: 48,
             padding: EdgeInsets.zero,
             onPressed: _dismiss,
-            child: const Icon(LucideIcons.chevronDown, size: 20),
+            child: const AppSvgIcon(AppSvgIcons.chevronDown, size: 20),
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
@@ -176,7 +176,7 @@ class AppKeyboardBar extends StatelessWidget {
 class _StepArrow extends StatelessWidget {
   const _StepArrow({required this.icon, required this.label, this.onPressed});
 
-  final IconData icon;
+  final AppSvgIconData icon;
   final String label;
   final VoidCallback? onPressed;
 
@@ -192,8 +192,8 @@ class _StepArrow extends StatelessWidget {
         dimension: 36,
         child: AppButton(
           type: AppButtonType.icon,
-          lucidIcon: icon,
-          lucidIconSize: 20,
+          leadingSvgIcon: icon,
+          leadingSvgIconSize: 20,
           isDisabled: !enabled,
           foregroundColor: enabled ? AppPalette.stone700 : AppPalette.stone300,
           onPressed: onPressed,

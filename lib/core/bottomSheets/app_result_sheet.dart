@@ -10,7 +10,7 @@ import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// What happened. Picks the icon, its colours and the default button label.
 enum AppResultType {
@@ -211,6 +211,7 @@ class _AppResultSheetState extends State<AppResultSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppPrimaryButton(
+            useGradient: true,
             width: double.infinity,
             onPressed: () => _closeThen(widget.onPrimary),
             child: AppText(widget.primaryLabel ?? type.defaultLabel),
@@ -239,10 +240,10 @@ class _ResultIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = switch (type) {
-      AppResultType.success => LucideIcons.circleCheck300,
-      AppResultType.error => LucideIcons.circleX300,
-      AppResultType.warning => LucideIcons.triangleAlert300,
+      AppResultType.success => AppSvgIcons.circleCheck300,
+      AppResultType.error => AppSvgIcons.circleX300,
+      AppResultType.warning => AppSvgIcons.triangleAlert300,
     };
-    return Icon(icon, size: 64, color: type.tone.base);
+    return AppSvgIcon(icon, size: 64, color: type.tone.base);
   }
 }

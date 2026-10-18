@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// 6.2 · A section's header (name, class count, Edit) and a card with a
 /// row per class showing its arms.
@@ -158,8 +158,8 @@ class _ClassRow extends StatelessWidget {
             ),
           if (onTap != null) ...[
             const SizedBox(width: 8),
-            const Icon(
-              LucideIcons.chevronRight,
+            const AppSvgIcon(
+              AppSvgIcons.chevronRight,
               size: 18,
               color: AppPalette.stone400,
             ),
@@ -185,8 +185,8 @@ class _AddClassRow extends StatelessWidget {
       height: 52,
       child: Row(
         children: [
-          const Icon(
-            LucideIcons.plus,
+          const AppSvgIcon(
+            AppSvgIcons.plus,
             size: 18,
             color: LightColors.primaryPrimaryDefault,
           ),

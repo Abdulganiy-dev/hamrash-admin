@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:hamrash_admin/services/image_cache_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// A reusable cached network image widget with customizable properties
 ///
@@ -38,7 +38,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 ///   height: 100,
 ///   placeholder: Container(
 ///     color: Colors.grey,
-///     child: Icon(LucideIcons.image),
+///     child: AppSvgIcon(AppSvgIcons.image),
 ///   ),
 /// )
 ///
@@ -49,7 +49,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 ///   height: 100,
 ///   errorWidget: Container(
 ///     color: Colors.red,
-///     child: Icon(LucideIcons.circleAlert),
+///     child: AppSvgIcon(AppSvgIcons.circleAlert),
 ///   ),
 /// )
 ///
@@ -61,7 +61,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 ///   borderRadius: 16,
 ///   fit: BoxFit.cover,
 ///   placeholder: CircularProgressIndicator(),
-///   errorWidget: Icon(LucideIcons.imageOff),
 ///   httpHeaders: {'Authorization': 'Bearer token'},
 ///   fadeInDuration: Duration(milliseconds: 500),
 /// )
@@ -154,8 +153,8 @@ class CachedNetworkImageWidget extends StatelessWidget {
                 ),
               ),
             )
-          : Icon(
-              LucideIcons.image,
+          : AppSvgIcon(
+              AppSvgIcons.image,
               size: (width != null && height != null)
                   ? (width! < height! ? width! * 0.4 : height! * 0.4)
                   : 24,
@@ -171,8 +170,8 @@ class CachedNetworkImageWidget extends StatelessWidget {
       height: height,
       color: backgroundColor ?? CupertinoColors.systemGrey5,
       alignment: alignment,
-      child: Icon(
-        LucideIcons.triangleAlert,
+      child: AppSvgIcon(
+        AppSvgIcons.triangleAlert,
         size: (width != null && height != null)
             ? (width! < height! ? width! * 0.4 : height! * 0.4)
             : 24,

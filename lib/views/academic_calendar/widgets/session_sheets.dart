@@ -11,7 +11,7 @@ import 'package:hamrash_admin/core/widgets/pickers/app_date_fields.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
 import 'package:hamrash_admin/views/academic_calendar/session_draft_model.dart';
 import 'package:intl/intl.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// Edit the session name and dates.
 class EditSessionSheet extends StatefulWidget {
@@ -124,8 +124,8 @@ class _EditSessionSheetState extends State<EditSessionSheet> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  LucideIcons.info,
+                const AppSvgIcon(
+                  AppSvgIcons.info,
                   size: 16,
                   color: AppPalette.stone600,
                 ),
@@ -149,6 +149,7 @@ class _EditSessionSheetState extends State<EditSessionSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           AppPrimaryButton(
+            useGradient: true,
             height: 52,
             isDisabled: !canSave,
             onPressed: _save,
@@ -157,7 +158,7 @@ class _EditSessionSheetState extends State<EditSessionSheet> {
           if (widget.showRemove) ...[
             const SizedBox(height: 16),
             AppSheetLinkAction(
-              icon: LucideIcons.trash2,
+              icon: AppSvgIcons.trash2,
               isDestructive: true,
               label: 'Remove session',
               helper: widget.removeBlockedReason,
@@ -287,6 +288,7 @@ class _EditTermSheetState extends State<EditTermSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           AppPrimaryButton(
+            useGradient: true,
             height: 52,
             isDisabled: !canSave,
             onPressed: _save,
@@ -295,7 +297,7 @@ class _EditTermSheetState extends State<EditTermSheet> {
           if (!_adding) ...[
             const SizedBox(height: 16),
             AppSheetLinkAction(
-              icon: LucideIcons.trash2,
+              icon: AppSvgIcons.trash2,
               isDestructive: true,
               label: 'Remove term',
               helper: _isCurrent

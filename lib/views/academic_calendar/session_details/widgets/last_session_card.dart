@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:intl/intl.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// 4.6 · Under the current session: last year's session has ended but isn't
 /// closed yet.
@@ -40,8 +40,8 @@ class LastSessionCard extends StatelessWidget {
                     color: AppPalette.stone100,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
-                    LucideIcons.calendar,
+                  child: const AppSvgIcon(
+                    AppSvgIcons.calendar,
                     size: 20,
                     color: AppPalette.stone600,
                   ),

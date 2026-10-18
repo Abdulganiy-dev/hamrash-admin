@@ -10,7 +10,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
 import 'package:hamrash_admin/views/subjects/class_subjects/class_subjects_view_model.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// What the add sheet ended with: how many subjects it added, or a request
 /// to create one that isn't listed.
@@ -174,8 +174,8 @@ class _AddSubjectsSheetState extends State<AddSubjectsSheet> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      LucideIcons.plus,
+                    const AppSvgIcon(
+                      AppSvgIcons.plus,
                       size: 16,
                       color: LightColors.primaryPrimaryDefault,
                     ),
@@ -198,6 +198,7 @@ class _AddSubjectsSheetState extends State<AddSubjectsSheet> {
         children: [
           if (_error case final message?) AppSheetError(message),
           AppPrimaryButton(
+            useGradient: true,
             height: 52,
             isLoading: _saving,
             loadingText: 'Adding…',

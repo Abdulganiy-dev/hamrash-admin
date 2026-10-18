@@ -2,165 +2,92 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 
-/// Paint recipe for a filled button: a vertical gradient lit from above,
-/// a bright top edge and a deeper rim. No outer shadow.
-///
-/// Flutter has no inset box-shadow, so the top highlight and bottom rim are
-/// drawn as a translucent overlay ([sheen]) on top of the gradient.
+/// Fill and border colors for a button variant.
 @immutable
 class AppButtonFill {
   const AppButtonFill({
-    required this.colors,
-    this.stops,
+    required this.color,
     required this.border,
-    this.shadows = const [],
-    this.highlight = const Color(0x00FFFFFF),
-    this.highlightEnd = 0.14,
-    this.rim = const Color(0x00000000),
-    this.textShadows = const [],
+    this.gradient,
   });
 
-  final List<Color> colors;
-  final List<double>? stops;
+  final Color color;
   final Color border;
-  final List<BoxShadow> shadows;
+  final LinearGradient? gradient;
 
-  /// Light along the top inside edge.
-  final Color highlight;
+  /// Adds the older subtle highlight-to-rim treatment for sheets and alerts.
+  AppButtonFill withGradient() {
+    if (color == Colors.transparent) return this;
+    return AppButtonFill(
+      color: color,
+      border: border,
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color.lerp(color, Colors.white, 0.08)!,
+          color,
+          Color.lerp(color, Colors.black, 0.10)!,
+        ],
+        stops: const [0, 0.45, 1],
+      ),
+    );
+  }
 
-  /// How far the top highlight fades across the button, as a fraction of its
-  /// height.
-  final double highlightEnd;
-
-  /// Shade along the bottom inside edge.
-  final Color rim;
-
-  final List<Shadow> textShadows;
-
-  LinearGradient get gradient => LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: colors,
-    stops: stops,
-  );
-
-  LinearGradient get sheen => LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [highlight, highlight.withAlpha(0), rim.withAlpha(0), rim],
-    stops: [0, highlightEnd, 0.62, 1],
-  );
-
-  // Shared pieces
-  static const _aubergineText = [
-    Shadow(color: Color(0x400D050C), offset: Offset(0, 1), blurRadius: 1),
-  ];
-  static const _rustText = [
-    Shadow(color: Color(0x405A160A), offset: Offset(0, 1), blurRadius: 1),
-  ];
-
-  /// Default fill for a button type. Returns flat transparent for types that
-  /// aren't filled (outline, text, icon).
+  /// Default fill for a button type. Unfilled types stay transparent.
   static AppButtonFill forType(AppButtonType type, {required bool isLight}) {
     switch (type) {
       case AppButtonType.primary:
-        return _primary;
+        return AppButtonFill(
+          color: LightColors.primaryPrimaryDefault,
+          border: LightColors.primaryPrimaryHover,
+        );
       case AppButtonType.destructive:
-        return _destructive;
+        return AppButtonFill(
+          color: LightColors.errorErrorDefault,
+          border: LightColors.errorErrorText,
+        );
       case AppButtonType.secondary:
-        return isLight ? _secondary : _secondaryDark;
+        return AppButtonFill(
+          color: isLight
+              ? LightColors.backgroundSurfacePrimaryBG
+              : DarkColors.backgroundSurfaceLayer,
+          border: isLight ? AppPalette.stone300 : AppPalette.stone700,
+        );
       case AppButtonType.tertiary:
-        return isLight ? _tinted : _tintedDark;
+        return AppButtonFill(
+          color: isLight
+              ? LightColors.primaryPrimaryMute
+              : DarkColors.primaryPrimaryMute,
+          border: isLight
+              ? LightColors.primaryPrimaryThin
+              : DarkColors.primaryPrimaryThin,
+        );
       case AppButtonType.outline:
       case AppButtonType.text:
       case AppButtonType.icon:
         return const AppButtonFill(
-          colors: [Colors.transparent, Colors.transparent],
+          color: Colors.transparent,
           border: Colors.transparent,
         );
     }
   }
 
-  /// Flat, shadowless fill for disabled and loading buttons.
+  /// Flat, shadowless fill for disabled buttons.
   static AppButtonFill disabled({required bool isLight}) {
     final color = isLight
         ? LightColors.backgroundSurfaceMild
         : DarkColors.backgroundSurfaceMild;
-    return AppButtonFill(colors: [color, color], border: color);
+    return AppButtonFill(color: color, border: color);
   }
 
-  /// A caller-supplied solid color, still lit from above.
+  /// A caller-supplied solid color.
   static AppButtonFill flat(Color color) {
-    return AppButtonFill(
-      colors: [color, color],
-      border: Colors.transparent,
-      highlight: const Color(0x2EFFFFFF),
-      rim: const Color(0x1F000000),
-    );
+    return AppButtonFill(color: color, border: Colors.transparent);
   }
-
-  /// A caller-supplied gradient, still lit from above.
-  static AppButtonFill fromGradient(LinearGradient gradient) {
-    return AppButtonFill(
-      colors: gradient.colors,
-      stops: gradient.stops,
-      border: Colors.transparent,
-      highlight: const Color(0x47FFFFFF),
-      rim: const Color(0x38000000),
-    );
-  }
-
-  // Primary — aubergine
-  static const _primary = AppButtonFill(
-    colors: [Color(0xFF4D2A4B), Color(0xFF3B1F3A), Color(0xFF2E172D)],
-    stops: [0, 0.45, 1],
-    border: Color(0xFF3B1F3A),
-    highlight: Color(0x4DFFFFFF),
-    highlightEnd: 0.036,
-    rim: Color(0x660D050C),
-    textShadows: _aubergineText,
-  );
-
-  // Destructive — rust
-  static const _destructive = AppButtonFill(
-    colors: [Color(0xFFC44A2C), Color(0xFFB23A1E), Color(0xFF962F17)],
-    stops: [0, 0.45, 1],
-    border: Color(0xFF962F17),
-    highlight: Color(0x66FFFFFF),
-    rim: Color(0x4D5A160A),
-    textShadows: _rustText,
-  );
-
-  // Secondary — cream to stone
-  static const _secondary = AppButtonFill(
-    colors: [Color(0xFFFFFDF8), Color(0xFFF3EEE4)],
-    border: Color(0xFFD3C9B8),
-    rim: Color(0x0F2A1712),
-  );
-  static const _secondaryDark = AppButtonFill(
-    colors: [Color(0xFF26334A), Color(0xFF1E293B)],
-    border: Color(0xFF334155),
-    highlight: Color(0x14FFFFFF),
-    rim: Color(0x33000000),
-  );
-
-  // Tinted — pale aubergine
-  static const _tinted = AppButtonFill(
-    colors: [Color(0xFFFAF4F8), Color(0xFFEBDCE7)],
-    border: Color(0xFFD5B9CF),
-    highlight: Color(0xE6FFFFFF),
-    rim: Color(0x1A3B1F3A),
-  );
-  static const _tintedDark = AppButtonFill(
-    colors: [Color(0xFF14305A), Color(0xFF10264A)],
-    border: Color(0xFF053A85),
-    highlight: Color(0x1AFFFFFF),
-    rim: Color(0x33000000),
-  );
 }
 
-/// Paints an [AppButtonFill] behind [child]. Fills the available width unless
-/// [width] is given (or the parent is unbounded, in which case it hugs).
+/// Paints a simple solid button surface behind [child].
 class AppButtonSurface extends StatelessWidget {
   const AppButtonSurface({
     super.key,
@@ -181,42 +108,18 @@ class AppButtonSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final innerRadius = borderRadius - BorderRadius.circular(1);
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final resolvedWidth =
-            width ?? (constraints.hasBoundedWidth ? double.infinity : null);
-
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOut,
-          width: resolvedWidth,
-          height: height,
-          decoration: BoxDecoration(
-            gradient: fill.gradient,
-            borderRadius: borderRadius,
-            border: Border.all(color: fill.border),
-            boxShadow: fill.shadows,
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: innerRadius,
-                      gradient: fill.sheen,
-                    ),
-                  ),
-                ),
-              ),
-              Padding(padding: padding, child: child),
-            ],
-          ),
-        );
-      },
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: fill.gradient == null ? fill.color : null,
+        gradient: fill.gradient,
+        borderRadius: borderRadius,
+        border: Border.all(color: fill.border),
+      ),
+      child: Padding(padding: padding, child: child),
     );
   }
 }

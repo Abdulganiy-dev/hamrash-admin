@@ -7,7 +7,7 @@ import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_surface.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// Centred dialog for decisions that must block everything, e.g. "Session
 /// expired". For everyday confirmations prefer a floating sheet — its
@@ -30,7 +30,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// ```dart
 /// final ok = await AppAlertDialog.show(
 ///   context,
-///   icon: LucideIcons.triangleAlert,
+///   icon: AppSvgIcons.triangleAlert,
 ///   tone: AppBadgeTone.warning,
 ///   title: 'Session expired',
 ///   message: 'Sign in again to keep working. Unsaved attendance is kept on this phone.',
@@ -57,7 +57,7 @@ class AppAlertDialog extends StatefulWidget {
   final String? message;
 
   /// Shown on its own above the title, in the tone colour.
-  final IconData? icon;
+  final AppSvgIconData? icon;
 
   /// Colours the icon. Defaults to [AppBadgeTone.info], or
   /// [AppBadgeTone.error] when [isDestructive].
@@ -94,7 +94,7 @@ class AppAlertDialog extends StatefulWidget {
     BuildContext context, {
     required String title,
     String? message,
-    IconData? icon,
+    AppSvgIconData? icon,
     AppBadgeTone? tone,
     String confirmLabel = 'Confirm',
     String cancelLabel = 'Cancel',
@@ -178,12 +178,14 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
     final confirmLabel = AppText(widget.confirmLabel);
     final confirm = widget.isDestructive
         ? AppDestructiveButton(
+            useGradient: true,
             width: double.infinity,
             isLoading: _isSubmitting,
             onPressed: _isSubmitting ? null : _confirm,
             child: confirmLabel,
           )
         : AppPrimaryButton(
+            useGradient: true,
             width: double.infinity,
             isLoading: _isSubmitting,
             onPressed: _isSubmitting ? null : _confirm,
@@ -248,6 +250,7 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
                       if (_cancelVisible) ...[
                         Expanded(
                           child: AppSecondaryButton(
+                            useGradient: true,
                             width: double.infinity,
                             onPressed: _isSubmitting
                                 ? null
@@ -274,11 +277,12 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
 class _DialogIcon extends StatelessWidget {
   const _DialogIcon({required this.icon, required this.tone});
 
-  final IconData icon;
+  final AppSvgIconData icon;
   final AppBadgeTone tone;
 
   @override
-  Widget build(BuildContext context) => Icon(icon, size: 44, color: tone.base);
+  Widget build(BuildContext context) =>
+      AppSvgIcon(icon, size: 44, color: tone.base);
 }
 
 /// Inline failure from [AppAlertDialog.onConfirm], on a pale red strip.
@@ -299,8 +303,8 @@ class _ErrorLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            LucideIcons.circleAlert500,
+          AppSvgIcon(
+            AppSvgIcons.circleAlert500,
             size: 16,
             color: AppBadgeTone.error.strong,
           ),

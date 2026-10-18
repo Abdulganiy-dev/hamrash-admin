@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/subjects/widgets/subject_code_chip.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// A card of subjects, each with its code chip. Used for the school's whole
 /// list (7.6, with a line under each name and a chevron) and a class's
@@ -17,7 +17,7 @@ class SubjectListCard extends StatelessWidget {
     required this.subjects,
     this.detailsOf,
     this.onTap,
-    this.trailingIcon = LucideIcons.chevronRight,
+    this.trailingIcon = AppSvgIcons.chevronRight,
   });
 
   final List<Subject> subjects;
@@ -28,7 +28,7 @@ class SubjectListCard extends StatelessWidget {
   /// Null for people who can't change subjects.
   final ValueChanged<Subject>? onTap;
 
-  final IconData trailingIcon;
+  final AppSvgIconData trailingIcon;
 
   @override
   Widget build(BuildContext context) => AppCard(
@@ -60,7 +60,7 @@ class _Row extends StatelessWidget {
   final Subject subject;
   final String? details;
   final bool showDivider;
-  final IconData trailingIcon;
+  final AppSvgIconData trailingIcon;
   final VoidCallback? onTap;
 
   @override
@@ -114,7 +114,7 @@ class _Row extends StatelessWidget {
           ),
           if (onTap != null) ...[
             const SizedBox(width: 12),
-            Icon(trailingIcon, size: 18, color: AppPalette.stone400),
+            AppSvgIcon(trailingIcon, size: 18, color: AppPalette.stone400),
           ],
         ],
       ),

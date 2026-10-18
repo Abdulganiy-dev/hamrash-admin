@@ -10,21 +10,21 @@ import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/utils/view_util.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:motor/motor.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// What a toast is about. Picks its icon and colour.
 enum AppToastType {
-  success(LucideIcons.circleCheck500, Color(0xFF22C55E)),
-  error(LucideIcons.circleX500, Color(0xFFF87171)),
-  warning(LucideIcons.triangleAlert500, Color(0xFFFBBF24)),
+  success(AppSvgIcons.circleCheck500, Color(0xFF22C55E)),
+  error(AppSvgIcons.circleX500, Color(0xFFF87171)),
+  warning(AppSvgIcons.triangleAlert500, Color(0xFFFBBF24)),
 
   /// Neutral note, e.g. "You're offline". Pass your own `icon`.
-  info(LucideIcons.info, AppPalette.stone300);
+  info(AppSvgIcons.info, AppPalette.stone300);
 
   const AppToastType(this.icon, this.color);
 
-  final IconData icon;
+  final AppSvgIconData icon;
 
   /// Bright tones that read on the dark espresso toast.
   final Color color;
@@ -49,7 +49,7 @@ enum AppToastType {
 ///   actionLabel: 'Undo',
 ///   onAction: model.undoAttendance,
 /// );
-/// AppToast.show('You’re offline. Changes will sync later.', icon: LucideIcons.wifiOff);
+/// AppToast.show('You’re offline. Changes will sync later.', icon: AppSvgIcons.wifiOff);
 /// ```
 abstract final class AppToast {
   AppToast._();
@@ -63,7 +63,7 @@ abstract final class AppToast {
   static void show(
     String message, {
     AppToastType type = AppToastType.info,
-    IconData? icon,
+    AppSvgIconData? icon,
     String? actionLabel,
     VoidCallback? onAction,
     Duration? duration,
@@ -77,7 +77,7 @@ abstract final class AppToast {
     if (overlay == null || message.trim().isEmpty) return;
 
     // The same toast again while it's up: shake it rather than replace it.
-    final signature = '${type.name}|${icon?.codePoint}|$message|$actionLabel';
+    final signature = '${type.name}|${icon?.assetPath}|$message|$actionLabel';
     if (signature == _signature && (_hostKey?.currentState?.shake() ?? false)) {
       return;
     }
@@ -142,7 +142,7 @@ class _ToastHost extends StatefulWidget {
 
   final String message;
   final AppToastType type;
-  final IconData icon;
+  final AppSvgIconData icon;
   final String? actionLabel;
   final VoidCallback? onAction;
   final Duration duration;
@@ -286,7 +286,7 @@ class _ToastBody extends StatelessWidget {
   });
 
   final String message;
-  final IconData icon;
+  final AppSvgIconData icon;
   final Color iconColor;
   final String? actionLabel;
   final VoidCallback? onAction;
@@ -321,7 +321,7 @@ class _ToastBody extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(icon, size: 22, color: iconColor),
+              AppSvgIcon(icon, size: 22, color: iconColor),
               const SizedBox(width: 12),
               Expanded(
                 child: AppText(

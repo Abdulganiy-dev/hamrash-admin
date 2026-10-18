@@ -9,8 +9,8 @@ import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/views/onboarding/widgets/auth_onboarding_widgets.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// 09 · This school is paused. Hamrash suspended the school, so its records
 /// are hidden until it is active again.
@@ -71,8 +71,8 @@ class SchoolPausedScreen extends StatelessWidget {
               color: LightColors.warningWarningMute,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
-              LucideIcons.circlePause,
+            child: const AppSvgIcon(
+              AppSvgIcons.circlePause,
               size: 30,
               color: LightColors.warningWarningText,
             ),
@@ -104,7 +104,7 @@ class SchoolPausedScreen extends StatelessWidget {
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(LucideIcons.messageSquare, size: 20),
+              AppSvgIcon(AppSvgIcons.messageSquare, size: 20),
               SizedBox(width: 10),
               AppText('Contact Hamrash support'),
             ],

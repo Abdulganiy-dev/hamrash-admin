@@ -3,6 +3,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// A single option inside an [AppSegmentedControl].
 ///
@@ -13,7 +14,7 @@ class AppSegmentOption<T> {
 
   final T value;
   final String label;
-  final IconData? icon;
+  final AppSvgIconData? icon;
 }
 
 /// Two to four views of the same thing: a stone-100 track with a white thumb
@@ -134,7 +135,7 @@ class _Segment<T> extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (option.icon != null) ...[
-              Icon(option.icon, size: 16, color: color),
+              AppSvgIcon(option.icon, size: 16, color: color),
               const SizedBox(width: 6),
             ],
             Flexible(

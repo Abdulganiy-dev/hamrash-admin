@@ -8,8 +8,8 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_scroll_fade.dart';
 import 'package:hamrash_admin/core/widgets/app_surface.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:stupid_simple_sheet/stupid_simple_sheet.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// How a sheet sits on the screen.
 enum AppSheetSize {
@@ -402,8 +402,8 @@ class AppSheetCloseButton extends StatelessWidget {
                 color: AppPalette.stone100,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                LucideIcons.x500,
+              child: const AppSvgIcon(
+                AppSvgIcons.x500,
                 size: 18,
                 color: AppPalette.stone700,
               ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_option_card.dart';
 import 'package:hamrash_admin/views/classes/classes_view_model.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// 6.1 · A school with no classes picks how to start: the usual Nigerian
 /// structure, or its own sections from scratch.
@@ -38,7 +38,7 @@ class StructureStartPicker extends StatelessWidget {
             ('Secondary', 'JSS 1 – SS 3'),
           ],
           note: 'Students graduate after SS 3',
-          noteIcon: LucideIcons.graduationCap,
+          noteIcon: AppSvgIcons.graduationCap,
         ),
       ),
       const SizedBox(height: 12),

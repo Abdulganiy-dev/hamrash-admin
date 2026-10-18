@@ -19,8 +19,8 @@ import 'package:hamrash_admin/views/academic_calendar/sessions/academic_sessions
 import 'package:hamrash_admin/views/academic_calendar/sessions/widgets/current_session_card.dart';
 import 'package:hamrash_admin/views/academic_calendar/sessions/widgets/session_dates.dart';
 import 'package:hamrash_admin/views/academic_calendar/widgets/session_skeletons.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:stacked/stacked.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// 4.0 / 4.0a · Academic sessions, from the More tab. Pops `true` when a
 /// session was added or changed, so the More tab refreshes its tile.
@@ -50,7 +50,7 @@ class _AcademicSessionsScreenState extends State<AcademicSessionsScreen> {
           actions: [
             if (model.canCreate && !model.isEmpty)
               AppNavIconButton(
-                icon: LucideIcons.plus,
+                icon: AppSvgIcons.plus,
                 semanticLabel: 'New session',
                 onPressed: () => _create(model),
               ),
@@ -61,7 +61,7 @@ class _AcademicSessionsScreenState extends State<AcademicSessionsScreen> {
               ? const _Loading(child: SessionsListSkeleton())
               : model.isEmpty
               ? AppEmptyState(
-                  icon: LucideIcons.calendar,
+                  icon: AppSvgIcons.calendar,
                   title: 'No academic sessions yet',
                   subtitle: model.canCreate
                       ? 'Create the first session to set its dates and terms.'

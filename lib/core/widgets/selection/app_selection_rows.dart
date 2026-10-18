@@ -327,7 +327,6 @@ class AppChoiceCard<T> extends StatelessWidget {
                     : LightColors.strokeColourStrokeCard,
                 width: picked ? 1.5 : 1,
               ),
-              boxShadow: enabled ? AppShadows.floating : null,
             ),
             child: Row(
               children: [
