@@ -97,6 +97,7 @@ class SignInScreen extends StatelessWidget {
                     tint: AppPalette.white,
                     label: 'Continue with Apple',
                     labelColor: AppPalette.white,
+                    markOffsetY: kAppleMarkOffsetY,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.ms),

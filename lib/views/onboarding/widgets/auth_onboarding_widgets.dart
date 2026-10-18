@@ -111,6 +111,11 @@ class AuthScreenFrame extends StatelessWidget {
   }
 }
 
+/// Apple's artwork is bottom-heavy: the apple body sits low in the 814 × 1000
+/// box and the leaf above it is light. Its visual mass therefore sits about
+/// 3px below the box centre at a 22px mark, so the paint is lifted to put the
+/// body level with the label. The slot and the row are untouched.
+const double kAppleMarkOffsetY = -2;
 class AuthProviderLabel extends StatelessWidget {
   const AuthProviderLabel({
     super.key,
@@ -118,7 +123,8 @@ class AuthProviderLabel extends StatelessWidget {
     required this.label,
     required this.labelColor,
     this.tint,
-    this.iconSize = 20,
+    this.iconSize = 22,
+    this.markOffsetY = 0,
   });
 
   final String asset;
@@ -126,28 +132,41 @@ class AuthProviderLabel extends StatelessWidget {
   final Color labelColor;
   final Color? tint;
 
-  /// Drawn height of the mark, e.g. 20. The width follows the asset's own
-  /// aspect ratio — see the note in [build].
+  /// Size of the square slot the mark is centred in, e.g. 22. The artwork
+  /// keeps its own aspect ratio inside it — see the note in [build].
   final double iconSize;
+
+  /// Optical correction for a mark whose visual mass is not centred in its
+  /// box, e.g. Apple's leaf-over-body silhouette. Moves only the paint, not
+  /// the slot, so the label never shifts.
+  final double markOffsetY;
 
   @override
   Widget build(BuildContext context) {
-    // The mark is sized by height only and keeps its own aspect ratio, so the
-    // 10px gap is measured from the drawn edge. A square 20 × 20 slot would
-    // leave ~1.9px of empty space on each side of a tall mark (the Apple logo
-    // is 814 × 1000) and none beside a square one (the Google G is 48 × 48):
-    // the Apple button then reads as spaced wider and sitting left of centre.
+    // The mark sits in a shared square slot so both rows have the same layout
+    // width, and the artwork keeps its own aspect ratio inside it. A tall mark
+    // (Apple, 814 × 1000) paints narrower than a square one (Google G), so
+    // [opticalScale] enlarges only the paint — the slot, the 10px gap and the
+    // label's position are unaffected.
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SvgPicture.asset(
-          asset,
-          height: iconSize,
-          fit: BoxFit.contain,
-          colorFilter: tint == null
-              ? null
-              : ColorFilter.mode(tint!, BlendMode.srcIn),
+        SizedBox.square(
+          dimension: iconSize,
+          child: Transform.translate(
+            offset: Offset(0, markOffsetY),
+            child: SvgPicture.asset(
+              asset,
+              width: iconSize,
+              height: iconSize,
+              fit: BoxFit.contain,
+              alignment: Alignment.center,
+              colorFilter: tint == null
+                  ? null
+                  : ColorFilter.mode(tint!, BlendMode.srcIn),
+            ),
+          ),
         ),
         const SizedBox(width: 10),
         Text(
@@ -158,6 +177,7 @@ class AuthProviderLabel extends StatelessWidget {
             color: labelColor,
             fontSize: 17,
             height: 24 / 17,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
