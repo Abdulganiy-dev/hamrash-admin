@@ -118,29 +118,44 @@ class AuthProviderLabel extends StatelessWidget {
     required this.label,
     required this.labelColor,
     this.tint,
+    this.iconSize = 20,
   });
 
   final String asset;
   final String label;
   final Color labelColor;
   final Color? tint;
+  final double iconSize;
 
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.center,
     children: [
-      SvgPicture.asset(
-        asset,
-        width: 20,
-        height: 20,
-        colorFilter: tint == null
-            ? null
-            : ColorFilter.mode(tint!, BlendMode.srcIn),
+      // Fixed 20 × 20 slot, matching the Paper design, so the mark's own
+      // aspect ratio can't nudge the label off the row's centre line.
+      SizedBox.square(
+        dimension: iconSize,
+        child: SvgPicture.asset(
+          asset,
+          width: iconSize,
+          height: iconSize,
+          fit: BoxFit.contain,
+          colorFilter: tint == null
+              ? null
+              : ColorFilter.mode(tint!, BlendMode.srcIn),
+        ),
       ),
       const SizedBox(width: 10),
       Text(
         label,
-        style: AppTypography.title.copyWith(color: labelColor, fontSize: 17),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AppTypography.title.copyWith(
+          color: labelColor,
+          fontSize: 17,
+          height: 24 / 17,
+        ),
       ),
     ],
   );

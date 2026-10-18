@@ -190,6 +190,7 @@ class _ClassSheetState extends State<ClassSheet> {
       ),
       footer: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (_error case final message?) AppSheetError(message),
           AppPrimaryButton(

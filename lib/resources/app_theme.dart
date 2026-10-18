@@ -50,7 +50,7 @@ class AppTheme {
       // Icon theme
       iconTheme: const IconThemeData(
         color: LightColors.iconIconInverted,
-        size: 24,
+        size: 20,
       ),
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
@@ -186,7 +186,7 @@ class AppTheme {
       // Icon theme
       iconTheme: const IconThemeData(
         color: DarkColors.iconIconPrimary,
-        size: 24,
+        size: 20,
       ),
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(

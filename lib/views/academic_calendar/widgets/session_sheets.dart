@@ -147,6 +147,7 @@ class _EditSessionSheetState extends State<EditSessionSheet> {
       ),
       footer: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppPrimaryButton(
             useGradient: true,
@@ -286,6 +287,7 @@ class _EditTermSheetState extends State<EditTermSheet> {
       ),
       footer: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppPrimaryButton(
             useGradient: true,

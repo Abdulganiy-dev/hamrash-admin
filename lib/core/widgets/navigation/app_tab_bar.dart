@@ -95,7 +95,7 @@ class _Tab extends StatelessWidget {
                 duration: _duration,
                 builder: (context, value, _) => AppSvgIcon(
                   selected ? (item.activeIcon ?? item.icon) : item.icon,
-                  size: 24,
+                  size: 22,
                   color: value,
                 ),
               ),

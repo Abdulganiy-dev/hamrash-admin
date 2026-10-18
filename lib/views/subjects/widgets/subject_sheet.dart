@@ -147,6 +147,7 @@ class _SubjectSheetState extends State<SubjectSheet> {
       ),
       footer: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (_error case final message?) AppSheetError(message),
           AppPrimaryButton(

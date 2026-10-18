@@ -107,6 +107,7 @@ class _SectionSheetState extends State<SectionSheet> {
       ),
       footer: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (_error case final message?) AppSheetError(message),
           AppPrimaryButton(

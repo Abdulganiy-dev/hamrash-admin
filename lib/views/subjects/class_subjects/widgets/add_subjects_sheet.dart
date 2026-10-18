@@ -195,6 +195,7 @@ class _AddSubjectsSheetState extends State<AddSubjectsSheet> {
       ),
       footer: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (_error case final message?) AppSheetError(message),
           AppPrimaryButton(

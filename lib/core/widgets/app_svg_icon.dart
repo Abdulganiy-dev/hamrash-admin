@@ -98,7 +98,7 @@ abstract final class AppSvgIcons {
   static const toggleRight = AppSvgIconData(
     'assets/svg/icons/toggle-right.svg',
   );
-  static const trash2 = AppSvgIconData('assets/svg/icons/trash2.svg');
+  static const trash2 = AppSvgIconData('assets/svg/icons/trash-2.svg');
   static const triangleAlert = AppSvgIconData(
     'assets/svg/icons/triangle-alert.svg',
   );
@@ -140,15 +140,23 @@ class AppSvgIcon extends StatelessWidget {
     if (icon == null) return SizedBox.square(dimension: iconSize);
 
     final resolvedColor = color ?? iconTheme.color;
-    return SvgPicture.asset(
-      icon.assetPath,
-      width: iconSize,
-      height: iconSize,
-      fit: BoxFit.contain,
-      colorFilter: resolvedColor == null
-          ? null
-          : ColorFilter.mode(resolvedColor, BlendMode.srcIn),
-      semanticsLabel: semanticLabel,
+    // Center + widthFactor/heightFactor: the icon keeps its own size even when
+    // a parent hands it tight constraints (e.g. Container(width: 28, height:
+    // 28, child: AppSvgIcon(size: 14))). Without this, SvgPicture is forced to
+    // fill the parent and every such icon renders at the container's size.
+    return Center(
+      widthFactor: 1,
+      heightFactor: 1,
+      child: SvgPicture.asset(
+        icon.assetPath,
+        width: iconSize,
+        height: iconSize,
+        fit: BoxFit.contain,
+        colorFilter: resolvedColor == null
+            ? null
+            : ColorFilter.mode(resolvedColor, BlendMode.srcIn),
+        semanticsLabel: semanticLabel,
+      ),
     );
   }
 }
