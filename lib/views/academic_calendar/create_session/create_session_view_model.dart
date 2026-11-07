@@ -16,7 +16,7 @@ class CreateSessionViewModel extends SessionDraftModel {
   }) : _service = service ?? locator<AcademicCalendarService>(),
        _now = now ?? DateTime.now() {
     final year = startYear ?? (_now.month >= 9 ? _now.year : _now.year - 1);
-    draft = CalendarDraft(
+    draft = CalendarDraft( 
       name: '$year/${((year + 1) % 100).toString().padLeft(2, '0')}',
       dates: DateTimeRange(
         start: DateTime(year, 9, 7),
