@@ -1,16 +1,17 @@
 -- 25 · Remove the wrong-code limits
 --
--- Migrations 12 and 13 limited wrong codes to 5 per account per hour, using
--- two attempt tables. That limit is gone: a wrong code is just "not found".
+-- Migration 13 limited wrong claim codes to 5 per account per hour. That limit
+-- is gone: a wrong code is just "not found". (Migration 26 does the same for
+-- platform invites by replacing them altogether.)
 --
--- * Drops private.claim_code_attempts and private.platform_invite_attempts,
---   and the three helpers that only served the claim-code limit.
+-- * Drops private.claim_code_attempts and the three helpers that only served
+--   the limit.
 -- * check_claim_code no longer returns tries_left or retry_at, and the
 --   'locked' status no longer exists. The return type changes, so it is
 --   dropped and recreated.
--- * redeem_claim_code and redeem_platform_invite keep their signatures and
---   still return NULL for a wrong code. They no longer count tries, lock
---   anyone out, or raise "Too many wrong codes".
+-- * redeem_claim_code keeps its signature and still returns NULL for a wrong
+--   code. It no longer counts tries, locks anyone out, or raises
+--   "Too many wrong codes".
 --
 -- Contains DROP, which the Supabase connector refuses to run: apply it in the
 -- SQL editor, then record it in supabase_migrations.schema_migrations.
@@ -159,68 +160,6 @@ end;
 $$;
 
 -- ─────────────────────────────────────────────────────────────
--- redeem_platform_invite: same, without the limit
--- ─────────────────────────────────────────────────────────────
-create or replace function public.redeem_platform_invite(
-  p_code      text,
-  p_full_name text,
-  p_email     text default null
-)
-returns public.platform_admins
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  v_sub      text := (select auth.jwt() ->> 'sub');
-  v_existing public.platform_admins;
-  v_invite   private.platform_invite_codes;
-  v_admin    public.platform_admins;
-begin
-  if v_sub is null or v_sub = '' then
-    raise exception 'Not authenticated' using errcode = '28000';
-  end if;
-
-  -- Already on the team: nothing to redeem, and the code stays unused.
-  select pa.* into v_existing from public.platform_admins pa where pa.clerk_user_id = v_sub;
-  if found then
-    if v_existing.is_active then
-      return v_existing;
-    end if;
-    raise exception 'Your platform access was turned off. Ask a Hamrash admin to turn it back on.'
-      using errcode = '42501';
-  end if;
-
-  if nullif(trim(p_full_name), '') is null then
-    raise exception 'Enter your full name to join the Hamrash team' using errcode = '22023';
-  end if;
-
-  select c.* into v_invite
-  from private.platform_invite_codes c
-  where c.code_hash = private.platform_code_hash(p_code)
-    and c.redeemed_at is null
-    and c.revoked_at is null
-    and c.expires_at > now()
-  for update;
-
-  if not found then
-    return null;
-  end if;
-
-  insert into public.platform_admins (clerk_user_id, full_name, email)
-  values (v_sub, trim(p_full_name), nullif(trim(p_email), ''))
-  returning * into v_admin;
-
-  update private.platform_invite_codes c
-  set redeemed_by = v_sub,
-      redeemed_at = now()
-  where c.id = v_invite.id;
-
-  return v_admin;
-end;
-$$;
-
--- ─────────────────────────────────────────────────────────────
 -- Drop the tables and the helpers only they used
 -- ─────────────────────────────────────────────────────────────
 drop function private.claim_code_locked_until(text);
@@ -228,4 +167,3 @@ drop function private.claim_code_tries_left(text);
 drop function private.record_claim_code_attempt(text);
 
 drop table private.claim_code_attempts;
-drop table private.platform_invite_attempts;
