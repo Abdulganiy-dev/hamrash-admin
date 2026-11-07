@@ -150,14 +150,13 @@ class SessionUsage {
   /// with it), or null when nothing else uses it.
   String? get blockedReasonBesidesTerms {
     if (placements > 0) {
-      return '${_count(placements, 'student')} are placed in classes for it.';
+      return placements == 1
+          ? '1 student is placed in a class for it.'
+          : '$placements students are placed in classes for it.';
     }
     if (studentSubjects > 0 || teachingAssignments > 0 || classTeachers > 0) {
       return 'Its subjects and teachers are still set up.';
     }
     return null;
   }
-
-  static String _count(int n, String noun) =>
-      n == 1 ? '1 $noun' : '$n ${noun}s';
 }

@@ -1,6 +1,6 @@
 # Academic Structure: sections, classes, arms, sessions
 
-> **Status:** applied to the live project on 2026-10-11 (migrations `20261011123753` and `20261011130000`). All 47 checks in the access test pass. SQL: [`supabase/migrations/20261011123753_04_create_academic_structure.sql`](../supabase/migrations/20261011123753_04_create_academic_structure.sql), plus [`…05_split_staff_private_details.sql`](../supabase/migrations/20261011130000_05_split_staff_private_details.sql) so parents can see teachers' names. Test: [`supabase/tests/03_academic_structure_access_test.sql`](../supabase/tests/03_academic_structure_access_test.sql). Builds on [people-schema.md](people-schema.md).
+> **Up to date with migrations 04, 18–21 and 23.** First applied to the live project on 2026-10-11 (migrations `20261011123753` and `20261011130000`). All 47 checks in the access test pass. SQL: [`supabase/migrations/20261011123753_04_create_academic_structure.sql`](../supabase/migrations/20261011123753_04_create_academic_structure.sql), plus [`…05_split_staff_private_details.sql`](../supabase/migrations/20261011130000_05_split_staff_private_details.sql) so parents can see teachers' names. Test: [`supabase/tests/03_academic_structure_access_test.sql`](../supabase/tests/03_academic_structure_access_test.sql). Builds on [people-schema.md](people-schema.md).
 
 ---
 
@@ -61,9 +61,13 @@ Every link uses the two-column `(organization_id, id)` pattern, so nothing can p
 | Deleting… | Result |
 |---|---|
 | a section that has classes, or an arm that has placements or a class teacher (migration 23) | **Blocked.** Deactivate it instead (`is_active = false`). |
-| a session that has terms or placements | **Blocked** |
-| a staff member or a session | Their **class-teacher assignments** are removed with them |
-| a student | Their placements are removed with them |
+| a class that has arms | **Blocked.** Remove its arms first (the app does both in one go) or switch it off. |
+| a session that has terms, placements, class teachers, teaching assignments or subject choices (migration 19) | **Blocked** |
+| the current term (migration 20) | **Blocked**: make another term current first |
+| anything in a **closed** session (migration 19) | **Blocked**, including cascades: a staff member with class-teacher rows, or a student with placements, in a closed session can't be deleted |
+| a staff member | Their class-teacher assignments are removed with them (open sessions only, see above) |
+| a student | Their placements are removed with them (open sessions only) |
+| a staff member or student with a login | Their login is suspended, or their unclaimed invite deleted (migration 28) |
 | a staff member who heads a section | The section stays and its head is cleared |
 
 ---

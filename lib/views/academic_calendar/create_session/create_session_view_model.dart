@@ -3,6 +3,7 @@ import 'package:hamrash_admin/api/models/academic_calendar/calendar_draft.dart';
 import 'package:hamrash_admin/api/services/supabase_services/academic_calendar_service.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/academic_calendar/session_draft_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Creates a session from a suggested calendar: the school's first one from
 /// setup step 2, or the next year's from the sessions list.
@@ -85,9 +86,18 @@ class CreateSessionViewModel extends SessionDraftModel {
       await _service.createCalendar(organizationId, draft);
       return true;
     } catch (error, stackTrace) {
-      saveError = error is StateError
-          ? error.message
-          : 'Could not save the calendar. Try again.';
+      saveError = switch (error) {
+        StateError(:final message) => message,
+        // Our own calendar rules (closed session, term outside the session,
+        // current-term rules) raise readable messages.
+        PostgrestException(code: 'P0001' || '23514', :final message) => message,
+        PostgrestException(code: '42501') =>
+          'Only the owner, admins, the principal and vice principals can '
+              'change the calendar.',
+        PostgrestException(code: '23505') =>
+          'There’s already a session or term with that name.',
+        _ => 'Could not save the calendar. Try again.',
+      };
       await handleError(
         error,
         stackTrace: stackTrace,

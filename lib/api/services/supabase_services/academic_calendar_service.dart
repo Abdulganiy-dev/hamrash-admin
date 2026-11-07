@@ -133,7 +133,21 @@ class AcademicCalendarService {
             .from('academic_terms')
             .delete()
             .eq('session_id', session.id);
-        await _supabase.from('academic_sessions').delete().eq('id', session.id);
+        // Row-level security doesn't raise on a blocked delete; it removes
+        // nothing. Ask for the row back so that shows up as a refusal.
+        final removed = await _supabase
+            .from('academic_sessions')
+            .delete()
+            .eq('id', session.id)
+            .select('id');
+        if ((removed as List).isEmpty) {
+          throw const PostgrestException(
+            message:
+                'Only the owner, admins, the principal and vice principals can '
+                'remove a session.',
+            code: 'P0001',
+          );
+        }
       }, log: (_) => {'id': session.id});
 
   /// Seals an ended session: it and everything recorded against it become

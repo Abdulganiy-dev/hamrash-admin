@@ -164,4 +164,14 @@ class HomeViewModel extends BaseViewModel {
     }
     AppToast.show('${step.title} is coming soon');
   }
+
+  /// The school logo in the header opens the details for the owner, the only
+  /// one who can change them; everyone else is told why, as on More.
+  void openSchoolDetailsFromLogo() {
+    if (school.canEditSchool) {
+      onOpenSchoolDetails?.call();
+    } else {
+      AppToast.show("Only the owner can change the school's details");
+    }
+  }
 }

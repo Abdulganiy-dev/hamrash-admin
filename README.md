@@ -2,6 +2,7 @@
 
 Admin app for the Hamrash school management system. Built with Flutter, backed by Supabase, with Clerk for sign-in.
 
+- **Handbook (start here):** [docs/handbook/index.html](docs/handbook/index.html). Every operation, the tables it touches, who can do it and why it can be refused. Keep [docs/handbook/data.js](docs/handbook/data.js) up to date with every migration or data-access change.
 - What the app will do: [ADMIN_FEATURES.md](ADMIN_FEATURES.md)
 - Database design and guides: [docs/README.md](docs/README.md). Start with [docs/rls-guide.md](docs/rls-guide.md) before writing a migration.
 - Migrations and access tests: [supabase/README.md](supabase/README.md)

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/staff_profile.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/image_service.dart';
@@ -150,7 +151,7 @@ class ConfirmSchoolViewModel extends BaseViewModel {
         context: 'ConfirmSchool.saveField.${field.name}',
         showErrorModal: false,
       );
-      return "Couldn't save that. Check your connection and try again.";
+      return _messageFor(error);
     }
   }
 
@@ -167,12 +168,11 @@ class ConfirmSchoolViewModel extends BaseViewModel {
     _uploadingLogo = true;
     notifyListeners();
     try {
-      final logo = await (_imageService ?? locator<ImageService>())
-          .uploadImage(
-            await picked.readAsBytes(),
-            'school-logo-${_organization.id}',
-            kind: MediaKind.schoolLogo,
-          );
+      final logo = await (_imageService ?? locator<ImageService>()).uploadImage(
+        await picked.readAsBytes(),
+        'school-logo-${_organization.id}',
+        kind: MediaKind.schoolLogo,
+      );
       _organization = await _service.updateDetails(_organization.id, {
         'logo_id': logo.id,
         'logo_url': logo.url,
@@ -207,9 +207,25 @@ class ConfirmSchoolViewModel extends BaseViewModel {
         error,
         stackTrace: stackTrace,
         context: 'ConfirmSchool.confirm',
-        userMessage:
-            "We couldn't save that. Check your connection and try again.",
+        userMessage: _messageFor(error),
       );
     }
+  }
+
+  /// Turns a refusal into words. Row-level security lets only the owner (or
+  /// Hamrash) update the school; a blocked update matches no row, which
+  /// `.single()` reports as PGRST116.
+  static String _messageFor(Object error) {
+    if (error is PostgrestException) {
+      switch (error.code) {
+        case '42501' || 'PGRST116':
+          return "Only the owner can change the school's details.";
+        case '23514' || '22023':
+          return "That value isn't allowed. Check it and try again.";
+        case 'P0001':
+          return error.message;
+      }
+    }
+    return "Couldn't save that. Check your connection and try again.";
   }
 }

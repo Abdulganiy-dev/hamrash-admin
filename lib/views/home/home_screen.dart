@@ -60,7 +60,7 @@ class HomeScreen extends StatelessWidget {
 
           customAppBar: _Header(
             model: model,
-            onSchoolLogoTapped: onOpenSchoolDetails,
+            onSchoolLogoTapped: model.openSchoolDetailsFromLogo,
             onAvatarTap: () => onAvatarTap(model.displayName, model.photoUrl),
           ),
           body: AppRefreshScrollView.children(

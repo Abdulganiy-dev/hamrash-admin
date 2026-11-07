@@ -1,5 +1,7 @@
 # Docs
 
+**Start with the handbook:** open [handbook/index.html](handbook/index.html). It lists every operation in both apps, the tables and functions each one touches, who can do it and why it can be refused. Update [handbook/data.js](handbook/data.js) whenever data access changes (see [handbook/README.md](handbook/README.md)).
+
 ## Database design (current)
 Read these in order. Each describes what's live, with its migrations and access test.
 

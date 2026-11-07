@@ -21,13 +21,25 @@ Applied in filename order. Each filename's timestamp matches the version recorde
 | 11 | `20261012100000_11_owner_staff_record_on_redeem.sql` | `redeem_claim_code(code, first_name, last_name, email, phone)`: redeeming an owner code also creates the owner's staff record. The name is required for owner codes only. |
 | 12 | `20261013120000_12_platform_invite_codes.sql` | Per-person platform invite codes (replaced by migration 26): `private.platform_invite_codes`; RPCs `create_platform_invite`, `list_platform_invites`, `revoke_platform_invite`, `redeem_platform_invite`. One-time, 7-day, hash-only codes, so new Hamrash team members can join from Hamrash Platform Admin. |
 | 13 | `20261013140000_13_check_claim_code_and_limit_attempts.sql` | `check_claim_code(code)`: look a code up without using it (school, role, which app it's for, whether an owner name is needed). `redeem_claim_code` now returns NULL for a wrong or used code instead of raising. |
+| 14 | `20261013193951_14_confirm_school_details_and_guard_org_updates.sql` | `organizations.details_confirmed_at/by`; trigger `guard_organization_update`: only Hamrash changes a school's status, creator or created date |
+| 15 | `20261013200847_15_stamp_details_confirmed_on_server.sql` | The database stamps the confirm time and who confirmed; later confirms keep the first stamp |
+| 16 | `20261013201547_16_grant_update_details_confirmed_at.sql` | Lets the owner send the confirm (column grant) |
+| 17 | `20261013213000_17_owner_edits_school_leaders_invite.sql` | Only the owner (and Hamrash) edits school details; principals and VPs invite, and delete unclaimed invites, for principal, VP, bursar, teacher and staff |
+| 18 | `20261014090000_18_leaders_delete_sessions_and_terms.sql` | All leaders (not just owner/admin) can delete sessions and terms |
+| 19 | `20261014120000_19_close_sessions_and_protect_calendar.sql` | `close_session`, `reopen_session` (owner), `session_usage`; a closed session and everything recorded against it is read-only; session links become RESTRICT |
+| 20 | `20261014130000_20_block_current_term_delete.sql` | The current term can't be deleted |
+| 21 | `20261014150000_21_leaders_delete_sections_classes_arms.sql` | All leaders can delete sections, classes and arms |
+| 22 | `20261014160000_22_leaders_delete_subjects.sql` | All leaders can delete subjects |
+| 23 | `20261014170000_23_class_teachers_keep_their_arm.sql` | An arm with a class teacher can't be deleted (was cascade) |
+| 24 | `20261014180000_24_keep_taught_arm_subjects.sql` | A subject can't come off an arm while taught or chosen there in an open session; `arm_subject_usage` |
 | 25 | `20261107120000_25_remove_wrong_code_limits.sql` | Removes the wrong-code limit on claim codes: drops `private.claim_code_attempts` and three helper functions; `check_claim_code` no longer returns `tries_left` or `retry_at` (the `locked` status is gone); `redeem_claim_code` no longer counts tries or raises "Too many wrong codes". Contains `drop`, so apply it in the SQL editor. |
 | 26 | `20261107130000_26_platform_team_join_code.sql` | Replaces the per-person platform invite codes with one shared team code: drops `private.platform_invite_codes`, `private.platform_invite_attempts` and the four invite RPCs; adds `private.platform_join_code` (hash only), `platform_admins.joined_at`, and RPCs `redeem_platform_join_code`, `rotate_platform_join_code`, `set_platform_join_enabled`, `platform_join_code_status`. The first code is made by hand in the SQL editor. Contains `drop`, so apply it in the SQL editor. |
 | 27 | `20261107140000_27_remove_organization_code.sql` | Removes the school code `organizations.code` (`HMR-XXXXXX`): `create_organization` now returns `(organization_id, owner_claim_code)`, `check_claim_code` no longer returns `school_code`, and the school-update guard (migration 14) no longer compares it. Contains `drop`, so apply it in the SQL editor. |
+| 28 | `20261107150000_28_person_delete_revokes_login_and_principals_issue_logins.sql` | Deleting a staff, student or parent record deletes its unclaimed invite or suspends its login (an active owner's staff record can't be deleted); `invite_staff` lets principals and VPs issue logins for their tier |
 
 Migration 02's revoke on `rls_auto_enable()` is guarded, since that function exists only on hosted Supabase; this lets the migrations run on a local database.
 
-Migrations 03, 05, 07, 10 and 11 contain `drop` statements, which the Supabase connector refuses to run. They were applied in the SQL editor and then recorded in `supabase_migrations.schema_migrations` by hand. Any future migration that drops something needs the same treatment.
+Migrations 03, 05, 07, 10, 11, 25, 26 and 27 contain `drop` statements, which the Supabase connector refuses to run. They were applied in the SQL editor and then recorded in `supabase_migrations.schema_migrations` by hand. Any future migration that drops something needs the same treatment.
 
 Before writing a new migration, read [`docs/rls-guide.md`](../docs/rls-guide.md).
 
@@ -70,6 +82,15 @@ node --test supabase/functions/media-upload/media_upload.test.mjs supabase/funct
 | `tests/06_owner_staff_record_test.sql` | 10 checks for the owner's staff record: owner codes need a name, the record is linked and numbered `STF/0001`, the owner can edit it, other codes need no name, a staff member made co-owner keeps one record. Needs migrations 01–11. |
 | `tests/07_platform_join_code_access_test.sql` | 21 checks for the shared team code: none yet → null; code shape and hash-only storage; only admins can rotate, switch or see status; the table isn't readable; name required; wrong code rejected; a loosely typed code joins and sets `joined_at`; reusable for a second person; rotating stops the old code; switched-off codes refused; rotating switches joining on; turned-off admins refused; anon can't join. Needs migrations 01–26. |
 | `tests/08_check_claim_code_test.sql` | 12 checks for checking a code first: owner, principal and teacher codes report the right app and stay unused; half-typed and wrong codes are `not_found`; a wrong redeem returns NULL; many wrong codes never lock anyone out; a good redeem works afterwards; `already_member` and `school_inactive`; anon can't check. Needs migrations 01–25. |
+| `tests/09_owner_edits_school_leaders_invite_test.sql` | Only the owner edits school details; principals and VPs invite their tier. Needs 01–17. |
+| `tests/10_leaders_delete_sessions_and_terms_test.sql` | Leaders delete sessions and terms. Needs 01–18. |
+| `tests/11_close_sessions_test.sql` | Closing and reopening sessions; closed sessions are read-only. Needs 01–19. |
+| `tests/12_current_term_delete_test.sql` | The current term can't be deleted. Needs 01–20. |
+| `tests/13_leaders_delete_structure_test.sql` | Leaders delete sections, classes and arms. Needs 01–21. |
+| `tests/14_leaders_delete_subjects_test.sql` | Leaders delete subjects. Needs 01–22. |
+| `tests/15_class_teachers_keep_their_arm_test.sql` | An arm with a class teacher can't be deleted. Needs 01–23. |
+| `tests/16_keep_taught_arm_subjects_test.sql` | Taught or chosen arm subjects stay. Needs 01–24. |
+| `tests/17_person_delete_and_principal_logins_test.sql` | 10 checks: deleting a person deletes their invite or suspends their login, the owner's record stays, principals issue logins for their tier only. Needs 01–28. |
 
 **Run the tests locally (preferred).** Needs Docker (Docker Desktop or OrbStack) and the Supabase CLI.
 

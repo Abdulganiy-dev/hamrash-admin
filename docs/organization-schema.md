@@ -74,11 +74,12 @@ There is no try limit. The table is in `private` (not exposed by the Data API) w
 | Column | Notes |
 |--------|-------|
 | `id` | `uuid` PK. The organization id. |
-| `name`, `email`, `phone`, `address`, `state`, `logo_url` | Editable by the school's owner or admin |
-| `logo_id` | Cloudflare Images id of the logo, needed to replace or delete it. Editable by the owner or admin. *(added in migration 03)* |
-| `number_prefix` | Required, 2–8 letters or digits (e.g. `KCL`). Entered by Hamrash at creation; goes in front of admission and staff numbers. Owner or admin can correct it. *(added in migration 03)* |
+| `name`, `email`, `phone`, `address`, `state`, `logo_url` | Editable by the school's owner (and Hamrash). Admins lost this in migration 17. |
+| `logo_id` | Cloudflare Images id of the logo, needed to replace or delete it. Editable by the owner. *(added in migration 03)* |
+| `number_prefix` | Required, 2–8 letters or digits (e.g. `KCL`). Entered by Hamrash at creation; goes in front of admission and staff numbers. The owner can correct it; existing numbers keep the old prefix. *(added in migration 03)* |
 | `status` | `trial`, `active`, `suspended`, `archived`. Only platform admins change it. Schools are never deleted. |
 | `created_by` | Clerk id of the platform admin who created it |
+| `details_confirmed_at`, `details_confirmed_by` | Stamped by the database the first time the owner taps Looks good; later confirms keep the first stamp. *(migrations 14–16)* |
 
 ### `organization_members`
 
@@ -127,7 +128,7 @@ Apps look a code up with `check_claim_code(code)` before redeeming it. Checking 
 
 **No wrong-code limit.** Migrations 12 and 13 limited wrong codes to 5 per account per hour; migration 25 removed that. A wrong code is just `not_found`, and `redeem_claim_code` returns NULL for a wrong or used code instead of raising. Tested by `supabase/tests/08_check_claim_code_test.sql`.
 
-Later, `set_organization_status(org, 'active' | 'suspended' | 'archived')` is platform-admin only.
+`set_organization_status(org, 'trial' | 'active' | 'suspended' | 'archived')` is platform-admin only.
 
 **What suspension does.** Members of a suspended or archived school can still see their membership and the school's row, so the app can show "this school is suspended, contact Hamrash". All other school data is hidden, and claim codes for that school stop working.
 
@@ -146,8 +147,8 @@ Every policy is built from them:
 -- members of the school (and Hamrash support) can read
 using (organization_id in (select private.my_org_ids()) or (select private.is_platform_admin()))
 
--- only the school's owners and admins can write
-with check (organization_id in (select private.my_org_ids(array['owner','admin']::public.member_role[])))
+-- only the school's leaders can write (the roles vary by table)
+with check (organization_id in (select private.my_org_ids(array['owner','admin','principal','vice_principal']::public.member_role[])))
 ```
 
 - **`in (select …)` runs once per query, not per row**, then uses the `organization_id` index.
@@ -158,20 +159,23 @@ with check (organization_id in (select private.my_org_ids(array['owner','admin']
 | Action | Owner | Admin | Principal / VP | Other members | Platform admin |
 |--------|:-----:|:-----:|:--------------:|:-------------:|:--------------:|
 | Read own school | ✓ | ✓ | ✓ | ✓ | ✓ (all schools) |
-| Edit school details | ✓ | ✓ | | | ✓ |
+| Edit school details | ✓ | | | | ✓ |
 | Change school status | | | | | ✓ (RPC) |
 | See all members of the school | ✓ | ✓ | ✓ | own rows only | ✓ |
-| Invite members (not owners) | ✓ | ✓ | | | ✓ |
+| Invite members (not owners) | ✓ | ✓ | principal, VP, bursar, teacher, staff | | ✓ |
 | Invite owners | | | | | ✓ |
 | Change role or status of members | ✓ | ✓ | | | ✓ |
 | Change or remove an owner | ✓ | | | | ✓ |
-| Delete unclaimed invites | ✓ | ✓ | | | ✓ |
+| Delete unclaimed invites | ✓ | ✓ | same tiers as inviting | | ✓ |
+| Issue a login for a staff record (`invite_staff`) | ✓ | ✓ | principal, VP, bursar, teacher, staff *(migration 28)* | | ✓ |
+| Issue a login for a student or parent | ✓ | ✓ | | | ✓ |
 
 **Guards enforced by the database:**
 - An admin can't promote anyone, including themselves, to owner, and can't demote or suspend an owner.
 - A school can never lose its last active owner.
-- Clients can never write `status`/`code` on schools, or `clerk_user_id`/`claim_code` on members. Column-level grants block it, and only the RPCs set them.
+- Clients can never write `status` on schools, or `clerk_user_id`/`claim_code` on members. Column-level grants block it, and only the RPCs set them.
 - An `active` member must have a Clerk id, and an `invited` member must have a claim code.
+- Deleting a staff, student or parent record deletes its unclaimed invite or suspends its login; an active owner's staff record can't be deleted. *(migration 28)*
 
 ---
 

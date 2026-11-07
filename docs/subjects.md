@@ -1,6 +1,6 @@
 # Subjects and Teaching Assignments
 
-> **Status:** applied to the live project on 2026-10-11 (migration `20261011134957`). The access test passes (48 checks, last run 2026-10-11). SQL: [`supabase/migrations/20261011134957_06_create_subjects.sql`](../supabase/migrations/20261011134957_06_create_subjects.sql). Test: [`supabase/tests/04_subjects_access_test.sql`](../supabase/tests/04_subjects_access_test.sql). Builds on [academic-structure.md](academic-structure.md).
+> **Up to date with migrations 06, 22 and 24.** First applied to the live project on 2026-10-11 (migration `20261011134957`). The access test passes (48 checks, last run 2026-10-11). SQL: [`supabase/migrations/20261011134957_06_create_subjects.sql`](../supabase/migrations/20261011134957_06_create_subjects.sql). Test: [`supabase/tests/04_subjects_access_test.sql`](../supabase/tests/04_subjects_access_test.sql). Builds on [academic-structure.md](academic-structure.md).
 
 ---
 
@@ -29,7 +29,8 @@ Student subjects     Chidi takes French in 2026/2027                            
 | a subject that's only on the curriculum | Allowed, and its curriculum links go with it |
 | a subject from one arm's curriculum, while a teacher is assigned to it there or students there chose it, in a session that isn't closed (migration 24) | **Blocked**, with the teacher or the number of students named. Unassign or remove the choices first. `arm_subject_usage(school_id)` lists these links so the app can say so ahead of time. |
 | an arm or subject | Its curriculum links are removed |
-| an arm, session or staff member | Their teaching assignments are removed |
+| an arm or staff member | Their teaching assignments are removed, unless one is in a closed session (then the delete is refused) |
+| a session | **Blocked** while it has teaching assignments or electives (migration 19) |
 | a student | Their electives are removed |
 
 ---
@@ -89,7 +90,7 @@ This is built with the results tables, where every row carries its own session, 
 
 | | Read | Add / edit | Delete |
 |---|---|---|---|
-| subjects, arm subjects, teaching assignments | **every member of the school**, including parents, who see who teaches their child, plus platform admins | leaders | subjects: owner and admin. Curriculum links and assignments: leaders. |
+| subjects, arm subjects, teaching assignments | **every member of the school**, including parents, who see who teaches their child, plus platform admins | leaders | leaders (subjects: principals and VPs since migration 22) |
 | student subjects (electives) | leaders, the bursar, the student's teachers, the child's parents, the student, platform admins | leaders | leaders |
 
 ---
