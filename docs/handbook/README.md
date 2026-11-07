@@ -17,6 +17,8 @@ A handoff site for anyone joining Hamrash. For every data operation in Hamrash A
 | `drawer.js` | The side panel that opens when you click a table or function name. |
 | `snippets.js` | **Generated.** The SQL shown in the panel, copied from the migrations. Don't edit; run `extract_sql.py`. |
 | `extract_sql.py` | Rebuilds `snippets.js` from `supabase/migrations/`. |
+| `lightbox.js` | Thumbnails and the click-to-enlarge screen viewer. |
+| `screens/` | App screens exported from Paper (page “Hmarash Admin”) at 2x. Listed in `data.js` `screens`; re-export when a design changes. Hamrash Admin only. |
 | `check.py` | Fails if a table, RPC or edge function used by the apps or migrations isn't mentioned in `data.js`. |
 
 ## Keep it up to date

@@ -13,6 +13,48 @@ window.HANDBOOK = {
     migrationsLive: 28, // highest one applied to the live project (ccvyhbyrtobdsecqvhcr)
   },
 
+  // Screens exported from Paper (file “Hamrash”, page “Hmarash Admin”) into screens/.
+  // Re-export when a design changes. `outdated` flags a design that no longer matches the app.
+  screens: {
+    'sign-in': { file: 'screens/1-1-sign-in.png', title: '1.1 · Sign in', caption: 'Continue with Apple or Google through Clerk. No database call happens here.' },
+    'join-code': { file: 'screens/1-2-join-enter-code.png', title: '1.2 · Join · Enter code', caption: 'Type the 8-character code; **Continue** calls `check_claim_code`, which never uses the code up.' },
+    'join-wrong-code': { file: 'screens/3-1-join-wrong-code.png', title: '3.1 · Join · Wrong code', caption: 'A wrong or already-used code: “We couldn’t find that code. Check it with whoever sent it to you.”', outdated: 'The design still shows “3 more tries this hour.” That line was removed with the wrong-code limit (migration 25); the app no longer counts tries.' },
+    'join-other-app': { file: 'screens/3-4-join-code-for-another-app.png', title: '3.4 · Join · Code for another app', caption: 'A teacher, parent or student code is turned away without being used, so it still works in the right app.' },
+    'join-confirm-staff': { file: 'screens/1-3-join-confirm-staff.png', title: '1.3 · Join · Confirm (staff)', caption: '“Is this your school?” shows the school’s name, place and the role the code gives. Nothing is used until **Join** is tapped.', outdated: 'The design shows a “School code (HMR-…)” row. The school code was removed in migration 27, so the app no longer shows it.' },
+    'join-confirm-owner': { file: 'screens/1-4-join-confirm-owner.png', title: '1.4 · Join · Confirm (owner)', caption: 'Owner codes ask for the owner’s name and phone, which become their staff record.' },
+    'join-add-role': { file: 'screens/3-3-join-add-a-role.png', title: '3.3 · Join · Add a role', caption: 'The person already belongs to the school with another role; this code adds one more.' },
+    'join-role-covered': { file: 'screens/3-5-join-role-already-covered.png', title: '3.5 · Join · Role already covered', caption: 'They already have this role (or are the owner), so there is nothing to add.' },
+    'pick-school': { file: 'screens/1-5-pick-a-school.png', title: '1.5 · Pick a school', caption: 'Shown when the person belongs to more than one school and has no last-opened school saved.' },
+    'school-paused': { file: 'screens/3-6-school-paused.png', title: '3.6 · School paused', caption: 'The school is suspended: its data is hidden and there is nothing to open. Nothing is deleted.' },
+    'confirm-details': { file: 'screens/1-6-welcome-confirm-school-details.png', title: '1.6 · Welcome · Confirm school details', caption: 'The owner checks the school’s name, contact details, number prefix and logo, edits any of them, and taps **Looks good**.' },
+    'home-checklist': { file: 'screens/2-1-home-setup-checklist-owner-admin-principal-vp.png', title: '2.1 · Home · Setup checklist', caption: 'Leaders see all seven setup steps, how many are done, and the next one to open.' },
+    'home-bursar': { file: 'screens/2-2-home-setup-in-progress-bursar.png', title: '2.2 · Home · Setup in progress (bursar)', caption: 'The bursar can’t open the steps: it shows progress and that the owner is getting the school ready.' },
+    'more-owner': { file: 'screens/5-1-more-owner.png', title: '5.1 · More (owner)', caption: 'The school card, the setup tiles with their status, and sign out.', outdated: 'The design shows the school code under the school’s name. The app now shows the person’s roles there (for example “Owner · Principal”), because the school code was removed in migration 27.' },
+    'cal-list': { file: 'screens/4-0-academic-sessions-list.png', title: '4.0 · Academic sessions · List', caption: 'Every session, newest first, with the current one marked.' },
+    'cal-empty': { file: 'screens/4-0a-academic-sessions-empty.png', title: '4.0a · Academic sessions · Empty', caption: 'No session yet: leaders are offered **Create session**; everyone else sees that the leaders will add it.' },
+    'cal-session': { file: 'screens/4-1-session-details-current.png', title: '4.1 · Session details · Current', caption: 'The current session with its terms, the current term marked, and **Edit** and **Add a term**.' },
+    'cal-edit-term': { file: 'screens/4-2-calendar-edit-a-term.png', title: '4.2 · Calendar · Edit a term', caption: 'Rename a term, change its dates, make it current, or remove it (not while it’s the current term).' },
+    'cal-edit-session': { file: 'screens/4-4-calendar-edit-the-session.png', title: '4.4 · Calendar · Edit the session', caption: 'Change the session’s name and dates, or remove the session when nothing uses it.' },
+    'cal-dates-leave-term': { file: 'screens/4-5-calendar-dates-leave-a-term-out.png', title: '4.5 · Calendar · Dates leave a term out', caption: 'Shrinking the session past a term is blocked: Save stays disabled and the term is named.' },
+    'cal-last-year': { file: 'screens/4-6-calendar-last-year-to-close.png', title: '4.6 · Calendar · Last year to close', caption: 'On the current session, the last finished session is offered with **Close 2025/26**.' },
+    'cal-confirm-close': { file: 'screens/4-7-calendar-confirm-close.png', title: '4.7 · Calendar · Confirm close', caption: 'Closing makes the year’s terms, classes, subjects and results read-only; only the owner can reopen it.' },
+    'cal-closed': { file: 'screens/4-8-calendar-closed-session-owner.png', title: '4.8 · Calendar · Closed session (owner)', caption: 'A closed session is read-only; only the owner sees **Reopen**.' },
+    'cls-start': { file: 'screens/6-1-classes-start.png', title: '6.1 · Classes · Start', caption: 'An empty school chooses the standard structure (Nursery to SS 3) or starts from scratch.' },
+    'cls-overview': { file: 'screens/6-2-classes-overview.png', title: '6.2 · Classes · Overview', caption: 'Sections with their classes and arms, and a banner for classes that still have no arms.' },
+    'cls-edit': { file: 'screens/6-3-classes-edit-a-class.png', title: '6.3 · Classes · Edit a class', caption: 'Rename a class, add or remove arms, mark it graduating, switch it off or remove it.' },
+    'cls-in-use': { file: 'screens/6-3a-classes-class-in-use.png', title: '6.3a · Classes · Class in use', caption: 'An arm with students (lock icon) can’t be removed; **Remove class** is greyed out with the reason.' },
+    'cls-arms': { file: 'screens/6-4-classes-arms-for-every-class.png', title: '6.4 · Classes · Arms for every class', caption: 'Add the same arms to every class that has none, in one go.' },
+    'sub-start': { file: 'screens/7-1-subjects-start.png', title: '7.1 · Subjects · Start', caption: 'A school with arms but no subjects chooses the common Nigerian subjects or starts from scratch.' },
+    'sub-by-class': { file: 'screens/7-2-subjects-by-class.png', title: '7.2 · Subjects · By class', caption: 'Each class with a summary such as “14 compulsory · 3 optional”.' },
+    'sub-class': { file: 'screens/7-3-subjects-a-class-jss-1.png', title: '7.3 · Subjects · A class (JSS 1)', caption: 'One class’s subjects, compulsory and optional, with arm tabs.' },
+    'sub-actions': { file: 'screens/7-4-subjects-a-subjects-actions.png', title: '7.4 · Subjects · A subject’s actions', caption: 'Make it optional or compulsory, copy to other arms, edit it, or remove it from the arm.' },
+    'sub-in-use': { file: 'screens/7-4a-subjects-subject-in-use.png', title: '7.4a · Subjects · Subject in use', caption: 'A taught subject can’t come off an arm: it names the teacher or the students who chose it.' },
+    'sub-add': { file: 'screens/7-5-subjects-add-subjects-to-a-class.png', title: '7.5 · Subjects · Add subjects to a class', caption: 'Search the school’s subjects, tick some, and add them as compulsory or optional.' },
+    'sub-all': { file: 'screens/7-6-subjects-all-subjects.png', title: '7.6 · Subjects · All subjects', caption: 'The school-wide list with search, and where each subject is used.' },
+    'sub-edit': { file: 'screens/7-7-subjects-edit-a-subject.png', title: '7.7 · Subjects · Edit a subject', caption: 'Change a subject’s name or code, switch it off, or remove it when nothing uses it.' },
+    'sub-arms-differ': { file: 'screens/7-8-subjects-arms-differ-ss-1.png', title: '7.8 · Subjects · Arms differ (SS 1)', caption: 'When arms take different subjects, “All arms” is replaced by one tab per arm.' },
+  },
+
   // ────────────────────────────────────────────────────────────────────
   overview: {
     lede:
@@ -138,6 +180,7 @@ window.HANDBOOK = {
     {
       id: 'join',
       app: 'admin',
+      gallery: ['sign-in', 'join-code', 'join-wrong-code', 'join-other-app', 'join-confirm-staff', 'join-confirm-owner', 'join-add-role', 'join-role-covered', 'pick-school', 'school-paused'],
       title: 'Sign in and join a school',
       summary: 'Apple or Google sign-in through Clerk, then a claim code turns an invite into an active membership. The app decides where to send the person from their memberships.',
       notes: [
@@ -147,7 +190,7 @@ window.HANDBOOK = {
       ],
       ops: [
         {
-          id: 'join-r1', kind: 'read', title: 'Load my schools', target: 'organization_members + organizations',
+          id: 'join-r1', screens: ['pick-school', 'school-paused'], kind: 'read', title: 'Load my schools', target: 'organization_members + organizations',
           trigger: 'Automatic after sign-in, after joining, and on **Try again**.',
           touches: ['select organization_members', 'select organizations'],
           who: { yes: ['Anyone signed in'], note: 'RLS returns only the person’s own memberships, including those in suspended schools.' },
@@ -156,7 +199,7 @@ window.HANDBOOK = {
           sources: ['member_access_view_model.dart:43', 'organization_member_service.dart:13'],
         },
         {
-          id: 'join-r2', kind: 'read', title: 'Check a claim code', target: 'rpc check_claim_code',
+          id: 'join-r2', screens: ['join-code', 'join-wrong-code', 'join-other-app'], kind: 'read', title: 'Check a claim code', target: 'rpc check_claim_code',
           trigger: 'Join your school → type the 8-character code → **Continue**.',
           touches: ['rpc check_claim_code'],
           who: { yes: ['Anyone signed in'], note: 'Never uses the code up.' },
@@ -169,7 +212,7 @@ window.HANDBOOK = {
           sources: ['join_view_model.dart:117', 'migration 13 · 25 · 27'],
         },
         {
-          id: 'join-c1', kind: 'create', title: 'Redeem a claim code (join)', target: 'rpc redeem_claim_code',
+          id: 'join-c1', screens: ['join-confirm-staff', 'join-confirm-owner', 'join-add-role', 'join-role-covered'], kind: 'create', title: 'Redeem a claim code (join)', target: 'rpc redeem_claim_code',
           trigger: 'Confirm screen → **Join {school}**, **Join as owner** or **Add {role} role**.',
           touches: ['update organization_members', '~insert staff (owner codes)', '~staff_private_details'],
           who: { yes: ['Anyone signed in with a valid code'] },
@@ -187,6 +230,7 @@ window.HANDBOOK = {
     {
       id: 'school',
       app: 'admin',
+      gallery: ['confirm-details'],
       title: 'School details',
       summary: 'The owner checks and edits the school’s name, contact details, number prefix and logo, and confirms them once on first sign-in.',
       notes: [
@@ -195,7 +239,7 @@ window.HANDBOOK = {
       ],
       ops: [
         {
-          id: 'school-u1', kind: 'update', title: 'Edit one field', target: 'update organizations',
+          id: 'school-u1', screens: ['confirm-details'], kind: 'update', title: 'Edit one field', target: 'update organizations',
           trigger: 'Check your school → **Edit** on name, address, phone, email or number prefix → Save.',
           touches: ['update organizations'],
           who: { yes: ['Owner', 'Hamrash'], no: ['Everyone else'] },
@@ -208,7 +252,7 @@ window.HANDBOOK = {
           sources: ['confirm_school_view_model.dart:134', 'school_service.dart:19', 'migration 01 · 14 · 17 · 27'],
         },
         {
-          id: 'school-u2', kind: 'update', title: 'Change the logo', target: 'edge media-upload → update organizations',
+          id: 'school-u2', screens: ['confirm-details'], kind: 'update', title: 'Change the logo', target: 'edge media-upload → update organizations',
           trigger: 'Check your school → tap the logo → pick a photo.',
           touches: ['edge media-upload', '~Cloudflare Images', 'update organizations.logo_id, logo_url'],
           who: { yes: ['Owner'], note: 'The upload itself only needs a valid Clerk login; saving it needs the owner.' },
@@ -217,7 +261,7 @@ window.HANDBOOK = {
           sources: ['confirm_school_view_model.dart:157', 'media_upload_service.dart:40'],
         },
         {
-          id: 'school-u3', kind: 'update', title: 'Confirm the details (“Looks good”)', target: 'update organizations.details_confirmed_at',
+          id: 'school-u3', screens: ['confirm-details'], kind: 'update', title: 'Confirm the details (“Looks good”)', target: 'update organizations.details_confirmed_at',
           trigger: 'Check your school → **Looks good**.',
           touches: ['update organizations'],
           who: { yes: ['Owner', 'Hamrash'] },
@@ -233,6 +277,7 @@ window.HANDBOOK = {
     {
       id: 'calendar',
       app: 'admin',
+      gallery: ['cal-list', 'cal-empty', 'cal-session', 'cal-edit-term', 'cal-edit-session', 'cal-dates-leave-term', 'cal-last-year', 'cal-confirm-close', 'cal-closed'],
       title: 'Academic calendar',
       summary: 'Sessions (2026/2027) and their terms. One session and one term are **current**. A finished session can be closed so its records become history.',
       strip: [['academic_sessions', '2026/2027'], ['academic_terms', 'First term', true], ['is_current', 'one per school'], ['closed_at', 'history, read-only']],
@@ -243,7 +288,7 @@ window.HANDBOOK = {
       ],
       ops: [
         {
-          id: 'cal-c2', kind: 'create', title: 'Create a session with its terms', target: 'insert academic_sessions, academic_terms',
+          id: 'cal-c2', screens: ['cal-empty', 'cal-list'], kind: 'create', title: 'Create a session with its terms', target: 'insert academic_sessions, academic_terms',
           trigger: 'More → Academic calendar → **+**, or the Home checklist step → **Save calendar**.',
           touches: ['insert academic_sessions', 'insert academic_terms', 'rpc set_current_term'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'], no: ['Bursar · view only', 'Everyone else'] },
@@ -258,7 +303,7 @@ window.HANDBOOK = {
           sources: ['create_session_view_model.dart:79', 'academic_calendar_service.dart:202', 'migration 04'],
         },
         {
-          id: 'cal-u4', kind: 'update', title: 'Save session and term changes', target: 'update academic_sessions, academic_terms',
+          id: 'cal-u4', screens: ['cal-session', 'cal-edit-term', 'cal-edit-session', 'cal-dates-leave-term'], kind: 'update', title: 'Save session and term changes', target: 'update academic_sessions, academic_terms',
           trigger: 'Session details → edit the session or terms → **Save changes**.',
           touches: ['delete academic_terms', 'update academic_sessions', 'insert / update academic_terms', 'rpc set_current_term'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'], no: ['Bursar', 'Anyone, once the session is closed'] },
@@ -272,7 +317,7 @@ window.HANDBOOK = {
           sources: ['session_details_view_model.dart:126', 'academic_calendar_service.dart:53', 'migration 04 · 19 · 20'],
         },
         {
-          id: 'cal-d1', kind: 'delete', title: 'Remove a session', target: 'delete academic_terms, academic_sessions',
+          id: 'cal-d1', screens: ['cal-edit-session'], kind: 'delete', title: 'Remove a session', target: 'delete academic_terms, academic_sessions',
           trigger: 'Session details → Edit session → **Remove session** → confirm.',
           touches: ['delete academic_terms', 'delete academic_sessions'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -285,7 +330,7 @@ window.HANDBOOK = {
           sources: ['session_details_view_model.dart:168', 'academic_calendar_service.dart:130', 'migration 18 · 19'],
         },
         {
-          id: 'cal-u5', kind: 'update', title: 'Close last session', target: 'rpc close_session',
+          id: 'cal-u5', screens: ['cal-last-year', 'cal-confirm-close'], kind: 'update', title: 'Close last session', target: 'rpc close_session',
           trigger: 'Current session’s details → Last session card → **Close {name}** → confirm.',
           touches: ['rpc close_session'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -299,7 +344,7 @@ window.HANDBOOK = {
           sources: ['session_details_view_model.dart:158', 'migration 19'],
         },
         {
-          id: 'cal-u6', kind: 'update', title: 'Reopen a closed session', target: 'rpc reopen_session',
+          id: 'cal-u6', screens: ['cal-closed'], kind: 'update', title: 'Reopen a closed session', target: 'rpc reopen_session',
           trigger: 'A closed session’s details → **Reopen {name}** → confirm.',
           touches: ['rpc reopen_session'],
           who: { yes: ['Owner'], no: ['Admin', 'Principal', 'Vice principal', 'Everyone else'] },
@@ -312,6 +357,7 @@ window.HANDBOOK = {
     {
       id: 'classes',
       app: 'admin',
+      gallery: ['cls-start', 'cls-overview', 'cls-edit', 'cls-in-use', 'cls-arms'],
       title: 'Classes and arms',
       summary: 'A school is split into **sections** (Nursery, Primary, Secondary), each section into **classes** (JSS 1), and each class into **arms** (JSS 1A). Pupils, class teachers and subjects always point at an arm, never at a class.',
       strip: [['sections', 'Secondary'], ['classes', 'JSS 1'], ['class_arms', 'JSS 1A', true], ['points at an arm', 'placements · class teachers · subjects']],
@@ -322,7 +368,7 @@ window.HANDBOOK = {
       ],
       ops: [
         {
-          id: 'cls-d3', kind: 'delete', title: 'Remove a class', target: 'delete class_arms, classes',
+          id: 'cls-d3', screens: ['cls-in-use'], kind: 'delete', title: 'Remove a class', target: 'delete class_arms, classes',
           trigger: 'Classes and arms → tap a class → **Remove class** → confirm.',
           touches: ['delete class_arms', 'delete classes', '~cascades → arm_subjects'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'], no: ['Bursar · view only', 'Teacher, staff, parent, student'] },
@@ -335,7 +381,7 @@ window.HANDBOOK = {
           sources: ['classes_view_model.dart:251', 'class_structure_service.dart:179', 'migration 04 · 21 · 23'],
         },
         {
-          id: 'cls-c3', kind: 'create', title: 'Use the standard structure', target: 'rpc create_standard_structure',
+          id: 'cls-c3', screens: ['cls-start'], kind: 'create', title: 'Use the standard structure', target: 'rpc create_standard_structure',
           trigger: 'Empty school → **Standard** → Use this structure.',
           touches: ['rpc create_standard_structure', '~insert sections, classes'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -347,7 +393,7 @@ window.HANDBOOK = {
           sources: ['classes_view_model.dart:170', 'migration 04'],
         },
         {
-          id: 'cls-c4', kind: 'create', title: 'Add a section', target: 'insert sections',
+          id: 'cls-c4', screens: ['cls-overview'], kind: 'create', title: 'Add a section', target: 'insert sections',
           trigger: '**+** → A section → name → Add section.',
           touches: ['insert sections'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -356,7 +402,7 @@ window.HANDBOOK = {
           sources: ['classes_view_model.dart:186', 'class_structure_service.dart:54'],
         },
         {
-          id: 'cls-c5', kind: 'create', title: 'Add a class with its arms', target: 'insert classes, class_arms',
+          id: 'cls-c5', screens: ['cls-edit'], kind: 'create', title: 'Add a class with its arms', target: 'insert classes, class_arms',
           trigger: '**+** → A class in {section} → name, arms → Add class.',
           touches: ['insert classes', 'insert class_arms'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -369,7 +415,7 @@ window.HANDBOOK = {
           sources: ['classes_view_model.dart:212', 'class_structure_service.dart:96'],
         },
         {
-          id: 'cls-c6', kind: 'create', title: 'Add arms to classes that have none', target: 'insert class_arms',
+          id: 'cls-c6', screens: ['cls-arms'], kind: 'create', title: 'Add arms to classes that have none', target: 'insert class_arms',
           trigger: 'Banner “N classes have no arms yet” → **Add arms** → pick arms → Add.',
           touches: ['insert class_arms'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -378,7 +424,7 @@ window.HANDBOOK = {
           sources: ['classes_view_model.dart:256', 'class_structure_service.dart:202'],
         },
         {
-          id: 'cls-u7', kind: 'update', title: 'Rename a section', target: 'update sections.name',
+          id: 'cls-u7', screens: ['cls-overview'], kind: 'update', title: 'Rename a section', target: 'update sections.name',
           trigger: 'Section card → edit → Save section.',
           touches: ['update sections'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -387,7 +433,7 @@ window.HANDBOOK = {
           sources: ['class_structure_service.dart:71'],
         },
         {
-          id: 'cls-u9', kind: 'update', title: 'Save a class (name, graduating, arms)', target: 'update classes · delete/insert class_arms',
+          id: 'cls-u9', screens: ['cls-edit'], kind: 'update', title: 'Save a class (name, graduating, arms)', target: 'update classes · delete/insert class_arms',
           trigger: 'Tap a class → change name, graduating or arms → Save class.',
           touches: ['update classes', 'delete class_arms', 'insert class_arms', '~cascades → arm_subjects'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -399,7 +445,7 @@ window.HANDBOOK = {
           sources: ['classes_view_model.dart:229', 'class_structure_service.dart:127'],
         },
         {
-          id: 'cls-u8', kind: 'update', title: 'Switch a section or class off / on', target: 'update sections / classes.is_active',
+          id: 'cls-u8', screens: ['cls-overview', 'cls-edit'], kind: 'update', title: 'Switch a section or class off / on', target: 'update sections / classes.is_active',
           trigger: 'Section or class sheet → **Switch off this …** → confirm.',
           touches: ['update sections.is_active', 'update classes.is_active'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -408,7 +454,7 @@ window.HANDBOOK = {
           sources: ['class_structure_service.dart:71 · 170'],
         },
         {
-          id: 'cls-d2', kind: 'delete', title: 'Remove a section', target: 'delete sections',
+          id: 'cls-d2', screens: ['cls-overview'], kind: 'delete', title: 'Remove a section', target: 'delete sections',
           trigger: 'Section sheet → **Remove section** → confirm.',
           touches: ['delete sections', '~cascades → score_columns, grade_boundaries'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -421,6 +467,7 @@ window.HANDBOOK = {
     {
       id: 'subjects',
       app: 'admin',
+      gallery: ['sub-start', 'sub-by-class', 'sub-class', 'sub-actions', 'sub-in-use', 'sub-add', 'sub-all', 'sub-edit', 'sub-arms-differ'],
       title: 'Subjects and curriculum',
       summary: 'The school’s list of **subjects**, and which subjects each **arm** takes (`arm_subjects`), as compulsory or optional. Optional subjects are chosen per student (`student_subjects`).',
       strip: [['subjects', 'Mathematics'], ['arm_subjects', 'JSS 1A · compulsory', true], ['student_subjects', 'optional choices'], ['teaching_assignments', 'who teaches it']],
@@ -431,7 +478,7 @@ window.HANDBOOK = {
       ],
       ops: [
         {
-          id: 'sub-c7', kind: 'create', title: 'Use the standard subjects', target: 'rpc create_standard_subjects',
+          id: 'sub-c7', screens: ['sub-start'], kind: 'create', title: 'Use the standard subjects', target: 'rpc create_standard_subjects',
           trigger: 'Subjects (school has arms, no subjects) → **Common subjects** → Use these subjects.',
           touches: ['rpc create_standard_subjects', '~insert subjects', '~insert arm_subjects'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -443,7 +490,7 @@ window.HANDBOOK = {
           sources: ['subjects_view_model.dart:230', 'migration 06'],
         },
         {
-          id: 'sub-c8', kind: 'create', title: 'Add a subject', target: 'insert subjects',
+          id: 'sub-c8', screens: ['sub-all', 'sub-edit'], kind: 'create', title: 'Add a subject', target: 'insert subjects',
           trigger: 'Subjects → **+** → name and code → Add subject (also from a class’s Add subjects sheet).',
           touches: ['insert subjects'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -455,7 +502,7 @@ window.HANDBOOK = {
           sources: ['subject_service.dart:86'],
         },
         {
-          id: 'sub-u11', kind: 'update', title: 'Edit a subject’s name or code', target: 'update subjects',
+          id: 'sub-u11', screens: ['sub-edit'], kind: 'update', title: 'Edit a subject’s name or code', target: 'update subjects',
           trigger: 'Tap a subject → change name or code → Save subject.',
           touches: ['update subjects'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -464,7 +511,7 @@ window.HANDBOOK = {
           sources: ['subject_service.dart:110'],
         },
         {
-          id: 'sub-u12', kind: 'update', title: 'Switch a subject off / on', target: 'update subjects.is_active',
+          id: 'sub-u12', screens: ['sub-edit'], kind: 'update', title: 'Switch a subject off / on', target: 'update subjects.is_active',
           trigger: 'Subject sheet → **Switch off this subject** → confirm.',
           touches: ['update subjects.is_active'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -472,7 +519,7 @@ window.HANDBOOK = {
           sources: ['subject_service.dart:125'],
         },
         {
-          id: 'sub-d4', kind: 'delete', title: 'Remove a subject', target: 'delete subjects',
+          id: 'sub-d4', screens: ['sub-edit', 'sub-in-use'], kind: 'delete', title: 'Remove a subject', target: 'delete subjects',
           trigger: 'Subject sheet → **Remove subject** → confirm.',
           touches: ['delete subjects', '~cascades → arm_subjects'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'], note: 'Principals and VPs since migration 22.' },
@@ -484,7 +531,7 @@ window.HANDBOOK = {
           sources: ['subject_service.dart:132', 'migration 06 · 22'],
         },
         {
-          id: 'sub-c9', kind: 'create', title: 'Add subjects to arms', target: 'upsert arm_subjects',
+          id: 'sub-c9', screens: ['sub-add', 'sub-by-class'], kind: 'create', title: 'Add subjects to arms', target: 'upsert arm_subjects',
           trigger: 'A class’s Subjects → **+** → tick subjects, compulsory or optional → Add.',
           touches: ['upsert arm_subjects'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -492,7 +539,7 @@ window.HANDBOOK = {
           sources: ['subject_service.dart:150'],
         },
         {
-          id: 'sub-u13', kind: 'update', title: 'Make a subject compulsory or optional', target: 'update arm_subjects.is_compulsory',
+          id: 'sub-u13', screens: ['sub-actions', 'sub-class'], kind: 'update', title: 'Make a subject compulsory or optional', target: 'update arm_subjects.is_compulsory',
           trigger: 'A class’s Subjects → tap a subject → **Make optional / compulsory**.',
           touches: ['update arm_subjects'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -500,7 +547,7 @@ window.HANDBOOK = {
           sources: ['subject_service.dart:175'],
         },
         {
-          id: 'sub-d5', kind: 'delete', title: 'Remove a subject from arms', target: 'delete arm_subjects',
+          id: 'sub-d5', screens: ['sub-actions', 'sub-class'], kind: 'delete', title: 'Remove a subject from arms', target: 'delete arm_subjects',
           trigger: 'A class’s Subjects → tap a subject → **Remove from {arms}** → confirm.',
           touches: ['delete arm_subjects'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -512,7 +559,7 @@ window.HANDBOOK = {
           sources: ['subject_service.dart:190', 'migration 24'],
         },
         {
-          id: 'sub-u14', kind: 'create', title: 'Copy one arm’s subjects to another', target: 'rpc copy_arm_subjects',
+          id: 'sub-u14', screens: ['sub-class', 'sub-arms-differ'], kind: 'create', title: 'Copy one arm’s subjects to another', target: 'rpc copy_arm_subjects',
           trigger: 'One arm selected → **Copy {arm}’s subjects to another arm** → pick → confirm.',
           touches: ['rpc copy_arm_subjects', '~insert arm_subjects'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
@@ -525,6 +572,7 @@ window.HANDBOOK = {
     {
       id: 'home',
       app: 'admin',
+      gallery: ['home-checklist', 'home-bursar', 'more-owner'],
       title: 'Home checklist and More',
       summary: 'Read-only screens: the setup checklist on Home, and the More tab’s tiles. They count rows to decide what’s done.',
       notes: [
@@ -533,7 +581,7 @@ window.HANDBOOK = {
       ],
       ops: [
         {
-          id: 'home-r3', kind: 'read', title: 'Setup progress', target: '8 small reads',
+          id: 'home-r3', screens: ['home-checklist', 'home-bursar'], kind: 'read', title: 'Setup progress', target: '8 small reads',
           trigger: 'Opening Home or More, pull to refresh, and after a setup page saves.',
           touches: ['academic_terms', 'class_arms', 'arm_subjects', 'grade_boundaries', 'score_columns', 'organization_members', 'students', 'staff'],
           who: { yes: ['Every admin-app role'], note: 'Each role sees what RLS lets it see, so a bursar’s counts can differ.' },
@@ -541,7 +589,7 @@ window.HANDBOOK = {
           sources: ['school_service.dart:44', 'home_view_model.dart:144'],
         },
         {
-          id: 'home-r6', kind: 'read', title: 'Current term and team count', target: 'academic_terms · organization_members',
+          id: 'home-r6', screens: ['more-owner'], kind: 'read', title: 'Current term and team count', target: 'academic_terms · organization_members',
           trigger: 'Opening More.',
           touches: ['academic_terms + academic_sessions', 'organization_members'],
           who: { yes: ['Every admin-app role'], some: ['Team count: leaders only'] },
@@ -768,6 +816,7 @@ window.HANDBOOK = {
       'Add the migration to `migrations` and bump `meta.migrationsInRepo`; bump `meta.migrationsLive` once it’s applied to the live project.',
       'Run `python3 docs/handbook/extract_sql.py` after any migration change. It rebuilds `snippets.js`, the SQL shown in the reference drawer, straight from the migrations.',
       'Run `python3 docs/handbook/check.py`. It lists every table, RPC and edge function the apps or migrations use that the handbook doesn’t mention, and fails if `snippets.js` is stale.',
+      'If a screen design changed in Paper (file “Hamrash”, page “Hmarash Admin”), re-export that artboard at 2x into `docs/handbook/screens/` and update its entry in `screens`. Hamrash Admin only: Platform Admin has no screens yet.',
       'Open `docs/handbook/index.html` and check the page reads right.',
     ],
     check:

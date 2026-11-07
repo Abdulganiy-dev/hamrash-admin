@@ -4,7 +4,7 @@
 (function () {
   const H = window.HANDBOOK;
   const $ = (sel) => document.querySelector(sel);
-  const { esc, md, slug, KIND_LABEL, refFor, linkCode } = window.HB;
+  const { esc, md, slug, KIND_LABEL, refFor, linkCode, shots } = window.HB;
   const DR = window.HB.drawer;
 
   // ── Sidebar ─────────────────────────────────────────────────────────
@@ -85,6 +85,7 @@
       <summary><span class="kind ${op.kind}">${KIND_LABEL[op.kind]}</span><span class="op-title">${esc(op.title)}</span><span class="op-target">${esc(op.target || '')}</span><span class="op-plus">+</span></summary>
       ${op.trigger ? `<div class="op-trigger">${md(op.trigger)}</div>` : ''}
       ${touches ? `<div class="op-row band"><span class="op-label">Touches</span><div class="op-body">${touches}</div></div>` : ''}
+      ${op.screens && op.screens.length ? `<div class="op-row"><span class="op-label">Screens</span><div class="op-screens">${shots(op.screens)}</div></div>` : ''}
       ${pills ? `<div class="op-row"><span class="op-label">Who can</span><div class="op-body">${pills}${who.note ? `<p style="width:100%;font-size:14px;margin-top:4px">${md(who.note)}</p>` : ''}</div></div>` : ''}
       ${steps ? `<div class="op-row"><span class="op-label">What happens</span><div class="steps">${steps}</div></div>` : ''}
       ${refusals ? `<div class="op-row"><span class="op-label">Refused when</span><div class="refusals">${refusals}</div></div>` : ''}
@@ -131,13 +132,16 @@
       ? `<div class="strip">${f.strip.map(([a, b, hl]) => `<div class="${hl ? 'hl' : ''}"><span>${esc(a)}</span><b>${md(b)}</b></div>`).join('')}</div>`
       : '';
     setToc([
+      ...(f.gallery && f.gallery.length ? [{ id: 'screens', label: 'Screens' }] : []),
       ...(f.notes ? [{ id: 'notes', label: 'Good to know' }] : []),
       { id: 'operations', label: 'Operations' },
       ...f.ops.map((o) => ({ id: o.id, label: o.title, sub: true })),
     ]);
+    const gallery = f.gallery && f.gallery.length
+      ? `<section class="gallery" id="screens"><div class="dr-label" style="margin-bottom:12px">Screens · ${f.gallery.length}</div>${shots(f.gallery)}</section>` : '';
     return `<div class="page-head"><span class="eyebrow">${f.app === 'admin' ? 'Hamrash Admin app' : 'Platform Admin app'} · Feature</span><h1>${esc(
       f.title
-    )}</h1><p class="lede">${md(f.summary)}</p></div>${strip}
+    )}</h1><p class="lede">${md(f.summary)}</p></div>${gallery}${strip}
       ${f.notes ? `<section id="notes"><h2>Good to know</h2><div class="prose" style="margin-top:14px"><ul>${f.notes.map((n) => `<li>${md(n)}</li>`).join('')}</ul></div></section>` : ''}
       <section id="operations"><div class="ops-head"><div><h2 style="border:0;padding:0">Operations</h2><p class="section-sub" style="margin:6px 0 0">Everything a user can do here, and what it does to the database. Tap one to open it.</p></div><div class="ops-counts">${counts}</div></div>
       ${f.ops.map((o, i) => opBlock(o, i === 0)).join('')}</section>`;

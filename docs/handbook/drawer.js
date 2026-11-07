@@ -330,6 +330,7 @@
       root.classList.add('open');
       scrim().classList.add('open');
     });
+    if (document.body.classList) document.body.classList.add('drawer-open');
     const close = root.querySelector('[data-act="close"]');
     if (close) close.focus({ preventScroll: true });
   }
@@ -338,6 +339,7 @@
     if (root.hidden) return;
     root.classList.remove('open');
     scrim().classList.remove('open');
+    if (document.body.classList) document.body.classList.remove('drawer-open');
     setTimeout(() => {
       if (!state.d) {
         root.hidden = true;

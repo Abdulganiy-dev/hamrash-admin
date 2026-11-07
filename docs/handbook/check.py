@@ -90,6 +90,26 @@ for kind, pat in (("function", r"name: '([a-z_ ·]+)', security"), ("table", r"\
             if nm and not re.search(rf'"{re.escape(nm)}": \{{', snips):
                 problems.append(f"No SQL snippet for {kind} {nm}: is it dropped, or misspelled in data.js?")
 
+# screens: every listed file exists, every id used by an op or gallery is defined,
+# and no PNG in screens/ is left unreferenced
+defined = dict(re.findall(r"'([a-z0-9-]+)': \{ file: 'screens/([^']+)'", data))
+shots_dir = here / "screens"
+for sid, fname in defined.items():
+    if not (shots_dir / fname).is_file():
+        problems.append(f"Screen '{sid}' lists screens/{fname}, which doesn't exist.")
+used_ids = set()
+for arr in re.findall(r"(?:screens|gallery): \[([^\]]*)\]", data):
+    used_ids |= set(re.findall(r"'([a-z0-9-]+)'", arr))
+for sid in sorted(used_ids - set(defined)):
+    problems.append(f"An operation or gallery uses screen '{sid}', which isn't defined in `screens`.")
+for sid in sorted(set(defined) - used_ids):
+    problems.append(f"Screen '{sid}' is defined but no operation or gallery shows it.")
+if shots_dir.is_dir():
+    listed = set(defined.values())
+    for f in sorted(shots_dir.iterdir()):
+        if f.is_file() and f.name not in listed:
+            problems.append(f"screens/{f.name} isn't listed in data.js `screens`.")
+
 if problems:
     print("\n".join(problems))
     sys.exit(1)
