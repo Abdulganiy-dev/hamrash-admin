@@ -19,13 +19,16 @@
   const fnEntry = (name) => H.functions.find((f) => namesOf(f).includes(name));
   const tblEntry = (name) => H.tables.find((t) => namesOf(t).includes(name));
   const isFn = (n) => Object.prototype.hasOwnProperty.call(S.functions, n);
+  const PF = S.privateFunctions || {};
+  const isPFn = (n) => Object.prototype.hasOwnProperty.call(PF, n);
   const isTbl = (n) => Object.prototype.hasOwnProperty.call(S.tables, n);
 
   // `name` (or `name()`) in a content string becomes a link when it's a known
   // table or function.
   function linkCode(name) {
-    const bare = name.replace(/\(\)$/, '');
+    const bare = name.replace(/\(\)$/, '').replace(/^private\./, '');
     if (isFn(bare)) return `<code><a class="ref-link" data-d="fn:${bare}" href="#">${name}</a></code>`;
+    if (isPFn(bare)) return `<code><a class="ref-link" data-d="pfn:${bare}" href="#">${name}</a></code>`;
     if (isTbl(bare)) return `<code><a class="ref-link" data-d="tbl:${bare}" href="#">${name}</a></code>`;
     return `<code>${name}</code>`;
   }
@@ -86,6 +89,46 @@
     'gi'
   );
   const TYPES = /\b(uuid|text|int|integer|boolean|bool|date|timestamptz|timestamp|numeric|bigint|jsonb|json|void|record|bytea)\b/gi;
+  // Names inside a snippet that are known functions (or tables) become links,
+  // except the one the drawer is already showing. Comments and strings stay plain.
+  const IDENT = /((?:public|private)\.)?([A-Za-z_][A-Za-z0-9_]*)/g;
+  function codeToken(text) {
+    let out = '';
+    let last = 0;
+    let m;
+    IDENT.lastIndex = 0;
+    while ((m = IDENT.exec(text))) {
+      out += esc(text.slice(last, m.index));
+      last = m.index + m[0].length;
+      const schema = m[1] ? m[1].slice(0, -1) : '';
+      const name = m[2];
+      const isCall = /^\s*\(/.test(text.slice(last));
+      const here = state && state.d;
+      let target = null;
+      if (schema === 'private') {
+        if (isPFn(name) && isCall) target = `pfn:${name}`;
+        else if (isTbl(name)) target = `tbl:${name}`;
+      } else if (schema === 'public') {
+        if (isFn(name) && isCall) target = `fn:${name}`;
+        else if (isTbl(name)) target = `tbl:${name}`;
+      }
+      if (target && target !== here) {
+        out += `<a class="ref-link sql-ref" data-d="${target}" href="#" title="Open ${esc(name)}">${esc(m[0])}</a>`;
+      } else if (schema) {
+        out += `<span class="tok-k">${esc(schema)}</span>.${highlightWord(name)}`;
+      } else {
+        out += highlightWord(name);
+      }
+    }
+    return out + esc(text.slice(last));
+  }
+  const WORD_TYPE = new RegExp('^' + TYPES.source.slice(2, -2) + '$', 'i');
+  const WORD_KW = new RegExp('^' + KW.source.slice(2, -2) + '$', 'i');
+  function highlightWord(w) {
+    if (WORD_TYPE.test(w)) return `<span class="tok-t">${esc(w)}</span>`;
+    if (WORD_KW.test(w)) return `<span class="tok-k">${esc(w)}</span>`;
+    return esc(w);
+  }
   function highlight(sql) {
     const out = [];
     const re = /(--[^\n]*)|('(?:[^']|'')*')|(\$[A-Za-z_]*\$)|([^'$\-]+|[\s\S])/g;
@@ -94,13 +137,7 @@
       if (m[1]) out.push(`<span class="tok-c">${esc(m[1])}</span>`);
       else if (m[2]) out.push(`<span class="tok-s">${esc(m[2])}</span>`);
       else if (m[3]) out.push(esc(m[3]));
-      else {
-        out.push(
-          esc(m[4])
-            .replace(TYPES, '<span class="tok-t">$1</span>')
-            .replace(KW, (k) => `<span class="tok-k">${k}</span>`)
-        );
-      }
+      else out.push(codeToken(m[4]));
     }
     return out.join('');
   }
@@ -117,6 +154,11 @@
       <pre id="${id}" class="${opts.clip ? 'clip' : ''}" data-raw="${esc(sql)}">${highlight(sql)}</pre>${opts.foot ? `<div class="snip-foot">${opts.foot}</div>` : ''}</div>`;
   }
   const where = (x) => `migration ${migLabel(x.migration)} · lines ${x.lines[0]}–${x.lines[1]}`;
+  // A policy's current definition is its create statement plus any later alter policy.
+  const policySql = (p) =>
+    [p.sql, ...(p.alters || []).map((a) => `-- changed in migration ${migLabel(a.migration)}\n${a.sql}`)].join('\n\n');
+  const policyMeta = (p) =>
+    `${p.name} · ${where(p)}${p.renamed_in ? ` · renamed in ${migLabel(p.renamed_in)}` : ''}${(p.alters || []).length ? ` · changed in ${p.alters.map((a) => migLabel(a.migration)).join(', ')}` : ''}`;
 
   // ── Function drawer ─────────────────────────────────────────────────
   function dartValue(p) {
@@ -174,12 +216,61 @@
           .join('')}</div>${showAll ? '' : `<span class="dr-note" style="font-size:13px">+ ${errs.length - 3} more · <button class="dr-link" data-act="expand">see all</button></span>`}</div>` : ''}
         ${snippet('SQL', where(f), f.sql, { clip: true, foot: '<button class="dr-link" data-tab="sql">Show full function ↓</button>' })}
         ${e.from ? `<div class="dr-sec"><div class="dr-label">Called from</div><div class="dr-note">${md(e.from)}</div></div>` : ''}
+        ${(f.calls || []).length ? `<div class="dr-sec"><div class="dr-label">Calls private helpers</div><div class="dr-note">${f.calls.map((c) => linkCode('private.' + c + '()')).join(' · ')}</div></div>` : ''}
         ${siblings.length ? `<div class="dr-sec"><div class="dr-label">Documented together with</div><div class="dr-note">${siblings.map((n) => linkCode(n)).join(' · ')}</div></div>` : ''}`;
     }
     return {
       kind: 'fn',
       head: `<span class="dr-kind fn">Function</span><span class="pill off">security ${f.security}</span>${livePill(f.migration)}`,
       title: name,
+      sub: sig,
+      subClass: '',
+      tabs,
+      body,
+    };
+  }
+
+  // ── Private function drawer ─────────────────────────────────────────
+  function pfnView(name, tab) {
+    const f = PF[name];
+    const u = f.usedBy || { triggers: [], policies: [], functions: [], private: [] };
+    const total = u.triggers.length + u.policies.length + u.functions.length + u.private.length;
+    const note = (H.privateNotes || {})[name];
+    const sig = `private.${name}(${(f.params || []).map((p) => `${p.name} ${p.type}`).join(', ')}) → ${(f.returns || '').replace(/^public\./, '') || 'trigger'}`;
+    const tabs = [['overview', 'Overview'], ['sql', 'SQL'], ['used', `Used by <b>${total}</b>`]];
+    const usedBox = () => {
+      const part = (label, rows) => (rows.length ? `<div class="dr-sec"><div class="dr-label">${label} <span style="letter-spacing:0">${rows.length}</span></div><div class="dr-box">${rows.join('')}</div></div>` : '');
+      const row = (inner) => `<div class="dr-row"><span class="grow">${inner}</span></div>`;
+      return [
+        part('Policies', u.policies.map((x) => row(`<a class="ref-link" data-d="tbl:${esc(x.table)}" href="#">${esc(x.table)}</a> · <span style="font-size:13px;color:var(--text)">${esc(x.name)}</span>`))),
+        part('Triggers', u.triggers.map((x) => row(`<a class="ref-link" data-d="tbl:${esc(x.table)}" href="#">${esc(x.table)}</a> · <code>${esc(x.name)}</code>`))),
+        part('Public functions', u.functions.map((x) => row(linkCode(x + '()')))),
+        part('Other private helpers', u.private.map((x) => row(linkCode('private.' + x + '()')))),
+      ].join('') || '<p class="dr-empty">Nothing in the migrations uses this.</p>';
+    };
+    let body;
+    if (tab === 'sql') {
+      body = snippet('Latest definition', where(f), f.sql);
+    } else if (tab === 'used') {
+      body = `<div class="stack">${usedBox()}</div>`;
+    } else {
+      const bits = [
+        u.policies.length ? `${u.policies.length} polic${u.policies.length === 1 ? 'y' : 'ies'}` : '',
+        u.triggers.length ? `${u.triggers.length} trigger${u.triggers.length === 1 ? '' : 's'}` : '',
+        u.functions.length ? `${u.functions.length} public function${u.functions.length === 1 ? '' : 's'}` : '',
+        u.private.length ? `${u.private.length} other helper${u.private.length === 1 ? '' : 's'}` : '',
+      ].filter(Boolean);
+      body = `
+        <div class="dr-sec"><div class="dr-label">What it is</div><div class="dr-note">${f.doc ? md(f.doc) : note ? md(note) : '<span class="dr-empty">No comment in the migration.</span>'}</div></div>
+        <div class="dr-sec"><div class="dr-label">Who can call it</div><div class="dr-note">Nobody from the apps. It lives in the <code>private</code> schema, which the Data API never exposes. Policies, triggers and other functions call it${f.security === 'definer' ? ', and because it is <b>security definer</b> it runs with its owner’s rights, not the caller’s' : ', as the caller, so row-level security still applies inside it'}.</div></div>
+        ${bits.length ? `<div class="dr-sec"><div class="dr-label">Used by <button class="dr-link" data-tab="used">${bits.join(' · ')} →</button></div></div>` : ''}
+        ${(f.calls || []).length ? `<div class="dr-sec"><div class="dr-label">Calls</div><div class="dr-note">${f.calls.map((c) => linkCode('private.' + c + '()')).join(' · ')}</div></div>` : ''}
+        ${snippet('SQL', where(f), f.sql, { clip: true, foot: '<button class="dr-link" data-tab="sql">Show full function ↓</button>' })}`;
+    }
+    return {
+      kind: 'fn',
+      head: `<span class="dr-kind fn">Private function</span><span class="pill off">security ${f.security}</span>${livePill(f.migration)}`,
+      title: `private.${name}`,
       sub: sig,
       subClass: '',
       tabs,
@@ -210,7 +301,7 @@
 
   // One line per trigger: when it fires and which function it runs.
   function triggerRow(x) {
-    return `<div class="dr-row"><span class="grow"><b style="font-family:var(--mono);font-size:12.5px;color:var(--ink)">${esc(x.name)}</b><br><span style="font-size:12px;color:var(--muted)">${esc(x.timing)}${x.each_row ? ' · each row' : ''}${x.function ? ` · runs <code>${esc(x.function)}()</code>` : ''}</span></span></div>`;
+    return `<div class="dr-row"><span class="grow"><b style="font-family:var(--mono);font-size:12.5px;color:var(--ink)">${esc(x.name)}</b><br><span style="font-size:12px;color:var(--muted)">${esc(x.timing)}${x.each_row ? ' · each row' : ''}${x.function ? ` · runs ${linkCode(x.function_schema === 'private' ? 'private.' + x.function + '()' : x.function + '()')}` : ''}</span></span></div>`;
   }
 
   function triggersTab(t, trg) {
@@ -224,7 +315,7 @@
             <div class="trg-head"><span class="trg-n">${i + 1}</span><div class="grow"><b class="mono">${esc(x.name)}</b><div class="trg-when">${esc(x.timing)}${x.each_row ? ' · for each row' : ''}${x.when ? ` · when (${esc(x.when.trim())})` : ''}</div></div></div>
             ${snippet('Trigger', `${x.table} · ${where(x)}`, x.sql)}
             ${f
-              ? snippet(`Function ${x.function_schema}.${x.function}()`, `security ${f.security} · ${where(f)}`, f.sql)
+              ? snippet(`Function ${x.function_schema}.${x.function}()`, `security ${f.security} · ${where(f)}`, f.sql, x.function_schema === 'private' ? { foot: `<a class="dr-link" data-d="pfn:${esc(x.function)}" href="#">Open private.${esc(x.function)}() · everything that uses it →</a>` } : {})
               : `<p class="dr-note">The function <code>${esc(x.function_schema || '')}.${esc(x.function || '?')}()</code> isn’t in the migrations the extractor reads.</p>`}
           </div>`;
         })
@@ -251,7 +342,7 @@
       }`;
     } else if (tab === 'policies') {
       body = `<p class="dr-note">${t.schema === 'private' ? 'This table is in the <code>private</code> schema: the Data API never exposes it, so there are no policies. Only security-definer functions touch it.' : pol.length ? `Row-level security decides who sees or changes which rows. ${pol.length} polic${pol.length === 1 ? 'y' : 'ies'}, as they stand after every migration.` : 'No policies: clients can do nothing with this table directly.'}</p>
-        ${pol.map((p) => snippet('Policy', `${p.name} · ${where(p)}`, p.sql)).join('')}`;
+        ${pol.map((p) => snippet('Policy', policyMeta(p), policySql(p))).join('')}`;
     } else if (tab === 'triggers') {
       body = triggersTab(t, trg);
     } else if (tab === 'sql') {
@@ -270,7 +361,7 @@
         </div></div>
         ${e.rules ? `<div class="dr-sec"><div class="dr-label">Rules</div><div class="dr-note">${md(e.rules)}</div></div>` : ''}
         <div class="dr-sec"><div class="dr-label">Columns <button class="dr-link" data-tab="columns">All ${cols.length} →</button></div><div class="dr-box">${columnRows(cols.slice(0, 4))}</div></div>
-        ${pol.length ? snippet('Policy', `${pol[0].name} · ${where(pol[0])}`, pol[0].sql, { clip: true, foot: `<button class="dr-link" data-tab="policies">All ${pol.length} polic${pol.length === 1 ? 'y' : 'ies'} →</button>` }) : ''}
+        ${pol.length ? snippet('Policy', policyMeta(pol[0]), policySql(pol[0]), { clip: true, foot: `<button class="dr-link" data-tab="policies">All ${pol.length} polic${pol.length === 1 ? 'y' : 'ies'} →</button>` }) : ''}
         ${trg.length ? `<div class="dr-sec"><div class="dr-label">Triggers <button class="dr-link" data-tab="triggers">All ${trg.length} with their functions →</button></div><div class="dr-box">${trg.slice(0, 4).map((x) => triggerRow(x)).join('')}</div></div>` : ''}
         ${siblings.length ? `<div class="dr-sec"><div class="dr-label">Documented together with</div><div class="dr-note">${siblings.map((n) => linkCode(n)).join(' · ')}</div></div>` : ''}`;
     }
@@ -304,11 +395,13 @@
 
   function paint() {
     const [kind, name] = state.d.split(':');
-    const ok = kind === 'fn' ? isFn(name) : isTbl(name);
+    const ok = kind === 'fn' ? isFn(name) : kind === 'pfn' ? isPFn(name) : isTbl(name);
     const v = ok
       ? kind === 'fn'
         ? fnView(name, state.tab, state)
-        : tblView(name, state.tab, state)
+        : kind === 'pfn'
+          ? pfnView(name, state.tab)
+          : tblView(name, state.tab, state)
       : { kind: 'fn', head: '<span class="dr-kind fn">Not found</span>', title: name, sub: 'No such table or function in the migrations.', tabs: [], body: '' };
     const root = el();
     root.innerHTML = `
@@ -425,5 +518,5 @@
     }
   });
 
-  window.HB = { esc, md, slug, KIND_LABEL, refFor, linkCode, usedBy, drawer: { sync, isOpen: () => !!state.d, go } };
+  window.HB = { esc, md, slug, KIND_LABEL, refFor, linkCode, usedBy, isPFn, privateFunctions: PF, drawer: { sync, isOpen: () => !!state.d, go } };
 })();

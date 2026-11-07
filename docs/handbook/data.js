@@ -697,6 +697,15 @@ window.HANDBOOK = {
     },
   ],
 
+  // One-line descriptions for private functions whose migration has no comment.
+  privateNotes: {
+    assign_staff_number: 'Trigger on `staff`: gives a new staff member the next number for their school, `PREFIX/STF/0001`, unless one was typed.',
+    guard_current_term_delete: 'Trigger on `academic_terms`: refuses to delete the current term (“Make another term current before removing this one”).',
+    next_number: 'Adds one to a school’s counter for admission or staff numbers and returns the new value. Called only by the numbering triggers.',
+    set_updated_at: 'Trigger: sets `updated_at` to now whenever a row is updated. Used by most tables.',
+    stamp_details_confirmed: 'Trigger on `organizations`: when the owner confirms the school’s details, the database records its own time and the caller’s id, and keeps the first confirmation.',
+  },
+
   // ────────────────────────────────────────────────────────────────────
   migrations: [
     { n: 1, title: 'Schools and memberships', text: '`organizations`, `organization_members`, `platform_admins`; claim codes; the owner guard; `create_organization`, `set_organization_status`, `redeem_claim_code`; the `private` RLS helpers.' },

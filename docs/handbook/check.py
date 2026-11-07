@@ -110,6 +110,18 @@ if shots_dir.is_dir():
         if f.is_file() and f.name not in listed:
             problems.append(f"screens/{f.name} isn't listed in data.js `screens`.")
 
+# every private function needs a description: a comment above it in the migration,
+# or an entry in data.js `privateNotes`
+import json
+snap = json.loads(snips[snips.index("window.SNIPPETS = ") + len("window.SNIPPETS = "):].rstrip().rstrip(";"))
+notes = set(re.findall(r"^\s{4}([a-z_0-9]+): '", data[data.find("privateNotes:"):data.find("migrations: [")], re.M))
+for nm, fn in sorted(snap.get("privateFunctions", {}).items()):
+    if not fn.get("doc") and nm not in notes:
+        problems.append(f"private.{nm}() has no comment in {fn['file']} and no entry in data.js privateNotes.")
+unused = [nm for nm, fn in snap.get("privateFunctions", {}).items() if not any(fn["usedBy"].values())]
+if unused:
+    problems.append("Private functions nothing uses (dead code, or the extractor missed a caller): " + ", ".join(sorted(unused)))
+
 if problems:
     print("\n".join(problems))
     sys.exit(1)

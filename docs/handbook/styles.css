@@ -395,3 +395,7 @@ body.lb-open { overflow: hidden; }
   .lb-img { width: 100%; flex: 1 1 55%; min-height: 0; border-right: 0; border-bottom: 1px solid var(--border); }
   .lb-side { flex: 0 0 auto; max-height: 45%; }
 }
+
+/* function and table names inside SQL snippets */
+.snip pre .sql-ref { color: var(--primary); font-weight: 600; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.snip pre .sql-ref:hover { background: var(--primary-mute); text-decoration-style: solid; border-radius: 3px; }

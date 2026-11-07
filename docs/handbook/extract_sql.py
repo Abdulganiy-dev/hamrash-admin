@@ -27,6 +27,25 @@ OUT = here / "snippets.js"
 KEYWORDS = {"before", "after", "instead", "of", "insert", "update", "delete", "or", "truncate"}
 
 
+def doc_above(text, offset):
+    """The `--` comment block directly above a statement (no blank line between),
+    without box-drawing rules, as plain sentences."""
+    lines = text[:offset].split("\n")
+    if lines and lines[-1].strip() == "":
+        lines.pop()
+    got = []
+    while lines and lines[-1].lstrip().startswith("--"):
+        got.append(lines.pop().lstrip()[2:].strip())
+    got.reverse()
+    keep = [g for g in got if g and not re.fullmatch(r"[─━\-=_ ]+", g)]
+    return " ".join(keep).strip()
+
+
+def pgname(n):
+    """Postgres cuts identifiers at 63 bytes, so a later `alter policy` names the cut form."""
+    return n.encode()[:63].decode(errors="ignore")
+
+
 def line_of(text, offset):
     return text.count("\n", 0, offset) + 1
 
@@ -83,6 +102,7 @@ comment_strip = re.compile(r"--[^\n]*")
 FN = re.compile(r"create\s+(?:or\s+replace\s+)?function\s+(public|private)\.([a-z_]+)\s*\(", re.I)
 CT = re.compile(r"create\s+table\s+(?:if\s+not\s+exists\s+)?(public|private)\.([a-z_]+)\s*\(", re.I)
 CP = re.compile(r"create\s+policy\s+\"([^\"]+)\"\s+on\s+(?:public|private)\.([a-z_]+)", re.I)
+ALTP = re.compile(r"alter\s+policy\s+\"([^\"]+)\"\s+on\s+(?:public|private)\.([a-z_]+)", re.I)
 DP = re.compile(r"drop\s+policy\s+(?:if\s+exists\s+)?\"([^\"]+)\"\s+on\s+(?:public|private)\.([a-z_]+)", re.I)
 CTR = re.compile(r"create\s+trigger\s+([a-z_]+)[\s\S]*?\bon\s+(?:public|private)\.([a-z_]+)", re.I)
 DTR = re.compile(r"drop\s+trigger\s+(?:if\s+exists\s+)?([a-z_]+)\s+on\s+(?:public|private)\.([a-z_]+)", re.I)
@@ -160,6 +180,7 @@ for path in migrations:
             "lines": [line_of(text, m.start()), line_of(text, end - 1)],
             "params": params,
             "returns": returns,
+            "doc": doc_above(text, m.start()),
             "security": "definer" if re.search(r"security\s+definer", rest, re.I) else "invoker",
         }
 
@@ -200,11 +221,13 @@ for path in migrations:
             if dm:
                 t["columns"] = [c for c in t["columns"] if c["name"] != dm.group(1)]
 
+    pending_alters = [(m.start(), m) for m in ALTP.finditer(blank)]
     for m in DP.finditer(blank):
-        policies.pop((m.group(2), m.group(1)), None)
+        policies.pop((m.group(2), pgname(m.group(1))), None)
     for m in CP.finditer(blank):
         end = statement_end(blank, m.start())
-        policies[(m.group(2), m.group(1))] = {
+        policies[(m.group(2), pgname(m.group(1)))] = {
+            "alters": [],
             "name": m.group(1),
             "table": m.group(2),
             "sql": text[m.start():end].strip(),
@@ -212,6 +235,22 @@ for path in migrations:
             "migration": n,
             "lines": [line_of(text, m.start()), line_of(text, end - 1)],
         }
+
+    for _, m in pending_alters:
+        key = (m.group(2), pgname(m.group(1)))
+        end = statement_end(blank, m.start())
+        stmt = text[m.start():end].strip()
+        pol = policies.get(key)
+        if not pol:
+            continue
+        rn = re.search(r"rename\s+to\s+\"([^\"]+)\"", blank[m.start():end], re.I)
+        if rn:
+            policies.pop(key)
+            pol["name"] = rn.group(1)
+            pol["renamed_in"] = n
+            policies[(m.group(2), pgname(rn.group(1)))] = pol
+        else:
+            pol["alters"].append({"sql": stmt, "migration": n, "file": rel, "lines": [line_of(text, m.start()), line_of(text, end - 1)]})
 
     for m in DTR.finditer(blank):
         triggers.pop((m.group(2), m.group(1)), None)
@@ -248,6 +287,22 @@ for t in tables.values():
     t["policies"].sort(key=lambda p: (p["migration"], p["name"]))
     # Postgres fires triggers for the same event in alphabetical order by name
     t["triggers"].sort(key=lambda p: p["name"])
+
+CALL = re.compile(r"private\.([a-z_0-9]+)\s*\(", re.I)
+for fn in list(functions.values()) + list(private_functions.values()):
+    fn["calls"] = sorted({c for c in CALL.findall(fn["sql"]) if c in private_functions})
+for name, pf in private_functions.items():
+    used = {"triggers": [], "policies": [], "functions": [], "private": []}
+    for tname, t in tables.items():
+        for tr in t["triggers"]:
+            if tr.get("function") == name and tr.get("function_schema") == "private":
+                used["triggers"].append({"table": tname, "name": tr["name"]})
+        for pol in t["policies"]:
+            if re.search(rf"private\.{name}\s*\(", pol["sql"] + " " + " ".join(a["sql"] for a in pol["alters"])):
+                used["policies"].append({"table": tname, "name": pol["name"]})
+    used["functions"] = sorted(n for n, f in functions.items() if name in f["calls"])
+    used["private"] = sorted(n for n, f in private_functions.items() if n != name and name in f["calls"])
+    pf["usedBy"] = used
 
 out = {"functions": functions, "privateFunctions": private_functions, "tables": tables}
 js = (

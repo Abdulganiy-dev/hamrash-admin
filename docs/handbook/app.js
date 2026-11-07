@@ -29,7 +29,7 @@
       group('Database reference', [
         link('/migrations', 'Migrations', H.migrations.length),
         link('/tables', 'Tables', H.tables.length),
-        link('/functions', 'Functions (RPCs)', H.functions.length),
+        link('/functions', 'Functions', H.functions.reduce((n, f) => n + f.name.split(' · ').length, 0) + Object.keys(window.HB.privateFunctions).length),
         link('/edge', 'Edge functions', H.edge.length),
         link('/gaps', 'Known gaps', H.gaps.length),
       ]),
@@ -214,10 +214,42 @@
         .join('')}`;
   }
 
+  // First sentence of a private function's comment, for the list.
+  function blurb(name) {
+    const f = window.HB.privateFunctions[name];
+    const text = f.doc || (H.privateNotes || {})[name] || '';
+    const first = text.split(/(?<=[.!?])\s/)[0] || '';
+    return first.length > 170 ? first.slice(0, 167) + '…' : first;
+  }
+  function privateGroups() {
+    const PF = window.HB.privateFunctions;
+    const g = { 'Access helpers': [], 'Trigger functions': [], 'Called by other functions': [] };
+    Object.keys(PF).sort().forEach((n) => {
+      const u = PF[n].usedBy;
+      (u.triggers.length ? g['Trigger functions'] : u.policies.length ? g['Access helpers'] : g['Called by other functions']).push(n);
+    });
+    return g;
+  }
+  const GROUP_NOTE = {
+    'Access helpers': 'Used inside row-level-security policies to decide who sees or changes a row. Almost every policy calls `my_org_ids()` or `is_platform_admin()`.',
+    'Trigger functions': 'Run automatically when a row is inserted, updated or deleted. Each is shown on its table’s Triggers tab too.',
+    'Called by other functions': 'Small helpers that the public functions use.',
+  };
+
   function pageFunctions() {
     const groups = [...new Set(H.functions.map((f) => f.group))];
-    setToc(groups.map((g) => ({ id: 'g-' + slug(g), label: g })));
-    return `<div class="page-head"><span class="eyebrow">Database reference</span><h1>Functions (RPCs)</h1><p class="lede">Postgres functions the apps call with <code>rpc()</code>. <b>Definer</b> functions run with the owner's rights and check the caller themselves; <b>invoker</b> functions run as the caller, so row-level security still applies.</p></div>
+    const priv = privateGroups();
+    const privCount = Object.values(priv).reduce((n, l) => n + l.length, 0);
+    setToc([...groups.map((g) => ({ id: 'g-' + slug(g), label: g })), { id: 'private', label: `Private helpers · ${privCount}` }, ...Object.keys(priv).map((k) => ({ id: 'p-' + slug(k), label: k, sub: true }))]);
+    const privTable = (list) =>
+      `<table class="ref" style="margin-top:14px"><thead><tr><th>Function</th><th>What it is</th><th style="width:96px">Used by</th></tr></thead><tbody>${list
+        .map((n) => {
+          const u = window.HB.privateFunctions[n].usedBy;
+          const count = u.policies.length + u.triggers.length + u.functions.length + u.private.length;
+          return `<tr id="pfn-${slug(n)}"><td style="width:34%"><code><a class="ref-link" data-d="pfn:${esc(n)}" href="#">${esc(n)}()</a></code><br><span class="pill off" style="margin-top:4px">${window.HB.privateFunctions[n].security}</span></td><td>${md(blurb(n)) || '<span class="empty">No comment in the migration.</span>'}</td><td>${count}</td></tr>`;
+        })
+        .join('')}</tbody></table>`;
+    return `<div class="page-head"><span class="eyebrow">Database reference</span><h1>Functions</h1><p class="lede">Postgres functions the apps call with <code>rpc()</code>, then the <b>private helpers</b> that policies, triggers and those functions use behind the scenes. <b>Definer</b> functions run with the owner's rights and check the caller themselves; <b>invoker</b> functions run as the caller, so row-level security still applies. Click any name for its SQL and everything that uses it.</p></div>
       ${groups
         .map(
           (g) => `<section id="g-${slug(g)}"><h2>${esc(g)}</h2>${H.functions
@@ -234,7 +266,11 @@
             )
             .join('')}</section>`
         )
-        .join('')}`;
+        .join('')}
+      <section id="private"><h2>Private helpers <span style="font-size:16px;color:var(--muted);font-weight:600">${privCount}</span></h2>
+        <p class="section-sub">In the <code>private</code> schema, which the Data API never exposes. The apps can't call these; the database does.</p>
+        ${Object.entries(priv).map(([k, list]) => `<div id="p-${slug(k)}" style="margin-top:26px"><h3 style="font-size:20px">${esc(k)} <span style="font-size:14px;color:var(--muted);font-weight:600">${list.length}</span></h3><p class="section-sub" style="margin:4px 0 0">${md(GROUP_NOTE[k])}</p>${privTable(list)}</div>`).join('')}
+      </section>`;
   }
 
   function pageEdge() {
@@ -297,6 +333,7 @@
       })
     );
     H.tables.forEach((t) => has(t.name, t.purpose, t.rules) && hits.push({ d: `tbl:${t.name.split(' · ')[0].replace('private.', '')}`, kind: 'Table', title: t.name, where: t.purpose }));
+    Object.entries(window.HB.privateFunctions).forEach(([n, f]) => has(n, f.doc) && hits.push({ d: `pfn:${n}`, kind: 'Private function', title: `private.${n}`, where: blurb(n) }));
     H.functions.forEach((f) => has(f.name, f.does, f.errors) && hits.push({ d: `fn:${f.name.split(' · ')[0]}`, kind: 'Function', title: f.name, where: f.group }));
     H.errors.codes.forEach((c) => has(c.code, c.name, c.text) && hits.push({ href: '/errors', kind: 'Error', title: `${c.code} · ${c.name}`, where: 'Reading an error' }));
     H.migrations.forEach((x) => has(x.title, x.text) && hits.push({ href: `/migrations?at=m-${x.n}`, kind: `Migration ${String(x.n).padStart(2, '0')}`, title: x.title, where: x.text }));

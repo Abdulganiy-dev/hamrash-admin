@@ -3,6 +3,11 @@
 window.SNIPPETS = {
  "functions": {
   "apply_standard_curriculum": {
+   "calls": [
+    "can_manage_academics",
+    "standard_curriculum"
+   ],
+   "doc": "Give one arm the standard curriculum for its class level (e.g. a new JSS 2 C). Adds what's missing, keeps what's there. Subjects are matched by name in the school's catalogue, so renamed/deleted ones are skipped. Returns how many subjects were added. Runs as the caller (leaders only).",
    "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
    "lines": [
     491,
@@ -21,6 +26,10 @@ window.SNIPPETS = {
    "sql": "create function public.apply_standard_curriculum(p_arm_id uuid)\nreturns int\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_org   uuid;\n  v_class text;\n  v_added int;\nbegin\n  select a.organization_id, c.name into v_org, v_class\n  from public.class_arms a\n  join public.classes c on c.id = a.class_id\n  where a.id = p_arm_id;\n\n  if not found or not private.can_manage_academics(v_org) then\n    raise exception 'Arm not found, or you can''t manage this school''s subjects' using errcode = '42501';\n  end if;\n\n  insert into public.arm_subjects (organization_id, arm_id, subject_id, is_compulsory)\n  select v_org, p_arm_id, s.id, sc.is_compulsory\n  from private.standard_curriculum() sc\n  join public.subjects s on s.organization_id = v_org and s.name = sc.subject\n  where v_class like sc.level || ' %'\n  on conflict (arm_id, subject_id) do nothing;\n  get diagnostics v_added = row_count;\n\n  return v_added;\nend;\n$$;"
   },
   "arm_subject_usage": {
+   "calls": [
+    "my_org_ids"
+   ],
+   "doc": "2. Which links are in use, for the app",
    "file": "supabase/migrations/20261014180000_24_keep_taught_arm_subjects.sql",
    "lines": [
     83,
@@ -39,6 +48,12 @@ window.SNIPPETS = {
    "sql": "create function public.arm_subject_usage(p_organization_id uuid)\nreturns table (\n  arm_id       uuid,\n  subject_id   uuid,\n  teacher_name text,\n  choices      int\n)\nlanguage plpgsql\nstable\nsecurity definer\nset search_path = ''\nas $$\nbegin\n  if p_organization_id not in (select private.my_org_ids()) then\n    raise exception 'School not found' using errcode = '42501';\n  end if;\n\n  return query\n  with taught as (\n    select ta.arm_id, ta.subject_id, min(trim(st.first_name || ' ' || st.last_name)) as teacher_name\n    from public.teaching_assignments ta\n    join public.academic_sessions se on se.id = ta.session_id and se.closed_at is null\n    join public.staff st on st.id = ta.staff_id\n    where ta.organization_id = p_organization_id\n    group by ta.arm_id, ta.subject_id\n  ), chosen as (\n    select sp.arm_id, ss.subject_id, count(*)::int as choices\n    from public.student_subjects ss\n    join public.academic_sessions se on se.id = ss.session_id and se.closed_at is null\n    join public.student_placements sp on sp.student_id = ss.student_id and sp.session_id = ss.session_id\n    where ss.organization_id = p_organization_id\n    group by sp.arm_id, ss.subject_id\n  )\n  select coalesce(t.arm_id, c.arm_id), coalesce(t.subject_id, c.subject_id),\n         t.teacher_name, coalesce(c.choices, 0)\n  from taught t\n  full join chosen c on c.arm_id = t.arm_id and c.subject_id = t.subject_id;\nend;\n$$;"
   },
   "check_claim_code": {
+   "calls": [
+    "member_role_app",
+    "normalise_claim_code",
+    "owner_needs_staff_record"
+   ],
+   "doc": "",
    "file": "supabase/migrations/20261107140000_27_remove_organization_code.sql",
    "lines": [
     89,
@@ -57,6 +72,10 @@ window.SNIPPETS = {
    "sql": "create function public.check_claim_code(p_code text)\nreturns table (\n  status          text,\n  organization_id uuid,\n  school_name     text,\n  school_address  text,\n  school_state    text,\n  school_logo_url text,\n  role            public.member_role,\n  app             text,\n  needs_name      boolean\n)\nlanguage plpgsql\nvolatile\nsecurity definer\nset search_path = ''\nas $$\n#variable_conflict use_column\ndeclare\n  v_sub    text := (select auth.jwt() ->> 'sub');\n  v_code   text := private.normalise_claim_code(p_code);\n  v_member public.organization_members;\n  v_org    public.organizations;\nbegin\n  if v_sub is null or v_sub = '' then\n    raise exception 'Not authenticated' using errcode = '28000';\n  end if;\n\n  select m.* into v_member\n  from public.organization_members m\n  where m.claim_code = v_code\n    and m.status = 'invited';\n\n  if not found then\n    return query select 'not_found', null::uuid, null::text, null::text, null::text, null::text,\n                        null::public.member_role, null::text, null::boolean;\n    return;\n  end if;\n\n  select o.* into v_org from public.organizations o where o.id = v_member.organization_id;\n\n  return query select\n    case\n      when v_org.status not in ('trial', 'active') then 'school_inactive'\n      when exists (\n        select 1 from public.organization_members m\n        where m.organization_id = v_member.organization_id\n          and m.clerk_user_id = v_sub\n          and m.role = v_member.role\n      ) then 'already_member'\n      else 'ok'\n    end,\n    v_org.id, v_org.name, v_org.address, v_org.state, v_org.logo_url,\n    v_member.role,\n    private.member_role_app(v_member.role),\n    private.owner_needs_staff_record(v_member, v_sub);\nend;\n$$;"
   },
   "close_session": {
+   "calls": [
+    "can_manage_academics"
+   ],
+   "doc": "3d. Close and reopen Leaders close a session once it has ended and another one is current.",
    "file": "supabase/migrations/20261014120000_19_close_sessions_and_protect_calendar.sql",
    "lines": [
     125,
@@ -75,6 +94,10 @@ window.SNIPPETS = {
    "sql": "create function public.close_session(p_session_id uuid)\nreturns public.academic_sessions\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_session public.academic_sessions;\nbegin\n  select s.* into v_session\n  from public.academic_sessions s\n  where s.id = p_session_id\n    and private.can_manage_academics(s.organization_id)\n  for update;\n  if not found then\n    raise exception 'Session not found, or you can''t manage this school''s calendar' using errcode = '42501';\n  end if;\n  if v_session.closed_at is not null then\n    raise exception 'This session is already closed' using errcode = 'P0001';\n  end if;\n  if v_session.is_current then\n    raise exception 'Make the new session current before closing this one' using errcode = 'P0001';\n  end if;\n  -- new work needs somewhere to go: a current session with a current term\n  if not exists (\n    select 1\n    from public.academic_terms t\n    join public.academic_sessions s on s.id = t.session_id\n    where t.organization_id = v_session.organization_id\n      and t.is_current\n      and s.id <> v_session.id\n      and s.closed_at is null\n  ) then\n    raise exception 'Set up the new session and its current term before closing this one' using errcode = 'P0001';\n  end if;\n  if v_session.ends_on >= current_date then\n    raise exception 'This session hasn''t ended yet' using errcode = 'P0001';\n  end if;\n\n  update public.academic_sessions s\n  set closed_at = now(),\n      closed_by = (select auth.jwt() ->> 'sub')\n  where s.id = p_session_id\n  returning s.* into v_session;\n  return v_session;\nend;\n$$;"
   },
   "copy_arm_subjects": {
+   "calls": [
+    "can_manage_academics"
+   ],
+   "doc": "Copy one arm's subjects to another arm of the same school (e.g. JSS 1A \u2192 JSS 1B, or SS 1 Arts A \u2192 SS 1 Arts B). Adds what's missing with the same compulsory/optional setting; keeps the target's existing subjects. Returns how many subjects were added. Runs as the caller (leaders only).",
    "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
    "lines": [
     527,
@@ -98,6 +121,10 @@ window.SNIPPETS = {
    "sql": "create function public.copy_arm_subjects(p_from_arm_id uuid, p_to_arm_id uuid)\nreturns int\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_org   uuid;\n  v_added int;\nbegin\n  select a.organization_id into v_org\n  from public.class_arms a\n  where a.id = p_to_arm_id;\n\n  if not found or not private.can_manage_academics(v_org)\n     or not exists (select 1 from public.class_arms a where a.id = p_from_arm_id and a.organization_id = v_org) then\n    raise exception 'Arm not found, or you can''t manage this school''s subjects' using errcode = '42501';\n  end if;\n\n  insert into public.arm_subjects (organization_id, arm_id, subject_id, is_compulsory)\n  select v_org, p_to_arm_id, src.subject_id, src.is_compulsory\n  from public.arm_subjects src\n  where src.arm_id = p_from_arm_id\n  on conflict (arm_id, subject_id) do nothing;\n  get diagnostics v_added = row_count;\n\n  return v_added;\nend;\n$$;"
   },
   "copy_assignments_forward": {
+   "calls": [
+    "can_manage_academics"
+   ],
+   "doc": "Copy last session's class teachers and subject teachers onto the SAME arms in another session. Anything the target already has is kept: \u00b7 class teachers are copied only for arms with none in the target yet \u00b7 a subject teacher is copied only where the target has none for that arm + subject Skips staff who have exited, inactive arms, and subjects the arm no longer offers. Runs as the caller (leaders only).",
    "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
    "lines": [
     572,
@@ -121,6 +148,10 @@ window.SNIPPETS = {
    "sql": "create function public.copy_assignments_forward(p_from_session_id uuid, p_to_session_id uuid)\nreturns table (class_teachers_copied int, subject_teachers_copied int)\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\n#variable_conflict use_column\ndeclare\n  v_org uuid;\n  v_ct  int;\n  v_ta  int;\nbegin\n  if p_from_session_id = p_to_session_id then\n    raise exception 'Choose two different sessions' using errcode = '22023';\n  end if;\n\n  select s.organization_id into v_org\n  from public.academic_sessions s\n  where s.id = p_to_session_id;\n\n  if not found or not private.can_manage_academics(v_org)\n     or not exists (select 1 from public.academic_sessions s where s.id = p_from_session_id and s.organization_id = v_org) then\n    raise exception 'Session not found, or you can''t manage this school''s calendar' using errcode = '42501';\n  end if;\n\n  insert into public.class_teachers (organization_id, session_id, arm_id, staff_id, is_lead)\n  select v_org, p_to_session_id, ct.arm_id, ct.staff_id, ct.is_lead\n  from public.class_teachers ct\n  join public.class_arms a on a.id = ct.arm_id and a.is_active\n  join public.staff st on st.id = ct.staff_id and st.status <> 'exited'\n  where ct.session_id = p_from_session_id\n    and not exists (\n      select 1 from public.class_teachers x\n      where x.session_id = p_to_session_id and x.arm_id = ct.arm_id\n    )\n  order by ct.is_lead desc;\n  get diagnostics v_ct = row_count;\n\n  insert into public.teaching_assignments (organization_id, session_id, arm_id, subject_id, staff_id)\n  select v_org, p_to_session_id, ta.arm_id, ta.subject_id, ta.staff_id\n  from public.teaching_assignments ta\n  join public.class_arms a on a.id = ta.arm_id and a.is_active\n  join public.arm_subjects asub on asub.arm_id = ta.arm_id and asub.subject_id = ta.subject_id\n  join public.staff st on st.id = ta.staff_id and st.status <> 'exited'\n  where ta.session_id = p_from_session_id\n  on conflict (session_id, arm_id, subject_id) do nothing;\n  get diagnostics v_ta = row_count;\n\n  return query select v_ct, v_ta;\nend;\n$$;"
   },
   "create_organization": {
+   "calls": [
+    "is_platform_admin"
+   ],
+   "doc": "",
    "file": "supabase/migrations/20261107140000_27_remove_organization_code.sql",
    "lines": [
     41,
@@ -164,6 +195,8 @@ window.SNIPPETS = {
    "sql": "create function public.create_organization(\n  p_name          text,\n  p_number_prefix text,\n  p_email         text default null,\n  p_phone         text default null,\n  p_address       text default null,\n  p_state         text default null\n)\nreturns table (organization_id uuid, owner_claim_code text)\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\n#variable_conflict use_column\ndeclare\n  v_sub    text := (select auth.jwt() ->> 'sub');\n  v_prefix text := upper(trim(coalesce(p_number_prefix, '')));\n  v_org    public.organizations;\n  v_claim  text;\nbegin\n  if not private.is_platform_admin() then\n    raise exception 'Only Hamrash platform admins can create schools' using errcode = '42501';\n  end if;\n\n  if v_prefix !~ '^[A-Z0-9]{2,8}$' then\n    raise exception 'Number prefix must be 2 to 8 letters or digits, e.g. KCL' using errcode = '22023';\n  end if;\n\n  insert into public.organizations (name, number_prefix, email, phone, address, state, created_by)\n  values (trim(p_name), v_prefix, p_email, p_phone, p_address, p_state, v_sub)\n  returning * into v_org;\n\n  insert into public.organization_members (organization_id, role, invited_by)\n  values (v_org.id, 'owner', v_sub)\n  returning claim_code into v_claim;\n\n  return query select v_org.id, v_claim;\nend;\n$$;"
   },
   "create_parent": {
+   "calls": [],
+   "doc": "Add parent: profile + private details in one call (leaders only).",
    "file": "supabase/migrations/20261011144800_07_split_student_and_parent_private_details.sql",
    "lines": [
     350,
@@ -242,6 +275,8 @@ window.SNIPPETS = {
    "sql": "create function public.create_parent(\n    p_organization_id uuid,\n    p_first_name      text,\n    p_last_name       text,\n    p_phone           text,\n    p_title           text          default null,\n    p_gender          public.gender default null,\n    p_alt_phone       text          default null,\n    p_photo_id        text          default null,\n    p_photo_url       text          default null,\n    p_is_active       boolean       default true,\n    p_email           text          default null,\n    p_occupation      text          default null,\n    p_address         text          default null\n  )\n  returns public.parents\n  language plpgsql\n  security invoker\n  set search_path = ''\n  as $$\n  declare\n    v_parent public.parents;\n  begin\n    insert into public.parents (organization_id, title, first_name, last_name, gender, phone, alt_phone,\n                                photo_id, photo_url, is_active)\n    values (p_organization_id, p_title, p_first_name, p_last_name, p_gender, p_phone, p_alt_phone,\n            p_photo_id, p_photo_url, p_is_active)\n    returning * into v_parent;\n  \n    update public.parent_private_details d\n    set email      = p_email,\n        occupation = p_occupation,\n        address    = p_address\n    where d.parent_id = v_parent.id;\n  \n    return v_parent;\n  end;\n  $$;"
   },
   "create_staff": {
+   "calls": [],
+   "doc": "Add staff. Leave p_staff_number blank to have it generated.",
    "file": "supabase/migrations/20261011130000_05_split_staff_private_details.sql",
    "lines": [
     118,
@@ -340,6 +375,10 @@ window.SNIPPETS = {
    "sql": "create function public.create_staff(\n  p_organization_id uuid,\n  p_first_name      text,\n  p_last_name       text,\n  p_middle_name     text                default null,\n  p_staff_number    text                default null,\n  p_gender          public.gender       default null,\n  p_phone           text                default null,\n  p_email           text                default null,\n  p_photo_id        text                default null,\n  p_photo_url       text                default null,\n  p_job_title       text                default null,\n  p_staff_type      public.staff_type   default 'teaching',\n  p_status          public.staff_status default 'active',\n  p_date_of_birth   date                default null,\n  p_address         text                default null,\n  p_state_of_origin text                default null,\n  p_employment_date date                default null\n)\nreturns public.staff\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_staff public.staff;\nbegin\n  insert into public.staff (organization_id, staff_number, first_name, middle_name, last_name, gender,\n                            phone, email, photo_id, photo_url, job_title, staff_type, status)\n  values (p_organization_id, p_staff_number, p_first_name, p_middle_name, p_last_name, p_gender,\n          p_phone, p_email, p_photo_id, p_photo_url, p_job_title, p_staff_type, p_status)\n  returning * into v_staff;\n\n  -- the details row was just created by the staff_create_private_details trigger\n  update public.staff_private_details d\n  set date_of_birth   = p_date_of_birth,\n      address         = p_address,\n      state_of_origin = p_state_of_origin,\n      employment_date = p_employment_date\n  where d.staff_id = v_staff.id;\n\n  return v_staff;\nend;\n$$;"
   },
   "create_standard_grading": {
+   "calls": [
+    "can_manage_academics"
+   ],
+   "doc": "One-tap standard setup the school's (used by Nursery and Primary): score columns CA 1 (20) + CA 2 (20) + Exam (60) grades A 70 \u00b7 B 60 \u00b7 C 50 \u00b7 D 45 \u00b7 E 40 \u00b7 F 0 \"Secondary\" section, if it exists: its own grade boundaries only (WAEC) A1 75 \u00b7 B2 70 \u00b7 B3 65 \u00b7 C4 60 \u00b7 C5 55 \u00b7 C6 50 \u00b7 D7 45 \u00b7 E8 40 \u00b7 F9 0 \u2014 it keeps the school's score columns Only for a school with no grading setup yet; everything stays editable. Runs as the caller (leaders only).",
    "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
    "lines": [
     238,
@@ -358,6 +397,10 @@ window.SNIPPETS = {
    "sql": "create function public.create_standard_grading(p_organization_id uuid)\nreturns void\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_secondary uuid;\nbegin\n  if not private.can_manage_academics(p_organization_id) then\n    raise exception 'Only the school''s leaders can set up grading' using errcode = '42501';\n  end if;\n\n  if exists (select 1 from public.score_columns x where x.organization_id = p_organization_id)\n     or exists (select 1 from public.grade_boundaries x where x.organization_id = p_organization_id) then\n    raise exception 'This school already has a grading setup; the standard one is only for a new school' using errcode = 'P0001';\n  end if;\n\n  -- the school's score columns and grade boundaries\n  insert into public.score_columns (organization_id, name, max_score, sort_order)\n  values (p_organization_id, 'CA 1', 20, 1),\n         (p_organization_id, 'CA 2', 20, 2),\n         (p_organization_id, 'Exam', 60, 3);\n\n  insert into public.grade_boundaries (organization_id, grade, min_percent, remark, is_pass)\n  values (p_organization_id, 'A', 70, 'Excellent', true),\n         (p_organization_id, 'B', 60, 'Very Good', true),\n         (p_organization_id, 'C', 50, 'Good',      true),\n         (p_organization_id, 'D', 45, 'Fair',      true),\n         (p_organization_id, 'E', 40, 'Pass',      true),\n         (p_organization_id, 'F',  0, 'Fail',      false);\n\n  -- WAEC grade boundaries for a section named \"Secondary\"\n  select s.id into v_secondary\n  from public.sections s\n  where s.organization_id = p_organization_id and lower(s.name) = 'secondary';\n\n  if found then\n    insert into public.grade_boundaries (organization_id, section_id, grade, min_percent, remark, is_pass)\n    values (p_organization_id, v_secondary, 'A1', 75, 'Excellent', true),\n           (p_organization_id, v_secondary, 'B2', 70, 'Very Good', true),\n           (p_organization_id, v_secondary, 'B3', 65, 'Good',      true),\n           (p_organization_id, v_secondary, 'C4', 60, 'Credit',    true),\n           (p_organization_id, v_secondary, 'C5', 55, 'Credit',    true),\n           (p_organization_id, v_secondary, 'C6', 50, 'Credit',    true),\n           (p_organization_id, v_secondary, 'D7', 45, 'Pass',      true),\n           (p_organization_id, v_secondary, 'E8', 40, 'Pass',      true),\n           (p_organization_id, v_secondary, 'F9',  0, 'Fail',      false);\n  end if;\nend;\n$$;"
   },
   "create_standard_structure": {
+   "calls": [
+    "can_manage_academics"
+   ],
+   "doc": "One-tap starting structure for a Nigerian school: Nursery    Nursery 1\u20133 Primary    Primary 1\u20136 Secondary  JSS 1\u20133, SS 1\u20133   (SS 3 marked as the graduating class) Only for a school with no sections yet. Everything it creates can be renamed, reordered or deactivated afterwards. Arms are left to the school admin. Runs as the caller, so the normal leader-only RLS applies.",
    "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
    "lines": [
     527,
@@ -376,6 +419,11 @@ window.SNIPPETS = {
    "sql": "create function public.create_standard_structure(p_organization_id uuid)\nreturns int\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_def     record;\n  v_section uuid;\n  v_classes int := 0;\nbegin\n  if not private.can_manage_academics(p_organization_id) then\n    raise exception 'Only the school''s leaders can set up its structure' using errcode = '42501';\n  end if;\n\n  if exists (select 1 from public.sections s where s.organization_id = p_organization_id) then\n    raise exception 'This school already has sections; the standard structure is only for a new school' using errcode = 'P0001';\n  end if;\n\n  for v_def in\n    select d.sort_order, d.name, d.classes\n    from (values\n      (1, 'Nursery',   array['Nursery 1', 'Nursery 2', 'Nursery 3']),\n      (2, 'Primary',   array['Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6']),\n      (3, 'Secondary', array['JSS 1', 'JSS 2', 'JSS 3', 'SS 1', 'SS 2', 'SS 3'])\n    ) as d (sort_order, name, classes)\n  loop\n    insert into public.sections (organization_id, name, sort_order)\n    values (p_organization_id, v_def.name, v_def.sort_order)\n    returning id into v_section;\n\n    insert into public.classes (organization_id, section_id, name, sort_order)\n    select p_organization_id, v_section, c.name, c.ord\n    from unnest(v_def.classes) with ordinality as c (name, ord);\n\n    v_classes := v_classes + cardinality(v_def.classes);\n  end loop;\n\n  update public.classes c\n  set is_graduating_class = true\n  where c.organization_id = p_organization_id\n    and c.name = 'SS 3';\n\n  return v_classes;\nend;\n$$;"
   },
   "create_standard_subjects": {
+   "calls": [
+    "can_manage_academics",
+    "standard_curriculum"
+   ],
+   "doc": "One-tap setup: a typical Nigerian catalogue (41 subjects), plus the standard curriculum for every EXISTING arm of a standard-named class. Create arms first; arms added later use apply_standard_curriculum or copy_arm_subjects. Only for a school with no subjects yet; everything stays editable. Runs as the caller (leaders only).",
    "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
    "lines": [
     410,
@@ -394,6 +442,8 @@ window.SNIPPETS = {
    "sql": "create function public.create_standard_subjects(p_organization_id uuid)\nreturns int\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_subjects int;\nbegin\n  if not private.can_manage_academics(p_organization_id) then\n    raise exception 'Only the school''s leaders can set up its subjects' using errcode = '42501';\n  end if;\n\n  if exists (select 1 from public.subjects s where s.organization_id = p_organization_id) then\n    raise exception 'This school already has subjects; the standard list is only for a new school' using errcode = 'P0001';\n  end if;\n\n  -- catalogue, in report-card order\n  insert into public.subjects (organization_id, name, code, sort_order)\n  select p_organization_id, d.name, d.code, d.ord\n  from (values\n    ( 1, 'English Language',             'ENG'),\n    ( 2, 'Mathematics',                  'MTH'),\n    ( 3, 'Numeracy',                     'NUM'),\n    ( 4, 'Literacy',                     'LTR'),\n    ( 5, 'Phonics',                      'PHN'),\n    ( 6, 'Basic Science',                'BSC'),\n    ( 7, 'Basic Technology',             'BTE'),\n    ( 8, 'Social Studies',               'SST'),\n    ( 9, 'Civic Education',              'CVE'),\n    (10, 'Security Education',           'SEC'),\n    (11, 'Christian Religious Studies',  'CRS'),\n    (12, 'Islamic Religious Studies',    'IRS'),\n    (13, 'Cultural and Creative Arts',   'CCA'),\n    (14, 'Physical and Health Education','PHE'),\n    (15, 'Agricultural Science',         'AGR'),\n    (16, 'Home Economics',               'HEC'),\n    (17, 'Business Studies',             'BUS'),\n    (18, 'Computer Studies',             'CMP'),\n    (19, 'Nigerian Language',            'NGL'),\n    (20, 'French',                       'FRE'),\n    (21, 'Verbal Reasoning',             'VBR'),\n    (22, 'Quantitative Reasoning',       'QTR'),\n    (23, 'Social Habits',                'SOH'),\n    (24, 'Health Habits',                'HEH'),\n    (25, 'Rhymes',                       'RHY'),\n    (26, 'Handwriting',                  'HWR'),\n    (27, 'Physics',                      'PHY'),\n    (28, 'Chemistry',                    'CHM'),\n    (29, 'Biology',                      'BIO'),\n    (30, 'Further Mathematics',          'FMT'),\n    (31, 'Geography',                    'GEO'),\n    (32, 'Economics',                    'ECO'),\n    (33, 'Government',                   'GOV'),\n    (34, 'Literature in English',        'LIT'),\n    (35, 'History',                      'HIS'),\n    (36, 'Financial Accounting',         'ACC'),\n    (37, 'Commerce',                     'COM'),\n    (38, 'Technical Drawing',            'TDR'),\n    (39, 'Food and Nutrition',           'FNU'),\n    (40, 'Visual Arts',                  'VAR'),\n    (41, 'Data Processing',              'DPR')\n  ) as d (ord, name, code);\n  get diagnostics v_subjects = row_count;\n\n  -- standard curriculum for every existing arm of a standard-named class\n  insert into public.arm_subjects (organization_id, arm_id, subject_id, is_compulsory)\n  select p_organization_id, a.id, s.id, sc.is_compulsory\n  from private.standard_curriculum() sc\n  join public.classes    c on c.organization_id = p_organization_id and c.name like sc.level || ' %'\n  join public.class_arms a on a.class_id = c.id\n  join public.subjects   s on s.organization_id = p_organization_id and s.name = sc.subject;\n\n  return v_subjects;\nend;\n$$;"
   },
   "create_student": {
+   "calls": [],
+   "doc": "Add student. Leave p_admission_number blank to have it generated.",
    "file": "supabase/migrations/20261011144800_07_split_student_and_parent_private_details.sql",
    "lines": [
     173,
@@ -492,6 +542,8 @@ window.SNIPPETS = {
    "sql": "create function public.create_student(\n    p_organization_id  uuid,\n    p_first_name       text,\n    p_last_name        text,\n    p_middle_name      text                  default null,\n    p_admission_number text                  default null,\n    p_gender           public.gender         default null,\n    p_admission_date   date                  default null,\n    p_photo_id         text                  default null,\n    p_photo_url        text                  default null,\n    p_status           public.student_status default 'active',\n    p_date_of_birth    date                  default null,\n    p_address          text                  default null,\n    p_state_of_origin  text                  default null,\n    p_lga              text                  default null,\n    p_blood_group      text                  default null,\n    p_genotype         text                  default null,\n    p_medical_notes    text                  default null\n  )\n  returns public.students\n  language plpgsql\n  security invoker\n  set search_path = ''\n  as $$\n  declare\n    v_student public.students;\n  begin\n    insert into public.students (organization_id, admission_number, first_name, middle_name, last_name,\n                                 gender, admission_date, photo_id, photo_url, status)\n    values (p_organization_id, p_admission_number, p_first_name, p_middle_name, p_last_name,\n            p_gender, p_admission_date, p_photo_id, p_photo_url, p_status)\n    returning * into v_student;\n  \n    -- the details row was just created by the students_create_private_details trigger\n    update public.student_private_details d\n    set date_of_birth   = p_date_of_birth,\n        address         = p_address,\n        state_of_origin = p_state_of_origin,\n        lga             = p_lga,\n        blood_group     = p_blood_group,\n        genotype        = p_genotype,\n        medical_notes   = p_medical_notes\n    where d.student_id = v_student.id;\n  \n    return v_student;\n  end;\n  $$;"
   },
   "grade_boundaries_for_arm": {
+   "calls": [],
+   "doc": "The grade boundaries an arm uses: its section's own if it has any, otherwise the school's. Highest first.",
    "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
    "lines": [
     119,
@@ -510,6 +562,8 @@ window.SNIPPETS = {
    "sql": "create function public.grade_boundaries_for_arm(p_arm_id uuid)\nreturns setof public.grade_boundaries\nlanguage sql\nstable\nsecurity invoker\nset search_path = ''\nas $$\n  with arm as (\n    select a.organization_id, c.section_id\n    from public.class_arms a\n    join public.classes c on c.id = a.class_id\n    where a.id = p_arm_id\n  ),\n  scope as (\n    select arm.organization_id,\n           case when exists (select 1 from public.grade_boundaries x where x.section_id = arm.section_id)\n                then arm.section_id end as section_id\n    from arm\n  )\n  select gb.*\n  from public.grade_boundaries gb\n  join scope on gb.organization_id = scope.organization_id\n            and gb.section_id is not distinct from scope.section_id\n  order by gb.min_percent desc;\n$$;"
   },
   "grade_for": {
+   "calls": [],
+   "doc": "The grade a percentage gets in an arm (null if its boundaries don't reach down that far, i.e. the setup is incomplete).",
    "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
    "lines": [
     147,
@@ -533,6 +587,8 @@ window.SNIPPETS = {
    "sql": "create function public.grade_for(p_arm_id uuid, p_percent numeric)\nreturns public.grade_boundaries\nlanguage sql\nstable\nsecurity invoker\nset search_path = ''\nas $$\n  select gb.*\n  from public.grade_boundaries_for_arm(p_arm_id) gb\n  where gb.min_percent <= p_percent\n  order by gb.min_percent desc\n  limit 1;\n$$;"
   },
   "grading_problems": {
+   "calls": [],
+   "doc": "What's missing before a section (or, with no section, the school) can be graded \u2014 taking the fall-back to the school's setup into account.",
    "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
    "lines": [
     163,
@@ -556,6 +612,11 @@ window.SNIPPETS = {
    "sql": "create function public.grading_problems(p_organization_id uuid, p_section_id uuid default null)\nreturns text[]\nlanguage sql\nstable\nsecurity invoker\nset search_path = ''\nas $$\n  with scope as (\n    select\n      case when p_section_id is not null\n                and exists (select 1 from public.score_columns x where x.section_id = p_section_id)\n           then p_section_id end as columns_section,\n      case when p_section_id is not null\n                and exists (select 1 from public.grade_boundaries x where x.section_id = p_section_id)\n           then p_section_id end as boundaries_section\n  )\n  select array_remove(array[\n    case when not exists (\n           select 1 from public.score_columns sc, scope\n           where sc.organization_id = p_organization_id\n             and sc.section_id is not distinct from scope.columns_section)\n         then 'No score columns yet' end,\n    case when not exists (\n           select 1 from public.grade_boundaries gb, scope\n           where gb.organization_id = p_organization_id\n             and gb.section_id is not distinct from scope.boundaries_section\n             and gb.min_percent = 0)\n         then 'No grade boundary at 0%' end\n  ], null)\n  from scope;\n$$;"
   },
   "invite_parent": {
+   "calls": [
+    "can_issue_logins",
+    "ensure_invite"
+   ],
+   "doc": "",
    "file": "supabase/migrations/20261007210000_03_create_people.sql",
    "lines": [
     683,
@@ -574,6 +635,11 @@ window.SNIPPETS = {
    "sql": "create function public.invite_parent(p_parent_id uuid)\nreturns text\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_parent public.parents;\n  v_member public.organization_members;\nbegin\n  select p.* into v_parent\n  from public.parents p\n  where p.id = p_parent_id\n    and private.can_issue_logins(p.organization_id)\n  for update;\n  if not found then\n    raise exception 'Parent record not found, or you can''t issue logins for it' using errcode = '42501';\n  end if;\n  if not v_parent.is_active then\n    raise exception 'This parent record is inactive' using errcode = 'P0001';\n  end if;\n\n  v_member := private.ensure_invite(v_parent.organization_id, v_parent.member_id, 'parent');\n\n  update public.parents p\n  set member_id = v_member.id\n  where p.id = v_parent.id\n    and p.member_id is distinct from v_member.id;\n\n  return v_member.claim_code;\nend;\n$$;"
   },
   "invite_staff": {
+   "calls": [
+    "can_issue_login_for",
+    "ensure_invite"
+   ],
+   "doc": "invite_staff: the record is visible to anyone who may issue some staff login there; ensure_invite then checks the specific role.",
    "file": "supabase/migrations/20261107150000_28_person_delete_revokes_login_and_principals_issue_logins.sql",
    "lines": [
     159,
@@ -597,6 +663,11 @@ window.SNIPPETS = {
    "sql": "create or replace function public.invite_staff(p_staff_id uuid, p_role public.member_role default 'teacher')\nreturns text\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_staff  public.staff;\n  v_member public.organization_members;\nbegin\n  if p_role not in ('admin', 'principal', 'vice_principal', 'bursar', 'teacher', 'staff') then\n    raise exception 'Staff can be invited as admin, principal, vice principal, bursar, teacher or staff' using errcode = '22023';\n  end if;\n\n  select s.* into v_staff\n  from public.staff s\n  where s.id = p_staff_id\n    and private.can_issue_login_for(s.organization_id, p_role)\n  for update;\n  if not found then\n    raise exception 'Staff record not found, or you can''t issue that login for it' using errcode = '42501';\n  end if;\n  if v_staff.status = 'exited' then\n    raise exception 'This staff member has left the school' using errcode = 'P0001';\n  end if;\n\n  v_member := private.ensure_invite(v_staff.organization_id, v_staff.member_id, p_role);\n\n  update public.staff s\n  set member_id = v_member.id\n  where s.id = v_staff.id\n    and s.member_id is distinct from v_member.id;\n\n  return v_member.claim_code;\nend;\n$$;"
   },
   "invite_student": {
+   "calls": [
+    "can_issue_logins",
+    "ensure_invite"
+   ],
+   "doc": "",
    "file": "supabase/migrations/20261007210000_03_create_people.sql",
    "lines": [
     650,
@@ -615,6 +686,10 @@ window.SNIPPETS = {
    "sql": "create function public.invite_student(p_student_id uuid)\nreturns text\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_student public.students;\n  v_member  public.organization_members;\nbegin\n  select s.* into v_student\n  from public.students s\n  where s.id = p_student_id\n    and private.can_issue_logins(s.organization_id)\n  for update;\n  if not found then\n    raise exception 'Student record not found, or you can''t issue logins for it' using errcode = '42501';\n  end if;\n  if v_student.status <> 'active' then\n    raise exception 'Only active students can be given a login' using errcode = 'P0001';\n  end if;\n\n  v_member := private.ensure_invite(v_student.organization_id, v_student.member_id, 'student');\n\n  update public.students s\n  set member_id = v_member.id\n  where s.id = v_student.id\n    and s.member_id is distinct from v_member.id;\n\n  return v_member.claim_code;\nend;\n$$;"
   },
   "platform_join_code_status": {
+   "calls": [
+    "is_platform_admin"
+   ],
+   "doc": "RPC: is there a code, is it on, which one is it (platform admins only)",
    "file": "supabase/migrations/20261107130000_26_platform_team_join_code.sql",
    "lines": [
     183,
@@ -627,6 +702,11 @@ window.SNIPPETS = {
    "sql": "create function public.platform_join_code_status()\nreturns table (\n  has_code        boolean,\n  is_enabled      boolean,\n  code_hint       text,\n  changed_at      timestamptz,\n  changed_by_name text\n)\nlanguage plpgsql\nstable\nsecurity definer\nset search_path = ''\nas $$\n#variable_conflict use_column\nbegin\n  if not private.is_platform_admin() then\n    raise exception 'Only Hamrash platform admins can see the team code' using errcode = '42501';\n  end if;\n\n  return query\n    select true, c.is_enabled, c.code_hint, c.changed_at, pa.full_name\n    from private.platform_join_code c\n    left join public.platform_admins pa on pa.clerk_user_id = c.changed_by;\n\n  if not found then\n    return query select false, false, null::text, null::timestamptz, null::text;\n  end if;\nend;\n$$;"
   },
   "redeem_claim_code": {
+   "calls": [
+    "normalise_claim_code",
+    "owner_needs_staff_record"
+   ],
+   "doc": "redeem_claim_code: same, without the limit",
    "file": "supabase/migrations/20261107120000_25_remove_wrong_code_limits.sql",
    "lines": [
     90,
@@ -665,6 +745,10 @@ window.SNIPPETS = {
    "sql": "create or replace function public.redeem_claim_code(\n  p_code       text,\n  p_first_name text default null,\n  p_last_name  text default null,\n  p_email      text default null,\n  p_phone      text default null\n)\nreturns public.organization_members\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_sub         text := (select auth.jwt() ->> 'sub');\n  v_code        text := private.normalise_claim_code(p_code);\n  v_member      public.organization_members;\n  v_needs_staff boolean;\nbegin\n  if v_sub is null or v_sub = '' then\n    raise exception 'Not authenticated' using errcode = '28000';\n  end if;\n\n  select m.* into v_member\n  from public.organization_members m\n  where m.claim_code = v_code\n    and m.status = 'invited'\n  for update;\n\n  if not found then\n    return null;\n  end if;\n\n  if not exists (\n    select 1 from public.organizations o\n    where o.id = v_member.organization_id\n      and o.status in ('trial', 'active')\n  ) then\n    raise exception 'This school is not currently active' using errcode = 'P0001';\n  end if;\n\n  v_needs_staff := private.owner_needs_staff_record(v_member, v_sub);\n\n  -- checked before anything changes, so the code still works on retry\n  if v_needs_staff\n     and (nullif(trim(p_first_name), '') is null or nullif(trim(p_last_name), '') is null) then\n    raise exception 'Enter your first and last name to finish setting up your school' using errcode = '22023';\n  end if;\n\n  begin\n    update public.organization_members m\n    set clerk_user_id = v_sub,\n        status        = 'active',\n        claim_code    = null,\n        joined_at     = now()\n    where m.id = v_member.id\n    returning m.* into v_member;\n  exception\n    when unique_violation then\n      raise exception 'You already have this role at this school' using errcode = 'P0001';\n  end;\n\n  -- staff number and the staff_private_details row come from the staff triggers\n  if v_needs_staff then\n    insert into public.staff (organization_id, member_id, first_name, last_name, email, phone, job_title, staff_type)\n    values (v_member.organization_id, v_member.id, trim(p_first_name), trim(p_last_name),\n            nullif(trim(p_email), ''), nullif(trim(p_phone), ''), 'Owner', 'non_teaching');\n  end if;\n\n  return v_member;\nend;\n$$;"
   },
   "redeem_platform_join_code": {
+   "calls": [
+    "platform_code_hash"
+   ],
+   "doc": "RPC: join the team with the code (any signed-in user) Returns the caller's platform_admins row, or NULL when the code is wrong, switched off, or none has been made yet.",
    "file": "supabase/migrations/20261107130000_26_platform_team_join_code.sql",
    "lines": [
     68,
@@ -693,6 +777,10 @@ window.SNIPPETS = {
    "sql": "create function public.redeem_platform_join_code(\n  p_code      text,\n  p_full_name text,\n  p_email     text default null\n)\nreturns public.platform_admins\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_sub      text := (select auth.jwt() ->> 'sub');\n  v_existing public.platform_admins;\n  v_admin    public.platform_admins;\nbegin\n  if v_sub is null or v_sub = '' then\n    raise exception 'Not authenticated' using errcode = '28000';\n  end if;\n\n  -- Already on the team: nothing to redeem.\n  select pa.* into v_existing from public.platform_admins pa where pa.clerk_user_id = v_sub;\n  if found then\n    if v_existing.is_active then\n      return v_existing;\n    end if;\n    raise exception 'Your platform access was turned off. Ask a Hamrash admin to turn it back on.'\n      using errcode = '42501';\n  end if;\n\n  if nullif(trim(p_full_name), '') is null then\n    raise exception 'Enter your full name to join the Hamrash team' using errcode = '22023';\n  end if;\n\n  if not exists (\n    select 1 from private.platform_join_code c\n    where c.is_enabled\n      and c.code_hash = private.platform_code_hash(p_code)\n  ) then\n    return null;\n  end if;\n\n  insert into public.platform_admins (clerk_user_id, full_name, email)\n  values (v_sub, trim(p_full_name), nullif(trim(p_email), ''))\n  returning * into v_admin;\n\n  return v_admin;\nend;\n$$;"
   },
   "reopen_session": {
+   "calls": [
+    "my_org_ids"
+   ],
+   "doc": "Only the owner reopens a closed session, to fix a genuine mistake.",
    "file": "supabase/migrations/20261014120000_19_close_sessions_and_protect_calendar.sql",
    "lines": [
     174,
@@ -711,6 +799,12 @@ window.SNIPPETS = {
    "sql": "create function public.reopen_session(p_session_id uuid)\nreturns public.academic_sessions\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_session public.academic_sessions;\nbegin\n  select s.* into v_session\n  from public.academic_sessions s\n  where s.id = p_session_id\n    and s.organization_id in (select private.my_org_ids(array['owner']::public.member_role[]))\n  for update;\n  if not found then\n    raise exception 'Session not found, or only the owner can reopen it' using errcode = '42501';\n  end if;\n  if v_session.closed_at is null then\n    return v_session;\n  end if;\n\n  perform set_config('hamrash.reopening_session', 'on', true);\n  update public.academic_sessions s\n  set closed_at = null,\n      closed_by = null\n  where s.id = p_session_id\n  returning s.* into v_session;\n  perform set_config('hamrash.reopening_session', 'off', true);\n  return v_session;\nend;\n$$;"
   },
   "rotate_platform_join_code": {
+   "calls": [
+    "is_platform_admin",
+    "platform_code_hash",
+    "random_code"
+   ],
+   "doc": "RPC: make a new team code (platform admins only). The old code stops working at once, and joining is switched on. The full code is returned here and never again.",
    "file": "supabase/migrations/20261107130000_26_platform_team_join_code.sql",
    "lines": [
     122,
@@ -723,6 +817,8 @@ window.SNIPPETS = {
    "sql": "create function public.rotate_platform_join_code()\nreturns table (code text, code_hint text, changed_at timestamptz)\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\n#variable_conflict use_column\ndeclare\n  v_sub  text := (select auth.jwt() ->> 'sub');\n  v_code text;\n  v_row  private.platform_join_code;\nbegin\n  if not private.is_platform_admin() then\n    raise exception 'Only Hamrash platform admins can change the team code' using errcode = '42501';\n  end if;\n\n  v_code := private.random_code(12);\n\n  insert into private.platform_join_code (id, code_hash, code_hint, is_enabled, changed_by, changed_at)\n  values (true, private.platform_code_hash(v_code), right(v_code, 4), true, v_sub, now())\n  on conflict (id) do update\n    set code_hash  = excluded.code_hash,\n        code_hint  = excluded.code_hint,\n        is_enabled = true,\n        changed_by = excluded.changed_by,\n        changed_at = excluded.changed_at\n  returning * into v_row;\n\n  return query select v_code, v_row.code_hint, v_row.changed_at;\nend;\n$$;"
   },
   "score_columns_for_arm": {
+   "calls": [],
+   "doc": "The score columns an arm uses: its section's own if it has any, otherwise the school's. In report-card order.",
    "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
    "lines": [
     91,
@@ -741,6 +837,10 @@ window.SNIPPETS = {
    "sql": "create function public.score_columns_for_arm(p_arm_id uuid)\nreturns setof public.score_columns\nlanguage sql\nstable\nsecurity invoker\nset search_path = ''\nas $$\n  with arm as (\n    select a.organization_id, c.section_id\n    from public.class_arms a\n    join public.classes c on c.id = a.class_id\n    where a.id = p_arm_id\n  ),\n  scope as (\n    select arm.organization_id,\n           case when exists (select 1 from public.score_columns x where x.section_id = arm.section_id)\n                then arm.section_id end as section_id\n    from arm\n  )\n  select sc.*\n  from public.score_columns sc\n  join scope on sc.organization_id = scope.organization_id\n            and sc.section_id is not distinct from scope.section_id\n  order by sc.sort_order, sc.name;\n$$;"
   },
   "session_readiness": {
+   "calls": [
+    "can_manage_academics"
+   ],
+   "doc": "What's still missing before a session is made current. The app shows this (and warns) before calling set_current_session.",
    "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
    "lines": [
     626,
@@ -759,6 +859,10 @@ window.SNIPPETS = {
    "sql": "create function public.session_readiness(p_session_id uuid)\nreturns table (\n  terms                         int,  -- terms created for the session\n  students_placed               int,  -- students with a placement in the session\n  active_students_not_placed    int,  -- active students with no placement yet\n  arms_with_students            int,  -- arms that have at least one student\n  arms_without_lead_teacher     int,  -- of those, arms with no lead class teacher\n  subjects_without_teacher      int   -- arm subjects (in arms with students) with no teacher\n)\nlanguage plpgsql\nstable\nsecurity invoker\nset search_path = ''\nas $$\n#variable_conflict use_column\ndeclare\n  v_org uuid;\nbegin\n  select s.organization_id into v_org\n  from public.academic_sessions s\n  where s.id = p_session_id;\n\n  if not found or not private.can_manage_academics(v_org) then\n    raise exception 'Session not found, or you can''t manage this school''s calendar' using errcode = '42501';\n  end if;\n\n  return query\n  with placed as (\n    select sp.student_id, sp.arm_id\n    from public.student_placements sp\n    where sp.session_id = p_session_id\n  ),\n  arms as (\n    select distinct p.arm_id from placed p\n  )\n  select\n    (select count(*) from public.academic_terms t where t.session_id = p_session_id)::int,\n    (select count(*) from placed)::int,\n    (select count(*) from public.students st\n      where st.organization_id = v_org\n        and st.status = 'active'\n        and not exists (select 1 from placed p where p.student_id = st.id))::int,\n    (select count(*) from arms)::int,\n    (select count(*) from arms a\n      where not exists (\n        select 1 from public.class_teachers ct\n        where ct.session_id = p_session_id and ct.arm_id = a.arm_id and ct.is_lead\n      ))::int,\n    (select count(*) from public.arm_subjects asub\n      join arms a on a.arm_id = asub.arm_id\n      where not exists (\n        select 1 from public.teaching_assignments ta\n        where ta.session_id = p_session_id and ta.arm_id = asub.arm_id and ta.subject_id = asub.subject_id\n      ))::int;\nend;\n$$;"
   },
   "session_usage": {
+   "calls": [
+    "my_org_ids"
+   ],
+   "doc": "4. What a session is used by",
    "file": "supabase/migrations/20261014120000_19_close_sessions_and_protect_calendar.sql",
    "lines": [
     209,
@@ -777,6 +881,10 @@ window.SNIPPETS = {
    "sql": "create function public.session_usage(p_session_id uuid)\nreturns table (\n  terms                int,\n  placements           int,\n  student_subjects     int,\n  class_teachers       int,\n  teaching_assignments int\n)\nlanguage plpgsql\nstable\nsecurity definer\nset search_path = ''\nas $$\nbegin\n  if not exists (\n    select 1 from public.academic_sessions s\n    where s.id = p_session_id\n      and s.organization_id in (select private.my_org_ids())\n  ) then\n    raise exception 'Session not found' using errcode = '42501';\n  end if;\n\n  return query select\n    (select count(*)::int from public.academic_terms       x where x.session_id = p_session_id),\n    (select count(*)::int from public.student_placements   x where x.session_id = p_session_id),\n    (select count(*)::int from public.student_subjects     x where x.session_id = p_session_id),\n    (select count(*)::int from public.class_teachers       x where x.session_id = p_session_id),\n    (select count(*)::int from public.teaching_assignments x where x.session_id = p_session_id);\nend;\n$$;"
   },
   "set_current_session": {
+   "calls": [
+    "can_manage_academics"
+   ],
+   "doc": "Makes a session current. Any current term from another session is cleared.",
    "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
    "lines": [
     431,
@@ -795,6 +903,10 @@ window.SNIPPETS = {
    "sql": "create function public.set_current_session(p_session_id uuid)\nreturns public.academic_sessions\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_session public.academic_sessions;\nbegin\n  select s.* into v_session\n  from public.academic_sessions s\n  where s.id = p_session_id\n    and private.can_manage_academics(s.organization_id)\n  for update;\n  if not found then\n    raise exception 'Session not found, or you can''t manage this school''s calendar' using errcode = '42501';\n  end if;\n\n  -- clear old flags first so the one-current indexes never clash\n  update public.academic_terms t\n  set is_current = false\n  where t.organization_id = v_session.organization_id\n    and t.is_current\n    and t.session_id <> v_session.id;\n\n  update public.academic_sessions s\n  set is_current = false\n  where s.organization_id = v_session.organization_id\n    and s.is_current\n    and s.id <> v_session.id;\n\n  update public.academic_sessions s\n  set is_current = true\n  where s.id = v_session.id\n    and not s.is_current;\n\n  select s.* into v_session from public.academic_sessions s where s.id = p_session_id;\n  return v_session;\nend;\n$$;"
   },
   "set_current_term": {
+   "calls": [
+    "can_manage_academics"
+   ],
+   "doc": "Makes a term current, and its session with it.",
    "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
    "lines": [
     473,
@@ -813,6 +925,10 @@ window.SNIPPETS = {
    "sql": "create function public.set_current_term(p_term_id uuid)\nreturns public.academic_terms\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_term public.academic_terms;\nbegin\n  select t.* into v_term\n  from public.academic_terms t\n  where t.id = p_term_id\n    and private.can_manage_academics(t.organization_id)\n  for update;\n  if not found then\n    raise exception 'Term not found, or you can''t manage this school''s calendar' using errcode = '42501';\n  end if;\n\n  update public.academic_terms t\n  set is_current = false\n  where t.organization_id = v_term.organization_id\n    and t.is_current\n    and t.id <> v_term.id;\n\n  update public.academic_sessions s\n  set is_current = false\n  where s.organization_id = v_term.organization_id\n    and s.is_current\n    and s.id <> v_term.session_id;\n\n  update public.academic_sessions s\n  set is_current = true\n  where s.id = v_term.session_id\n    and not s.is_current;\n\n  update public.academic_terms t\n  set is_current = true\n  where t.id = v_term.id\n    and not t.is_current;\n\n  select t.* into v_term from public.academic_terms t where t.id = p_term_id;\n  return v_term;\nend;\n$$;"
   },
   "set_organization_status": {
+   "calls": [
+    "is_platform_admin"
+   ],
+   "doc": "RPC: platform admin suspends / reactivates / archives a school",
    "file": "supabase/migrations/20261007182933_01_create_organizations_and_members.sql",
    "lines": [
     366,
@@ -836,6 +952,10 @@ window.SNIPPETS = {
    "sql": "create function public.set_organization_status(\n  p_organization_id uuid,\n  p_status          public.org_status\n)\nreturns public.organizations\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_org public.organizations;\nbegin\n  if not private.is_platform_admin() then\n    raise exception 'Only Hamrash platform admins can change a school''s status' using errcode = '42501';\n  end if;\n\n  update public.organizations o\n  set status = p_status\n  where o.id = p_organization_id\n  returning * into v_org;\n\n  if not found then\n    raise exception 'School not found' using errcode = 'P0002';\n  end if;\n\n  return v_org;\nend;\n$$;"
   },
   "set_platform_join_enabled": {
+   "calls": [
+    "is_platform_admin"
+   ],
+   "doc": "RPC: switch joining on or off without changing the code",
    "file": "supabase/migrations/20261107130000_26_platform_team_join_code.sql",
    "lines": [
     157,
@@ -854,6 +974,8 @@ window.SNIPPETS = {
    "sql": "create function public.set_platform_join_enabled(p_enabled boolean)\nreturns void\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\nbegin\n  if not private.is_platform_admin() then\n    raise exception 'Only Hamrash platform admins can change the team code' using errcode = '42501';\n  end if;\n\n  update private.platform_join_code c\n  set is_enabled = p_enabled,\n      changed_by = (select auth.jwt() ->> 'sub'),\n      changed_at = now()\n  where c.id;\n\n  if not found then\n    raise exception 'There is no team code yet. Create one first.' using errcode = 'P0001';\n  end if;\nend;\n$$;"
   },
   "update_parent": {
+   "calls": [],
+   "doc": "Edit parent: every argument required; null clears a field (leaders only).",
    "file": "supabase/migrations/20261011144800_07_split_student_and_parent_private_details.sql",
    "lines": [
     390,
@@ -932,6 +1054,8 @@ window.SNIPPETS = {
    "sql": "create function public.update_parent(\n    p_parent_id  uuid,\n    p_first_name text,\n    p_last_name  text,\n    p_phone      text,\n    p_title      text,\n    p_gender     public.gender,\n    p_alt_phone  text,\n    p_photo_id   text,\n    p_photo_url  text,\n    p_is_active  boolean,\n    p_email      text,\n    p_occupation text,\n    p_address    text\n  )\n  returns public.parents\n  language plpgsql\n  security invoker\n  set search_path = ''\n  as $$\n  declare\n    v_parent public.parents;\n  begin\n    update public.parents p\n    set title      = p_title,\n        first_name = p_first_name,\n        last_name  = p_last_name,\n        gender     = p_gender,\n        phone      = p_phone,\n        alt_phone  = p_alt_phone,\n        photo_id   = p_photo_id,\n        photo_url  = p_photo_url,\n        is_active  = p_is_active\n    where p.id = p_parent_id\n    returning p.* into v_parent;\n  \n    if not found then\n      raise exception 'Parent record not found, or you can''t edit it' using errcode = '42501';\n    end if;\n  \n    update public.parent_private_details d\n    set email      = p_email,\n        occupation = p_occupation,\n        address    = p_address\n    where d.parent_id = p_parent_id;\n  \n    return v_parent;\n  end;\n  $$;"
   },
   "update_staff": {
+   "calls": [],
+   "doc": "Edit staff. Every argument is required: the form sends the whole record, and null clears a field. A blank staff number keeps the current one.",
    "file": "supabase/migrations/20261011130000_05_split_staff_private_details.sql",
    "lines": [
     165,
@@ -1030,6 +1154,8 @@ window.SNIPPETS = {
    "sql": "create function public.update_staff(\n  p_staff_id        uuid,\n  p_first_name      text,\n  p_last_name       text,\n  p_middle_name     text,\n  p_staff_number    text,\n  p_gender          public.gender,\n  p_phone           text,\n  p_email           text,\n  p_photo_id        text,\n  p_photo_url       text,\n  p_job_title       text,\n  p_staff_type      public.staff_type,\n  p_status          public.staff_status,\n  p_date_of_birth   date,\n  p_address         text,\n  p_state_of_origin text,\n  p_employment_date date\n)\nreturns public.staff\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_staff public.staff;\nbegin\n  update public.staff s\n  set staff_number = coalesce(nullif(trim(p_staff_number), ''), s.staff_number),\n      first_name   = p_first_name,\n      middle_name  = p_middle_name,\n      last_name    = p_last_name,\n      gender       = p_gender,\n      phone        = p_phone,\n      email        = p_email,\n      photo_id     = p_photo_id,\n      photo_url    = p_photo_url,\n      job_title    = p_job_title,\n      staff_type   = p_staff_type,\n      status       = p_status\n  where s.id = p_staff_id\n  returning s.* into v_staff;\n\n  if not found then\n    raise exception 'Staff record not found, or you can''t edit it' using errcode = '42501';\n  end if;\n\n  update public.staff_private_details d\n  set date_of_birth   = p_date_of_birth,\n      address         = p_address,\n      state_of_origin = p_state_of_origin,\n      employment_date = p_employment_date\n  where d.staff_id = p_staff_id;\n\n  return v_staff;\nend;\n$$;"
   },
   "update_student": {
+   "calls": [],
+   "doc": "Edit student. Every argument is required: the form sends the whole record, and null clears a field. A blank admission number keeps the current one.",
    "file": "supabase/migrations/20261011144800_07_split_student_and_parent_private_details.sql",
    "lines": [
     223,
@@ -1130,6 +1256,11 @@ window.SNIPPETS = {
  },
  "privateFunctions": {
   "assign_admission_number": {
+   "calls": [
+    "assign_admission_number",
+    "next_number"
+   ],
+   "doc": "Fill in admission / staff numbers when the app leaves them blank. A number typed in by the school is kept as-is; generated numbers skip any value already taken (e.g. imported records), so they never collide. security definer so the counter and the \"already taken\" check see the whole school. If the insert is then rejected by RLS, the transaction rolls back the counter too.",
    "file": "supabase/migrations/20261007210000_03_create_people.sql",
    "lines": [
     291,
@@ -1139,9 +1270,30 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "definer",
-   "sql": "create function private.assign_admission_number()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_prefix text;\n  v_year   int;\n  v_n      int;\n  v_number text;\nbegin\n  if nullif(trim(new.admission_number), '') is not null then\n    return new;\n  end if;\n\n  select o.number_prefix into v_prefix from public.organizations o where o.id = new.organization_id;\n  v_year := extract(year from coalesce(new.admission_date, (now() at time zone 'Africa/Lagos')::date))::int;\n\n  loop\n    v_n := private.next_number(new.organization_id, 'admission', v_year);\n    v_number := concat_ws('/', v_prefix, v_year::text,\n                          case when v_n < 10000 then lpad(v_n::text, 4, '0') else v_n::text end);\n    exit when not exists (\n      select 1 from public.students s\n      where s.organization_id = new.organization_id\n        and s.admission_number = v_number\n    );\n  end loop;\n\n  new.admission_number := v_number;\n  return new;\nend;\n$$;"
+   "sql": "create function private.assign_admission_number()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_prefix text;\n  v_year   int;\n  v_n      int;\n  v_number text;\nbegin\n  if nullif(trim(new.admission_number), '') is not null then\n    return new;\n  end if;\n\n  select o.number_prefix into v_prefix from public.organizations o where o.id = new.organization_id;\n  v_year := extract(year from coalesce(new.admission_date, (now() at time zone 'Africa/Lagos')::date))::int;\n\n  loop\n    v_n := private.next_number(new.organization_id, 'admission', v_year);\n    v_number := concat_ws('/', v_prefix, v_year::text,\n                          case when v_n < 10000 then lpad(v_n::text, 4, '0') else v_n::text end);\n    exit when not exists (\n      select 1 from public.students s\n      where s.organization_id = new.organization_id\n        and s.admission_number = v_number\n    );\n  end loop;\n\n  new.admission_number := v_number;\n  return new;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     }
+    ],
+    "private": [],
+    "triggers": [
+     {
+      "name": "students_assign_admission_number",
+      "table": "students"
+     }
+    ]
+   }
   },
   "assign_claim_code": {
+   "calls": [
+    "assign_claim_code",
+    "random_code"
+   ],
+   "doc": "Give every invite an unused 8-char claim code (shown to users as XXXX-XXXX). security definer so the uniqueness check sees codes in every school.",
    "file": "supabase/migrations/20261007182933_01_create_organizations_and_members.sql",
    "lines": [
     172,
@@ -1151,9 +1303,25 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "definer",
-   "sql": "create function private.assign_claim_code()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_code text;\nbegin\n  if new.status = 'invited' and new.claim_code is null then\n    loop\n      v_code := private.random_code(8);\n      exit when not exists (select 1 from public.organization_members m where m.claim_code = v_code);\n    end loop;\n    new.claim_code := v_code;\n  end if;\n  return new;\nend;\n$$;"
+   "sql": "create function private.assign_claim_code()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_code text;\nbegin\n  if new.status = 'invited' and new.claim_code is null then\n    loop\n      v_code := private.random_code(8);\n      exit when not exists (select 1 from public.organization_members m where m.claim_code = v_code);\n    end loop;\n    new.claim_code := v_code;\n  end if;\n  return new;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "organization_members_assign_claim_code",
+      "table": "organization_members"
+     }
+    ]
+   }
   },
   "assign_staff_number": {
+   "calls": [
+    "assign_staff_number",
+    "next_number"
+   ],
+   "doc": "",
    "file": "supabase/migrations/20261007210000_03_create_people.sql",
    "lines": [
     330,
@@ -1163,9 +1331,31 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "definer",
-   "sql": "create function private.assign_staff_number()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_prefix text;\n  v_n      int;\n  v_number text;\nbegin\n  if nullif(trim(new.staff_number), '') is not null then\n    return new;\n  end if;\n\n  select o.number_prefix into v_prefix from public.organizations o where o.id = new.organization_id;\n\n  loop\n    v_n := private.next_number(new.organization_id, 'staff', 0);\n    v_number := concat_ws('/', v_prefix, 'STF',\n                          case when v_n < 10000 then lpad(v_n::text, 4, '0') else v_n::text end);\n    exit when not exists (\n      select 1 from public.staff s\n      where s.organization_id = new.organization_id\n        and s.staff_number = v_number\n    );\n  end loop;\n\n  new.staff_number := v_number;\n  return new;\nend;\n$$;"
+   "sql": "create function private.assign_staff_number()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_prefix text;\n  v_n      int;\n  v_number text;\nbegin\n  if nullif(trim(new.staff_number), '') is not null then\n    return new;\n  end if;\n\n  select o.number_prefix into v_prefix from public.organizations o where o.id = new.organization_id;\n\n  loop\n    v_n := private.next_number(new.organization_id, 'staff', 0);\n    v_number := concat_ws('/', v_prefix, 'STF',\n                          case when v_n < 10000 then lpad(v_n::text, 4, '0') else v_n::text end);\n    exit when not exists (\n      select 1 from public.staff s\n      where s.organization_id = new.organization_id\n        and s.staff_number = v_number\n    );\n  end loop;\n\n  new.staff_number := v_number;\n  return new;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     }
+    ],
+    "private": [],
+    "triggers": [
+     {
+      "name": "staff_assign_staff_number",
+      "table": "staff"
+     }
+    ]
+   }
   },
   "can_issue_login_for": {
+   "calls": [
+    "can_issue_login_for",
+    "can_issue_logins",
+    "my_org_ids"
+   ],
+   "doc": "2. Who may issue a login for a given role Owners and admins: any role except owner (the role lists below never include owner). Principals and VPs: principal, VP, bursar, teacher, staff, matching the organization_members insert policy (migration 17). Hamrash platform admins: any.",
    "file": "supabase/migrations/20261107150000_28_person_delete_revokes_login_and_principals_issue_logins.sql",
    "lines": [
     89,
@@ -1186,9 +1376,25 @@ window.SNIPPETS = {
    ],
    "returns": "boolean",
    "security": "invoker",
-   "sql": "create function private.can_issue_login_for(p_organization_id uuid, p_role public.member_role)\nreturns boolean\nlanguage sql\nstable\nset search_path = ''\nas $$\n  select private.can_issue_logins(p_organization_id)\n      or (\n        p_role in ('principal', 'vice_principal', 'bursar', 'teacher', 'staff')\n        and p_organization_id in (\n          select private.my_org_ids(array['principal', 'vice_principal']::public.member_role[])\n        )\n      );\n$$;"
+   "sql": "create function private.can_issue_login_for(p_organization_id uuid, p_role public.member_role)\nreturns boolean\nlanguage sql\nstable\nset search_path = ''\nas $$\n  select private.can_issue_logins(p_organization_id)\n      or (\n        p_role in ('principal', 'vice_principal', 'bursar', 'teacher', 'staff')\n        and p_organization_id in (\n          select private.my_org_ids(array['principal', 'vice_principal']::public.member_role[])\n        )\n      );\n$$;",
+   "usedBy": {
+    "functions": [
+     "invite_staff"
+    ],
+    "policies": [],
+    "private": [
+     "ensure_invite"
+    ],
+    "triggers": []
+   }
   },
   "can_issue_logins": {
+   "calls": [
+    "can_issue_logins",
+    "is_platform_admin",
+    "my_org_ids"
+   ],
+   "doc": "Owners and admins of the school, or Hamrash platform admins.",
    "file": "supabase/migrations/20261007210000_03_create_people.sql",
    "lines": [
     554,
@@ -1204,9 +1410,30 @@ window.SNIPPETS = {
    ],
    "returns": "boolean",
    "security": "invoker",
-   "sql": "create function private.can_issue_logins(p_organization_id uuid)\nreturns boolean\nlanguage sql\nstable\nset search_path = ''\nas $$\n  select p_organization_id in (select private.my_org_ids(array['owner', 'admin']::public.member_role[]))\n      or private.is_platform_admin();\n$$;"
+   "sql": "create function private.can_issue_logins(p_organization_id uuid)\nreturns boolean\nlanguage sql\nstable\nset search_path = ''\nas $$\n  select p_organization_id in (select private.my_org_ids(array['owner', 'admin']::public.member_role[]))\n      or private.is_platform_admin();\n$$;",
+   "usedBy": {
+    "functions": [
+     "invite_parent",
+     "invite_student"
+    ],
+    "policies": [
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     }
+    ],
+    "private": [
+     "can_issue_login_for"
+    ],
+    "triggers": []
+   }
   },
   "can_manage_academics": {
+   "calls": [
+    "can_manage_academics",
+    "my_org_ids"
+   ],
+   "doc": "Leaders of the school.",
    "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
    "lines": [
     419,
@@ -1222,9 +1449,35 @@ window.SNIPPETS = {
    ],
    "returns": "boolean",
    "security": "invoker",
-   "sql": "create function private.can_manage_academics(p_organization_id uuid)\nreturns boolean\nlanguage sql\nstable\nset search_path = ''\nas $$\n  select p_organization_id in (\n    select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])\n  );\n$$;"
+   "sql": "create function private.can_manage_academics(p_organization_id uuid)\nreturns boolean\nlanguage sql\nstable\nset search_path = ''\nas $$\n  select p_organization_id in (\n    select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])\n  );\n$$;",
+   "usedBy": {
+    "functions": [
+     "apply_standard_curriculum",
+     "close_session",
+     "copy_arm_subjects",
+     "copy_assignments_forward",
+     "create_standard_grading",
+     "create_standard_structure",
+     "create_standard_subjects",
+     "session_readiness",
+     "set_current_session",
+     "set_current_term"
+    ],
+    "policies": [
+     {
+      "name": "student_placements: read by leaders, bursars, teachers, family",
+      "table": "student_placements"
+     }
+    ],
+    "private": [],
+    "triggers": []
+   }
   },
   "check_student_subject": {
+   "calls": [
+    "check_student_subject"
+   ],
+   "doc": "The student must be placed that session in an arm that offers the subject, and the subject must be optional for that arm.",
    "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
    "lines": [
     155,
@@ -1234,9 +1487,24 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "invoker",
-   "sql": "create function private.check_student_subject()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\ndeclare\n  v_compulsory boolean;\nbegin\n  select asub.is_compulsory into v_compulsory\n  from public.student_placements sp\n  join public.arm_subjects asub on asub.arm_id = sp.arm_id and asub.subject_id = new.subject_id\n  where sp.student_id = new.student_id\n    and sp.session_id = new.session_id;\n\n  if not found then\n    raise exception 'The student isn''t placed that session in an arm that offers this subject'\n      using errcode = '23514';\n  end if;\n  if v_compulsory then\n    raise exception 'This subject is compulsory for the student''s arm, so every student already takes it'\n      using errcode = '23514';\n  end if;\n  return new;\nend;\n$$;"
+   "sql": "create function private.check_student_subject()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\ndeclare\n  v_compulsory boolean;\nbegin\n  select asub.is_compulsory into v_compulsory\n  from public.student_placements sp\n  join public.arm_subjects asub on asub.arm_id = sp.arm_id and asub.subject_id = new.subject_id\n  where sp.student_id = new.student_id\n    and sp.session_id = new.session_id;\n\n  if not found then\n    raise exception 'The student isn''t placed that session in an arm that offers this subject'\n      using errcode = '23514';\n  end if;\n  if v_compulsory then\n    raise exception 'This subject is compulsory for the student''s arm, so every student already takes it'\n      using errcode = '23514';\n  end if;\n  return new;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "student_subjects_valid",
+      "table": "student_subjects"
+     }
+    ]
+   }
   },
   "check_subject_offered_to_arm": {
+   "calls": [
+    "check_subject_offered_to_arm"
+   ],
+   "doc": "Shared check: the subject must be on the arm's curriculum.",
    "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
    "lines": [
     71,
@@ -1246,9 +1514,24 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "invoker",
-   "sql": "create function private.check_subject_offered_to_arm()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if not exists (\n    select 1\n    from public.arm_subjects asub\n    where asub.arm_id = new.arm_id\n      and asub.subject_id = new.subject_id\n  ) then\n    raise exception 'This subject isn''t offered to this arm; add it to the arm''s subjects first'\n      using errcode = '23514';\n  end if;\n  return new;\nend;\n$$;"
+   "sql": "create function private.check_subject_offered_to_arm()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if not exists (\n    select 1\n    from public.arm_subjects asub\n    where asub.arm_id = new.arm_id\n      and asub.subject_id = new.subject_id\n  ) then\n    raise exception 'This subject isn''t offered to this arm; add it to the arm''s subjects first'\n      using errcode = '23514';\n  end if;\n  return new;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "teaching_assignments_subject_offered",
+      "table": "teaching_assignments"
+     }
+    ]
+   }
   },
   "check_term_within_session": {
+   "calls": [
+    "check_term_within_session"
+   ],
+   "doc": "A term must fall inside its session's dates.",
    "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
    "lines": [
     166,
@@ -1258,9 +1541,24 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "invoker",
-   "sql": "create function private.check_term_within_session()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if not exists (\n    select 1 from public.academic_sessions s\n    where s.id = new.session_id\n      and new.starts_on >= s.starts_on\n      and new.ends_on   <= s.ends_on\n  ) then\n    raise exception 'Term dates must fall within the session''s dates' using errcode = '23514';\n  end if;\n  return new;\nend;\n$$;"
+   "sql": "create function private.check_term_within_session()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if not exists (\n    select 1 from public.academic_sessions s\n    where s.id = new.session_id\n      and new.starts_on >= s.starts_on\n      and new.ends_on   <= s.ends_on\n  ) then\n    raise exception 'Term dates must fall within the session''s dates' using errcode = '23514';\n  end if;\n  return new;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "academic_terms_within_session",
+      "table": "academic_terms"
+     }
+    ]
+   }
   },
   "create_parent_private_details": {
+   "calls": [
+    "create_parent_private_details"
+   ],
+   "doc": "Every new parent gets their (empty) details row automatically.",
    "file": "supabase/migrations/20261011144800_07_split_student_and_parent_private_details.sql",
    "lines": [
     317,
@@ -1270,9 +1568,24 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "definer",
-   "sql": "create function private.create_parent_private_details()\n  returns trigger\n  language plpgsql\n  security definer\n  set search_path = ''\n  as $$\n  begin\n    insert into public.parent_private_details (parent_id, organization_id)\n    values (new.id, new.organization_id);\n    return new;\n  end;\n  $$;"
+   "sql": "create function private.create_parent_private_details()\n  returns trigger\n  language plpgsql\n  security definer\n  set search_path = ''\n  as $$\n  begin\n    insert into public.parent_private_details (parent_id, organization_id)\n    values (new.id, new.organization_id);\n    return new;\n  end;\n  $$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "parents_create_private_details",
+      "table": "parents"
+     }
+    ]
+   }
   },
   "create_staff_private_details": {
+   "calls": [
+    "create_staff_private_details"
+   ],
+   "doc": "Every new staff member gets their (empty) details row automatically, so the app only ever updates it. security definer so clients need no insert grant.",
    "file": "supabase/migrations/20261011130000_05_split_staff_private_details.sql",
    "lines": [
     52,
@@ -1282,9 +1595,24 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "definer",
-   "sql": "create function private.create_staff_private_details()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\nbegin\n  insert into public.staff_private_details (staff_id, organization_id)\n  values (new.id, new.organization_id);\n  return new;\nend;\n$$;"
+   "sql": "create function private.create_staff_private_details()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\nbegin\n  insert into public.staff_private_details (staff_id, organization_id)\n  values (new.id, new.organization_id);\n  return new;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "staff_create_private_details",
+      "table": "staff"
+     }
+    ]
+   }
   },
   "create_student_private_details": {
+   "calls": [
+    "create_student_private_details"
+   ],
+   "doc": "Every new student gets their (empty) details row automatically, so the app only ever updates it. security definer so clients need no insert grant.",
    "file": "supabase/migrations/20261011144800_07_split_student_and_parent_private_details.sql",
    "lines": [
     75,
@@ -1294,9 +1622,25 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "definer",
-   "sql": "create function private.create_student_private_details()\n  returns trigger\n  language plpgsql\n  security definer\n  set search_path = ''\n  as $$\n  begin\n    insert into public.student_private_details (student_id, organization_id)\n    values (new.id, new.organization_id);\n    return new;\n  end;\n  $$;"
+   "sql": "create function private.create_student_private_details()\n  returns trigger\n  language plpgsql\n  security definer\n  set search_path = ''\n  as $$\n  begin\n    insert into public.student_private_details (student_id, organization_id)\n    values (new.id, new.organization_id);\n    return new;\n  end;\n  $$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "students_create_private_details",
+      "table": "students"
+     }
+    ]
+   }
   },
   "ensure_invite": {
+   "calls": [
+    "can_issue_login_for",
+    "ensure_invite"
+   ],
+   "doc": "ensure_invite: checks the role being issued, and the role of an existing invite it would change, so a principal can't reissue an admin's invite.",
    "file": "supabase/migrations/20261107150000_28_person_delete_revokes_login_and_principals_issue_logins.sql",
    "lines": [
     108,
@@ -1322,9 +1666,28 @@ window.SNIPPETS = {
    ],
    "returns": "public.organization_members",
    "security": "definer",
-   "sql": "create or replace function private.ensure_invite(\n  p_organization_id uuid,\n  p_member_id       uuid,\n  p_role            public.member_role\n)\nreturns public.organization_members\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_member public.organization_members;\nbegin\n  if not private.can_issue_login_for(p_organization_id, p_role) then\n    raise exception 'You can''t issue a login for that role' using errcode = '42501';\n  end if;\n\n  if p_member_id is not null then\n    select m.* into v_member\n    from public.organization_members m\n    where m.id = p_member_id\n    for update;\n\n    if v_member.status <> 'invited' then\n      raise exception 'This person already has a login' using errcode = 'P0001';\n    end if;\n\n    if not private.can_issue_login_for(p_organization_id, v_member.role) then\n      raise exception 'You can''t change this person''s invite' using errcode = '42501';\n    end if;\n\n    if v_member.role <> p_role then\n      update public.organization_members m\n      set role = p_role\n      where m.id = v_member.id\n      returning m.* into v_member;\n    end if;\n\n    return v_member;\n  end if;\n\n  insert into public.organization_members (organization_id, role, invited_by)\n  values (p_organization_id, p_role, (select auth.jwt() ->> 'sub'))\n  returning * into v_member;\n\n  return v_member;\nend;\n$$;"
+   "sql": "create or replace function private.ensure_invite(\n  p_organization_id uuid,\n  p_member_id       uuid,\n  p_role            public.member_role\n)\nreturns public.organization_members\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_member public.organization_members;\nbegin\n  if not private.can_issue_login_for(p_organization_id, p_role) then\n    raise exception 'You can''t issue a login for that role' using errcode = '42501';\n  end if;\n\n  if p_member_id is not null then\n    select m.* into v_member\n    from public.organization_members m\n    where m.id = p_member_id\n    for update;\n\n    if v_member.status <> 'invited' then\n      raise exception 'This person already has a login' using errcode = 'P0001';\n    end if;\n\n    if not private.can_issue_login_for(p_organization_id, v_member.role) then\n      raise exception 'You can''t change this person''s invite' using errcode = '42501';\n    end if;\n\n    if v_member.role <> p_role then\n      update public.organization_members m\n      set role = p_role\n      where m.id = v_member.id\n      returning m.* into v_member;\n    end if;\n\n    return v_member;\n  end if;\n\n  insert into public.organization_members (organization_id, role, invited_by)\n  values (p_organization_id, p_role, (select auth.jwt() ->> 'sub'))\n  returning * into v_member;\n\n  return v_member;\nend;\n$$;",
+   "usedBy": {
+    "functions": [
+     "invite_parent",
+     "invite_staff",
+     "invite_student"
+    ],
+    "policies": [
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     }
+    ],
+    "private": [],
+    "triggers": []
+   }
   },
   "guard_current_term_delete": {
+   "calls": [
+    "guard_current_term_delete"
+   ],
+   "doc": "",
    "file": "supabase/migrations/20261014130000_20_block_current_term_delete.sql",
    "lines": [
     4,
@@ -1334,9 +1697,25 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "invoker",
-   "sql": "create function private.guard_current_term_delete()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if old.is_current then\n    raise exception 'Make another term current before removing this one' using errcode = 'P0001';\n  end if;\n\n  return old;\nend;\n$$;"
+   "sql": "create function private.guard_current_term_delete()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if old.is_current then\n    raise exception 'Make another term current before removing this one' using errcode = 'P0001';\n  end if;\n\n  return old;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "academic_terms_guard_current_delete",
+      "table": "academic_terms"
+     }
+    ]
+   }
   },
   "guard_organization_update": {
+   "calls": [
+    "guard_organization_update",
+    "is_platform_admin"
+   ],
+   "doc": "The update guard, without the code comparison (replaced in place, so the trigger from migration 14 keeps using it)",
    "file": "supabase/migrations/20261107140000_27_remove_organization_code.sql",
    "lines": [
     22,
@@ -1346,9 +1725,25 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "definer",
-   "sql": "create or replace function private.guard_organization_update()\nreturns trigger language plpgsql security definer set search_path = '' as $$\nbegin\n  if (select private.is_platform_admin()) then\n    return new;\n  end if;\n  if new.status is distinct from old.status\n     or new.created_by is distinct from old.created_by\n     or new.created_at is distinct from old.created_at then\n    raise exception 'Only Hamrash can change this' using errcode = '42501';\n  end if;\n  return new;\nend $$;"
+   "sql": "create or replace function private.guard_organization_update()\nreturns trigger language plpgsql security definer set search_path = '' as $$\nbegin\n  if (select private.is_platform_admin()) then\n    return new;\n  end if;\n  if new.status is distinct from old.status\n     or new.created_by is distinct from old.created_by\n     or new.created_at is distinct from old.created_at then\n    raise exception 'Only Hamrash can change this' using errcode = '42501';\n  end if;\n  return new;\nend $$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "organizations_guard_update",
+      "table": "organizations"
+     }
+    ]
+   }
   },
   "guard_owner_changes": {
+   "calls": [
+    "guard_owner_changes",
+    "is_platform_admin"
+   ],
+   "doc": "Only owners (or platform admins) may touch owner rows, and a school can never lose its last active owner. Runs as the caller; service role, the SQL editor and our own security-definer RPCs are trusted and skip the checks.",
    "file": "supabase/migrations/20261007182933_01_create_organizations_and_members.sql",
    "lines": [
     199,
@@ -1358,9 +1753,24 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "invoker",
-   "sql": "create function private.guard_owner_changes()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if current_user not in ('authenticated', 'anon') then\n    return coalesce(new, old);\n  end if;\n\n  if (old.role = 'owner' or (tg_op = 'UPDATE' and new.role = 'owner'))\n     and not private.is_platform_admin()\n     and not exists (\n       select 1 from public.organization_members m\n       where m.organization_id = old.organization_id\n         and m.clerk_user_id = (select auth.jwt() ->> 'sub')\n         and m.role = 'owner'\n         and m.status = 'active'\n     )\n  then\n    raise exception 'Only an owner can change owner memberships' using errcode = '42501';\n  end if;\n\n  if old.role = 'owner' and old.status = 'active'\n     and (tg_op = 'DELETE' or new.role <> 'owner' or new.status <> 'active')\n     and not exists (\n       select 1 from public.organization_members m\n       where m.organization_id = old.organization_id\n         and m.role = 'owner'\n         and m.status = 'active'\n         and m.id <> old.id\n     )\n  then\n    raise exception 'A school must keep at least one active owner' using errcode = 'P0001';\n  end if;\n\n  return coalesce(new, old);\nend;\n$$;"
+   "sql": "create function private.guard_owner_changes()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if current_user not in ('authenticated', 'anon') then\n    return coalesce(new, old);\n  end if;\n\n  if (old.role = 'owner' or (tg_op = 'UPDATE' and new.role = 'owner'))\n     and not private.is_platform_admin()\n     and not exists (\n       select 1 from public.organization_members m\n       where m.organization_id = old.organization_id\n         and m.clerk_user_id = (select auth.jwt() ->> 'sub')\n         and m.role = 'owner'\n         and m.status = 'active'\n     )\n  then\n    raise exception 'Only an owner can change owner memberships' using errcode = '42501';\n  end if;\n\n  if old.role = 'owner' and old.status = 'active'\n     and (tg_op = 'DELETE' or new.role <> 'owner' or new.status <> 'active')\n     and not exists (\n       select 1 from public.organization_members m\n       where m.organization_id = old.organization_id\n         and m.role = 'owner'\n         and m.status = 'active'\n         and m.id <> old.id\n     )\n  then\n    raise exception 'A school must keep at least one active owner' using errcode = 'P0001';\n  end if;\n\n  return coalesce(new, old);\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "organization_members_guard_owner",
+      "table": "organization_members"
+     }
+    ]
+   }
   },
   "guard_session_change": {
+   "calls": [
+    "guard_session_change"
+   ],
+   "doc": "2 + 3b. Guard the session row itself",
    "file": "supabase/migrations/20261014120000_19_close_sessions_and_protect_calendar.sql",
    "lines": [
     41,
@@ -1370,9 +1780,24 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "invoker",
-   "sql": "create function private.guard_session_change()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if tg_op = 'DELETE' then\n    if old.closed_at is not null then\n      raise exception 'This session is closed. Its records are kept as history.' using errcode = 'P0001';\n    end if;\n    return old;\n  end if;\n\n  -- a closed session only changes when reopen_session reopens it\n  if old.closed_at is not null\n     and current_setting('hamrash.reopening_session', true) is distinct from 'on' then\n    raise exception 'This session is closed and can''t be changed' using errcode = 'P0001';\n  end if;\n\n  if (new.starts_on, new.ends_on) is distinct from (old.starts_on, old.ends_on)\n     and exists (\n       select 1 from public.academic_terms t\n       where t.session_id = new.id\n         and (t.starts_on < new.starts_on or t.ends_on > new.ends_on)\n     ) then\n    raise exception 'A term falls outside these dates. Change that term first.' using errcode = '23514';\n  end if;\n\n  return new;\nend;\n$$;"
+   "sql": "create function private.guard_session_change()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if tg_op = 'DELETE' then\n    if old.closed_at is not null then\n      raise exception 'This session is closed. Its records are kept as history.' using errcode = 'P0001';\n    end if;\n    return old;\n  end if;\n\n  -- a closed session only changes when reopen_session reopens it\n  if old.closed_at is not null\n     and current_setting('hamrash.reopening_session', true) is distinct from 'on' then\n    raise exception 'This session is closed and can''t be changed' using errcode = 'P0001';\n  end if;\n\n  if (new.starts_on, new.ends_on) is distinct from (old.starts_on, old.ends_on)\n     and exists (\n       select 1 from public.academic_terms t\n       where t.session_id = new.id\n         and (t.starts_on < new.starts_on or t.ends_on > new.ends_on)\n     ) then\n    raise exception 'A term falls outside these dates. Change that term first.' using errcode = '23514';\n  end if;\n\n  return new;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "academic_sessions_guard_change",
+      "table": "academic_sessions"
+     }
+    ]
+   }
   },
   "is_platform_admin": {
+   "calls": [
+    "is_platform_admin"
+   ],
+   "doc": "RLS helpers. security definer so policies on these tables can call them without recursing; both only ever look up the caller's own JWT sub.",
    "file": "supabase/migrations/20261007182933_01_create_organizations_and_members.sql",
    "lines": [
     130,
@@ -1382,9 +1807,134 @@ window.SNIPPETS = {
    "params": [],
    "returns": "boolean",
    "security": "definer",
-   "sql": "create function private.is_platform_admin()\nreturns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select exists (\n    select 1 from public.platform_admins pa\n    where pa.clerk_user_id = (select auth.jwt() ->> 'sub')\n      and pa.is_active\n  );\n$$;"
+   "sql": "create function private.is_platform_admin()\nreturns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select exists (\n    select 1 from public.platform_admins pa\n    where pa.clerk_user_id = (select auth.jwt() ->> 'sub')\n      and pa.is_active\n  );\n$$;",
+   "usedBy": {
+    "functions": [
+     "create_organization",
+     "platform_join_code_status",
+     "rotate_platform_join_code",
+     "set_organization_status",
+     "set_platform_join_enabled"
+    ],
+    "policies": [
+     {
+      "name": "platform_admins: read own row, platform admins read all",
+      "table": "platform_admins"
+     },
+     {
+      "name": "organizations: members and platform admins can read",
+      "table": "organizations"
+     },
+     {
+      "name": "organizations: owners and platform admins can update",
+      "table": "organizations"
+     },
+     {
+      "name": "organization_members: own rows, school leaders and platform admins can read",
+      "table": "organization_members"
+     },
+     {
+      "name": "organization_members: owners, admins and platform admins can change role/status",
+      "table": "organization_members"
+     },
+     {
+      "name": "organization_members: leaders and platform admins can delete unclaimed invites",
+      "table": "organization_members"
+     },
+     {
+      "name": "staff: members and platform admins can read",
+      "table": "staff"
+     },
+     {
+      "name": "students: read by leaders, bursars, teachers, family, self",
+      "table": "students"
+     },
+     {
+      "name": "parents: read by leaders, bursars, teachers, family, self",
+      "table": "parents"
+     },
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     },
+     {
+      "name": "sections: members and platform admins can read",
+      "table": "sections"
+     },
+     {
+      "name": "classes: members and platform admins can read",
+      "table": "classes"
+     },
+     {
+      "name": "class_arms: members and platform admins can read",
+      "table": "class_arms"
+     },
+     {
+      "name": "academic_sessions: members and platform admins can read",
+      "table": "academic_sessions"
+     },
+     {
+      "name": "academic_terms: members and platform admins can read",
+      "table": "academic_terms"
+     },
+     {
+      "name": "class_teachers: members and platform admins can read",
+      "table": "class_teachers"
+     },
+     {
+      "name": "student_placements: read by leaders, bursars, teachers, family",
+      "table": "student_placements"
+     },
+     {
+      "name": "staff_private_details: leaders, bursars, self and platform admins can read",
+      "table": "staff_private_details"
+     },
+     {
+      "name": "subjects: members and platform admins can read",
+      "table": "subjects"
+     },
+     {
+      "name": "arm_subjects: members and platform admins can read",
+      "table": "arm_subjects"
+     },
+     {
+      "name": "teaching_assignments: members and platform admins can read",
+      "table": "teaching_assignments"
+     },
+     {
+      "name": "student_subjects: read by leaders, bursars, teachers, family",
+      "table": "student_subjects"
+     },
+     {
+      "name": "student_private_details: leaders, current teachers, family",
+      "table": "student_private_details"
+     },
+     {
+      "name": "parent_private_details: leaders, bursars, self",
+      "table": "parent_private_details"
+     },
+     {
+      "name": "score_columns: members and platform admins can read",
+      "table": "score_columns"
+     },
+     {
+      "name": "grade_boundaries: members and platform admins can read",
+      "table": "grade_boundaries"
+     }
+    ],
+    "private": [
+     "can_issue_logins",
+     "guard_organization_update",
+     "guard_owner_changes"
+    ],
+    "triggers": []
+   }
   },
   "keep_single_lead_class_teacher": {
+   "calls": [
+    "keep_single_lead_class_teacher"
+   ],
+   "doc": "Making someone the lead demotes the arm's previous lead to assistant.",
    "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
    "lines": [
     216,
@@ -1394,9 +1944,24 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "invoker",
-   "sql": "create function private.keep_single_lead_class_teacher()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if new.is_lead then\n    update public.class_teachers ct\n    set is_lead = false\n    where ct.session_id = new.session_id\n      and ct.arm_id = new.arm_id\n      and ct.staff_id <> new.staff_id\n      and ct.is_lead;\n  end if;\n  return new;\nend;\n$$;"
+   "sql": "create function private.keep_single_lead_class_teacher()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if new.is_lead then\n    update public.class_teachers ct\n    set is_lead = false\n    where ct.session_id = new.session_id\n      and ct.arm_id = new.arm_id\n      and ct.staff_id <> new.staff_id\n      and ct.is_lead;\n  end if;\n  return new;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "class_teachers_single_lead",
+      "table": "class_teachers"
+     }
+    ]
+   }
   },
   "keep_single_primary_contact": {
+   "calls": [
+    "keep_single_primary_contact"
+   ],
+   "doc": "Making a parent the primary contact clears the flag on the student's other links, so the app never has to unset the old one first.",
    "file": "supabase/migrations/20261007210000_03_create_people.sql",
    "lines": [
     262,
@@ -1406,9 +1971,29 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "invoker",
-   "sql": "create function private.keep_single_primary_contact()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if new.is_primary_contact then\n    update public.student_parents sp\n    set is_primary_contact = false\n    where sp.student_id = new.student_id\n      and sp.parent_id <> new.parent_id\n      and sp.is_primary_contact;\n  end if;\n  return new;\nend;\n$$;"
+   "sql": "create function private.keep_single_primary_contact()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if new.is_primary_contact then\n    update public.student_parents sp\n    set is_primary_contact = false\n    where sp.student_id = new.student_id\n      and sp.parent_id <> new.parent_id\n      and sp.is_primary_contact;\n  end if;\n  return new;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     }
+    ],
+    "private": [],
+    "triggers": [
+     {
+      "name": "student_parents_single_primary",
+      "table": "student_parents"
+     }
+    ]
+   }
   },
   "limit_assistant_class_teachers": {
+   "calls": [
+    "limit_assistant_class_teachers"
+   ],
+   "doc": "At most two assistants. Also catches the case where making someone the lead would demote the old lead into a third assistant slot.",
    "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
    "lines": [
     240,
@@ -1418,9 +2003,24 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "invoker",
-   "sql": "create function private.limit_assistant_class_teachers()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if not new.is_lead and (\n    select count(*)\n    from public.class_teachers ct\n    where ct.session_id = new.session_id\n      and ct.arm_id = new.arm_id\n      and ct.staff_id <> new.staff_id\n      and not ct.is_lead\n  ) >= 2 then\n    raise exception 'An arm can have at most 2 assistant class teachers per session (changing the lead makes the old lead an assistant)'\n      using errcode = '23514';\n  end if;\n  return new;\nend;\n$$;"
+   "sql": "create function private.limit_assistant_class_teachers()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  if not new.is_lead and (\n    select count(*)\n    from public.class_teachers ct\n    where ct.session_id = new.session_id\n      and ct.arm_id = new.arm_id\n      and ct.staff_id <> new.staff_id\n      and not ct.is_lead\n  ) >= 2 then\n    raise exception 'An arm can have at most 2 assistant class teachers per session (changing the lead makes the old lead an assistant)'\n      using errcode = '23514';\n  end if;\n  return new;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "class_teachers_limit_assistants",
+      "table": "class_teachers"
+     }
+    ]
+   }
   },
   "member_role_app": {
+   "calls": [
+    "member_role_app"
+   ],
+   "doc": "Which app a role signs in to",
    "file": "supabase/migrations/20261013140000_13_check_claim_code_and_limit_attempts.sql",
    "lines": [
     63,
@@ -1436,9 +2036,22 @@ window.SNIPPETS = {
    ],
    "returns": "text",
    "security": "invoker",
-   "sql": "create function private.member_role_app(p_role public.member_role)\nreturns text\nlanguage sql\nimmutable\nset search_path = ''\nas $$\n  select case\n    when p_role in ('owner', 'admin', 'principal', 'vice_principal', 'bursar') then 'admin'\n    when p_role in ('teacher', 'staff') then 'staff'\n    else 'family'\n  end;\n$$;"
+   "sql": "create function private.member_role_app(p_role public.member_role)\nreturns text\nlanguage sql\nimmutable\nset search_path = ''\nas $$\n  select case\n    when p_role in ('owner', 'admin', 'principal', 'vice_principal', 'bursar') then 'admin'\n    when p_role in ('teacher', 'staff') then 'staff'\n    else 'family'\n  end;\n$$;",
+   "usedBy": {
+    "functions": [
+     "check_claim_code"
+    ],
+    "policies": [],
+    "private": [],
+    "triggers": []
+   }
   },
   "my_child_ids": {
+   "calls": [
+    "my_child_ids",
+    "my_parent_ids"
+   ],
+   "doc": "Students the caller is a parent of.",
    "file": "supabase/migrations/20261007210000_03_create_people.sql",
    "lines": [
     404,
@@ -1448,9 +2061,43 @@ window.SNIPPETS = {
    "params": [],
    "returns": "setof uuid",
    "security": "definer",
-   "sql": "create function private.my_child_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select sp.student_id\n  from public.student_parents sp\n  where sp.parent_id in (select private.my_parent_ids());\n$$;"
+   "sql": "create function private.my_child_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select sp.student_id\n  from public.student_parents sp\n  where sp.parent_id in (select private.my_parent_ids());\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [
+     {
+      "name": "students: read by leaders, bursars, teachers, family, self",
+      "table": "students"
+     },
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     },
+     {
+      "name": "student_placements: read by leaders, bursars, teachers, family",
+      "table": "student_placements"
+     },
+     {
+      "name": "student_subjects: read by leaders, bursars, teachers, family",
+      "table": "student_subjects"
+     },
+     {
+      "name": "student_private_details: leaders, current teachers, family",
+      "table": "student_private_details"
+     }
+    ],
+    "private": [
+     "my_childrens_parent_ids"
+    ],
+    "triggers": []
+   }
   },
   "my_childrens_parent_ids": {
+   "calls": [
+    "my_child_ids",
+    "my_childrens_parent_ids"
+   ],
+   "doc": "Every parent of the caller's children (the caller included), so a parent can see the child's other parents and guardians.",
    "file": "supabase/migrations/20261007210000_03_create_people.sql",
    "lines": [
     418,
@@ -1460,9 +2107,29 @@ window.SNIPPETS = {
    "params": [],
    "returns": "setof uuid",
    "security": "definer",
-   "sql": "create function private.my_childrens_parent_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select sp.parent_id\n  from public.student_parents sp\n  where sp.student_id in (select private.my_child_ids());\n$$;"
+   "sql": "create function private.my_childrens_parent_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select sp.parent_id\n  from public.student_parents sp\n  where sp.student_id in (select private.my_child_ids());\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [
+     {
+      "name": "parents: read by leaders, bursars, teachers, family, self",
+      "table": "parents"
+     },
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     }
+    ],
+    "private": [],
+    "triggers": []
+   }
   },
   "my_ever_taught_student_ids": {
+   "calls": [
+    "my_ever_taught_student_ids",
+    "my_staff_ids"
+   ],
+   "doc": "Students the caller has EVER taught: in any session, placed in an arm where, that session, the caller was a class teacher, taught a compulsory subject, or taught an optional subject the student took. Used only for the profile (name, photo\u2026) so past scores and work can show who they belong to. Current-session access is private.my_taught_student_ids().",
    "file": "supabase/migrations/20261011144800_07_split_student_and_parent_private_details.sql",
    "lines": [
     99,
@@ -1472,9 +2139,24 @@ window.SNIPPETS = {
    "params": [],
    "returns": "setof uuid",
    "security": "definer",
-   "sql": "create function private.my_ever_taught_student_ids()\n  returns setof uuid\n  language sql\n  stable\n  security definer\n  set search_path = ''\n  as $$\n    select sp.student_id\n    from public.student_placements sp\n    join public.class_teachers ct on ct.session_id = sp.session_id and ct.arm_id = sp.arm_id\n    where ct.staff_id in (select private.my_staff_ids())\n  \n    union\n  \n    select sp.student_id\n    from public.student_placements sp\n    join public.teaching_assignments ta on ta.session_id = sp.session_id and ta.arm_id = sp.arm_id\n    join public.arm_subjects asub on asub.arm_id = sp.arm_id and asub.subject_id = ta.subject_id\n    where ta.staff_id in (select private.my_staff_ids())\n      and asub.is_compulsory\n  \n    union\n  \n    select sp.student_id\n    from public.student_placements sp\n    join public.teaching_assignments ta on ta.session_id = sp.session_id and ta.arm_id = sp.arm_id\n    join public.arm_subjects asub on asub.arm_id = sp.arm_id and asub.subject_id = ta.subject_id\n    join public.student_subjects ss on ss.student_id = sp.student_id\n                                   and ss.session_id = sp.session_id\n                                   and ss.subject_id = ta.subject_id\n    where ta.staff_id in (select private.my_staff_ids())\n      and not asub.is_compulsory;\n  $$;"
+   "sql": "create function private.my_ever_taught_student_ids()\n  returns setof uuid\n  language sql\n  stable\n  security definer\n  set search_path = ''\n  as $$\n    select sp.student_id\n    from public.student_placements sp\n    join public.class_teachers ct on ct.session_id = sp.session_id and ct.arm_id = sp.arm_id\n    where ct.staff_id in (select private.my_staff_ids())\n  \n    union\n  \n    select sp.student_id\n    from public.student_placements sp\n    join public.teaching_assignments ta on ta.session_id = sp.session_id and ta.arm_id = sp.arm_id\n    join public.arm_subjects asub on asub.arm_id = sp.arm_id and asub.subject_id = ta.subject_id\n    where ta.staff_id in (select private.my_staff_ids())\n      and asub.is_compulsory\n  \n    union\n  \n    select sp.student_id\n    from public.student_placements sp\n    join public.teaching_assignments ta on ta.session_id = sp.session_id and ta.arm_id = sp.arm_id\n    join public.arm_subjects asub on asub.arm_id = sp.arm_id and asub.subject_id = ta.subject_id\n    join public.student_subjects ss on ss.student_id = sp.student_id\n                                   and ss.session_id = sp.session_id\n                                   and ss.subject_id = ta.subject_id\n    where ta.staff_id in (select private.my_staff_ids())\n      and not asub.is_compulsory;\n  $$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [
+     {
+      "name": "students: read by leaders, bursars, teachers, family, self",
+      "table": "students"
+     }
+    ],
+    "private": [],
+    "triggers": []
+   }
   },
   "my_member_ids": {
+   "calls": [
+    "my_member_ids"
+   ],
+   "doc": "The caller's active memberships in active/trial schools.",
    "file": "supabase/migrations/20261007210000_03_create_people.sql",
    "lines": [
     374,
@@ -1484,9 +2166,40 @@ window.SNIPPETS = {
    "params": [],
    "returns": "setof uuid",
    "security": "definer",
-   "sql": "create function private.my_member_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select m.id\n  from public.organization_members m\n  join public.organizations o on o.id = m.organization_id\n  where m.clerk_user_id = (select auth.jwt() ->> 'sub')\n    and m.status = 'active'\n    and o.status in ('trial', 'active');\n$$;"
+   "sql": "create function private.my_member_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select m.id\n  from public.organization_members m\n  join public.organizations o on o.id = m.organization_id\n  where m.clerk_user_id = (select auth.jwt() ->> 'sub')\n    and m.status = 'active'\n    and o.status in ('trial', 'active');\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [
+     {
+      "name": "staff: members and platform admins can read",
+      "table": "staff"
+     },
+     {
+      "name": "students: read by leaders, bursars, teachers, family, self",
+      "table": "students"
+     },
+     {
+      "name": "parents: read by leaders, bursars, teachers, family, self",
+      "table": "parents"
+     },
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     }
+    ],
+    "private": [
+     "my_parent_ids",
+     "my_staff_ids",
+     "my_student_ids"
+    ],
+    "triggers": []
+   }
   },
   "my_org_ids": {
+   "calls": [
+    "my_org_ids"
+   ],
+   "doc": "Org ids the caller is an active member of, optionally limited to some roles. Suspended/archived schools are excluded unless p_include_inactive_orgs is true (used only so members can still see their school's row and its status).",
    "file": "supabase/migrations/20261007182933_01_create_organizations_and_members.sql",
    "lines": [
     147,
@@ -1507,9 +2220,341 @@ window.SNIPPETS = {
    ],
    "returns": "setof uuid",
    "security": "definer",
-   "sql": "create function private.my_org_ids(\n  p_roles                 public.member_role[] default null,\n  p_include_inactive_orgs boolean default false\n)\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select m.organization_id\n  from public.organization_members m\n  join public.organizations o on o.id = m.organization_id\n  where m.clerk_user_id = (select auth.jwt() ->> 'sub')\n    and m.status = 'active'\n    and (p_roles is null or m.role = any (p_roles))\n    and (p_include_inactive_orgs or o.status in ('trial', 'active'));\n$$;"
+   "sql": "create function private.my_org_ids(\n  p_roles                 public.member_role[] default null,\n  p_include_inactive_orgs boolean default false\n)\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select m.organization_id\n  from public.organization_members m\n  join public.organizations o on o.id = m.organization_id\n  where m.clerk_user_id = (select auth.jwt() ->> 'sub')\n    and m.status = 'active'\n    and (p_roles is null or m.role = any (p_roles))\n    and (p_include_inactive_orgs or o.status in ('trial', 'active'));\n$$;",
+   "usedBy": {
+    "functions": [
+     "arm_subject_usage",
+     "reopen_session",
+     "session_usage"
+    ],
+    "policies": [
+     {
+      "name": "organizations: members and platform admins can read",
+      "table": "organizations"
+     },
+     {
+      "name": "organizations: owners and platform admins can update",
+      "table": "organizations"
+     },
+     {
+      "name": "organization_members: own rows, school leaders and platform admins can read",
+      "table": "organization_members"
+     },
+     {
+      "name": "organization_members: owners, admins and platform admins can change role/status",
+      "table": "organization_members"
+     },
+     {
+      "name": "organization_members: leaders and platform admins can delete unclaimed invites",
+      "table": "organization_members"
+     },
+     {
+      "name": "staff: leaders can add",
+      "table": "staff"
+     },
+     {
+      "name": "staff: leaders can edit",
+      "table": "staff"
+     },
+     {
+      "name": "staff: members and platform admins can read",
+      "table": "staff"
+     },
+     {
+      "name": "staff: owners and admins can delete",
+      "table": "staff"
+     },
+     {
+      "name": "students: leaders can add",
+      "table": "students"
+     },
+     {
+      "name": "students: leaders can edit",
+      "table": "students"
+     },
+     {
+      "name": "students: owners and admins can delete",
+      "table": "students"
+     },
+     {
+      "name": "students: read by leaders, bursars, teachers, family, self",
+      "table": "students"
+     },
+     {
+      "name": "parents: leaders can add",
+      "table": "parents"
+     },
+     {
+      "name": "parents: leaders can edit",
+      "table": "parents"
+     },
+     {
+      "name": "parents: owners and admins can delete",
+      "table": "parents"
+     },
+     {
+      "name": "parents: read by leaders, bursars, teachers, family, self",
+      "table": "parents"
+     },
+     {
+      "name": "student_parents: leaders can edit links",
+      "table": "student_parents"
+     },
+     {
+      "name": "student_parents: leaders can link",
+      "table": "student_parents"
+     },
+     {
+      "name": "student_parents: leaders can unlink",
+      "table": "student_parents"
+     },
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     },
+     {
+      "name": "sections: leaders can add",
+      "table": "sections"
+     },
+     {
+      "name": "sections: leaders can edit",
+      "table": "sections"
+     },
+     {
+      "name": "sections: members and platform admins can read",
+      "table": "sections"
+     },
+     {
+      "name": "sections: leaders can delete",
+      "table": "sections"
+     },
+     {
+      "name": "classes: leaders can add",
+      "table": "classes"
+     },
+     {
+      "name": "classes: leaders can edit",
+      "table": "classes"
+     },
+     {
+      "name": "classes: members and platform admins can read",
+      "table": "classes"
+     },
+     {
+      "name": "classes: leaders can delete",
+      "table": "classes"
+     },
+     {
+      "name": "class_arms: leaders can add",
+      "table": "class_arms"
+     },
+     {
+      "name": "class_arms: leaders can edit",
+      "table": "class_arms"
+     },
+     {
+      "name": "class_arms: members and platform admins can read",
+      "table": "class_arms"
+     },
+     {
+      "name": "class_arms: leaders can delete",
+      "table": "class_arms"
+     },
+     {
+      "name": "academic_sessions: leaders can add",
+      "table": "academic_sessions"
+     },
+     {
+      "name": "academic_sessions: leaders can edit",
+      "table": "academic_sessions"
+     },
+     {
+      "name": "academic_sessions: members and platform admins can read",
+      "table": "academic_sessions"
+     },
+     {
+      "name": "academic_sessions: leaders can delete",
+      "table": "academic_sessions"
+     },
+     {
+      "name": "academic_terms: leaders can add",
+      "table": "academic_terms"
+     },
+     {
+      "name": "academic_terms: leaders can edit",
+      "table": "academic_terms"
+     },
+     {
+      "name": "academic_terms: members and platform admins can read",
+      "table": "academic_terms"
+     },
+     {
+      "name": "academic_terms: leaders can delete",
+      "table": "academic_terms"
+     },
+     {
+      "name": "class_teachers: leaders can assign",
+      "table": "class_teachers"
+     },
+     {
+      "name": "class_teachers: leaders can edit",
+      "table": "class_teachers"
+     },
+     {
+      "name": "class_teachers: leaders can unassign",
+      "table": "class_teachers"
+     },
+     {
+      "name": "class_teachers: members and platform admins can read",
+      "table": "class_teachers"
+     },
+     {
+      "name": "student_placements: leaders can move",
+      "table": "student_placements"
+     },
+     {
+      "name": "student_placements: leaders can place",
+      "table": "student_placements"
+     },
+     {
+      "name": "student_placements: leaders can remove",
+      "table": "student_placements"
+     },
+     {
+      "name": "student_placements: read by leaders, bursars, teachers, family",
+      "table": "student_placements"
+     },
+     {
+      "name": "staff_private_details: leaders can edit",
+      "table": "staff_private_details"
+     },
+     {
+      "name": "staff_private_details: leaders, bursars, self and platform admins can read",
+      "table": "staff_private_details"
+     },
+     {
+      "name": "subjects: leaders can add",
+      "table": "subjects"
+     },
+     {
+      "name": "subjects: leaders can edit",
+      "table": "subjects"
+     },
+     {
+      "name": "subjects: members and platform admins can read",
+      "table": "subjects"
+     },
+     {
+      "name": "subjects: leaders can delete",
+      "table": "subjects"
+     },
+     {
+      "name": "arm_subjects: leaders can add",
+      "table": "arm_subjects"
+     },
+     {
+      "name": "arm_subjects: leaders can edit",
+      "table": "arm_subjects"
+     },
+     {
+      "name": "arm_subjects: leaders can remove",
+      "table": "arm_subjects"
+     },
+     {
+      "name": "arm_subjects: members and platform admins can read",
+      "table": "arm_subjects"
+     },
+     {
+      "name": "teaching_assignments: leaders can assign",
+      "table": "teaching_assignments"
+     },
+     {
+      "name": "teaching_assignments: leaders can change teacher",
+      "table": "teaching_assignments"
+     },
+     {
+      "name": "teaching_assignments: leaders can unassign",
+      "table": "teaching_assignments"
+     },
+     {
+      "name": "teaching_assignments: members and platform admins can read",
+      "table": "teaching_assignments"
+     },
+     {
+      "name": "student_subjects: leaders can enrol",
+      "table": "student_subjects"
+     },
+     {
+      "name": "student_subjects: leaders can remove",
+      "table": "student_subjects"
+     },
+     {
+      "name": "student_subjects: read by leaders, bursars, teachers, family",
+      "table": "student_subjects"
+     },
+     {
+      "name": "student_private_details: leaders can edit",
+      "table": "student_private_details"
+     },
+     {
+      "name": "student_private_details: leaders, current teachers, family",
+      "table": "student_private_details"
+     },
+     {
+      "name": "parent_private_details: leaders can edit",
+      "table": "parent_private_details"
+     },
+     {
+      "name": "parent_private_details: leaders, bursars, self",
+      "table": "parent_private_details"
+     },
+     {
+      "name": "score_columns: leaders can add",
+      "table": "score_columns"
+     },
+     {
+      "name": "score_columns: leaders can edit",
+      "table": "score_columns"
+     },
+     {
+      "name": "score_columns: leaders can remove",
+      "table": "score_columns"
+     },
+     {
+      "name": "score_columns: members and platform admins can read",
+      "table": "score_columns"
+     },
+     {
+      "name": "grade_boundaries: leaders can add",
+      "table": "grade_boundaries"
+     },
+     {
+      "name": "grade_boundaries: leaders can edit",
+      "table": "grade_boundaries"
+     },
+     {
+      "name": "grade_boundaries: leaders can remove",
+      "table": "grade_boundaries"
+     },
+     {
+      "name": "grade_boundaries: members and platform admins can read",
+      "table": "grade_boundaries"
+     }
+    ],
+    "private": [
+     "can_issue_login_for",
+     "can_issue_logins",
+     "can_manage_academics"
+    ],
+    "triggers": []
+   }
   },
   "my_parent_ids": {
+   "calls": [
+    "my_member_ids",
+    "my_parent_ids"
+   ],
+   "doc": "Parent records that are the caller.",
    "file": "supabase/migrations/20261007210000_03_create_people.sql",
    "lines": [
     390,
@@ -1519,9 +2564,31 @@ window.SNIPPETS = {
    "params": [],
    "returns": "setof uuid",
    "security": "definer",
-   "sql": "create function private.my_parent_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select p.id\n  from public.parents p\n  where p.member_id in (select private.my_member_ids())\n    and p.is_active;\n$$;"
+   "sql": "create function private.my_parent_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select p.id\n  from public.parents p\n  where p.member_id in (select private.my_member_ids())\n    and p.is_active;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     },
+     {
+      "name": "parent_private_details: leaders, bursars, self",
+      "table": "parent_private_details"
+     }
+    ],
+    "private": [
+     "my_child_ids"
+    ],
+    "triggers": []
+   }
   },
   "my_staff_ids": {
+   "calls": [
+    "my_member_ids",
+    "my_staff_ids"
+   ],
+   "doc": "Staff records that are the caller.",
    "file": "supabase/migrations/20261011130000_05_split_staff_private_details.sql",
    "lines": [
     70,
@@ -1531,9 +2598,28 @@ window.SNIPPETS = {
    "params": [],
    "returns": "setof uuid",
    "security": "definer",
-   "sql": "create function private.my_staff_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select s.id\n  from public.staff s\n  where s.member_id in (select private.my_member_ids());\n$$;"
+   "sql": "create function private.my_staff_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select s.id\n  from public.staff s\n  where s.member_id in (select private.my_member_ids());\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [
+     {
+      "name": "staff_private_details: leaders, bursars, self and platform admins can read",
+      "table": "staff_private_details"
+     }
+    ],
+    "private": [
+     "my_ever_taught_student_ids",
+     "my_taught_student_ids"
+    ],
+    "triggers": []
+   }
   },
   "my_student_ids": {
+   "calls": [
+    "my_member_ids",
+    "my_student_ids"
+   ],
+   "doc": "Student records that are the caller.",
    "file": "supabase/migrations/20261007210000_03_create_people.sql",
    "lines": [
     431,
@@ -1543,9 +2629,37 @@ window.SNIPPETS = {
    "params": [],
    "returns": "setof uuid",
    "security": "definer",
-   "sql": "create function private.my_student_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select s.id\n  from public.students s\n  where s.member_id in (select private.my_member_ids());\n$$;"
+   "sql": "create function private.my_student_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select s.id\n  from public.students s\n  where s.member_id in (select private.my_member_ids());\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     },
+     {
+      "name": "student_placements: read by leaders, bursars, teachers, family",
+      "table": "student_placements"
+     },
+     {
+      "name": "student_subjects: read by leaders, bursars, teachers, family",
+      "table": "student_subjects"
+     },
+     {
+      "name": "student_private_details: leaders, current teachers, family",
+      "table": "student_private_details"
+     }
+    ],
+    "private": [],
+    "triggers": []
+   }
   },
   "my_taught_student_ids": {
+   "calls": [
+    "my_staff_ids",
+    "my_taught_student_ids"
+   ],
+   "doc": "Students the caller teaches in the CURRENT session \u2014 placed in an arm where, this session, the caller is: \u00b7 a class teacher (lead or assistant) \u2192 everyone in the arm \u00b7 teaching a compulsory subject       \u2192 everyone in the arm \u00b7 teaching an optional subject        \u2192 only students taking it",
    "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
    "lines": [
     194,
@@ -1555,9 +2669,43 @@ window.SNIPPETS = {
    "params": [],
    "returns": "setof uuid",
    "security": "definer",
-   "sql": "create function private.my_taught_student_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select sp.student_id\n  from public.student_placements sp\n  join public.academic_sessions s on s.id = sp.session_id and s.is_current\n  join public.class_teachers ct on ct.session_id = sp.session_id and ct.arm_id = sp.arm_id\n  where ct.staff_id in (select private.my_staff_ids())\n\n  union\n\n  select sp.student_id\n  from public.student_placements sp\n  join public.academic_sessions s on s.id = sp.session_id and s.is_current\n  join public.teaching_assignments ta on ta.session_id = sp.session_id and ta.arm_id = sp.arm_id\n  join public.arm_subjects asub on asub.arm_id = sp.arm_id and asub.subject_id = ta.subject_id\n  where ta.staff_id in (select private.my_staff_ids())\n    and asub.is_compulsory\n\n  union\n\n  select sp.student_id\n  from public.student_placements sp\n  join public.academic_sessions s on s.id = sp.session_id and s.is_current\n  join public.teaching_assignments ta on ta.session_id = sp.session_id and ta.arm_id = sp.arm_id\n  join public.arm_subjects asub on asub.arm_id = sp.arm_id and asub.subject_id = ta.subject_id\n  join public.student_subjects ss on ss.student_id = sp.student_id\n                                 and ss.session_id = sp.session_id\n                                 and ss.subject_id = ta.subject_id\n  where ta.staff_id in (select private.my_staff_ids())\n    and not asub.is_compulsory;\n$$;"
+   "sql": "create function private.my_taught_student_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select sp.student_id\n  from public.student_placements sp\n  join public.academic_sessions s on s.id = sp.session_id and s.is_current\n  join public.class_teachers ct on ct.session_id = sp.session_id and ct.arm_id = sp.arm_id\n  where ct.staff_id in (select private.my_staff_ids())\n\n  union\n\n  select sp.student_id\n  from public.student_placements sp\n  join public.academic_sessions s on s.id = sp.session_id and s.is_current\n  join public.teaching_assignments ta on ta.session_id = sp.session_id and ta.arm_id = sp.arm_id\n  join public.arm_subjects asub on asub.arm_id = sp.arm_id and asub.subject_id = ta.subject_id\n  where ta.staff_id in (select private.my_staff_ids())\n    and asub.is_compulsory\n\n  union\n\n  select sp.student_id\n  from public.student_placements sp\n  join public.academic_sessions s on s.id = sp.session_id and s.is_current\n  join public.teaching_assignments ta on ta.session_id = sp.session_id and ta.arm_id = sp.arm_id\n  join public.arm_subjects asub on asub.arm_id = sp.arm_id and asub.subject_id = ta.subject_id\n  join public.student_subjects ss on ss.student_id = sp.student_id\n                                 and ss.session_id = sp.session_id\n                                 and ss.subject_id = ta.subject_id\n  where ta.staff_id in (select private.my_staff_ids())\n    and not asub.is_compulsory;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [
+     {
+      "name": "students: read by leaders, bursars, teachers, family, self",
+      "table": "students"
+     },
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     },
+     {
+      "name": "student_placements: read by leaders, bursars, teachers, family",
+      "table": "student_placements"
+     },
+     {
+      "name": "student_subjects: read by leaders, bursars, teachers, family",
+      "table": "student_subjects"
+     },
+     {
+      "name": "student_private_details: leaders, current teachers, family",
+      "table": "student_private_details"
+     }
+    ],
+    "private": [
+     "my_taught_students_parent_ids"
+    ],
+    "triggers": []
+   }
   },
   "my_taught_students_parent_ids": {
+   "calls": [
+    "my_taught_student_ids",
+    "my_taught_students_parent_ids"
+   ],
+   "doc": "Parents of the students the caller teaches.",
    "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
    "lines": [
     232,
@@ -1567,9 +2715,24 @@ window.SNIPPETS = {
    "params": [],
    "returns": "setof uuid",
    "security": "definer",
-   "sql": "create function private.my_taught_students_parent_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select sp.parent_id\n  from public.student_parents sp\n  where sp.student_id in (select private.my_taught_student_ids());\n$$;"
+   "sql": "create function private.my_taught_students_parent_ids()\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select sp.parent_id\n  from public.student_parents sp\n  where sp.student_id in (select private.my_taught_student_ids());\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [
+     {
+      "name": "parents: read by leaders, bursars, teachers, family, self",
+      "table": "parents"
+     }
+    ],
+    "private": [],
+    "triggers": []
+   }
   },
   "next_number": {
+   "calls": [
+    "next_number"
+   ],
+   "doc": "",
    "file": "supabase/migrations/20261007210000_03_create_people.sql",
    "lines": [
     97,
@@ -1595,9 +2758,27 @@ window.SNIPPETS = {
    ],
    "returns": "int",
    "security": "invoker",
-   "sql": "create function private.next_number(p_organization_id uuid, p_kind text, p_period int)\nreturns int\nlanguage sql\nvolatile\nset search_path = ''\nas $$\n  insert into private.number_sequences as ns (organization_id, kind, period, last_value)\n  values (p_organization_id, p_kind, p_period, 1)\n  on conflict (organization_id, kind, period)\n  do update set last_value = ns.last_value + 1\n  returning ns.last_value;\n$$;"
+   "sql": "create function private.next_number(p_organization_id uuid, p_kind text, p_period int)\nreturns int\nlanguage sql\nvolatile\nset search_path = ''\nas $$\n  insert into private.number_sequences as ns (organization_id, kind, period, last_value)\n  values (p_organization_id, p_kind, p_period, 1)\n  on conflict (organization_id, kind, period)\n  do update set last_value = ns.last_value + 1\n  returning ns.last_value;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [
+     {
+      "name": "student_parents: read by leaders, bursars, teachers, family",
+      "table": "student_parents"
+     }
+    ],
+    "private": [
+     "assign_admission_number",
+     "assign_staff_number"
+    ],
+    "triggers": []
+   }
   },
   "normalise_claim_code": {
+   "calls": [
+    "normalise_claim_code"
+   ],
+   "doc": "\"kq7m-2x9p\" \u2192 \"KQ7M2X9P\", the way claim codes are stored",
    "file": "supabase/migrations/20261013140000_13_check_claim_code_and_limit_attempts.sql",
    "lines": [
     53,
@@ -1613,9 +2794,22 @@ window.SNIPPETS = {
    ],
    "returns": "text",
    "security": "invoker",
-   "sql": "create function private.normalise_claim_code(p_code text)\nreturns text\nlanguage sql\nimmutable\nset search_path = ''\nas $$\n  select upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g'));\n$$;"
+   "sql": "create function private.normalise_claim_code(p_code text)\nreturns text\nlanguage sql\nimmutable\nset search_path = ''\nas $$\n  select upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g'));\n$$;",
+   "usedBy": {
+    "functions": [
+     "check_claim_code",
+     "redeem_claim_code"
+    ],
+    "policies": [],
+    "private": [],
+    "triggers": []
+   }
   },
   "owner_needs_staff_record": {
+   "calls": [
+    "owner_needs_staff_record"
+   ],
+   "doc": "An owner code needs a name (to create the owner's staff record) unless the invite already has a staff record, or the caller already has one at this school through another role. Moved here from redeem_claim_code (migration 11) so check_claim_code gives the same answer.",
    "file": "supabase/migrations/20261013140000_13_check_claim_code_and_limit_attempts.sql",
    "lines": [
     122,
@@ -1636,9 +2830,22 @@ window.SNIPPETS = {
    ],
    "returns": "boolean",
    "security": "invoker",
-   "sql": "create function private.owner_needs_staff_record(p_member public.organization_members, p_sub text)\nreturns boolean\nlanguage sql\nstable\nset search_path = ''\nas $$\n  select p_member.role = 'owner'\n    and not exists (select 1 from public.staff s where s.member_id = p_member.id)\n    and not exists (\n      select 1\n      from public.staff s\n      join public.organization_members m on m.id = s.member_id\n      where s.organization_id = p_member.organization_id\n        and m.clerk_user_id = p_sub\n    );\n$$;"
+   "sql": "create function private.owner_needs_staff_record(p_member public.organization_members, p_sub text)\nreturns boolean\nlanguage sql\nstable\nset search_path = ''\nas $$\n  select p_member.role = 'owner'\n    and not exists (select 1 from public.staff s where s.member_id = p_member.id)\n    and not exists (\n      select 1\n      from public.staff s\n      join public.organization_members m on m.id = s.member_id\n      where s.organization_id = p_member.organization_id\n        and m.clerk_user_id = p_sub\n    );\n$$;",
+   "usedBy": {
+    "functions": [
+     "check_claim_code",
+     "redeem_claim_code"
+    ],
+    "policies": [],
+    "private": [],
+    "triggers": []
+   }
   },
   "platform_code_hash": {
+   "calls": [
+    "platform_code_hash"
+   ],
+   "doc": "Helper: normalise and hash a code the way it's stored \"abcd-efgh-2345\" \u2192 sha256(\"ABCDEFGH2345\")",
    "file": "supabase/migrations/20261013120000_12_platform_invite_codes.sql",
    "lines": [
     68,
@@ -1654,9 +2861,22 @@ window.SNIPPETS = {
    ],
    "returns": "text",
    "security": "invoker",
-   "sql": "create function private.platform_code_hash(p_code text)\nreturns text\nlanguage sql\nimmutable\nset search_path = ''\nas $$\n  select encode(\n    extensions.digest(upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g')), 'sha256'),\n    'hex'\n  );\n$$;"
+   "sql": "create function private.platform_code_hash(p_code text)\nreturns text\nlanguage sql\nimmutable\nset search_path = ''\nas $$\n  select encode(\n    extensions.digest(upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g')), 'sha256'),\n    'hex'\n  );\n$$;",
+   "usedBy": {
+    "functions": [
+     "redeem_platform_join_code",
+     "rotate_platform_join_code"
+    ],
+    "policies": [],
+    "private": [],
+    "triggers": []
+   }
   },
   "random_code": {
+   "calls": [
+    "random_code"
+   ],
+   "doc": "Random code from a 32-char alphabet without look-alikes (no 0/O, 1/I). Uses pgcrypto bytes rather than random(); 256 % 32 = 0 keeps it uniform.",
    "file": "supabase/migrations/20261007182933_01_create_organizations_and_members.sql",
    "lines": [
     40,
@@ -1672,9 +2892,23 @@ window.SNIPPETS = {
    ],
    "returns": "text",
    "security": "invoker",
-   "sql": "create function private.random_code(p_length int)\nreturns text\nlanguage sql\nvolatile\nset search_path = ''\nas $$\n  select string_agg(substr('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', (get_byte(r.bytes, i) % 32) + 1, 1), '' order by i)\n  from (select extensions.gen_random_bytes(p_length) as bytes) r,\n       generate_series(0, p_length - 1) as i;\n$$;"
+   "sql": "create function private.random_code(p_length int)\nreturns text\nlanguage sql\nvolatile\nset search_path = ''\nas $$\n  select string_agg(substr('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', (get_byte(r.bytes, i) % 32) + 1, 1), '' order by i)\n  from (select extensions.gen_random_bytes(p_length) as bytes) r,\n       generate_series(0, p_length - 1) as i;\n$$;",
+   "usedBy": {
+    "functions": [
+     "rotate_platform_join_code"
+    ],
+    "policies": [],
+    "private": [
+     "assign_claim_code"
+    ],
+    "triggers": []
+   }
   },
   "refuse_if_arm_subject_in_use": {
+   "calls": [
+    "refuse_if_arm_subject_in_use"
+   ],
+   "doc": "1. Refuse removing a link that's in use",
    "file": "supabase/migrations/20261014180000_24_keep_taught_arm_subjects.sql",
    "lines": [
     22,
@@ -1684,9 +2918,24 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "definer",
-   "sql": "create function private.refuse_if_arm_subject_in_use()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_teacher text;\n  v_choices int;\n  v_subject text;\n  v_arm     text;\nbegin\n  -- The arm or subject is being deleted and this link is going with it.\n  if not exists (select 1 from public.class_arms a where a.id = old.arm_id)\n     or not exists (select 1 from public.subjects s where s.id = old.subject_id) then\n    return old;\n  end if;\n\n  select trim(st.first_name || ' ' || st.last_name) into v_teacher\n  from public.teaching_assignments ta\n  join public.academic_sessions se on se.id = ta.session_id and se.closed_at is null\n  join public.staff st on st.id = ta.staff_id\n  where ta.arm_id = old.arm_id\n    and ta.subject_id = old.subject_id\n  limit 1;\n\n  select count(*)::int into v_choices\n  from public.student_subjects ss\n  join public.academic_sessions se on se.id = ss.session_id and se.closed_at is null\n  join public.student_placements sp on sp.student_id = ss.student_id and sp.session_id = ss.session_id\n  where sp.arm_id = old.arm_id\n    and ss.subject_id = old.subject_id;\n\n  if v_teacher is null and v_choices = 0 then\n    return old;\n  end if;\n\n  select s.name into v_subject from public.subjects s where s.id = old.subject_id;\n  select c.name || case when length(a.name) = 1 then '' else ' ' end || a.name into v_arm\n  from public.class_arms a\n  join public.classes c on c.id = a.class_id\n  where a.id = old.arm_id;\n\n  if v_teacher is not null then\n    raise exception '% teaches % in %. Unassign them first.', v_teacher, v_subject, v_arm\n      using errcode = 'P0001';\n  end if;\n\n  raise exception '% in % chose %. Remove their choice first.',\n    case when v_choices = 1 then '1 student' else v_choices || ' students' end, v_arm, v_subject\n    using errcode = 'P0001';\nend;\n$$;"
+   "sql": "create function private.refuse_if_arm_subject_in_use()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_teacher text;\n  v_choices int;\n  v_subject text;\n  v_arm     text;\nbegin\n  -- The arm or subject is being deleted and this link is going with it.\n  if not exists (select 1 from public.class_arms a where a.id = old.arm_id)\n     or not exists (select 1 from public.subjects s where s.id = old.subject_id) then\n    return old;\n  end if;\n\n  select trim(st.first_name || ' ' || st.last_name) into v_teacher\n  from public.teaching_assignments ta\n  join public.academic_sessions se on se.id = ta.session_id and se.closed_at is null\n  join public.staff st on st.id = ta.staff_id\n  where ta.arm_id = old.arm_id\n    and ta.subject_id = old.subject_id\n  limit 1;\n\n  select count(*)::int into v_choices\n  from public.student_subjects ss\n  join public.academic_sessions se on se.id = ss.session_id and se.closed_at is null\n  join public.student_placements sp on sp.student_id = ss.student_id and sp.session_id = ss.session_id\n  where sp.arm_id = old.arm_id\n    and ss.subject_id = old.subject_id;\n\n  if v_teacher is null and v_choices = 0 then\n    return old;\n  end if;\n\n  select s.name into v_subject from public.subjects s where s.id = old.subject_id;\n  select c.name || case when length(a.name) = 1 then '' else ' ' end || a.name into v_arm\n  from public.class_arms a\n  join public.classes c on c.id = a.class_id\n  where a.id = old.arm_id;\n\n  if v_teacher is not null then\n    raise exception '% teaches % in %. Unassign them first.', v_teacher, v_subject, v_arm\n      using errcode = 'P0001';\n  end if;\n\n  raise exception '% in % chose %. Remove their choice first.',\n    case when v_choices = 1 then '1 student' else v_choices || ' students' end, v_arm, v_subject\n    using errcode = 'P0001';\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "arm_subjects_in_use",
+      "table": "arm_subjects"
+     }
+    ]
+   }
   },
   "refuse_if_session_closed": {
+   "calls": [
+    "refuse_if_session_closed"
+   ],
+   "doc": "3c. Everything recorded against a closed session is read-only",
    "file": "supabase/migrations/20261014120000_19_close_sessions_and_protect_calendar.sql",
    "lines": [
     80,
@@ -1696,9 +2945,40 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "definer",
-   "sql": "create function private.refuse_if_session_closed()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\nbegin\n  if tg_op in ('UPDATE', 'DELETE') and exists (\n    select 1 from public.academic_sessions s\n    where s.id = old.session_id and s.closed_at is not null\n  ) then\n    raise exception 'This belongs to a closed session and can''t be changed' using errcode = 'P0001';\n  end if;\n\n  if tg_op in ('INSERT', 'UPDATE') and exists (\n    select 1 from public.academic_sessions s\n    where s.id = new.session_id and s.closed_at is not null\n  ) then\n    raise exception 'That session is closed. Nothing new can be added to it; use the current session.' using errcode = 'P0001';\n  end if;\n\n  return coalesce(new, old);\nend;\n$$;"
+   "sql": "create function private.refuse_if_session_closed()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\nbegin\n  if tg_op in ('UPDATE', 'DELETE') and exists (\n    select 1 from public.academic_sessions s\n    where s.id = old.session_id and s.closed_at is not null\n  ) then\n    raise exception 'This belongs to a closed session and can''t be changed' using errcode = 'P0001';\n  end if;\n\n  if tg_op in ('INSERT', 'UPDATE') and exists (\n    select 1 from public.academic_sessions s\n    where s.id = new.session_id and s.closed_at is not null\n  ) then\n    raise exception 'That session is closed. Nothing new can be added to it; use the current session.' using errcode = 'P0001';\n  end if;\n\n  return coalesce(new, old);\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "academic_terms_session_open",
+      "table": "academic_terms"
+     },
+     {
+      "name": "class_teachers_session_open",
+      "table": "class_teachers"
+     },
+     {
+      "name": "student_placements_session_open",
+      "table": "student_placements"
+     },
+     {
+      "name": "teaching_assignments_session_open",
+      "table": "teaching_assignments"
+     },
+     {
+      "name": "student_subjects_session_open",
+      "table": "student_subjects"
+     }
+    ]
+   }
   },
   "revoke_login_of_deleted_person": {
+   "calls": [
+    "revoke_login_of_deleted_person"
+   ],
+   "doc": "1. Deleting a person record revokes the login it was linked to AFTER DELETE, so the person row is already gone and the member row can be deleted or updated without fighting the ON DELETE SET NULL link. security definer: owners and admins may delete people but the member row change must not depend on member policies. The owner guard trigger skips definer code, so the last-owner rule is checked here instead.",
    "file": "supabase/migrations/20261107150000_28_person_delete_revokes_login_and_principals_issue_logins.sql",
    "lines": [
     31,
@@ -1708,9 +2988,32 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "definer",
-   "sql": "create function private.revoke_login_of_deleted_person()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_member public.organization_members;\nbegin\n  if old.member_id is null then\n    return old;\n  end if;\n\n  select m.* into v_member\n  from public.organization_members m\n  where m.id = old.member_id\n  for update;\n\n  if not found then\n    return old;\n  end if;\n\n  if v_member.role = 'owner' and v_member.status = 'active' then\n    raise exception 'This is an owner''s staff record. Make someone else the owner, or suspend this owner, before removing it.'\n      using errcode = 'P0001';\n  end if;\n\n  if v_member.status = 'invited' then\n    delete from public.organization_members m where m.id = v_member.id;\n  elsif v_member.status = 'active' then\n    update public.organization_members m set status = 'suspended' where m.id = v_member.id;\n  end if;\n\n  return old;\nend;\n$$;"
+   "sql": "create function private.revoke_login_of_deleted_person()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_member public.organization_members;\nbegin\n  if old.member_id is null then\n    return old;\n  end if;\n\n  select m.* into v_member\n  from public.organization_members m\n  where m.id = old.member_id\n  for update;\n\n  if not found then\n    return old;\n  end if;\n\n  if v_member.role = 'owner' and v_member.status = 'active' then\n    raise exception 'This is an owner''s staff record. Make someone else the owner, or suspend this owner, before removing it.'\n      using errcode = 'P0001';\n  end if;\n\n  if v_member.status = 'invited' then\n    delete from public.organization_members m where m.id = v_member.id;\n  elsif v_member.status = 'active' then\n    update public.organization_members m set status = 'suspended' where m.id = v_member.id;\n  end if;\n\n  return old;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "staff_revoke_login",
+      "table": "staff"
+     },
+     {
+      "name": "students_revoke_login",
+      "table": "students"
+     },
+     {
+      "name": "parents_revoke_login",
+      "table": "parents"
+     }
+    ]
+   }
   },
   "set_updated_at": {
+   "calls": [
+    "set_updated_at"
+   ],
+   "doc": "",
    "file": "supabase/migrations/20261007182933_01_create_organizations_and_members.sql",
    "lines": [
     27,
@@ -1720,9 +3023,92 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "invoker",
-   "sql": "create function private.set_updated_at()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  new.updated_at := now();\n  return new;\nend;\n$$;"
+   "sql": "create function private.set_updated_at()\nreturns trigger\nlanguage plpgsql\nset search_path = ''\nas $$\nbegin\n  new.updated_at := now();\n  return new;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "organizations_set_updated_at",
+      "table": "organizations"
+     },
+     {
+      "name": "organization_members_set_updated_at",
+      "table": "organization_members"
+     },
+     {
+      "name": "staff_set_updated_at",
+      "table": "staff"
+     },
+     {
+      "name": "students_set_updated_at",
+      "table": "students"
+     },
+     {
+      "name": "parents_set_updated_at",
+      "table": "parents"
+     },
+     {
+      "name": "sections_set_updated_at",
+      "table": "sections"
+     },
+     {
+      "name": "classes_set_updated_at",
+      "table": "classes"
+     },
+     {
+      "name": "class_arms_set_updated_at",
+      "table": "class_arms"
+     },
+     {
+      "name": "academic_sessions_set_updated_at",
+      "table": "academic_sessions"
+     },
+     {
+      "name": "academic_terms_set_updated_at",
+      "table": "academic_terms"
+     },
+     {
+      "name": "student_placements_set_updated_at",
+      "table": "student_placements"
+     },
+     {
+      "name": "staff_private_details_set_updated_at",
+      "table": "staff_private_details"
+     },
+     {
+      "name": "subjects_set_updated_at",
+      "table": "subjects"
+     },
+     {
+      "name": "teaching_assignments_set_updated_at",
+      "table": "teaching_assignments"
+     },
+     {
+      "name": "student_private_details_set_updated_at",
+      "table": "student_private_details"
+     },
+     {
+      "name": "parent_private_details_set_updated_at",
+      "table": "parent_private_details"
+     },
+     {
+      "name": "score_columns_set_updated_at",
+      "table": "score_columns"
+     },
+     {
+      "name": "grade_boundaries_set_updated_at",
+      "table": "grade_boundaries"
+     }
+    ]
+   }
   },
   "stamp_details_confirmed": {
+   "calls": [
+    "stamp_details_confirmed"
+   ],
+   "doc": "",
    "file": "supabase/migrations/20261013200847_15_stamp_details_confirmed_on_server.sql",
    "lines": [
     12,
@@ -1732,9 +3118,24 @@ window.SNIPPETS = {
    "params": [],
    "returns": "trigger",
    "security": "definer",
-   "sql": "create or replace function private.stamp_details_confirmed()\nreturns trigger language plpgsql security definer set search_path = '' as $$\nbegin\n  if new.details_confirmed_at is distinct from old.details_confirmed_at then\n    if old.details_confirmed_at is not null then\n      -- keep the first confirmation\n      new.details_confirmed_at := old.details_confirmed_at;\n      new.details_confirmed_by := old.details_confirmed_by;\n    else\n      new.details_confirmed_at := now();\n      new.details_confirmed_by := (select auth.jwt() ->> 'sub');\n    end if;\n  elsif new.details_confirmed_by is distinct from old.details_confirmed_by then\n    new.details_confirmed_by := old.details_confirmed_by;\n  end if;\n  return new;\nend $$;"
+   "sql": "create or replace function private.stamp_details_confirmed()\nreturns trigger language plpgsql security definer set search_path = '' as $$\nbegin\n  if new.details_confirmed_at is distinct from old.details_confirmed_at then\n    if old.details_confirmed_at is not null then\n      -- keep the first confirmation\n      new.details_confirmed_at := old.details_confirmed_at;\n      new.details_confirmed_by := old.details_confirmed_by;\n    else\n      new.details_confirmed_at := now();\n      new.details_confirmed_by := (select auth.jwt() ->> 'sub');\n    end if;\n  elsif new.details_confirmed_by is distinct from old.details_confirmed_by then\n    new.details_confirmed_by := old.details_confirmed_by;\n  end if;\n  return new;\nend $$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "organizations_stamp_details_confirmed",
+      "table": "organizations"
+     }
+    ]
+   }
   },
   "standard_curriculum": {
+   "calls": [
+    "standard_curriculum"
+   ],
+   "doc": "The standard curriculum: which subjects (by name) a class level offers. Levels match class names from the standard structure: \"Nursery n\", \"Primary n\", \"JSS n\", \"SS n\".",
    "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
    "lines": [
     368,
@@ -1744,7 +3145,16 @@ window.SNIPPETS = {
    "params": [],
    "returns": "table (level text, subject text, is_compulsory boolean)",
    "security": "invoker",
-   "sql": "create function private.standard_curriculum()\nreturns table (level text, subject text, is_compulsory boolean)\nlanguage sql\nimmutable\nset search_path = ''\nas $$\n  with levels (level, compulsory, optional) as (\n    values\n      ('Nursery',\n       array['Numeracy', 'Literacy', 'Phonics', 'Basic Science', 'Social Habits', 'Health Habits',\n             'Cultural and Creative Arts', 'Rhymes', 'Handwriting'],\n       array[]::text[]),\n      ('Primary',\n       array['English Language', 'Mathematics', 'Basic Science', 'Basic Technology', 'Social Studies',\n             'Civic Education', 'Cultural and Creative Arts', 'Physical and Health Education',\n             'Agricultural Science', 'Home Economics', 'Computer Studies', 'Nigerian Language',\n             'Verbal Reasoning', 'Quantitative Reasoning'],\n       array['Christian Religious Studies', 'Islamic Religious Studies', 'French']),\n      ('JSS',\n       array['English Language', 'Mathematics', 'Basic Science', 'Basic Technology', 'Social Studies',\n             'Civic Education', 'Security Education', 'Cultural and Creative Arts',\n             'Physical and Health Education', 'Agricultural Science', 'Home Economics',\n             'Business Studies', 'Computer Studies', 'Nigerian Language'],\n       array['Christian Religious Studies', 'Islamic Religious Studies', 'French']),\n      ('SS',\n       array['English Language', 'Mathematics', 'Civic Education'],\n       array['Physics', 'Chemistry', 'Biology', 'Further Mathematics', 'Agricultural Science',\n             'Geography', 'Economics', 'Government', 'Literature in English',\n             'Christian Religious Studies', 'Islamic Religious Studies', 'History',\n             'Financial Accounting', 'Commerce', 'Technical Drawing', 'Food and Nutrition',\n             'Visual Arts', 'Computer Studies', 'Data Processing', 'Nigerian Language', 'French'])\n  )\n  select l.level, x.subject, true  from levels l, unnest(l.compulsory) as x (subject)\n  union all\n  select l.level, x.subject, false from levels l, unnest(l.optional)   as x (subject);\n$$;"
+   "sql": "create function private.standard_curriculum()\nreturns table (level text, subject text, is_compulsory boolean)\nlanguage sql\nimmutable\nset search_path = ''\nas $$\n  with levels (level, compulsory, optional) as (\n    values\n      ('Nursery',\n       array['Numeracy', 'Literacy', 'Phonics', 'Basic Science', 'Social Habits', 'Health Habits',\n             'Cultural and Creative Arts', 'Rhymes', 'Handwriting'],\n       array[]::text[]),\n      ('Primary',\n       array['English Language', 'Mathematics', 'Basic Science', 'Basic Technology', 'Social Studies',\n             'Civic Education', 'Cultural and Creative Arts', 'Physical and Health Education',\n             'Agricultural Science', 'Home Economics', 'Computer Studies', 'Nigerian Language',\n             'Verbal Reasoning', 'Quantitative Reasoning'],\n       array['Christian Religious Studies', 'Islamic Religious Studies', 'French']),\n      ('JSS',\n       array['English Language', 'Mathematics', 'Basic Science', 'Basic Technology', 'Social Studies',\n             'Civic Education', 'Security Education', 'Cultural and Creative Arts',\n             'Physical and Health Education', 'Agricultural Science', 'Home Economics',\n             'Business Studies', 'Computer Studies', 'Nigerian Language'],\n       array['Christian Religious Studies', 'Islamic Religious Studies', 'French']),\n      ('SS',\n       array['English Language', 'Mathematics', 'Civic Education'],\n       array['Physics', 'Chemistry', 'Biology', 'Further Mathematics', 'Agricultural Science',\n             'Geography', 'Economics', 'Government', 'Literature in English',\n             'Christian Religious Studies', 'Islamic Religious Studies', 'History',\n             'Financial Accounting', 'Commerce', 'Technical Drawing', 'Food and Nutrition',\n             'Visual Arts', 'Computer Studies', 'Data Processing', 'Nigerian Language', 'French'])\n  )\n  select l.level, x.subject, true  from levels l, unnest(l.compulsory) as x (subject)\n  union all\n  select l.level, x.subject, false from levels l, unnest(l.optional)   as x (subject);\n$$;",
+   "usedBy": {
+    "functions": [
+     "apply_standard_curriculum",
+     "create_standard_subjects"
+    ],
+    "policies": [],
+    "private": [],
+    "triggers": []
+   }
   }
  },
  "tables": {
@@ -1810,6 +3220,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       350,
@@ -1821,6 +3232,7 @@ window.SNIPPETS = {
      "table": "academic_sessions"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       353,
@@ -1832,6 +3244,7 @@ window.SNIPPETS = {
      "table": "academic_sessions"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       347,
@@ -1843,6 +3256,7 @@ window.SNIPPETS = {
      "table": "academic_sessions"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261014090000_18_leaders_delete_sessions_and_terms.sql",
      "lines": [
       13,
@@ -1953,6 +3367,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       365,
@@ -1964,6 +3379,7 @@ window.SNIPPETS = {
      "table": "academic_terms"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       368,
@@ -1975,6 +3391,7 @@ window.SNIPPETS = {
      "table": "academic_terms"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       362,
@@ -1986,6 +3403,7 @@ window.SNIPPETS = {
      "table": "academic_terms"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261014090000_18_leaders_delete_sessions_and_terms.sql",
      "lines": [
       20,
@@ -2105,6 +3523,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       317,
@@ -2116,6 +3535,7 @@ window.SNIPPETS = {
      "table": "arm_subjects"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       320,
@@ -2127,6 +3547,7 @@ window.SNIPPETS = {
      "table": "arm_subjects"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       324,
@@ -2138,6 +3559,7 @@ window.SNIPPETS = {
      "table": "arm_subjects"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       314,
@@ -2222,6 +3644,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       335,
@@ -2233,6 +3656,7 @@ window.SNIPPETS = {
      "table": "class_arms"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       338,
@@ -2244,6 +3668,7 @@ window.SNIPPETS = {
      "table": "class_arms"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       332,
@@ -2255,6 +3680,7 @@ window.SNIPPETS = {
      "table": "class_arms"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261014150000_21_leaders_delete_sections_classes_arms.sql",
      "lines": [
       22,
@@ -2331,6 +3757,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       380,
@@ -2342,6 +3769,7 @@ window.SNIPPETS = {
      "table": "class_teachers"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       383,
@@ -2353,6 +3781,7 @@ window.SNIPPETS = {
      "table": "class_teachers"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       387,
@@ -2364,6 +3793,7 @@ window.SNIPPETS = {
      "table": "class_teachers"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       377,
@@ -2483,6 +3913,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       320,
@@ -2494,6 +3925,7 @@ window.SNIPPETS = {
      "table": "classes"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       323,
@@ -2505,6 +3937,7 @@ window.SNIPPETS = {
      "table": "classes"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       317,
@@ -2516,6 +3949,7 @@ window.SNIPPETS = {
      "table": "classes"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261014150000_21_leaders_delete_sections_classes_arms.sql",
      "lines": [
       17,
@@ -2604,6 +4038,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
      "lines": [
       216,
@@ -2615,6 +4050,7 @@ window.SNIPPETS = {
      "table": "grade_boundaries"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
      "lines": [
       219,
@@ -2626,6 +4062,7 @@ window.SNIPPETS = {
      "table": "grade_boundaries"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
      "lines": [
       223,
@@ -2637,6 +4074,7 @@ window.SNIPPETS = {
      "table": "grade_boundaries"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
      "lines": [
       213,
@@ -2766,6 +4204,17 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [
+      {
+       "file": "supabase/migrations/20261007185331_02_tidy_rls_initplan_and_rls_auto_enable.sql",
+       "lines": [
+        16,
+        24
+       ],
+       "migration": 2,
+       "sql": "alter policy \"organization_members: own rows, school leaders and platform admins can read\"\n  on public.organization_members\n  using (\n    clerk_user_id = ((select auth.jwt()) ->> 'sub')\n    or organization_id in (\n      select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])\n    )\n    or (select private.is_platform_admin())\n  );"
+      }
+     ],
      "file": "supabase/migrations/20261007182933_01_create_organizations_and_members.sql",
      "lines": [
       278,
@@ -2777,6 +4226,7 @@ window.SNIPPETS = {
      "table": "organization_members"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261007182933_01_create_organizations_and_members.sql",
      "lines": [
       299,
@@ -2788,6 +4238,7 @@ window.SNIPPETS = {
      "table": "organization_members"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261013213000_17_owner_edits_school_leaders_invite.sql",
      "lines": [
       51,
@@ -2799,6 +4250,7 @@ window.SNIPPETS = {
      "table": "organization_members"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261013213000_17_owner_edits_school_leaders_invite.sql",
      "lines": [
       35,
@@ -2945,6 +4397,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261007182933_01_create_organizations_and_members.sql",
      "lines": [
       257,
@@ -2956,6 +4409,7 @@ window.SNIPPETS = {
      "table": "organizations"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261013213000_17_owner_edits_school_leaders_invite.sql",
      "lines": [
       18,
@@ -3065,6 +4519,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011144800_07_split_student_and_parent_private_details.sql",
      "lines": [
       344,
@@ -3076,6 +4531,7 @@ window.SNIPPETS = {
      "table": "parent_private_details"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011144800_07_split_student_and_parent_private_details.sql",
      "lines": [
       336,
@@ -3185,6 +4641,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       507,
@@ -3196,6 +4653,7 @@ window.SNIPPETS = {
      "table": "parents"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       511,
@@ -3207,6 +4665,7 @@ window.SNIPPETS = {
      "table": "parents"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       516,
@@ -3218,13 +4677,25 @@ window.SNIPPETS = {
      "table": "parents"
     },
     {
+     "alters": [
+      {
+       "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
+       "lines": [
+        262,
+        269
+       ],
+       "migration": 6,
+       "sql": "alter policy \"parents: read by leaders, bursars, teachers, family, self\" on public.parents\n  using (\n    organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal', 'bursar']::public.member_role[]))\n    or id in (select private.my_taught_students_parent_ids())\n    or member_id in (select private.my_member_ids())\n    or id in (select private.my_childrens_parent_ids())\n    or (select private.is_platform_admin())\n  );"
+      }
+     ],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       498,
       505
      ],
      "migration": 3,
-     "name": "parents: staff, self, co-parents and platform admins can read",
+     "name": "parents: read by leaders, bursars, teachers, family, self",
+     "renamed_in": 6,
      "sql": "create policy \"parents: staff, self, co-parents and platform admins can read\"\n  on public.parents for select to authenticated\n  using (\n    organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal', 'bursar', 'teacher']::public.member_role[]))\n    or member_id in (select private.my_member_ids())\n    or id in (select private.my_childrens_parent_ids())\n    or (select private.is_platform_admin())\n  );",
      "table": "parents"
     }
@@ -3322,6 +4793,17 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [
+      {
+       "file": "supabase/migrations/20261007185331_02_tidy_rls_initplan_and_rls_auto_enable.sql",
+       "lines": [
+        9,
+        14
+       ],
+       "migration": 2,
+       "sql": "alter policy \"platform_admins: read own row, platform admins read all\"\n  on public.platform_admins\n  using (\n    clerk_user_id = ((select auth.jwt()) ->> 'sub')\n    or (select private.is_platform_admin())\n  );"
+      }
+     ],
      "file": "supabase/migrations/20261007182933_01_create_organizations_and_members.sql",
      "lines": [
       246,
@@ -3433,6 +4915,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
      "lines": [
       202,
@@ -3444,6 +4927,7 @@ window.SNIPPETS = {
      "table": "score_columns"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
      "lines": [
       205,
@@ -3455,6 +4939,7 @@ window.SNIPPETS = {
      "table": "score_columns"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
      "lines": [
       209,
@@ -3466,6 +4951,7 @@ window.SNIPPETS = {
      "table": "score_columns"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
      "lines": [
       199,
@@ -3549,6 +5035,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       305,
@@ -3560,6 +5047,7 @@ window.SNIPPETS = {
      "table": "sections"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       308,
@@ -3571,6 +5059,7 @@ window.SNIPPETS = {
      "table": "sections"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       302,
@@ -3582,6 +5071,7 @@ window.SNIPPETS = {
      "table": "sections"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261014150000_21_leaders_delete_sections_classes_arms.sql",
      "lines": [
       12,
@@ -3703,6 +5193,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       455,
@@ -3714,6 +5205,7 @@ window.SNIPPETS = {
      "table": "staff"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       459,
@@ -3725,17 +5217,30 @@ window.SNIPPETS = {
      "table": "staff"
     },
     {
+     "alters": [
+      {
+       "file": "supabase/migrations/20261011130000_05_split_staff_private_details.sql",
+       "lines": [
+        89,
+        90
+       ],
+       "migration": 5,
+       "sql": "alter policy \"staff: members and platform admins can read\" on public.staff\n  using (organization_id in (select private.my_org_ids()) or (select private.is_platform_admin()));"
+      }
+     ],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       447,
       453
      ],
      "migration": 3,
-     "name": "staff: leaders, bursars, self and platform admins can read",
+     "name": "staff: members and platform admins can read",
+     "renamed_in": 5,
      "sql": "create policy \"staff: leaders, bursars, self and platform admins can read\"\n  on public.staff for select to authenticated\n  using (\n    organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal', 'bursar']::public.member_role[]))\n    or member_id in (select private.my_member_ids())\n    or (select private.is_platform_admin())\n  );",
      "table": "staff"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       464,
@@ -3865,6 +5370,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011130000_05_split_staff_private_details.sql",
      "lines": [
       101,
@@ -3876,6 +5382,7 @@ window.SNIPPETS = {
      "table": "staff_private_details"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011130000_05_split_staff_private_details.sql",
      "lines": [
       93,
@@ -3951,6 +5458,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       536,
@@ -3962,6 +5470,7 @@ window.SNIPPETS = {
      "table": "student_parents"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       532,
@@ -3973,6 +5482,7 @@ window.SNIPPETS = {
      "table": "student_parents"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       541,
@@ -3984,13 +5494,25 @@ window.SNIPPETS = {
      "table": "student_parents"
     },
     {
+     "alters": [
+      {
+       "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
+       "lines": [
+        273,
+        280
+       ],
+       "migration": 6,
+       "sql": "alter policy \"student_parents: read by leaders, bursars, teachers, family\" on public.student_parents\n  using (\n    organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal', 'bursar']::public.member_role[]))\n    or student_id in (select private.my_taught_student_ids())\n    or student_id in (select private.my_child_ids())\n    or student_id in (select private.my_student_ids())\n    or (select private.is_platform_admin())\n  );"
+      }
+     ],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       523,
       785
      ],
      "migration": 3,
-     "name": "student_parents: staff, the child's parents, the student and platform admins can read",
+     "name": "student_parents: read by leaders, bursars, teachers, family",
+     "renamed_in": 6,
      "sql": "create policy \"student_parents: staff, the child's parents, the student and platform admins can read\"\n  on public.student_parents for select to authenticated\n  using (\n    organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal', 'bursar', 'teacher']::public.member_role[]))\n    or student_id in (select private.my_child_ids())\n    or student_id in (select private.my_student_ids())\n    or (select private.is_platform_admin())\n  );\n\ncreate policy \"student_parents: leaders can link\"\n  on public.student_parents for insert to authenticated\n  with check (organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])));\n\ncreate policy \"student_parents: leaders can edit links\"\n  on public.student_parents for update to authenticated\n  using      (organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])))\n  with check (organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])));\n\ncreate policy \"student_parents: leaders can unlink\"\n  on public.student_parents for delete to authenticated\n  using (organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])));\n\n-- \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n-- Issuing logins\n-- The invite_* functions check permission *while* looking the record up:\n-- a record is only found (and locked) if the caller may issue logins for its\n-- school. Anyone else gets the same generic error whether or not the record\n-- exists, so the functions reveal nothing about other schools' records.\n-- \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n-- Owners and admins of the school, or Hamrash platform admins.\ncreate function private.can_issue_logins(p_organization_id uuid)\nreturns boolean\nlanguage sql\nstable\nset search_path = ''\nas $$\n  select p_organization_id in (select private.my_org_ids(array['owner', 'admin']::public.member_role[]))\n      or private.is_platform_admin();\n$$;\n\n-- Returns the invite for a person's login, creating it if needed. Calling it\n-- again before the code is redeemed returns the same invite (with the role\n-- updated), so \"show me the code again\" is safe.\ncreate function private.ensure_invite(\n  p_organization_id uuid,\n  p_member_id       uuid,\n  p_role            public.member_role\n)\nreturns public.organization_members\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_member public.organization_members;\nbegin\n  -- invite_* already checked; repeated here so this helper is never unsafe on its own\n  if not private.can_issue_logins(p_organization_id) then\n    raise exception 'Only the school''s owners and admins can issue logins' using errcode = '42501';\n  end if;\n\n  if p_member_id is not null then\n    select m.* into v_member\n    from public.organization_members m\n    where m.id = p_member_id\n    for update;\n\n    if v_member.status <> 'invited' then\n      raise exception 'This person already has a login' using errcode = 'P0001';\n    end if;\n\n    if v_member.role <> p_role then\n      update public.organization_members m\n      set role = p_role\n      where m.id = v_member.id\n      returning m.* into v_member;\n    end if;\n\n    return v_member;\n  end if;\n\n  insert into public.organization_members (organization_id, role, invited_by)\n  values (p_organization_id, p_role, (select auth.jwt() ->> 'sub'))\n  returning * into v_member;\n\n  return v_member;\nend;\n$$;\n\ncreate function public.invite_staff(p_staff_id uuid, p_role public.member_role default 'teacher')\nreturns text\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_staff  public.staff;\n  v_member public.organization_members;\nbegin\n  if p_role not in ('admin', 'principal', 'vice_principal', 'bursar', 'teacher', 'staff') then\n    raise exception 'Staff can be invited as admin, principal, vice principal, bursar, teacher or staff' using errcode = '22023';\n  end if;\n\n  select s.* into v_staff\n  from public.staff s\n  where s.id = p_staff_id\n    and private.can_issue_logins(s.organization_id)\n  for update;\n  if not found then\n    raise exception 'Staff record not found, or you can''t issue logins for it' using errcode = '42501';\n  end if;\n  if v_staff.status = 'exited' then\n    raise exception 'This staff member has left the school' using errcode = 'P0001';\n  end if;\n\n  v_member := private.ensure_invite(v_staff.organization_id, v_staff.member_id, p_role);\n\n  update public.staff s\n  set member_id = v_member.id\n  where s.id = v_staff.id\n    and s.member_id is distinct from v_member.id;\n\n  return v_member.claim_code;\nend;\n$$;\n\ncreate function public.invite_student(p_student_id uuid)\nreturns text\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_student public.students;\n  v_member  public.organization_members;\nbegin\n  select s.* into v_student\n  from public.students s\n  where s.id = p_student_id\n    and private.can_issue_logins(s.organization_id)\n  for update;\n  if not found then\n    raise exception 'Student record not found, or you can''t issue logins for it' using errcode = '42501';\n  end if;\n  if v_student.status <> 'active' then\n    raise exception 'Only active students can be given a login' using errcode = 'P0001';\n  end if;\n\n  v_member := private.ensure_invite(v_student.organization_id, v_student.member_id, 'student');\n\n  update public.students s\n  set member_id = v_member.id\n  where s.id = v_student.id\n    and s.member_id is distinct from v_member.id;\n\n  return v_member.claim_code;\nend;\n$$;\n\ncreate function public.invite_parent(p_parent_id uuid)\nreturns text\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_parent public.parents;\n  v_member public.organization_members;\nbegin\n  select p.* into v_parent\n  from public.parents p\n  where p.id = p_parent_id\n    and private.can_issue_logins(p.organization_id)\n  for update;\n  if not found then\n    raise exception 'Parent record not found, or you can''t issue logins for it' using errcode = '42501';\n  end if;\n  if not v_parent.is_active then\n    raise exception 'This parent record is inactive' using errcode = 'P0001';\n  end if;\n\n  v_member := private.ensure_invite(v_parent.organization_id, v_parent.member_id, 'parent');\n\n  update public.parents p\n  set member_id = v_member.id\n  where p.id = v_parent.id\n    and p.member_id is distinct from v_member.id;\n\n  return v_member.claim_code;\nend;\n$$;\n\n-- \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n-- Privileges\n-- Revoke the project's default ALL, then grant per column. member_id,\n-- created_at and updated_at are never client-writable, and organization_id\n-- can be set on insert but never changed.\n-- \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nrevoke all on public.staff           from anon, authenticated;\nrevoke all on public.students        from anon, authenticated;\nrevoke all on public.parents         from anon, authenticated;\nrevoke all on public.student_parents from anon, authenticated;\n\ngrant select, delete on public.staff to authenticated;\ngrant insert (id, organization_id, staff_number, first_name, middle_name, last_name, gender, date_of_birth,\n              email, phone, address, state_of_origin, photo_id, photo_url, job_title, staff_type, employment_date, status)\n  on public.staff to authenticated;\ngrant update (staff_number, first_name, middle_name, last_name, gender, date_of_birth,\n              email, phone, address, state_of_origin, photo_id, photo_url, job_title, staff_type, employment_date, status)\n  on public.staff to authenticated;\n\ngrant select, delete on public.students to authenticated;\ngrant insert (id, organization_id, admission_number, first_name, middle_name, last_name, gender, date_of_birth,\n              admission_date, photo_id, photo_url, address, state_of_origin, lga, blood_group, genotype, medical_notes, status)\n  on public.students to authenticated;\ngrant update (admission_number, first_name, middle_name, last_name, gender, date_of_birth,\n              admission_date, photo_id, photo_url, address, state_of_origin, lga, blood_group, genotype, medical_notes, status)\n  on public.students to authenticated;\n\ngrant select, delete on public.parents to authenticated;\ngrant insert (id, organization_id, title, first_name, last_name, gender, phone, alt_phone, email,\n              occupation, address, photo_id, photo_url, is_active)\n  on public.parents to authenticated;\ngrant update (title, first_name, last_name, gender, phone, alt_phone, email,\n              occupation, address, photo_id, photo_url, is_active)\n  on public.parents to authenticated;\n\n-- owners/admins can correct the prefix and change the logo through the\n-- existing organizations update policy\ngrant update (number_prefix, logo_id) on public.organizations to authenticated;\nrevoke all on private.number_sequences from public, anon, authenticated;\n\nrevoke execute on function public.create_organization(text, text, text, text, text, text) from public, anon;\ngrant  execute on function public.create_organization(text, text, text, text, text, text) to authenticated;\n\ngrant select, delete on public.student_parents to authenticated;\ngrant insert (organization_id, student_id, parent_id, relationship, is_primary_contact) on public.student_parents to authenticated;\ngrant update (relationship, is_primary_contact) on public.student_parents to authenticated;\n\nrevoke execute on function private.next_number(uuid, text, int)                                 from public, anon, authenticated;\nrevoke execute on function private.assign_admission_number()                                    from public, anon, authenticated;\nrevoke execute on function private.assign_staff_number()                                        from public, anon, authenticated;\nrevoke execute on function private.keep_single_primary_contact()                               from public, anon, authenticated;\nrevoke execute on function private.can_issue_logins(uuid)                                       from public, anon, authenticated;\nrevoke execute on function private.ensure_invite(uuid, uuid, public.member_role)                from public, anon, authenticated;\nrevoke execute on function private.my_member_ids()                                              from public, anon;\nrevoke execute on function private.my_parent_ids()                                              from public, anon;\nrevoke execute on function private.my_child_ids()                                               from public, anon;\nrevoke execute on function private.my_student_ids()                                             from public, anon;\nrevoke execute on function private.my_childrens_parent_ids()                                    from public, anon;\ngrant  execute on function private.my_childrens_parent_ids()                                    to authenticated;\ngrant  execute on function private.my_member_ids()                                              to authenticated;\ngrant  execute on function private.my_parent_ids()                                              to authenticated;\ngrant  execute on function private.my_child_ids()                                               to authenticated;\ngrant  execute on function private.my_student_ids()                                             to authenticated;\n\nrevoke execute on function public.invite_staff(uuid, public.member_role)  from public, anon;\nrevoke execute on function public.invite_student(uuid)                    from public, anon;\nrevoke execute on function public.invite_parent(uuid)                     from public, anon;\ngrant  execute on function public.invite_staff(uuid, public.member_role)  to authenticated;\ngrant  execute on function public.invite_student(uuid)                    to authenticated;\ngrant  execute on function public.invite_parent(uuid)                     to authenticated;",
      "table": "student_parents"
     }
@@ -4060,6 +5582,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       403,
@@ -4071,6 +5594,7 @@ window.SNIPPETS = {
      "table": "student_placements"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       400,
@@ -4082,6 +5606,7 @@ window.SNIPPETS = {
      "table": "student_placements"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       407,
@@ -4093,13 +5618,25 @@ window.SNIPPETS = {
      "table": "student_placements"
     },
     {
+     "alters": [
+      {
+       "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
+       "lines": [
+        284,
+        291
+       ],
+       "migration": 6,
+       "sql": "alter policy \"student_placements: read by leaders, bursars, teachers, family\" on public.student_placements\n  using (\n    organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal', 'bursar']::public.member_role[]))\n    or student_id in (select private.my_taught_student_ids())\n    or student_id in (select private.my_child_ids())\n    or student_id in (select private.my_student_ids())\n    or (select private.is_platform_admin())\n  );"
+      }
+     ],
      "file": "supabase/migrations/20261011123753_04_create_academic_structure.sql",
      "lines": [
       392,
       543
      ],
      "migration": 4,
-     "name": "student_placements: staff, the child's parents, the student and platform admins can read",
+     "name": "student_placements: read by leaders, bursars, teachers, family",
+     "renamed_in": 6,
      "sql": "create policy \"student_placements: staff, the child's parents, the student and platform admins can read\"\n  on public.student_placements for select to authenticated\n  using (\n    organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal', 'bursar', 'teacher']::public.member_role[]))\n    or student_id in (select private.my_child_ids())\n    or student_id in (select private.my_student_ids())\n    or (select private.is_platform_admin())\n  );\ncreate policy \"student_placements: leaders can place\"\n  on public.student_placements for insert to authenticated\n  with check (organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])));\ncreate policy \"student_placements: leaders can move\"\n  on public.student_placements for update to authenticated\n  using      (organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])))\n  with check (organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])));\ncreate policy \"student_placements: leaders can remove\"\n  on public.student_placements for delete to authenticated\n  using (organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])));\n\n-- \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n-- Current session / term\n-- is_current is not client-writable; these keep the flags consistent:\n-- one current session and term per school, and the current term always\n-- belongs to the current session.\n-- \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n-- Leaders of the school.\ncreate function private.can_manage_academics(p_organization_id uuid)\nreturns boolean\nlanguage sql\nstable\nset search_path = ''\nas $$\n  select p_organization_id in (\n    select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])\n  );\n$$;\n\n-- Makes a session current. Any current term from another session is cleared.\ncreate function public.set_current_session(p_session_id uuid)\nreturns public.academic_sessions\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_session public.academic_sessions;\nbegin\n  select s.* into v_session\n  from public.academic_sessions s\n  where s.id = p_session_id\n    and private.can_manage_academics(s.organization_id)\n  for update;\n  if not found then\n    raise exception 'Session not found, or you can''t manage this school''s calendar' using errcode = '42501';\n  end if;\n\n  -- clear old flags first so the one-current indexes never clash\n  update public.academic_terms t\n  set is_current = false\n  where t.organization_id = v_session.organization_id\n    and t.is_current\n    and t.session_id <> v_session.id;\n\n  update public.academic_sessions s\n  set is_current = false\n  where s.organization_id = v_session.organization_id\n    and s.is_current\n    and s.id <> v_session.id;\n\n  update public.academic_sessions s\n  set is_current = true\n  where s.id = v_session.id\n    and not s.is_current;\n\n  select s.* into v_session from public.academic_sessions s where s.id = p_session_id;\n  return v_session;\nend;\n$$;\n\n-- Makes a term current, and its session with it.\ncreate function public.set_current_term(p_term_id uuid)\nreturns public.academic_terms\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_term public.academic_terms;\nbegin\n  select t.* into v_term\n  from public.academic_terms t\n  where t.id = p_term_id\n    and private.can_manage_academics(t.organization_id)\n  for update;\n  if not found then\n    raise exception 'Term not found, or you can''t manage this school''s calendar' using errcode = '42501';\n  end if;\n\n  update public.academic_terms t\n  set is_current = false\n  where t.organization_id = v_term.organization_id\n    and t.is_current\n    and t.id <> v_term.id;\n\n  update public.academic_sessions s\n  set is_current = false\n  where s.organization_id = v_term.organization_id\n    and s.is_current\n    and s.id <> v_term.session_id;\n\n  update public.academic_sessions s\n  set is_current = true\n  where s.id = v_term.session_id\n    and not s.is_current;\n\n  update public.academic_terms t\n  set is_current = true\n  where t.id = v_term.id\n    and not t.is_current;\n\n  select t.* into v_term from public.academic_terms t where t.id = p_term_id;\n  return v_term;\nend;\n$$;\n\n-- \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n-- One-tap starting structure for a Nigerian school:\n--   Nursery    Nursery 1\u20133\n--   Primary    Primary 1\u20136\n--   Secondary  JSS 1\u20133, SS 1\u20133   (SS 3 marked as the graduating class)\n-- Only for a school with no sections yet. Everything it creates can be\n-- renamed, reordered or deactivated afterwards. Arms are left to the\n-- school admin. Runs as the caller, so the normal leader-only RLS applies.\n-- \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\ncreate function public.create_standard_structure(p_organization_id uuid)\nreturns int\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_def     record;\n  v_section uuid;\n  v_classes int := 0;\nbegin\n  if not private.can_manage_academics(p_organization_id) then\n    raise exception 'Only the school''s leaders can set up its structure' using errcode = '42501';\n  end if;\n\n  if exists (select 1 from public.sections s where s.organization_id = p_organization_id) then\n    raise exception 'This school already has sections;",
      "table": "student_placements"
     }
@@ -4204,6 +5741,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011144800_07_split_student_and_parent_private_details.sql",
      "lines": [
       158,
@@ -4215,6 +5753,7 @@ window.SNIPPETS = {
      "table": "student_private_details"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011144800_07_split_student_and_parent_private_details.sql",
      "lines": [
       148,
@@ -4287,6 +5826,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       354,
@@ -4298,6 +5838,7 @@ window.SNIPPETS = {
      "table": "student_subjects"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       357,
@@ -4309,6 +5850,7 @@ window.SNIPPETS = {
      "table": "student_subjects"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       345,
@@ -4436,6 +5978,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       482,
@@ -4447,6 +5990,7 @@ window.SNIPPETS = {
      "table": "students"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       486,
@@ -4458,6 +6002,7 @@ window.SNIPPETS = {
      "table": "students"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       491,
@@ -4469,13 +6014,34 @@ window.SNIPPETS = {
      "table": "students"
     },
     {
+     "alters": [
+      {
+       "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
+       "lines": [
+        251,
+        258
+       ],
+       "migration": 6,
+       "sql": "alter policy \"students: read by leaders, bursars, teachers, family, self\" on public.students\n  using (\n    organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal', 'bursar']::public.member_role[]))\n    or id in (select private.my_taught_student_ids())\n    or id in (select private.my_child_ids())\n    or member_id in (select private.my_member_ids())\n    or (select private.is_platform_admin())\n  );"
+      },
+      {
+       "file": "supabase/migrations/20261011144800_07_split_student_and_parent_private_details.sql",
+       "lines": [
+        138,
+        145
+       ],
+       "migration": 7,
+       "sql": "alter policy \"students: read by leaders, bursars, teachers, family, self\" on public.students\n    using (\n      organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal', 'bursar']::public.member_role[]))\n      or id in (select private.my_ever_taught_student_ids())\n      or id in (select private.my_child_ids())\n      or member_id in (select private.my_member_ids())\n      or (select private.is_platform_admin())\n    );"
+      }
+     ],
      "file": "supabase/migrations/20261007210000_03_create_people.sql",
      "lines": [
       473,
       480
      ],
      "migration": 3,
-     "name": "students: staff, own parents, self and platform admins can read",
+     "name": "students: read by leaders, bursars, teachers, family, self",
+     "renamed_in": 6,
      "sql": "create policy \"students: staff, own parents, self and platform admins can read\"\n  on public.students for select to authenticated\n  using (\n    organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal', 'bursar', 'teacher']::public.member_role[]))\n    or id in (select private.my_child_ids())\n    or member_id in (select private.my_member_ids())\n    or (select private.is_platform_admin())\n  );",
      "table": "students"
     }
@@ -4600,6 +6166,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       302,
@@ -4611,6 +6178,7 @@ window.SNIPPETS = {
      "table": "subjects"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       305,
@@ -4622,6 +6190,7 @@ window.SNIPPETS = {
      "table": "subjects"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       299,
@@ -4633,6 +6202,7 @@ window.SNIPPETS = {
      "table": "subjects"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261014160000_22_leaders_delete_subjects.sql",
      "lines": [
       12,
@@ -4714,6 +6284,7 @@ window.SNIPPETS = {
    },
    "policies": [
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       333,
@@ -4725,6 +6296,7 @@ window.SNIPPETS = {
      "table": "teaching_assignments"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       336,
@@ -4736,6 +6308,7 @@ window.SNIPPETS = {
      "table": "teaching_assignments"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       340,
@@ -4747,6 +6320,7 @@ window.SNIPPETS = {
      "table": "teaching_assignments"
     },
     {
+     "alters": [],
      "file": "supabase/migrations/20261011134957_06_create_subjects.sql",
      "lines": [
       330,
