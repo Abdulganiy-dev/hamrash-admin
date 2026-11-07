@@ -16,7 +16,7 @@ Update this file when an artboard is added or a screen ships.
 |---|------|---------|--------|
 | 1 | Onboarding | 1.1 Sign in · 1.2 Enter code · 1.3 Confirm (staff) · 1.4 Confirm (owner) · 1.5 Pick a school · 1.6 Confirm school details | ✅ |
 | 2 | Home | 2.1 Setup checklist · 2.2 Setup in progress (bursar) | ✅ |
-| 3 | Join scenarios | 3.1 Wrong code · 3.2 Too many tries · 3.6 School paused | ✅ |
+| 3 | Join scenarios | 3.1 Wrong code · 3.6 School paused | ✅ |
 | 3 | Join scenarios | 3.3 Add a role · 3.4 Code for another app · 3.5 Role already covered | ❓ error mapping exists in `join_view_model.dart`; confirm each has its own screen or message as designed |
 | 4 | Academic sessions | 4.0 List · 4.0a Empty · 4.1 Details · 4.2 Edit a term · 4.4 Edit the session · 4.5 Dates leave a term out · 4.6 Last year to close · 4.7 Confirm close · 4.8 Closed session | ✅ |
 | 4 | Academic sessions | 4.3 Terms overlap | ❓ no overlap check found in the code (also in TODO: "Stop overlapping sessions") |

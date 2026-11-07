@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/organization_models/claim_code_check.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
@@ -13,7 +11,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 enum JoinPhase {
   enterCode,
   wrongCode,
-  tooManyTries,
   schoolInactive,
   confirmStaff,
   codeForAnotherApp,
@@ -77,9 +74,6 @@ class JoinViewModel extends BaseViewModel {
 
   ClaimCodeCheck? _checkedCode;
   String? _checkedInput;
-  Timer? _lockTimer;
-  int? triesLeft;
-  DateTime? retryAt;
   String? nameError;
   String? phoneError;
 
@@ -96,27 +90,12 @@ class JoinViewModel extends BaseViewModel {
       ? "We couldn't find that code. Check it with whoever sent it to you."
       : null;
 
-  bool get isCodeLocked => phase == JoinPhase.tooManyTries;
-
   bool get canContinue =>
-      !busy &&
-      !isCodeLocked &&
-      JoinCodeInputFormatter.format(code.text).length == 9;
-
-  String? get codeAttemptsMessage {
-    if (!isCodeLocked) return null;
-    final remaining = retryAt?.difference(DateTime.now());
-    final minutes = remaining == null
-        ? null
-        : (remaining.inSeconds / 60).ceil().clamp(1, 60);
-    return 'Too many tries\nFor your school\'s safety, codes are paused. '
-        'Try again in ${minutes == null ? 'an hour' : '$minutes minutes'}.';
-  }
+      !busy && JoinCodeInputFormatter.format(code.text).length == 9;
 
   void _onCodeChanged() {
     if (phase == JoinPhase.wrongCode || phase == JoinPhase.schoolInactive) {
       phase = JoinPhase.enterCode;
-      triesLeft = null;
       _checkedCode = null;
       _checkedInput = null;
     }
@@ -161,8 +140,6 @@ class JoinViewModel extends BaseViewModel {
 
   void _applyCheck(ClaimCodeCheck result) {
     _checkedCode = result;
-    triesLeft = result.triesLeft;
-    retryAt = result.retryAt;
     if (result.schoolName != null) schoolName = result.schoolName!;
     if (result.schoolCode != null) schoolCode = result.schoolCode!;
     location = result.schoolAddress?.trim().isNotEmpty == true
@@ -173,9 +150,6 @@ class JoinViewModel extends BaseViewModel {
     switch (result.status) {
       case ClaimCodeStatus.notFound:
         setPhase(JoinPhase.wrongCode);
-      case ClaimCodeStatus.locked:
-        _scheduleUnlock();
-        setPhase(JoinPhase.tooManyTries);
       case ClaimCodeStatus.schoolInactive:
         setPhase(JoinPhase.schoolInactive);
       case ClaimCodeStatus.alreadyMember:
@@ -221,18 +195,6 @@ class JoinViewModel extends BaseViewModel {
     }
   }
 
-  void _scheduleUnlock() {
-    _lockTimer?.cancel();
-    final wait = retryAt?.difference(DateTime.now());
-    if (wait == null) return;
-    _lockTimer = Timer(wait.isNegative ? Duration.zero : wait, () {
-      if (!isDisposed && isCodeLocked) {
-        retryAt = null;
-        setPhase(JoinPhase.enterCode);
-      }
-    });
-  }
-
   void setPhase(JoinPhase nextPhase) {
     if (phase == nextPhase) return;
     phase = nextPhase;
@@ -243,8 +205,6 @@ class JoinViewModel extends BaseViewModel {
     if (busy) return;
     _checkedCode = null;
     _checkedInput = null;
-    triesLeft = null;
-    retryAt = null;
     code.clear();
     onDifferentCode?.call();
     setPhase(JoinPhase.enterCode);
@@ -312,24 +272,12 @@ class JoinViewModel extends BaseViewModel {
       );
       if (isDisposed) return;
       if (member == null) {
-        triesLeft = null;
         setPhase(JoinPhase.wrongCode);
       } else {
         redeemed = true;
       }
     } on PostgrestException catch (error, stackTrace) {
-      if (error.message.startsWith('Too many wrong codes')) {
-        try {
-          final result = await _service.checkClaimCode(code.text);
-          if (!isDisposed) _applyCheck(result);
-        } catch (checkError, checkStackTrace) {
-          await handleDatabaseError(
-            checkError,
-            stackTrace: checkStackTrace,
-            operation: 'check_claim_code',
-          );
-        }
-      } else if (error.message == 'This school is not currently active') {
+      if (error.message == 'This school is not currently active') {
         setPhase(JoinPhase.schoolInactive);
       } else if (error.message == 'You already have this role at this school') {
         currentRole = role;
@@ -366,7 +314,6 @@ class JoinViewModel extends BaseViewModel {
 
   @override
   void dispose() {
-    _lockTimer?.cancel();
     code.removeListener(_onCodeChanged);
     fullName.removeListener(_onFullNameChanged);
     phoneNumber.removeListener(_onPhoneNumberChanged);

@@ -98,7 +98,6 @@ class _JoinContent extends StatelessWidget {
     scrollContent: switch (model.phase) {
       JoinPhase.enterCode ||
       JoinPhase.wrongCode ||
-      JoinPhase.tooManyTries ||
       JoinPhase.schoolInactive => _buildCodeEntry(),
       JoinPhase.confirmStaff => _buildStaffConfirmation(),
       JoinPhase.codeForAnotherApp => _buildWrongApp(),
@@ -109,7 +108,6 @@ class _JoinContent extends StatelessWidget {
     footer: switch (model.phase) {
       JoinPhase.enterCode ||
       JoinPhase.wrongCode ||
-      JoinPhase.tooManyTries ||
       JoinPhase.schoolInactive => _buildCodeFooter(),
       JoinPhase.confirmStaff => _buildStaffFooter(),
       JoinPhase.codeForAnotherApp => _buildWrongAppFooter(),
@@ -132,30 +130,17 @@ class _JoinContent extends StatelessWidget {
       const SizedBox(height: AppSpacing.xl),
       JoinCodeEntryField(
         controller: model.code,
-        enabled: !model.isCodeLocked,
         errorMessage: model.codeError,
-        helperMessage: model.codeError == null && !model.isCodeLocked
+        helperMessage: model.codeError == null
             ? 'Letters and numbers only. The dash is added for you.'
             : null,
       ),
-      if (model.phase == JoinPhase.wrongCode && model.triesLeft != null) ...[
-        const SizedBox(height: AppSpacing.sm),
-        AppText(
-          '${model.triesLeft} more tries this hour.',
-          variant: AppTextVariant.caption,
-          colorType: AppTextColor.textMuted,
-        ),
-      ],
       if (model.phase == JoinPhase.schoolInactive) ...[
         const SizedBox(height: AppSpacing.md),
         AuthWarningBanner(
           message:
               '${model.schoolName} is paused\nAsk your school to contact Hamrash before joining.',
         ),
-      ],
-      if (model.isCodeLocked) ...[
-        const SizedBox(height: AppSpacing.md),
-        AuthWarningBanner(message: model.codeAttemptsMessage!),
       ],
     ],
   );

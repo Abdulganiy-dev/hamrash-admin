@@ -1,10 +1,10 @@
--- Access test for migration 12 (platform invite codes).
+-- Access test for migrations 12 and 25 (platform invite codes).
 --
 -- How to run: paste the whole file into the Supabase SQL editor and run it.
 -- It acts as several fake users, checks every rule, then raises an exception on
 -- purpose so EVERYTHING is rolled back. The "error" at the end is the report.
 --
--- Requires migrations 01–12.
+-- Requires migrations 01–25.
 
 do $test$
 declare
@@ -79,12 +79,11 @@ begin
     v_log := v_log || E'\n' || case when sqlstate = '22023' then 'PASS' else 'FAIL' end || ' 04 name required [' || sqlerrm || ']';
   end;
 
-  -- 05 a wrong code returns null and counts as an attempt
+  -- 05 a wrong code returns null
   v_admin := public.redeem_platform_invite('WRONG-CODE-0000', 'New Person');
   execute 'reset role';
-  select count(*) into v_n from private.platform_invite_attempts where clerk_user_id = 'test_newcomer';
-  v_log := v_log || E'\n' || case when v_admin.clerk_user_id is null and v_n = 1
-        then 'PASS' else 'FAIL' end || ' 05 wrong code → null, attempt recorded [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_admin.clerk_user_id is null
+        then 'PASS' else 'FAIL' end || ' 05 wrong code → null';
 
   -- 06 the right code, typed loosely, makes the caller a platform admin
   perform set_config('request.jwt.claims', '{"sub":"test_newcomer","role":"authenticated"}', true);
@@ -100,12 +99,11 @@ begin
   select count(*) into v_n from public.organizations;  -- reads all schools without error
   v_log := v_log || E'\n' || case when private.is_platform_admin() then 'PASS' else 'FAIL' end || ' 07 newcomer is a platform admin';
 
-  -- 08 the code is used up, and attempts were cleared
+  -- 08 the code is used up
   execute 'reset role';
   select count(*) into v_n from private.platform_invite_codes
     where id = v_invite and redeemed_by = 'test_newcomer' and redeemed_at is not null;
-  select v_n + count(*) * 100 into v_n from private.platform_invite_attempts where clerk_user_id = 'test_newcomer';
-  v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 08 code marked used, attempts cleared [' || v_n || ']';
+  v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 08 code marked used [' || v_n || ']';
 
   -- 09 someone else can't reuse it
   perform set_config('request.jwt.claims', '{"sub":"test_other","role":"authenticated"}', true);
@@ -161,19 +159,6 @@ begin
     where (l.invite_id = v_invite and l.status = 'used' and l.redeemed_by_name = 'New Person' and l.created_by_name is not null)
        or (l.invite_id = v_invite2 and l.status = 'expired');
   v_log := v_log || E'\n' || case when v_n = 2 then 'PASS' else 'FAIL' end || ' 13 list shows used and expired [' || coalesce(v_status, 'none') || ']';
-
-  -- 14 after 5 wrong codes in an hour, redeeming is blocked (test_other has 3 so far)
-  execute 'reset role';
-  perform set_config('request.jwt.claims', '{"sub":"test_other","role":"authenticated"}', true);
-  execute 'set local role authenticated';
-  perform public.redeem_platform_invite('NOPE-NOPE-NOP1', 'Other Person');
-  perform public.redeem_platform_invite('NOPE-NOPE-NOP2', 'Other Person');
-  begin
-    perform public.redeem_platform_invite('NOPE-NOPE-NOP3', 'Other Person');
-    v_log := v_log || E'\nFAIL 14 sixth try allowed';
-  exception when others then
-    v_log := v_log || E'\n' || case when sqlerrm like 'Too many wrong codes%' then 'PASS' else 'FAIL' end || ' 14 blocked after 5 wrong codes [' || sqlerrm || ']';
-  end;
 
   -- 15 a turned-off admin can't use a code to get back in
   execute 'reset role';

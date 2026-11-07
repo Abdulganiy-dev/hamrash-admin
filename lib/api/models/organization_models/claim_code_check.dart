@@ -3,7 +3,6 @@ import 'package:hamrash_admin/api/models/organization_models/organization_member
 enum ClaimCodeStatus {
   ok('ok'),
   notFound('not_found'),
-  locked('locked'),
   schoolInactive('school_inactive'),
   alreadyMember('already_member');
 
@@ -31,8 +30,6 @@ class ClaimCodeCheck {
     this.role,
     this.app,
     this.needsName,
-    required this.triesLeft,
-    this.retryAt,
   });
 
   final ClaimCodeStatus status;
@@ -45,8 +42,6 @@ class ClaimCodeCheck {
   final OrganizationMemberRole? role;
   final String? app;
   final bool? needsName;
-  final int triesLeft;
-  final DateTime? retryAt;
 
   factory ClaimCodeCheck.fromJson(Map<String, dynamic> json) => ClaimCodeCheck(
     status: ClaimCodeStatus.fromJson(json['status'] as String),
@@ -61,9 +56,5 @@ class ClaimCodeCheck {
         : OrganizationMemberRole.fromJson(json['role'] as String),
     app: json['app'] as String?,
     needsName: json['needs_name'] as bool?,
-    triesLeft: (json['tries_left'] as num).toInt(),
-    retryAt: json['retry_at'] == null
-        ? null
-        : DateTime.parse(json['retry_at'] as String),
   );
 }

@@ -11,7 +11,6 @@ import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
-import 'package:hamrash_admin/core/widgets/app_segmented_control.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -87,9 +86,6 @@ class _Body extends StatelessWidget {
   final ClassSubjectsViewModel model;
   final _ClassSubjectsActions actions;
 
-  /// The "All arms" tab, as the segmented control can't hold null.
-  static const _all = '';
-
   @override
   Widget build(BuildContext context) {
     final tabs = model.tabs;
@@ -108,34 +104,21 @@ class _Body extends StatelessWidget {
       onRefresh: model.refresh,
       children: [
         if (tabs.isNotEmpty) ...[
-          if (tabs.length <= 4)
-            AppSegmentedControl<String>(
-              options: [
-                for (final id in tabs)
-                  AppSegmentOption(
-                    value: id ?? _all,
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final (i, id) in tabs.indexed) ...[
+                  if (i > 0) const SizedBox(width: 8),
+                  AppFilterChip(
                     label: model.tabLabel(id),
+                    selected: model.armId == id,
+                    onTap: () => model.pickArm(id),
                   ),
-              ],
-              selected: model.armId ?? _all,
-              onChanged: (id) => model.pickArm(id == _all ? null : id),
-            )
-          else
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final (i, id) in tabs.indexed) ...[
-                    if (i > 0) const SizedBox(width: 8),
-                    AppFilterChip(
-                      label: model.tabLabel(id),
-                      selected: model.armId == id,
-                      onTap: () => model.pickArm(id),
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
+          ),
           if (model.note case final note?) ...[
             const SizedBox(height: 8),
             Padding(

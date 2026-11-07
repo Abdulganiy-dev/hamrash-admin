@@ -32,8 +32,6 @@ void main() {
                 'role': 'owner',
                 'app': 'admin',
                 'needs_name': true,
-                'tries_left': 5,
-                'retry_at': null,
               }),
               200,
               headers: {'content-type': 'application/json'},

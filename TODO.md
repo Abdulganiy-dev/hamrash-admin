@@ -63,7 +63,7 @@ Decisions so far: [docs/academic-structure.md → Promotion](docs/academic-struc
 ## Later
 
 - [ ] **Claim codes:** expiry, and re-issuing a code that may have leaked. See [docs/organization-schema.md](docs/organization-schema.md).
-- [ ] **Rate limiting on `redeem_claim_code`.** Codes have about 1.1 trillion combinations, so this isn't urgent.
+- [ ] **Rate limiting on claim-code and platform-invite redemption.** The 5-per-hour limit was removed in migration 25. Claim codes have about 1.1 trillion combinations, but nothing slows down guessing now.
 - [ ] **Campuses** as a sub-scope on a few tables (classes, staff, students).
 - [ ] **Where the Hamrash team's platform screens live:** inside the admin app behind `platform_admins`, or a separate console.
 - [ ] **Bursar access to results,** for example withholding report cards when fees are unpaid. Decide with fees.

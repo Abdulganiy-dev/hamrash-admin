@@ -40,7 +40,6 @@ ClaimCodeCheck _check({
   OrganizationMemberRole? role = OrganizationMemberRole.principal,
   String? app = 'admin',
   bool needsName = false,
-  int triesLeft = 5,
 }) => ClaimCodeCheck(
   status: status,
   organizationId: 'org-1',
@@ -50,7 +49,6 @@ ClaimCodeCheck _check({
   role: role,
   app: app,
   needsName: needsName,
-  triesLeft: triesLeft,
 );
 
 OrganizationMember _member() => OrganizationMember(
@@ -83,17 +81,14 @@ void main() {
     expect(joined, isTrue);
   });
 
-  test('uses the returned attempt count and blocks a wrong-app code', () async {
-    final service = _ClaimCodeService(
-      _check(status: ClaimCodeStatus.notFound, triesLeft: 3),
-    );
+  test('shows a wrong code, then blocks a wrong-app code', () async {
+    final service = _ClaimCodeService(_check(status: ClaimCodeStatus.notFound));
     final model = JoinViewModel(service: service);
     addTearDown(model.dispose);
     model.code.text = 'KQ7M-2X9B';
 
     await model.continueWithCode();
     expect(model.phase, JoinPhase.wrongCode);
-    expect(model.triesLeft, 3);
 
     service.checkResult = _check(
       role: OrganizationMemberRole.teacher,
@@ -156,18 +151,4 @@ void main() {
       expect(service.redeemCalls, 1);
     });
   }
-
-  test('a locked result disables code submission until retry time', () async {
-    final service = _ClaimCodeService(
-      _check(status: ClaimCodeStatus.locked, triesLeft: 0),
-    );
-    final model = JoinViewModel(service: service);
-    addTearDown(model.dispose);
-    model.code.text = 'KQ7M-2X9B';
-
-    await model.continueWithCode();
-    expect(model.phase, JoinPhase.tooManyTries);
-    expect(model.canContinue, isFalse);
-    expect(model.codeAttemptsMessage, contains('Too many tries'));
-  });
 }

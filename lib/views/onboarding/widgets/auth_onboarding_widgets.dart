@@ -269,13 +269,11 @@ class JoinCodeEntryField extends StatelessWidget {
   const JoinCodeEntryField({
     super.key,
     required this.controller,
-    required this.enabled,
     this.errorMessage,
     this.helperMessage,
   });
 
   final TextEditingController controller;
-  final bool enabled;
   final String? errorMessage;
   final String? helperMessage;
 
@@ -296,9 +294,7 @@ class JoinCodeEntryField extends StatelessWidget {
         ? AppFieldStyle.errorBorder(context)
         : AppFieldStyle.focusBorder(context);
     final codeStyle = AppTypography.title.copyWith(
-      color: enabled
-          ? AppFieldStyle.text(context, enabled: true)
-          : AppFieldStyle.text(context, enabled: false),
+      color: AppFieldStyle.text(context, enabled: true),
       fontSize: 24,
       fontWeight: FontWeight.w800,
       height: 32 / 24,
@@ -313,7 +309,6 @@ class JoinCodeEntryField extends StatelessWidget {
           height: 64,
           child: TextField(
             controller: controller,
-            enabled: enabled,
             maxLength: 9,
             keyboardType: TextInputType.visiblePassword,
             textInputAction: TextInputAction.done,
@@ -330,46 +325,36 @@ class JoinCodeEntryField extends StatelessWidget {
               hintStyle: codeStyle.copyWith(
                 color: AppFieldStyle.placeholder(context),
               ),
-              prefixIcon: enabled
-                  ? null
-                  : AppSvgIcon(
-                      AppSvgIcons.lock,
-                      size: AppFieldStyle.iconSize,
-                      color: AppFieldStyle.icon(context),
+              suffixIcon: Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: TextButton(
+                  onPressed: _paste,
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.ms,
                     ),
-              prefixIconConstraints: const BoxConstraints(minWidth: 48),
-              suffixIcon: enabled
-                  ? Padding(
-                      padding: const EdgeInsets.only(right: 10),
-                      child: TextButton(
-                        onPressed: _paste,
-                        style: TextButton.styleFrom(
-                          minimumSize: const Size(0, 40),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.ms,
-                          ),
-                          foregroundColor: AppPalette.aubergine500,
-                          backgroundColor: LightColors.primaryPrimaryMute,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AppSvgIcon(AppSvgIcons.clipboardPaste, size: 16),
-                            SizedBox(width: 6),
-                            AppText(
-                              'Paste',
-                              variant: AppTextVariant.subtitle,
-                              colorType: AppTextColor.textBrand,
-                            ),
-                          ],
-                        ),
+                    foregroundColor: AppPalette.aubergine500,
+                    backgroundColor: LightColors.primaryPrimaryMute,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppSvgIcon(AppSvgIcons.clipboardPaste, size: 16),
+                      SizedBox(width: 6),
+                      AppText(
+                        'Paste',
+                        variant: AppTextVariant.subtitle,
+                        colorType: AppTextColor.textBrand,
                       ),
-                    )
-                  : null,
+                    ],
+                  ),
+                ),
+              ),
               suffixIconConstraints: const BoxConstraints(
                 minWidth: 0,
                 minHeight: 40,
@@ -381,7 +366,7 @@ class JoinCodeEntryField extends StatelessWidget {
               filled: true,
               fillColor: AppFieldStyle.fill(
                 context,
-                enabled: enabled,
+                enabled: true,
                 active: false,
               ),
               border: AppFieldStyle.border(restBorder),
@@ -468,9 +453,7 @@ class AuthWarningBanner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AppSvgIcon(
-            parts.first == 'Too many tries'
-                ? AppSvgIcons.timer
-                : AppSvgIcons.info,
+            AppSvgIcons.info,
             size: 20,
             color: LightColors.warningWarningText,
           ),

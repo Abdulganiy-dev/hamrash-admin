@@ -59,7 +59,6 @@ How a new Hamrash team member joins, used by Hamrash Platform Admin.
 | Piece | Notes |
 |-------|-------|
 | `private.platform_invite_codes` | One row per code: `code_hash` (SHA-256 of the 12-character code), `code_hint` (last 4 characters), `note`, `created_by`, `expires_at` (7 days), `redeemed_by/at`, `revoked_by/at`. The code itself is never stored. |
-| `private.platform_invite_attempts` | Wrong-code attempts per Clerk user, for the 5-per-hour limit. Pruned after a day. |
 | `create_platform_invite(note)` | Platform admins only. Returns `(invite_id, code, expires_at)`; this is the only time the code is seen. |
 | `list_platform_invites()` | Platform admins only. Latest 100 codes with `status`: `pending`, `used`, `expired`, `cancelled`. |
 | `revoke_platform_invite(invite_id)` | Platform admins only. Cancels an unused code. |
@@ -119,13 +118,12 @@ Apps look a code up with `check_claim_code(code)` before redeeming it. Checking 
 
 | Column | Notes |
 |--------|-------|
-| `status` | `ok`, `not_found` (wrong or used), `locked` (too many wrong codes), `school_inactive`, `already_member` |
-| `organization_id`, `school_name`, `school_code`, `school_address`, `school_state`, `school_logo_url` | Filled in unless `not_found` or `locked`, so the person can confirm the school |
+| `status` | `ok`, `not_found` (wrong or used), `school_inactive`, `already_member` |
+| `organization_id`, `school_name`, `school_code`, `school_address`, `school_state`, `school_logo_url` | Filled in unless `not_found`, so the person can confirm the school |
 | `role`, `app` | `app` is the app that role signs in to: `admin` (owner, admin, principal, vice principal, bursar), `staff` (teacher, staff), `family` (parent, student). Hamrash Admin turns away anything but `admin`, and the code stays usable in the right app. |
 | `needs_name` | `true` for an owner code that will create the owner's staff record, so the app knows to ask for a name |
-| `tries_left`, `retry_at` | Wrong codes left this hour; when a `locked` account can try again |
 
-**Wrong-code limit.** 5 wrong codes per account per hour, counted across `check_claim_code` and `redeem_claim_code` in `private.claim_code_attempts`. The lock lifts an hour after the 5th most recent wrong try. Half-typed codes (not 8 letters or numbers) don't count, and a successful redeem clears the count. Since migration 13, `redeem_claim_code` returns NULL for a wrong or used code instead of raising, so the attempt is kept; while locked it raises "Too many wrong codes. Try again in N minutes." Tested by `supabase/tests/08_check_claim_code_test.sql`.
+**No wrong-code limit.** Migrations 12 and 13 limited wrong codes to 5 per account per hour; migration 25 removed that. A wrong code is just `not_found`, and `redeem_claim_code` returns NULL for a wrong or used code instead of raising. Tested by `supabase/tests/08_check_claim_code_test.sql`.
 
 Later, `set_organization_status(org, 'active' | 'suspended' | 'archived')` is platform-admin only.
 
