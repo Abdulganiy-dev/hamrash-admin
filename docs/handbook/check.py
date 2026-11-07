@@ -76,6 +76,20 @@ unlisted = [f"{x:02d}" for x in range(1, highest + 1) if x not in listed]
 if unlisted:
     problems.append("Migrations missing from the migrations list in data.js: " + ", ".join(unlisted))
 
+import subprocess
+stale = subprocess.run([sys.executable, str(here / "extract_sql.py"), "--check"], capture_output=True, text=True)
+if stale.returncode != 0:
+    problems.append(stale.stdout.strip() or "snippets.js is out of date. Run: python3 docs/handbook/extract_sql.py")
+
+# every documented function and table needs SQL in snippets.js to show in the drawer
+snips = (here / "snippets.js").read_text()
+for kind, pat in (("function", r"name: '([a-z_ ·]+)', security"), ("table", r"\{ name: '((?:private\.)?[a-z_ ·.]+)', purpose")):
+    for grp in re.findall(pat, data):
+        for nm in grp.split(" · "):
+            nm = nm.replace("private.", "").strip()
+            if nm and not re.search(rf'"{re.escape(nm)}": \{{', snips):
+                problems.append(f"No SQL snippet for {kind} {nm}: is it dropped, or misspelled in data.js?")
+
 if problems:
     print("\n".join(problems))
     sys.exit(1)

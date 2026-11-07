@@ -4,17 +4,8 @@
 (function () {
   const H = window.HANDBOOK;
   const $ = (sel) => document.querySelector(sel);
-  const esc = (s) =>
-    String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-  // Content strings may use `code` and **bold**; everything else is escaped.
-  const md = (s) =>
-    esc(s)
-      .replace(/`([^`]+)`/g, '<code>$1</code>')
-      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
-      .replace(/“([^”]+)”/g, '<span class="quote">“$1”</span>');
-  const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-
-  const KIND_LABEL = { create: 'Create', read: 'Read', update: 'Update', delete: 'Delete' };
+  const { esc, md, slug, KIND_LABEL, refFor, linkCode } = window.HB;
+  const DR = window.HB.drawer;
 
   // ── Sidebar ─────────────────────────────────────────────────────────
   function renderNav(route) {
@@ -73,9 +64,11 @@
       .map((t) => {
         const ghost = t.startsWith('~');
         const text = ghost ? t.slice(1) : t;
-        const href = refFor(text);
+        const ref = refFor(text);
         const cls = `chip${ghost ? ' ghost' : ''}`;
-        return href ? `<a class="${cls}" href="#${href}">${esc(text)}</a>` : `<span class="${cls}">${esc(text)}</span>`;
+        if (ref && ref.d) return `<a class="${cls}" data-d="${ref.d}" href="#">${esc(text)}</a>`;
+        if (ref && ref.href) return `<a class="${cls}" href="#${ref.href}">${esc(text)}</a>`;
+        return `<span class="${cls}">${esc(text)}</span>`;
       })
       .join('');
     const steps = (op.steps || [])
@@ -97,21 +90,6 @@
       ${refusals ? `<div class="op-row"><span class="op-label">Refused when</span><div class="refusals">${refusals}</div></div>` : ''}
       ${op.sources ? `<div class="op-foot">${op.sources.map(esc).join('<span>·</span>')}</div>` : '<div style="height:22px"></div>'}
     </details>`;
-  }
-
-  // A "touches" chip like "delete class_arms" or "rpc close_session" links to
-  // the reference entry that documents that table or function.
-  function refFor(text) {
-    const words = text.match(/[a-z_-]{4,}/g) || [];
-    for (const w of words) {
-      const t = H.tables.find((t) => t.name.split(/ · /).some((n) => n.replace('private.', '') === w));
-      if (t) return `/tables?at=t-${slug(t.name)}`;
-      const f = H.functions.find((f) => f.name.split(/ · /).includes(w));
-      if (f) return `/functions?at=fn-${slug(f.name)}`;
-      const e = H.edge.find((e) => e.name === w);
-      if (e) return `/edge?at=e-${slug(e.name)}`;
-    }
-    return null;
   }
 
   // ── Pages ───────────────────────────────────────────────────────────
@@ -220,7 +198,7 @@
     return `<div class="page-head"><span class="eyebrow">Database reference</span><h1>Tables</h1><p class="lede">Every table, who can read and write it, and what deleting a row does. Reading is filtered by row-level security: a role only ever sees its own school.</p></div>
       ${H.tables
         .map(
-          (t) => `<section id="t-${slug(t.name)}"><h2><code style="font-size:24px">${esc(t.name)}</code></h2><p class="section-sub">${md(t.purpose)}</p>
+          (t) => `<section id="t-${slug(t.name)}"><h2 style="font-size:24px">${t.name.split(' · ').map((n) => linkCode(n.replace('private.', ''))).join(' · ')}</h2><p class="section-sub">${md(t.purpose)}</p>
           <table class="ref"><tbody>
             <tr><td><b>Read</b></td><td>${md(t.read)}</td></tr>
             <tr><td><b>Insert / update</b></td><td>${md(t.write)}</td></tr>
@@ -241,7 +219,7 @@
           (g) => `<section id="g-${slug(g)}"><h2>${esc(g)}</h2>${H.functions
             .filter((f) => f.group === g)
             .map(
-              (f) => `<table class="ref" id="fn-${slug(f.name)}" style="margin:14px 0"><thead><tr><th colspan="2"><code>${esc(f.name)}</code> <span class="pill off" style="margin-left:6px">${esc(f.security)}</span>${
+              (f) => `<table class="ref" id="fn-${slug(f.name)}" style="margin:14px 0"><thead><tr><th colspan="2">${f.name.split(' · ').map((n) => linkCode(n)).join(' · ')} <span class="pill off" style="margin-left:6px">${esc(f.security)}</span>${
                 f.live === false ? ' <span class="pill warn">not live yet</span>' : ''
               }</th></tr></thead><tbody>
               <tr><td><b>Who can call</b></td><td>${md(f.who)}</td></tr>
@@ -314,21 +292,19 @@
         if (has(o.title, o.touches, o.refusals, o.steps, o.target)) hits.push({ href: `/f/${f.id}?at=${o.id}`, kind: KIND_LABEL[o.kind], title: o.title, where: f.title });
       })
     );
-    H.tables.forEach((t) => has(t.name, t.purpose, t.rules) && hits.push({ href: `/tables?at=t-${slug(t.name)}`, kind: 'Table', title: t.name, where: t.purpose }));
-    H.functions.forEach((f) => has(f.name, f.does, f.errors) && hits.push({ href: `/functions?at=fn-${slug(f.name)}`, kind: 'Function', title: f.name, where: f.group }));
+    H.tables.forEach((t) => has(t.name, t.purpose, t.rules) && hits.push({ d: `tbl:${t.name.split(' · ')[0].replace('private.', '')}`, kind: 'Table', title: t.name, where: t.purpose }));
+    H.functions.forEach((f) => has(f.name, f.does, f.errors) && hits.push({ d: `fn:${f.name.split(' · ')[0]}`, kind: 'Function', title: f.name, where: f.group }));
     H.errors.codes.forEach((c) => has(c.code, c.name, c.text) && hits.push({ href: '/errors', kind: 'Error', title: `${c.code} · ${c.name}`, where: 'Reading an error' }));
     H.migrations.forEach((x) => has(x.title, x.text) && hits.push({ href: `/migrations?at=m-${x.n}`, kind: `Migration ${String(x.n).padStart(2, '0')}`, title: x.title, where: x.text }));
     H.gaps.forEach((g) => has(g.title, g.text) && hits.push({ href: '/gaps', kind: 'Gap', title: g.title, where: g.where }));
     setToc([]);
     return `<div class="page-head"><span class="eyebrow">Search</span><h1>“${esc(q)}”</h1><p class="lede">${hits.length} result${hits.length === 1 ? '' : 's'}</p></div>
-      ${hits.length ? hits.map((h) => `<a class="card" style="margin-bottom:10px" href="#${h.href}"><span class="meta">${esc(h.kind.toUpperCase())}</span><h3>${esc(h.title)}</h3><p>${md(h.where || '')}</p></a>`).join('') : '<p class="empty">Nothing matches. Try a table name, an error message or a role.</p>'}`;
+      ${hits.length ? hits.map((h) => `<a class="card" style="margin-bottom:10px" ${h.d ? `data-d="${h.d}" href="#"` : `href="#${h.href}"`}><span class="meta">${esc(h.kind.toUpperCase())}</span><h3>${esc(h.title)}</h3><p>${md(h.where || '')}</p></a>`).join('') : '<p class="empty">Nothing matches. Try a table name, an error message or a role.</p>'}`;
   }
 
   // ── Router ──────────────────────────────────────────────────────────
-  function render() {
-    const raw = location.hash.slice(1) || '/';
-    const [path, query] = raw.split('?');
-    const at = new URLSearchParams(query || '').get('at');
+  let shownPath = null;
+  function renderPage(path, at) {
     const q = $('#q').value.trim();
     renderNav(path);
     let html;
@@ -345,6 +321,7 @@
     else if (path.startsWith('/f/')) html = pageFeature(path.slice(3));
     else html = '<p class="empty">No such page.</p>';
     $('#content').innerHTML = html;
+    shownPath = path;
     if (at) {
       const el = document.getElementById(at);
       if (el) {
@@ -354,17 +331,37 @@
     } else if (!q) window.scrollTo(0, 0);
   }
 
-  window.addEventListener('hashchange', render);
-  $('#q').addEventListener('input', render);
+  // Opening or closing the drawer changes only the "d" part of the address,
+  // so the page behind it isn't redrawn and keeps its scroll position.
+  function onHash() {
+    const raw = location.hash.slice(1) || '/';
+    const [path, query] = raw.split('?');
+    const params = new URLSearchParams(query || '');
+    const at = params.get('at');
+    if (path !== shownPath) renderPage(path, at);
+    else if (at && !params.get('d')) {
+      const el = document.getElementById(at);
+      if (el) {
+        if (el.tagName === 'DETAILS') el.open = true;
+        el.scrollIntoView({ block: 'start' });
+      }
+    }
+    DR.sync(params.get('d'));
+  }
+
+  window.addEventListener('hashchange', onHash);
+  $('#q').addEventListener('input', () => renderPage(shownPath || '/', null));
   document.addEventListener('keydown', (e) => {
-    if (e.key === '/' && document.activeElement !== $('#q')) {
+    if (e.key === 'Escape') {
+      if (DR.isOpen()) return DR.go(null);
+      $('#q').value = '';
+      renderPage(shownPath || '/', null);
+      return;
+    }
+    if (e.key === '/' && document.activeElement !== $('#q') && !DR.isOpen()) {
       e.preventDefault();
       $('#q').focus();
     }
-    if (e.key === 'Escape') {
-      $('#q').value = '';
-      render();
-    }
   });
-  render();
+  onHash();
 })();
