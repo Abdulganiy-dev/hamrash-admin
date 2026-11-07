@@ -27,7 +27,6 @@ class JoinViewModel extends BaseViewModel {
     this.schoolName = '',
     this.location = '',
     this.role = '',
-    this.schoolCode = '',
     this.targetApp = '',
     this.currentRole = 'Owner',
     this.newRole = 'Principal',
@@ -54,7 +53,6 @@ class JoinViewModel extends BaseViewModel {
   String schoolName;
   String location;
   String role;
-  String schoolCode;
   String targetApp;
   String currentRole;
   String newRole;
@@ -141,7 +139,6 @@ class JoinViewModel extends BaseViewModel {
   void _applyCheck(ClaimCodeCheck result) {
     _checkedCode = result;
     if (result.schoolName != null) schoolName = result.schoolName!;
-    if (result.schoolCode != null) schoolCode = result.schoolCode!;
     location = result.schoolAddress?.trim().isNotEmpty == true
         ? result.schoolAddress!
         : result.schoolState ?? '';

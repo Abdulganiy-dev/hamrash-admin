@@ -23,7 +23,6 @@ Organization _org(
   DateTime? confirmedAt,
 }) => Organization(
   id: id,
-  code: 'HMR-000001',
   name: name,
   status: status,
   createdBy: 'platform',

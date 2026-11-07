@@ -20,7 +20,6 @@ class JoinScreen extends StatelessWidget {
     this.schoolName = '',
     this.location = '',
     this.role = '',
-    this.schoolCode = '',
     this.targetApp = '',
     this.currentRole = 'Owner',
     this.newRole = 'Principal',
@@ -41,7 +40,6 @@ class JoinScreen extends StatelessWidget {
   final String schoolName;
   final String location;
   final String role;
-  final String schoolCode;
   final String targetApp;
   final String currentRole;
   final String newRole;
@@ -67,7 +65,6 @@ class JoinScreen extends StatelessWidget {
           schoolName: schoolName,
           location: location,
           role: role,
-          schoolCode: schoolCode,
           targetApp: targetApp,
           currentRole: currentRole,
           newRole: newRole,
@@ -175,7 +172,6 @@ class _JoinContent extends StatelessWidget {
         name: model.schoolName,
         location: model.location,
         role: model.role,
-        code: model.schoolCode,
       ),
     ],
   );

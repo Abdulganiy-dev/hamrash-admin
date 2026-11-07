@@ -490,7 +490,6 @@ class SchoolConfirmationCard extends StatelessWidget {
     required this.name,
     required this.location,
     this.role,
-    this.code,
     this.roleLabel = "You'll join as",
     this.additionalRole,
     this.additionalRoleLabel = 'This code adds',
@@ -502,7 +501,6 @@ class SchoolConfirmationCard extends StatelessWidget {
   final String name;
   final String location;
   final String? role;
-  final String? code;
   final String roleLabel;
   final String? additionalRole;
   final String additionalRoleLabel;
@@ -530,8 +528,7 @@ class SchoolConfirmationCard extends StatelessWidget {
             children: [
               if (role != null)
                 _ConfirmationRow(label: roleLabel, value: role!),
-              if (role != null &&
-                  (code != null || additionalRole != null || codeRole != null))
+              if (role != null && (additionalRole != null || codeRole != null))
                 const Divider(
                   height: 1,
                   thickness: 1,
@@ -552,12 +549,6 @@ class SchoolConfirmationCard extends StatelessWidget {
                       ? AppBadgeTone.info
                       : AppBadgeTone.neutral,
                 ),
-              if (code != null)
-                _ConfirmationRow(
-                  label: 'School code',
-                  value: code!,
-                  isPlainValue: true,
-                ),
             ],
           ),
         ),
@@ -572,14 +563,12 @@ class _ConfirmationRow extends StatelessWidget {
     required this.value,
     this.tone = AppBadgeTone.info,
     this.showPlus = false,
-    this.isPlainValue = false,
   });
 
   final String label;
   final String value;
   final AppBadgeTone tone;
   final bool showPlus;
-  final bool isPlainValue;
 
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -594,15 +583,7 @@ class _ConfirmationRow extends StatelessWidget {
             colorType: AppTextColor.textMuted,
           ),
         ),
-        if (isPlainValue)
-          AppText(
-            value,
-            variant: AppTextVariant.subtitle,
-            colorType: AppTextColor.textStrong,
-            letterSpacing: 0.56,
-          )
-        else
-          _RolePill(label: value, tone: tone, showPlus: showPlus),
+        _RolePill(label: value, tone: tone, showPlus: showPlus),
       ],
     ),
   );

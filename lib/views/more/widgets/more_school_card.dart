@@ -45,7 +45,7 @@ class MoreSchoolCard extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xxs),
               AppText(
-                school.organization.code,
+                school.rolesLabel,
                 variant: AppTextVariant.body,
                 colorType: AppTextColor.textMuted,
               ),

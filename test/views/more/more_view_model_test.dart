@@ -35,7 +35,6 @@ class _Schools extends SchoolService {
 MemberSchool _school(OrganizationMemberRole role) => MemberSchool(
   organization: Organization(
     id: 'kings',
-    code: 'HMR-000001',
     name: 'Kings College',
     status: OrganizationStatus.trial,
     createdBy: 'platform',

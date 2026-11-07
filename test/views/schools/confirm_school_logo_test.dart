@@ -13,7 +13,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 Organization _kings({String? logoId, String? logoUrl}) => Organization(
   id: 'kings',
-  code: 'HMR-000001',
   name: 'Kings College',
   status: OrganizationStatus.trial,
   createdBy: 'platform',
@@ -72,8 +71,7 @@ class _Images implements ImageService {
 }
 
 class _Schools extends SchoolService {
-  _Schools()
-    : super(SupabaseClient('https://example.supabase.co', 'test-key'));
+  _Schools() : super(SupabaseClient('https://example.supabase.co', 'test-key'));
 
   Map<String, Object?>? saved;
 
@@ -107,24 +105,27 @@ void main() {
     imagePicker: picker ?? _Picker(),
   );
 
-  test('the logo goes through the upload function and is saved on the school', () async {
-    final schools = _Schools();
-    final images = _Images();
-    final vm = model(schools, images);
+  test(
+    'the logo goes through the upload function and is saved on the school',
+    () async {
+      final schools = _Schools();
+      final images = _Images();
+      final vm = model(schools, images);
 
-    await vm.changeLogo();
+      await vm.changeLogo();
 
-    expect(images.kind, MediaKind.schoolLogo);
-    expect(images.bytes, [1, 2, 3]);
-    expect(images.filename, 'school-logo-kings');
-    expect(schools.saved, {
-      'logo_id': 'hamrash-admin/dev/school-logos/uuid-1',
-      'logo_url':
-          'https://imagedelivery.net/hash/hamrash-admin/dev/school-logos/uuid-1/public',
-    });
-    expect(vm.organization.logoId, 'hamrash-admin/dev/school-logos/uuid-1');
-    expect(vm.uploadingLogo, isFalse);
-  });
+      expect(images.kind, MediaKind.schoolLogo);
+      expect(images.bytes, [1, 2, 3]);
+      expect(images.filename, 'school-logo-kings');
+      expect(schools.saved, {
+        'logo_id': 'hamrash-admin/dev/school-logos/uuid-1',
+        'logo_url':
+            'https://imagedelivery.net/hash/hamrash-admin/dev/school-logos/uuid-1/public',
+      });
+      expect(vm.organization.logoId, 'hamrash-admin/dev/school-logos/uuid-1');
+      expect(vm.uploadingLogo, isFalse);
+    },
+  );
 
   test('nothing is uploaded or saved when no picture is picked', () async {
     final schools = _Schools();
@@ -135,17 +136,20 @@ void main() {
     expect(schools.saved, isNull);
   });
 
-  test('a failed upload leaves the school alone and the button usable', () async {
-    final schools = _Schools();
-    final vm = model(
-      schools,
-      _Images(failWith: CloudflareException.httpError(502)),
-    );
+  test(
+    'a failed upload leaves the school alone and the button usable',
+    () async {
+      final schools = _Schools();
+      final vm = model(
+        schools,
+        _Images(failWith: CloudflareException.httpError(502)),
+      );
 
-    await vm.changeLogo();
+      await vm.changeLogo();
 
-    expect(schools.saved, isNull);
-    expect(vm.organization.logoId, isNull);
-    expect(vm.uploadingLogo, isFalse);
-  });
+      expect(schools.saved, isNull);
+      expect(vm.organization.logoId, isNull);
+      expect(vm.uploadingLogo, isFalse);
+    },
+  );
 }

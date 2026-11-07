@@ -4,7 +4,7 @@
 -- It acts as several fake users, checks every rule, then raises an exception on
 -- purpose so EVERYTHING is rolled back. The "error" at the end is the report.
 --
--- Requires migrations 01–25.
+-- Requires migrations 01–27.
 
 do $test$
 declare
@@ -43,7 +43,7 @@ begin
   execute 'set local role authenticated';
   select * into v_r from public.check_claim_code(v_owner_claim);
   v_log := v_log || E'\n' || case when v_r.status = 'ok' and v_r.organization_id = v_org and v_r.school_name = 'Test School'
-        and v_r.school_code ~ '^HMR-' and v_r.role = 'owner' and v_r.app = 'admin' and v_r.needs_name
+        and v_r.role = 'owner' and v_r.app = 'admin' and v_r.needs_name
         then 'PASS' else 'FAIL' end || ' 01a owner code checks ok [' || coalesce(v_r.status, 'null') || ']';
   execute 'reset role';
   select count(*) into v_n from public.organization_members m where m.claim_code = v_owner_claim and m.status = 'invited';

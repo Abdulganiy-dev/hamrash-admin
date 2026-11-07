@@ -25,7 +25,6 @@ void main() {
                 'status': 'ok',
                 'organization_id': 'org-1',
                 'school_name': 'Kings College',
-                'school_code': 'HMR-123456',
                 'school_address': 'Ikeja',
                 'school_state': 'Lagos',
                 'school_logo_url': null,

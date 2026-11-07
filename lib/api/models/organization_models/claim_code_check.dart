@@ -23,7 +23,6 @@ class ClaimCodeCheck {
     required this.status,
     this.organizationId,
     this.schoolName,
-    this.schoolCode,
     this.schoolAddress,
     this.schoolState,
     this.schoolLogoUrl,
@@ -35,7 +34,6 @@ class ClaimCodeCheck {
   final ClaimCodeStatus status;
   final String? organizationId;
   final String? schoolName;
-  final String? schoolCode;
   final String? schoolAddress;
   final String? schoolState;
   final String? schoolLogoUrl;
@@ -47,7 +45,6 @@ class ClaimCodeCheck {
     status: ClaimCodeStatus.fromJson(json['status'] as String),
     organizationId: json['organization_id'] as String?,
     schoolName: json['school_name'] as String?,
-    schoolCode: json['school_code'] as String?,
     schoolAddress: json['school_address'] as String?,
     schoolState: json['school_state'] as String?,
     schoolLogoUrl: json['school_logo_url'] as String?,

@@ -18,7 +18,7 @@ erDiagram
 
 | Layer | Answers | Example |
 |-------|---------|---------|
-| `organizations` | Which school? | "Kings College", code `HMR-7K2Q9P` |
+| `organizations` | Which school? | "Kings College" |
 | `organization_members` | Who can **sign in** to this school, and with what role? | Clerk user `user_2ab…` is a `teacher` at Kings College |
 | People tables (next: `staff`, `students`, `parents`) | What does the school **know** about this person? | Name, class, admission number, photo |
 | `platform_admins` | Who on the Hamrash team runs the platform? | Support staff who onboard schools |
@@ -34,7 +34,7 @@ Membership is kept separate from the people tables because not every person reco
 | Who creates schools? | **Hamrash team**, through `create_organization`. Schools don't sign themselves up. |
 | Where do memberships live? | **Postgres** (`organization_members`), not Clerk Organizations |
 | Hamrash support access? | **Yes.** `platform_admins` can read every school and create and suspend schools. |
-| Short school code? | **Yes:** `HMR-XXXXXX`, generated automatically and unique |
+| Short school code? | **Removed in migration 27.** It was only a label (`HMR-XXXXXX`); schools are identified by `id` and joined with the owner's claim code. |
 | Campuses? | **Later add-on.** The organization is the only tenant boundary for now. |
 | Roles | `owner`, `admin`, `principal`, `vice_principal`, `bursar`, `teacher`, `staff`, `parent`, `student` |
 
@@ -74,7 +74,6 @@ There is no try limit. The table is in `private` (not exposed by the Data API) w
 | Column | Notes |
 |--------|-------|
 | `id` | `uuid` PK. The organization id. |
-| `code` | `HMR-XXXXXX`, unique, generated |
 | `name`, `email`, `phone`, `address`, `state`, `logo_url` | Editable by the school's owner or admin |
 | `logo_id` | Cloudflare Images id of the logo, needed to replace or delete it. Editable by the owner or admin. *(added in migration 03)* |
 | `number_prefix` | Required, 2–8 letters or digits (e.g. `KCL`). Entered by Hamrash at creation; goes in front of admission and staff numbers. Owner or admin can correct it. *(added in migration 03)* |
@@ -104,7 +103,7 @@ There is no try limit. The table is in `private` (not exposed by the Data API) w
 Hamrash platform admin              School owner                      Owner's staff
 ──────────────────────              ────────────                      ─────────────
 create_organization("Kings College", "KCL")
-  → org created (code HMR-7K2Q9P, status trial)
+  → org created (status trial)
   → owner invite created (claim code ABCD-2345)
 gives the code to the owner  ──►    signs in with Clerk
                                     redeem_claim_code("ABCD-2345", first, last, email, phone)
@@ -122,7 +121,7 @@ Apps look a code up with `check_claim_code(code)` before redeeming it. Checking 
 | Column | Notes |
 |--------|-------|
 | `status` | `ok`, `not_found` (wrong or used), `school_inactive`, `already_member` |
-| `organization_id`, `school_name`, `school_code`, `school_address`, `school_state`, `school_logo_url` | Filled in unless `not_found`, so the person can confirm the school |
+| `organization_id`, `school_name`, `school_address`, `school_state`, `school_logo_url` | Filled in unless `not_found`, so the person can confirm the school |
 | `role`, `app` | `app` is the app that role signs in to: `admin` (owner, admin, principal, vice principal, bursar), `staff` (teacher, staff), `family` (parent, student). Hamrash Admin turns away anything but `admin`, and the code stays usable in the right app. |
 | `needs_name` | `true` for an owner code that will create the owner's staff record, so the app knows to ask for a name |
 

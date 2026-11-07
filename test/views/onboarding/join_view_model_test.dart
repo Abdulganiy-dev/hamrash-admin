@@ -44,7 +44,6 @@ ClaimCodeCheck _check({
   status: status,
   organizationId: 'org-1',
   schoolName: 'Kings College',
-  schoolCode: 'HMR-123456',
   schoolState: 'Lagos',
   role: role,
   app: app,

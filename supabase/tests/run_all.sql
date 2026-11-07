@@ -9,7 +9,6 @@ do $test$
 declare
   v_log    text := '';
   v_org    uuid;
-  v_code   text;
   v_claim  text;
   v_org2   uuid;
   v_claim2 text;
@@ -43,12 +42,12 @@ begin
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"user_dummy_platform_admin","role":"authenticated"}', true);
   execute 'set local role authenticated';
-  select c.organization_id, c.organization_code, c.owner_claim_code into v_org, v_code, v_claim
+  select c.organization_id, c.owner_claim_code into v_org, v_claim
     from public.create_organization('Test School', 'TST', 'a@b.c') c;
   select c.organization_id, c.owner_claim_code into v_org2, v_claim2
     from public.create_organization('Other School', 'OTH') c;
-  v_log := v_log || E'\n' || case when v_code ~ '^HMR-[A-Z0-9]{6}$' and v_claim ~ '^[A-Z0-9]{8}$' then 'PASS' else 'FAIL' end
-        || ' 02 platform admin creates school [code ' || v_code || ', owner claim ' || v_claim || ']';
+  v_log := v_log || E'\n' || case when v_claim ~ '^[A-Z0-9]{8}$' then 'PASS' else 'FAIL' end
+        || ' 02 platform admin creates school [owner claim ' || v_claim || ']';
 
   -- 03 owner redeems (lowercase + dash accepted)
   execute 'reset role';
@@ -2085,7 +2084,7 @@ begin
   execute 'set local role authenticated';
   select * into v_r from public.check_claim_code(v_owner_claim);
   v_log := v_log || E'\n' || case when v_r.status = 'ok' and v_r.organization_id = v_org and v_r.school_name = 'Test School'
-        and v_r.school_code ~ '^HMR-' and v_r.role = 'owner' and v_r.app = 'admin' and v_r.needs_name
+        and v_r.role = 'owner' and v_r.app = 'admin' and v_r.needs_name
         then 'PASS' else 'FAIL' end || ' 01a owner code checks ok [' || coalesce(v_r.status, 'null') || ']';
   execute 'reset role';
   select count(*) into v_n from public.organization_members m where m.claim_code = v_owner_claim and m.status = 'invited';

@@ -27,7 +27,6 @@ enum OrganizationStatus {
 class Organization {
   const Organization({
     required this.id,
-    required this.code,
     required this.name,
     this.email,
     this.phone,
@@ -45,7 +44,6 @@ class Organization {
   });
 
   final String id;
-  final String code;
   final String name;
   final String? email;
   final String? phone;
@@ -67,7 +65,6 @@ class Organization {
 
   factory Organization.fromJson(Map<String, dynamic> json) => Organization(
     id: json['id'] as String,
-    code: json['code'] as String,
     name: json['name'] as String,
     email: json['email'] as String?,
     phone: json['phone'] as String?,
@@ -89,7 +86,6 @@ class Organization {
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'code': code,
     'name': name,
     'email': email,
     'phone': phone,
