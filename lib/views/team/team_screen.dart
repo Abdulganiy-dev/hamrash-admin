@@ -74,7 +74,6 @@ class TeamScreen extends StatelessWidget {
         ),
       );
 
-
   static Future<void> _openFilter(
     BuildContext context,
     TeamViewModel model,

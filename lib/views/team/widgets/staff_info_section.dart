@@ -87,6 +87,7 @@ class StaffInfoRow extends StatelessWidget {
     this.onTap,
     this.semanticLabel,
     this.valueDot,
+    this.iconOffsetY = 0,
   });
 
   final IconData icon;
@@ -99,6 +100,14 @@ class StaffInfoRow extends StatelessWidget {
   /// A 7px dot before the value, e.g. the record status colour.
   final Color? valueDot;
 
+  /// Optical correction for a glyph whose visual mass isn't centred in its
+  /// box (the cake sits low). Moves only the paint, not the slot.
+  final double iconOffsetY;
+
+  static const _evenLeading = TextHeightBehavior(
+    leadingDistribution: TextLeadingDistribution.even,
+  );
+
   static const double rowHeight = 54;
   static const double valueMaxWidth = 190;
 
@@ -107,9 +116,10 @@ class StaffInfoRow extends StatelessWidget {
     final text = value?.trim() ?? '';
     final empty = text.isEmpty;
 
-    final valueText = AppText(
+    final valueText = Text(
       empty ? 'Not added' : text,
       textAlign: TextAlign.right,
+      textHeightBehavior: _evenLeading,
       maxLines: multiline ? null : 1,
       overflow: multiline ? null : TextOverflow.ellipsis,
       style: AppTypography.body.copyWith(
@@ -128,12 +138,19 @@ class StaffInfoRow extends StatelessWidget {
         SizedBox(
           width: 20,
           height: 20,
-          child: AppIcon(icon, size: 18, color: AppPalette.stone400),
+          child: Transform.translate(
+            offset: Offset(0, iconOffsetY),
+            child: AppIcon(icon, size: 18, color: AppPalette.stone400),
+          ),
         ),
         const SizedBox(width: 12),
-        AppText(
+        // Even leading puts the glyphs in the middle of the 20px line, the
+        // same centre line as the 20px icon slot, so the icon and label sit
+        // on one horizontal axis.
+        Text(
           label,
           maxLines: 1,
+          textHeightBehavior: _evenLeading,
           style: AppTypography.body.copyWith(
             fontSize: 13,
             height: 20 / 13,

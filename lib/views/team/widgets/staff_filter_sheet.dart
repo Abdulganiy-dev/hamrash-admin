@@ -17,10 +17,7 @@ import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 /// results" applies it and closes, closing any other way throws it away.
 /// Nothing is asked of the server until then.
 class StaffFilterSheet extends StatefulWidget {
-  const StaffFilterSheet({
-    super.key,
-    required this.initial,
-  });
+  const StaffFilterSheet({super.key, required this.initial});
 
   /// The filter the list is showing now.
   final StaffFilter initial;
@@ -67,10 +64,7 @@ class _StaffFilterSheetState extends State<StaffFilterSheet> {
   Widget build(BuildContext context) {
     return AppSheet(
       title: 'Filter staff',
-      headerAction: _ResetAction(
-        enabled: !_draft.isDefault,
-        onPressed: _reset,
-      ),
+      headerAction: _ResetAction(enabled: !_draft.isDefault, onPressed: _reset),
       bodyPadding: const EdgeInsets.fromLTRB(
         AppSpacing.ml,
         AppSpacing.ml,

@@ -224,6 +224,8 @@ class _Content extends StatelessWidget {
     rows: [
       StaffInfoRow(
         icon: AppIcons.cake,
+        // The cake's mass sits low in its box; lift it onto the label's line.
+        iconOffsetY: -1.5,
         label: 'Date of birth',
         value: model.dateOfBirthLabel,
       ),

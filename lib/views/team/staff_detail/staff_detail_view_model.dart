@@ -132,9 +132,11 @@ class StaffDetailViewModel extends BaseViewModel {
   /// "Ikeja, Lagos": LGA then state. Whichever is known when only one is.
   String? get livesInLabel {
     final details = member.privateDetails;
+    // "Federal Capital Territory" is too long for the value column.
+    final state = details?.residenceState?.trim();
     final parts = [
       details?.residenceLga?.trim(),
-      details?.residenceState?.trim(),
+      state == 'Federal Capital Territory' ? 'FCT' : state,
     ].whereType<String>().where((part) => part.isNotEmpty);
     return parts.isEmpty ? null : parts.join(', ');
   }

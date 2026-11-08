@@ -1,0 +1,47 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
+
+void main() {
+  Widget host(StaffInfoRow row) => MaterialApp(
+    home: Scaffold(body: Center(child: row)),
+  );
+
+  testWidgets('icon, label and value share one centre line', (tester) async {
+    await tester.pumpWidget(
+      host(
+        const StaffInfoRow(
+          icon: AppIcons.phone,
+          label: 'Phone',
+          value: '0803 555 0142',
+        ),
+      ),
+    );
+
+    final icon = tester.getCenter(find.byType(AppIcon)).dy;
+    final label = tester.getCenter(find.text('Phone')).dy;
+    final value = tester.getCenter(find.text('0803 555 0142')).dy;
+    expect((icon - label).abs(), lessThanOrEqualTo(0.5));
+    expect((label - value).abs(), lessThanOrEqualTo(0.5));
+  });
+
+  testWidgets('a multi-line value keeps icon and label on its first line', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        const StaffInfoRow(
+          icon: AppIcons.house,
+          label: 'Home address',
+          value: '22 Ogunlana Drive, Surulere, Lagos Mainland, Lagos State',
+          multiline: true,
+        ),
+      ),
+    );
+
+    final icon = tester.getCenter(find.byType(AppIcon)).dy;
+    final label = tester.getCenter(find.text('Home address')).dy;
+    expect((icon - label).abs(), lessThanOrEqualTo(0.5));
+  });
+}
