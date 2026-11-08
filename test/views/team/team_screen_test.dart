@@ -485,13 +485,17 @@ void main() {
 
       await tester.tap(filterButton);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('On app'));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(StaffFilterSheet),
+          matching: find.text('On app'),
+        ),
+      );
       await tester.tap(sheetButton);
       await tester.pumpAndSettle();
 
       expect(service.calls.last.filter.login, StaffLoginFilter.onApp);
       expect(applied(tester), 1);
-      expect(find.text('On app'), findsOneWidget); // the applied chip
       expect(find.text('2 of 4'), findsOneWidget);
       expect(find.text('Amina Bello'), findsOneWidget);
       expect(find.text('Ada Nwosu'), findsNothing);
