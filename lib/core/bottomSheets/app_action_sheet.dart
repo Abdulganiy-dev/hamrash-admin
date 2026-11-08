@@ -5,7 +5,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// A big square shortcut at the top of an [AppActionSheet].
 class AppSheetTile {
@@ -16,7 +16,7 @@ class AppSheetTile {
   });
 
   final String label;
-  final AppSvgIconData icon;
+  final IconData icon;
 
   /// Runs after the sheet closes.
   final VoidCallback onTap;
@@ -33,7 +33,7 @@ class AppSheetAction {
   });
 
   final String label;
-  final AppSvgIconData icon;
+  final IconData icon;
 
   /// Runs after the sheet closes, so it can open another sheet or page.
   final VoidCallback onTap;
@@ -57,11 +57,11 @@ class AppSheetAction {
 ///   subtitle: '${student.className} · ${student.admissionNo}',
 ///   leading: AppLeadingPicture(leading: AppListLeading.initials(student.name), size: 44),
 ///   tiles: [
-///     AppSheetTile(label: 'Record fee', icon: AppSvgIcons.wallet, onTap: recordFee),
+///     AppSheetTile(label: 'Record fee', icon: AppIcons.wallet, onTap: recordFee),
 ///   ],
 ///   groups: [
 ///     [
-///       AppSheetAction(label: 'Edit details', icon: AppSvgIcons.pencil, onTap: edit),
+///       AppSheetAction(label: 'Edit details', icon: AppIcons.pencil, onTap: edit),
 ///     ],
 ///     [
 ///     ],
@@ -149,7 +149,7 @@ class _Tile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              AppSvgIcon(
+              AppIcon(
                 tile.icon,
                 size: 22,
                 color: LightColors.primaryPrimaryDefault,
@@ -252,7 +252,7 @@ class _ActionRow extends StatelessWidget {
                 ? CrossAxisAlignment.center
                 : CrossAxisAlignment.start,
             children: [
-              AppSvgIcon(action.icon, size: 20, color: iconColor),
+              AppIcon(action.icon, size: 20, color: iconColor),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(

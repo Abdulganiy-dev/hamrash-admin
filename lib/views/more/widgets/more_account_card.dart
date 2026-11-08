@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Help and sign out, at the bottom of the More tab.
 class MoreAccountCard extends StatelessWidget {
@@ -20,13 +20,13 @@ class MoreAccountCard extends StatelessWidget {
     child: Column(
       children: [
         _AccountRow(
-          icon: AppSvgIcons.circleHelp,
+          icon: AppIcons.circleHelp,
           label: 'Help and support',
           onTap: () => AppToast.show('Help and support is coming soon'),
         ),
         const Divider(height: 1, thickness: 1, color: AppPalette.stone100),
         _AccountRow(
-          icon: AppSvgIcons.logOut,
+          icon: AppIcons.logOut,
           label: 'Sign out',
           destructive: true,
           onTap: onSignOut,
@@ -44,7 +44,7 @@ class _AccountRow extends StatelessWidget {
     this.destructive = false,
   });
 
-  final AppSvgIconData icon;
+  final IconData icon;
   final String label;
   final VoidCallback onTap;
   final bool destructive;
@@ -61,7 +61,7 @@ class _AccountRow extends StatelessWidget {
         height: 52,
         child: Row(
           children: [
-            AppSvgIcon(icon, size: 20, color: color),
+            AppIcon(icon, size: 20, color: color),
             const SizedBox(width: AppSpacing.ms),
             Expanded(
               child: AppText(
@@ -72,8 +72,8 @@ class _AccountRow extends StatelessWidget {
               ),
             ),
             if (!destructive)
-              const AppSvgIcon(
-                AppSvgIcons.chevronRight,
+              const AppIcon(
+                AppIcons.chevronRight,
                 size: 18,
                 color: AppPalette.stone400,
               ),

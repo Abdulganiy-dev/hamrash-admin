@@ -7,7 +7,7 @@ import 'package:hamrash_admin/core/widgets/navigation/app_tab_bar.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_tab_shell.dart';
 import 'package:hamrash_admin/views/home/home_screen.dart';
 import 'package:hamrash_admin/views/more/more_screen.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// The signed-in app for one school: Home, People, Fees and More. People and
 /// Fees aren't built yet; their tabs say so.
@@ -49,14 +49,14 @@ class HomeShell extends StatelessWidget {
             [
               AppSheetAction(
                 label: 'Switch school',
-                icon: AppSvgIcons.arrowLeftRight,
+                icon: AppIcons.arrowLeftRight,
                 onTap: onSwitchSchool!,
               ),
             ],
           [
             AppSheetAction(
               label: 'Sign out',
-              icon: AppSvgIcons.logOut,
+              icon: AppIcons.logOut,
               isDestructive: true,
               onTap: onSignOut,
             ),
@@ -75,8 +75,8 @@ class HomeShell extends StatelessWidget {
     tabs: [
       AppTab(
         item: const AppTabItem(
-          icon: AppSvgIcons.house,
-          activeIcon: AppSvgIcons.house500,
+          icon: AppIcons.house,
+          activeIcon: AppIcons.house,
           label: 'Home',
         ),
         builder: (context) => HomeScreen(
@@ -93,13 +93,13 @@ class HomeShell extends StatelessWidget {
       for (final MapEntry(value: label) in _comingSoon.entries)
         AppTab(
           item: AppTabItem(
-            icon: label == 'People' ? AppSvgIcons.users : AppSvgIcons.wallet,
+            icon: label == 'People' ? AppIcons.users : AppIcons.wallet,
             label: label,
           ),
           builder: (_) => const SizedBox.shrink(),
         ),
       AppTab(
-        item: const AppTabItem(icon: AppSvgIcons.layoutGrid, label: 'More'),
+        item: const AppTabItem(icon: AppIcons.layoutGrid, label: 'More'),
         builder: (context) => MoreScreen(
           key: ValueKey('more/${school.id}/${school.organization.updatedAt}'),
           school: school,

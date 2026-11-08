@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_icon_label.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 
 /// The compact action beside a section title, e.g. "Change" over Details.
@@ -20,7 +19,7 @@ class AppSectionAction extends StatelessWidget {
   });
 
   final String label;
-  final AppSvgIconData icon;
+  final IconData icon;
 
   /// Null disables the action.
   final VoidCallback? onPressed;

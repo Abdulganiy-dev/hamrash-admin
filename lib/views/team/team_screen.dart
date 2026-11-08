@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_chip_row.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
@@ -41,7 +41,7 @@ class TeamScreen extends StatelessWidget {
           actions: [
             if (model.canAdd && !model.loading && model.error == null)
               AppNavIconButton(
-                icon: AppSvgIcons.plus,
+                icon: AppIcons.plus,
                 iconSize: 18,
                 iconColor: LightColors.primaryPrimaryDefault,
                 semanticLabel: 'Add staff member',
@@ -131,7 +131,7 @@ class _List extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
         child: model.visibleStaff.isEmpty
             ? AppEmptyState(
-                icon: AppSvgIcons.users,
+                icon: AppIcons.users,
                 compact: true,
                 title: model.filter == TeamFilter.onApp
                     ? 'No one on the app yet'
@@ -166,7 +166,7 @@ class _Empty extends StatelessWidget {
     ),
     child: const Center(
       child: AppEmptyState(
-        icon: AppSvgIcons.userPlus,
+        icon: AppIcons.userPlus,
         iconColor: LightColors.categoryTealText,
         iconTileColor: LightColors.categoryTealMute,
         title: 'No staff yet',

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_field_style.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Search input in the shared field style: search icon on the left, a clear
 /// button on the right once there's text. 48 tall, 12px corners.
@@ -103,8 +103,8 @@ class _AppSearchFieldState extends State<AppSearchField> {
         ),
         prefixIcon: Padding(
           padding: const EdgeInsets.only(left: 14, right: 12),
-          child: AppSvgIcon(
-            AppSvgIcons.search,
+          child: AppIcon(
+            AppIcons.search,
             size: AppFieldStyle.iconSize,
             color: iconColor,
           ),
@@ -114,9 +114,9 @@ class _AppSearchFieldState extends State<AppSearchField> {
             ? null
             : Padding(
                 padding: const EdgeInsets.only(left: 12, right: 10),
-                child: AppSvgIconButton(
-                  leadingSvgIcon: AppSvgIcons.x,
-                  leadingSvgIconSize: 18,
+                child: AppIconButton(
+                  leadingIcon: AppIcons.x,
+                  leadingIconSize: 18,
                   foregroundColor: iconColor,
                   onPressed: _clear,
                 ),

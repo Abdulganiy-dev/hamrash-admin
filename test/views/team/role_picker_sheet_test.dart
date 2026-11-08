@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
 import 'package:hamrash_admin/views/team/widgets/role_picker_sheet.dart';
@@ -62,10 +62,10 @@ AppText _title(WidgetTester tester, OrganizationMemberRole role) => tester
     )
     .first;
 
-Finder _icon(AppSvgIconData icon, Finder row) => find.descendant(
+Finder _icon(IconData icon, Finder row) => find.descendant(
   of: row,
   matching: find.byWidgetPredicate(
-    (widget) => widget is AppSvgIcon && widget.icon == icon,
+    (widget) => widget is AppIcon && widget.icon == icon,
   ),
 );
 
@@ -112,7 +112,7 @@ void main() {
       LightColors.primaryPrimaryDefault,
     );
     expect(
-      _icon(AppSvgIcons.check600, _row(OrganizationMemberRole.teacher)),
+      _icon(AppIcons.check, _row(OrganizationMemberRole.teacher)),
       findsOneWidget,
     );
     expect(_checkScale(tester, _row(OrganizationMemberRole.teacher)), 1);
@@ -123,7 +123,7 @@ void main() {
     expect(empty.color, AppPalette.white);
     expect((empty.border! as Border).top.color, AppPalette.stone300);
     expect(
-      _icon(AppSvgIcons.check600, _row(OrganizationMemberRole.staff)),
+      _icon(AppIcons.check, _row(OrganizationMemberRole.staff)),
       findsOneWidget,
     );
     expect(_checkScale(tester, _row(OrganizationMemberRole.staff)), 0);
@@ -167,7 +167,7 @@ void main() {
 
     final admin = _row(OrganizationMemberRole.admin);
     expect(_circles(tester, admin), isEmpty);
-    expect(_icon(AppSvgIcons.lock, admin), findsOneWidget);
+    expect(_icon(AppIcons.lock, admin), findsOneWidget);
 
     await tester.tap(admin);
     await tester.pumpAndSettle();

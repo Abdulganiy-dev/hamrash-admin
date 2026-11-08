@@ -8,7 +8,7 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// A big choice card with the radio on the left, like [AppChoiceCard] but
 /// with room for a badge and details under the text. For "how do you want
@@ -136,7 +136,7 @@ class AppOptionSummary extends StatelessWidget {
 
   final List<(String, String)> rows;
   final String? note;
-  final AppSvgIconData? noteIcon;
+  final IconData? noteIcon;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -188,7 +188,7 @@ class AppOptionSummary extends StatelessWidget {
         Row(
           children: [
             if (noteIcon case final icon?) ...[
-              AppSvgIcon(icon, size: 14, color: LightColors.textMuted),
+              AppIcon(icon, size: 14, color: LightColors.textMuted),
               const SizedBox(width: 6),
             ],
             Expanded(

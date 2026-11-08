@@ -26,7 +26,7 @@ class AppTab {
 /// ```dart
 /// AppTabShell(tabs: [
 ///   AppTab(
-///     item: AppTabItem(icon: AppSvgIcons.house, activeIcon: AppSvgIcons.house500, label: 'Home'),
+///     item: AppTabItem(icon: AppIcons.house, activeIcon: AppIcons.house, label: 'Home'),
 ///     builder: (_) => const HomeView(),
 ///   ),
 ///   ...

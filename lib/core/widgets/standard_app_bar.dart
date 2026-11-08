@@ -15,7 +15,7 @@ import 'package:hamrash_admin/core/widgets/navigation/app_nav_metrics.dart';
 ///   title: 'Students',
 ///   subtitle: 'JSS 2 Gold · 32 of 1,248',
 ///   actions: [
-///     AppNavIconButton(icon: AppSvgIcons.search, onPressed: search),
+///     AppNavIconButton(icon: AppIcons.search, onPressed: search),
 ///   ],
 /// )
 /// ```

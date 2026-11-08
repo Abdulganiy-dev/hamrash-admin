@@ -10,7 +10,7 @@ import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
@@ -165,7 +165,7 @@ class _Content extends StatelessWidget {
             if (model.canEditDetails)
               AppSectionAction(
                 label: 'Change',
-                icon: AppSvgIcons.pencil,
+                icon: AppIcons.pencil,
                 semanticLabel: 'Change details',
                 onPressed: () => _changeDetails(context),
               ),
@@ -336,7 +336,7 @@ class _Content extends StatelessWidget {
     final firstName = _member.firstNameOnly;
     final done = await AppConfirmSheet.show(
       context,
-      icon: suspend ? AppSvgIcons.circlePause : AppSvgIcons.lockOpen,
+      icon: suspend ? AppIcons.circlePause : AppIcons.lockOpen,
       tone: suspend ? AppBadgeTone.warning : AppBadgeTone.success,
       title: suspend
           ? "Suspend $firstName's access?"
@@ -357,7 +357,7 @@ class _Content extends StatelessWidget {
     final firstName = _member.firstNameOnly;
     final done = await AppConfirmSheet.show(
       context,
-      icon: AppSvgIcons.circleMinus,
+      icon: AppIcons.circleMinus,
       isDestructive: true,
       title: "Cancel $firstName's invite?",
       message: 'The code stops working. $firstName stays on the staff list.',
@@ -371,7 +371,7 @@ class _Content extends StatelessWidget {
     final name = _member.fullName;
     final done = await AppConfirmSheet.show(
       context,
-      icon: AppSvgIcons.trash2,
+      icon: AppIcons.trash2,
       isDestructive: true,
       title: 'Remove $name from the staff list?',
       message: model.isOnApp

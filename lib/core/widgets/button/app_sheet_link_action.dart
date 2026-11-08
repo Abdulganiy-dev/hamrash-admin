@@ -4,7 +4,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Quiet icon-and-text action under a sheet's main button, e.g. "Remove
 /// term" or "Switch off this class". When it can't be used, it greys out
@@ -16,7 +16,7 @@ import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 ///
 /// ```dart
 /// AppSheetLinkAction(
-///   icon: AppSvgIcons.trash2,
+///   icon: AppIcons.trash2,
 ///   label: 'Remove term',
 ///   isDestructive: true,
 ///   helper: isCurrent ? 'Make another term current first.' : null,
@@ -34,7 +34,7 @@ class AppSheetLinkAction extends StatelessWidget {
   });
 
   final String label;
-  final AppSvgIconData icon;
+  final IconData icon;
 
   /// Shown under the action, usually why it's greyed out.
   final String? helper;
@@ -61,7 +61,7 @@ class AppSheetLinkAction extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                AppSvgIcon(icon, size: 14, color: color),
+                AppIcon(icon, size: 14, color: color),
                 const SizedBox(width: 6),
                 Flexible(
                   child: AppText(

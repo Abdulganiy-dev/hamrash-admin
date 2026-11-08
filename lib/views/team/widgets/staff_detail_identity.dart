@@ -3,7 +3,7 @@ import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_detail_status_pill.dart';
@@ -175,8 +175,8 @@ class _ContactIconButton extends StatelessWidget {
           border: Border.all(color: LightColors.strokeColourStrokeCard),
         ),
         child: const Center(
-          child: AppSvgIcon(
-            AppSvgIcons.phone,
+          child: AppIcon(
+            AppIcons.phone,
             size: 20,
             color: LightColors.primaryPrimaryDefault,
           ),

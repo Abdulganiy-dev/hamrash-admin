@@ -22,7 +22,7 @@ import 'package:hamrash_admin/views/subjects/subjects_screen.dart';
 import 'package:hamrash_admin/views/team/team_screen.dart';
 import 'package:hamrash_admin/views/schools/widgets/school_logo.dart';
 import 'package:stacked/stacked.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Home tab: school header and, while the school is being set up, the setup
 /// card (11 for owners, admins, principals and VPs; 12 for bursars).
@@ -132,8 +132,8 @@ class _Header extends StatelessWidget {
         _RoundButton(
           label: 'Notifications',
           onTap: () => AppToast.show('Notifications are coming soon'),
-          child: const AppSvgIcon(
-            AppSvgIcons.bell,
+          child: const AppIcon(
+            AppIcons.bell,
             size: 20,
             color: AppPalette.stone700,
           ),
@@ -424,8 +424,8 @@ class _StepRow extends StatelessWidget {
           SizedBox.square(
             dimension: 24,
             child: showChevron
-                ? AppSvgIcon(
-                    AppSvgIcons.chevronRight,
+                ? AppIcon(
+                    AppIcons.chevronRight,
                     size: 20,
                     color: current
                         ? AppPalette.aubergine500
@@ -463,8 +463,8 @@ class _StepMarker extends StatelessWidget {
           color: LightColors.successSuccessDefault,
           shape: BoxShape.circle,
         ),
-        child: const AppSvgIcon(
-          AppSvgIcons.check,
+        child: const AppIcon(
+          AppIcons.check,
           size: 14,
           color: AppPalette.white,
         ),

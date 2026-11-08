@@ -5,7 +5,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/utils/phone_format.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -84,7 +84,7 @@ class ContactSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               _ContactRow(
-                icon: AppSvgIcons.phone,
+                icon: AppIcons.phone,
                 title: 'Call',
                 value: _phoneDisplay,
                 enabled: phone != null,
@@ -99,7 +99,7 @@ class ContactSheet extends StatelessWidget {
               ),
               const _RowDivider(color: _border),
               _ContactRow(
-                icon: AppSvgIcons.messageCircle,
+                icon: AppIcons.messageCircle,
                 title: 'Message',
                 value: _phoneDisplay,
                 enabled: phone != null,
@@ -114,7 +114,7 @@ class ContactSheet extends StatelessWidget {
               ),
               const _RowDivider(color: _border),
               _ContactRow(
-                icon: AppSvgIcons.mail,
+                icon: AppIcons.mail,
                 title: 'Email',
                 value: _emailDisplay,
                 enabled: email != null,
@@ -148,7 +148,7 @@ class _ContactRow extends StatefulWidget {
     required this.onTap,
   });
 
-  final AppSvgIconData icon;
+  final IconData icon;
   final String title;
   final String value;
   final bool enabled;
@@ -215,7 +215,7 @@ class _ContactRowState extends State<_ContactRow> {
                       shape: BoxShape.circle,
                     ),
                     child: Center(
-                      child: AppSvgIcon(
+                      child: AppIcon(
                         widget.icon,
                         size: 20,
                         color: iconColor,
@@ -253,8 +253,8 @@ class _ContactRowState extends State<_ContactRow> {
                   ),
                   if (_enabled) ...[
                     const SizedBox(width: AppSpacing.sm),
-                    const AppSvgIcon(
-                      AppSvgIcons.chevronRight500,
+                    const AppIcon(
+                      AppIcons.chevronRight,
                       size: 20,
                       color: LightColors.textDisabled,
                     ),

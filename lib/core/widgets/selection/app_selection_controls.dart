@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 const _duration = Duration(milliseconds: 140);
 
@@ -64,10 +64,10 @@ class AppCheckbox extends StatelessWidget {
             ScaleTransition(scale: animation, child: child),
         child: !on
             ? const SizedBox.shrink(key: ValueKey('off'))
-            : AppSvgIcon(
-                value == null ? AppSvgIcons.minus600 : AppSvgIcons.check600,
+            : AppIcon(
+                value == null ? AppIcons.minus : AppIcons.check,
                 key: ValueKey(value),
-                size: 16,
+                size: 18,
                 color: enabled ? AppPalette.white : AppPalette.stone400,
               ),
       ),

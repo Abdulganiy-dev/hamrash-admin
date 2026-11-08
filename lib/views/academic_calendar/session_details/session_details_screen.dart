@@ -22,7 +22,7 @@ import 'package:hamrash_admin/views/academic_calendar/widgets/session_skeletons.
 import 'package:hamrash_admin/views/academic_calendar/widgets/session_summary_card.dart';
 import 'package:hamrash_admin/views/academic_calendar/widgets/session_terms_section.dart';
 import 'package:stacked/stacked.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// 4.1–4.8 · A saved session. Pops `true` when something was saved, closed,
 /// reopened or removed, so the sessions list reloads.
@@ -140,7 +140,7 @@ class _Body extends StatelessWidget {
     final toClose = model.sessionToClose!;
     final closed = await AppConfirmSheet.show(
       context,
-      icon: AppSvgIcons.lock,
+      icon: AppIcons.lock,
       tone: AppBadgeTone.info,
       title: 'Close ${toClose.name}?',
       message:
@@ -158,7 +158,7 @@ class _Body extends StatelessWidget {
     final name = model.session!.name;
     final reopened = await AppConfirmSheet.show(
       context,
-      icon: AppSvgIcons.lockOpen,
+      icon: AppIcons.lockOpen,
       tone: AppBadgeTone.warning,
       title: 'Reopen $name?',
       message:
@@ -174,7 +174,7 @@ class _Body extends StatelessWidget {
     final name = model.session!.name;
     final removed = await AppConfirmSheet.show(
       context,
-      icon: AppSvgIcons.trash2,
+      icon: AppIcons.trash2,
       isDestructive: true,
       title: 'Remove $name?',
       message: 'The session and its terms will be removed for good.',

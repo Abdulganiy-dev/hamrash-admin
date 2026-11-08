@@ -7,7 +7,7 @@ import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_surface.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Centred dialog for decisions that must block everything, e.g. "Session
 /// expired". For everyday confirmations prefer a floating sheet — its
@@ -30,7 +30,7 @@ import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 /// ```dart
 /// final ok = await AppAlertDialog.show(
 ///   context,
-///   icon: AppSvgIcons.triangleAlert,
+///   icon: AppIcons.triangleAlert,
 ///   tone: AppBadgeTone.warning,
 ///   title: 'Session expired',
 ///   message: 'Sign in again to keep working. Unsaved attendance is kept on this phone.',
@@ -57,7 +57,7 @@ class AppAlertDialog extends StatefulWidget {
   final String? message;
 
   /// Shown on its own above the title, in the tone colour.
-  final AppSvgIconData? icon;
+  final IconData? icon;
 
   /// Colours the icon. Defaults to [AppBadgeTone.info], or
   /// [AppBadgeTone.error] when [isDestructive].
@@ -94,7 +94,7 @@ class AppAlertDialog extends StatefulWidget {
     BuildContext context, {
     required String title,
     String? message,
-    AppSvgIconData? icon,
+    IconData? icon,
     AppBadgeTone? tone,
     String confirmLabel = 'Confirm',
     String cancelLabel = 'Cancel',
@@ -277,12 +277,12 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
 class _DialogIcon extends StatelessWidget {
   const _DialogIcon({required this.icon, required this.tone});
 
-  final AppSvgIconData icon;
+  final IconData icon;
   final AppBadgeTone tone;
 
   @override
   Widget build(BuildContext context) =>
-      AppSvgIcon(icon, size: 44, color: tone.base);
+      AppIcon(icon, size: 44, color: tone.base);
 }
 
 /// Inline failure from [AppAlertDialog.onConfirm], on a pale red strip.
@@ -303,8 +303,8 @@ class _ErrorLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppSvgIcon(
-            AppSvgIcons.circleAlert500,
+          AppIcon(
+            AppIcons.circleAlert,
             size: 16,
             color: AppBadgeTone.error.strong,
           ),

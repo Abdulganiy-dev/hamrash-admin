@@ -4,7 +4,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// What a badge means. Colour follows meaning, never decoration.
 enum AppBadgeTone {
@@ -105,7 +105,7 @@ class AppBadge extends StatelessWidget {
     BadgeStatus status, {
     Key? key,
     AppBadgeStyle style = AppBadgeStyle.subtle,
-    AppSvgIconData? icon,
+    IconData? icon,
   }) : this(
          status.label,
          key: key,
@@ -119,7 +119,7 @@ class AppBadge extends StatelessWidget {
   final AppBadgeStyle style;
 
   /// Optional 12px leading icon (subtle and solid only).
-  final AppSvgIconData? icon;
+  final IconData? icon;
 
   /// Off for the flat pill used on the staff list, which has a fill only.
   final bool showBorder;
@@ -167,7 +167,7 @@ class AppBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            AppSvgIcon(icon, size: 12, color: foreground),
+            AppIcon(icon, size: 12, color: foreground),
             const SizedBox(width: 4),
           ],
           AppText(
@@ -282,10 +282,10 @@ class _AppFilterChipState extends State<AppFilterChip> {
 
     // Selected chips never get a leading icon, so they keep the 16 side
     // padding. Only a suggestion leads with a +.
-    final leading = widget.suggestion ? AppSvgIcons.plus : null;
+    final leading = widget.suggestion ? AppIcons.plus : null;
     final trailing = widget.locked
-        ? AppSvgIcons.lock
-        : (widget.onRemove != null ? AppSvgIcons.x500 : null);
+        ? AppIcons.lock
+        : (widget.onRemove != null ? AppIcons.x : null);
 
     final textStyle = AppTypography.body.copyWith(
       fontSize: 14,
@@ -315,7 +315,7 @@ class _AppFilterChipState extends State<AppFilterChip> {
 
     final Color? leadingColor = leading == null
         ? null
-        : (leading == AppSvgIcons.plus && !widget.selected
+        : (leading == AppIcons.plus && !widget.selected
               ? LightColors.textBody
               : labelColor);
 
@@ -337,7 +337,7 @@ class _AppFilterChipState extends State<AppFilterChip> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (leading != null) ...[
-              AppSvgIcon(leading, size: 14, color: leadingColor),
+              AppIcon(leading, size: 14, color: leadingColor),
               const SizedBox(width: 6),
             ],
             label,
@@ -347,10 +347,10 @@ class _AppFilterChipState extends State<AppFilterChip> {
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: _remove,
-                  child: AppSvgIcon(trailing, size: 14, color: labelColor),
+                  child: AppIcon(trailing, size: 14, color: labelColor),
                 )
               else
-                AppSvgIcon(trailing, size: 14, color: labelColor),
+                AppIcon(trailing, size: 14, color: labelColor),
             ],
           ],
         ),

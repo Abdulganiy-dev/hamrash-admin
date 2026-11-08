@@ -9,7 +9,7 @@ import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
 import 'package:hamrash_admin/views/classes/classes_view_model.dart';
 import 'package:hamrash_admin/views/classes/widgets/arms_editor.dart';
 import 'package:hamrash_admin/core/widgets/app_sheet_error.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// 6.3 · Add a class to [section], or edit [schoolClass]: its name, arms
 /// and whether it's the graduating class. Pops `true` once saved.
@@ -206,7 +206,7 @@ class _ClassSheetState extends State<ClassSheet> {
           if (saved != null) ...[
             const SizedBox(height: AppSpacing.md),
             AppSheetLinkAction(
-              icon: saved.isActive ? AppSvgIcons.eyeOff : AppSvgIcons.eye,
+              icon: saved.isActive ? AppIcons.eyeOff : AppIcons.eye,
               label: saved.isActive
                   ? 'Switch off this class'
                   : 'Switch on this class',
@@ -216,7 +216,7 @@ class _ClassSheetState extends State<ClassSheet> {
             ),
             const SizedBox(height: AppSpacing.ms),
             AppSheetLinkAction(
-              icon: AppSvgIcons.trash2,
+              icon: AppIcons.trash2,
               label: 'Remove class',
               isDestructive: true,
               helper: removeBlocked,

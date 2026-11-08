@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class ViewUtil {
   static final GlobalKey<NavigatorState> navigatorKey =
@@ -58,24 +57,4 @@ class ViewUtil {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
-
-  static Widget svgPictureAsset({
-    required String assetName,
-    Color? color,
-    double? width,
-    double? height,
-    double scale = 1,
-  }) {
-    return Transform.scale(
-      scale: scale,
-      child: SvgPicture.asset(
-        assetName,
-        colorFilter: color != null
-            ? ColorFilter.mode(color, BlendMode.srcIn)
-            : null,
-        width: width,
-        height: height,
-      ),
-    );
-  }
 }

@@ -4,7 +4,7 @@ import 'package:hamrash_admin/core/bottomSheets/app_confirm_sheet.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_result_sheet.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/app_sheet_link_action.dart';
@@ -70,7 +70,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: AppEmptyState(
-              icon: AppSvgIcons.users,
+              icon: AppIcons.users,
               title: 'No students yet',
               subtitle: 'Add them one by one.',
               actionLabel: 'Add student',
@@ -111,7 +111,7 @@ void main() {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     AppSheetLinkAction(
-                      icon: AppSvgIcons.eyeOff,
+                      icon: AppIcons.eyeOff,
                       label: 'Switch off this class',
                       onPressed: () {},
                     ),
@@ -119,7 +119,7 @@ void main() {
                     // under its label, which reads as 16.
                     const SizedBox(height: AppSpacing.ms),
                     AppSheetLinkAction(
-                      icon: AppSvgIcons.trash2,
+                      icon: AppIcons.trash2,
                       label: 'Remove class',
                       onPressed: () {},
                     ),
@@ -155,7 +155,7 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: AppEmptyState(
-            icon: AppSvgIcons.users,
+            icon: AppIcons.users,
             title: 'No students yet',
             subtitle: 'Add them one by one.',
             actionLabel: 'Add student',

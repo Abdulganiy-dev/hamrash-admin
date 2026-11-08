@@ -14,7 +14,7 @@ import 'package:hamrash_admin/core/utils/phone_format.dart';
 import 'package:hamrash_admin/core/utils/validation_util.dart';
 import 'package:hamrash_admin/core/widgets/app_segmented_control.dart';
 import 'package:hamrash_admin/core/widgets/app_sheet_error.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_text_field.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
@@ -572,8 +572,8 @@ class _RoleGroup extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                const AppSvgIcon(
-                  AppSvgIcons.chevronRight500,
+                const AppIcon(
+                  AppIcons.chevronRight,
                   size: 18,
                   color: AppPalette.stone400,
                 ),

@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 
 /// An eight-character invite code shown as `K7M2-QX9P`, typed straight onto
@@ -175,8 +175,8 @@ class _InviteCodeDisplayState extends State<InviteCodeDisplay> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const AppSvgIcon(
-          AppSvgIcons.check600,
+        const AppIcon(
+          AppIcons.check,
           size: 14,
           color: LightColors.successSuccessDefault,
         ),

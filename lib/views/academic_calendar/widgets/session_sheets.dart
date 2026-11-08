@@ -12,7 +12,7 @@ import 'package:hamrash_admin/core/widgets/pickers/app_date_fields.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
 import 'package:hamrash_admin/views/academic_calendar/session_draft_model.dart';
 import 'package:intl/intl.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Edit the session name and dates.
 class EditSessionSheet extends StatefulWidget {
@@ -125,8 +125,8 @@ class _EditSessionSheetState extends State<EditSessionSheet> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const AppSvgIcon(
-                  AppSvgIcons.info,
+                const AppIcon(
+                  AppIcons.info,
                   size: 16,
                   color: AppPalette.stone600,
                 ),
@@ -160,7 +160,7 @@ class _EditSessionSheetState extends State<EditSessionSheet> {
           if (widget.showRemove) ...[
             const SizedBox(height: AppSpacing.md),
             AppSheetLinkAction(
-              icon: AppSvgIcons.trash2,
+              icon: AppIcons.trash2,
               isDestructive: true,
               label: 'Remove session',
               helper: widget.removeBlockedReason,
@@ -300,7 +300,7 @@ class _EditTermSheetState extends State<EditTermSheet> {
           if (!_adding) ...[
             const SizedBox(height: AppSpacing.md),
             AppSheetLinkAction(
-              icon: AppSvgIcons.trash2,
+              icon: AppIcons.trash2,
               isDestructive: true,
               label: 'Remove term',
               helper: _isCurrent

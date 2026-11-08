@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Why a sheet's save didn't work, above its button.
 class AppSheetError extends StatelessWidget {
@@ -24,8 +24,8 @@ class AppSheetError extends StatelessWidget {
         children: [
           const Padding(
             padding: EdgeInsets.only(top: 1),
-            child: AppSvgIcon(
-              AppSvgIcons.circleAlert500,
+            child: AppIcon(
+              AppIcons.circleAlert,
               size: 16,
               color: LightColors.errorErrorText,
             ),

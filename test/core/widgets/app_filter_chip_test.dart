@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_chip_row.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Widget _host(Widget child) => MaterialApp(
@@ -45,16 +45,16 @@ Color? _labelColor(WidgetTester tester) => _spans(tester).first.style?.color;
 
 Color? _countColor(WidgetTester tester) => _spans(tester).last.style?.color;
 
-List<AppSvgIcon> _iconWidgets(WidgetTester tester) => tester
-    .widgetList<AppSvgIcon>(
+List<AppIcon> _iconWidgets(WidgetTester tester) => tester
+    .widgetList<AppIcon>(
       find.descendant(
         of: find.byType(AppFilterChip),
-        matching: find.byType(AppSvgIcon),
+        matching: find.byType(AppIcon),
       ),
     )
     .toList();
 
-List<AppSvgIconData?> _icons(WidgetTester tester) =>
+List<IconData?> _icons(WidgetTester tester) =>
     _iconWidgets(tester).map((icon) => icon.icon).toList();
 
 void main() {
@@ -221,10 +221,10 @@ void main() {
       ),
     );
 
-    expect(_icons(tester), [AppSvgIcons.x500]);
+    expect(_icons(tester), [AppIcons.x]);
     expect(_iconWidgets(tester).single.color, LightColors.primaryPrimaryText);
 
-    await tester.tap(find.byType(AppSvgIcon));
+    await tester.tap(find.byType(AppIcon));
     expect(removed, 1);
   });
 
@@ -243,7 +243,7 @@ void main() {
       ),
     );
 
-    expect(_icons(tester), [AppSvgIcons.lock]);
+    expect(_icons(tester), [AppIcons.lock]);
     expect(_iconWidgets(tester).single.color, LightColors.primaryPrimaryText);
     expect(_fill(tester), LightColors.primaryPrimaryMute);
     expect(_border(tester), LightColors.primaryPrimaryDefault);
@@ -257,7 +257,7 @@ void main() {
       _host(AppFilterChip(label: 'Gold', suggestion: true, onTap: () {})),
     );
 
-    expect(_icons(tester), [AppSvgIcons.plus]);
+    expect(_icons(tester), [AppIcons.plus]);
     expect(_fill(tester), AppPalette.white);
     expect(_border(tester), LightColors.textMuted);
   });

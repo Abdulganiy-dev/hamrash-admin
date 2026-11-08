@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_sheet_error.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -129,8 +129,8 @@ class _InviteSheetState extends State<InviteSheet> {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                const AppSvgIcon(
-                  AppSvgIcons.chevronRight500,
+                const AppIcon(
+                  AppIcons.chevronRight,
                   size: 18,
                   color: AppPalette.stone400,
                 ),

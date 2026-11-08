@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/views/more/more_view_model.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// The areas this person can see, two tiles per row. A lock marks the ones
 /// they can only view.
@@ -63,35 +63,35 @@ class _AreaTile extends StatelessWidget {
   final bool viewOnly;
   final VoidCallback onTap;
 
-  static (AppSvgIconData, Color, Color) _look(SchoolArea area) =>
+  static (IconData, Color, Color) _look(SchoolArea area) =>
       switch (area) {
         SchoolArea.academicCalendar => (
-          AppSvgIcons.calendar,
+          AppIcons.calendar,
           LightColors.primaryPrimaryMute,
           AppPalette.aubergine500,
         ),
         SchoolArea.classes => (
-          AppSvgIcons.layers,
+          AppIcons.layers,
           AppPalette.tangerineMute,
           AppPalette.tangerineText,
         ),
         SchoolArea.subjects => (
-          AppSvgIcons.bookOpen,
+          AppIcons.bookOpen,
           AppPalette.honeyMute,
           AppPalette.honeyText,
         ),
         SchoolArea.grading => (
-          AppSvgIcons.award,
+          AppIcons.award,
           AppPalette.chartreuseMute,
           AppPalette.chartreuseText,
         ),
         SchoolArea.team => (
-          AppSvgIcons.userPlus,
+          AppIcons.userPlus,
           AppPalette.tealMute,
           AppPalette.tealText,
         ),
         SchoolArea.schoolDetails => (
-          AppSvgIcons.school,
+          AppIcons.school,
           AppPalette.stone100,
           AppPalette.stone700,
         ),
@@ -118,12 +118,12 @@ class _AreaTile extends StatelessWidget {
                     color: fill,
                     borderRadius: BorderRadius.circular(11),
                   ),
-                  child: AppSvgIcon(icon, size: 20, color: ink),
+                  child: AppIcon(icon, size: 20, color: ink),
                 ),
                 const Spacer(),
                 if (viewOnly)
-                  const AppSvgIcon(
-                    AppSvgIcons.lock,
+                  const AppIcon(
+                    AppIcons.lock,
                     size: 14,
                     color: AppPalette.stone400,
                   ),

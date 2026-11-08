@@ -5,7 +5,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -178,8 +178,8 @@ class _RoleRow extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
             ],
             if (locked)
-              const AppSvgIcon(
-                AppSvgIcons.lock,
+              const AppIcon(
+                AppIcons.lock,
                 size: 20,
                 color: AppPalette.stone400,
               )
@@ -238,8 +238,8 @@ class _RoleRadio extends StatelessWidget {
       duration: _duration,
       curve: Curves.easeOutBack,
       scale: selected ? 1 : 0,
-      child: const AppSvgIcon(
-        AppSvgIcons.check600,
+      child: const AppIcon(
+        AppIcons.check,
         size: 14,
         color: AppPalette.white,
       ),

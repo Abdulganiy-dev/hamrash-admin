@@ -11,7 +11,7 @@ import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// What happened. Picks the icon, its colours and the default button label.
 enum AppResultType {
@@ -243,10 +243,10 @@ class _ResultIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = switch (type) {
-      AppResultType.success => AppSvgIcons.circleCheck300,
-      AppResultType.error => AppSvgIcons.circleX300,
-      AppResultType.warning => AppSvgIcons.triangleAlert300,
+      AppResultType.success => AppIcons.circleCheck,
+      AppResultType.error => AppIcons.circleX,
+      AppResultType.warning => AppIcons.triangleAlert,
     };
-    return AppSvgIcon(icon, size: 64, color: type.tone.base);
+    return AppIcon(icon, size: 64, color: type.tone.base);
   }
 }

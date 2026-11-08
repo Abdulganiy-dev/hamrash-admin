@@ -7,7 +7,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/app_sheet_link_action.dart';
 import 'package:hamrash_admin/views/classes/classes_view_model.dart';
 import 'package:hamrash_admin/core/widgets/app_sheet_error.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Add a section, or rename, switch off or remove [section]. Pops `true`
 /// once saved.
@@ -123,7 +123,7 @@ class _SectionSheetState extends State<SectionSheet> {
           if (saved != null) ...[
             const SizedBox(height: AppSpacing.md),
             AppSheetLinkAction(
-              icon: saved.isActive ? AppSvgIcons.eyeOff : AppSvgIcons.eye,
+              icon: saved.isActive ? AppIcons.eyeOff : AppIcons.eye,
               label: saved.isActive
                   ? 'Switch off this section'
                   : 'Switch on this section',
@@ -133,7 +133,7 @@ class _SectionSheetState extends State<SectionSheet> {
             ),
             const SizedBox(height: AppSpacing.ms),
             AppSheetLinkAction(
-              icon: AppSvgIcons.trash2,
+              icon: AppIcons.trash2,
               label: 'Remove section',
               isDestructive: true,
               helper: removeBlocked,

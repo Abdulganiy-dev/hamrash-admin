@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/core/widgets/app_spring_pager.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_tab_bar.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_tab_shell.dart';
 
@@ -14,10 +14,10 @@ void main() {
             width: 280,
             child: AppTabBar(
               items: const [
-                AppTabItem(icon: AppSvgIcons.house, label: 'Home'),
-                AppTabItem(icon: AppSvgIcons.users, label: 'People'),
-                AppTabItem(icon: AppSvgIcons.wallet, label: 'Fees'),
-                AppTabItem(icon: AppSvgIcons.layoutGrid, label: 'More'),
+                AppTabItem(icon: AppIcons.house, label: 'Home'),
+                AppTabItem(icon: AppIcons.users, label: 'People'),
+                AppTabItem(icon: AppIcons.wallet, label: 'Fees'),
+                AppTabItem(icon: AppIcons.layoutGrid, label: 'More'),
               ],
               currentIndex: 0,
               onTap: (_) {},
@@ -27,7 +27,7 @@ void main() {
       ),
     );
     expect(tester.takeException(), isNull);
-    expect(find.byType(AppSvgIcon), findsNWidgets(4));
+    expect(find.byType(AppIcon), findsNWidgets(4));
   });
 
   testWidgets('tab jumps slide directly and retain edited page state', (
@@ -39,11 +39,11 @@ void main() {
         home: AppTabShell(
           tabs: [
             AppTab(
-              item: const AppTabItem(icon: AppSvgIcons.house, label: 'Home'),
+              item: const AppTabItem(icon: AppIcons.house, label: 'Home'),
               builder: (_) => const Scaffold(body: TextField()),
             ),
             AppTab(
-              item: const AppTabItem(icon: AppSvgIcons.users, label: 'People'),
+              item: const AppTabItem(icon: AppIcons.users, label: 'People'),
               builder: (_) {
                 builds++;
                 return const Scaffold(body: Text('People page'));
@@ -51,7 +51,7 @@ void main() {
             ),
             AppTab(
               item: const AppTabItem(
-                icon: AppSvgIcons.layoutGrid,
+                icon: AppIcons.layoutGrid,
                 label: 'More',
               ),
               builder: (_) => const Scaffold(body: Text('More page')),
@@ -98,9 +98,9 @@ void main() {
                   update = setState;
                   return AppTabBar(
                     items: const [
-                      AppTabItem(icon: AppSvgIcons.house, label: 'Home'),
-                      AppTabItem(icon: AppSvgIcons.users, label: 'People'),
-                      AppTabItem(icon: AppSvgIcons.layoutGrid, label: 'More'),
+                      AppTabItem(icon: AppIcons.house, label: 'Home'),
+                      AppTabItem(icon: AppIcons.users, label: 'People'),
+                      AppTabItem(icon: AppIcons.layoutGrid, label: 'More'),
                     ],
                     currentIndex: index,
                     onTap: (_) {},

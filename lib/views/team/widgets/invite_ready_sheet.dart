@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_invite_code.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -79,7 +79,7 @@ class InviteReadySheet extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                AppSvgIcon(AppSvgIcons.share, size: 20),
+                AppIcon(AppIcons.share, size: 20),
                 SizedBox(width: AppSpacing.sm),
                 Text('Share invite'),
               ],

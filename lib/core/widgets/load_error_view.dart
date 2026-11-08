@@ -4,7 +4,7 @@ import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Shown when content failed to load: a plain red icon, what failed, the
 /// likely reason and a "Try again" button.
@@ -63,7 +63,7 @@ class LoadErrorView extends StatelessWidget {
     }
 
     return AppEmptyState(
-      icon: offline ? AppSvgIcons.wifiOff300 : AppSvgIcons.circleAlert300,
+      icon: offline ? AppIcons.wifiOff : AppIcons.circleAlert,
       iconColor: LightColors.errorErrorDefault,
       title: title,
       subtitle:
@@ -79,7 +79,7 @@ class LoadErrorView extends StatelessWidget {
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AppSvgIcon(AppSvgIcons.refreshCw500, size: 18),
+                  AppIcon(AppIcons.refreshCw, size: 18),
                   SizedBox(width: 8),
                   AppText('Try again'),
                 ],

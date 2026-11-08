@@ -8,7 +8,7 @@ import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Floating sheet that asks before doing something: a plain icon, a title,
 /// a message, then the confirm button with Cancel under it — both within
@@ -48,7 +48,7 @@ class AppConfirmSheet extends StatefulWidget {
   final String? message;
 
   /// Shown on its own above the title, in the tone colour.
-  final AppSvgIconData? icon;
+  final IconData? icon;
 
   /// Colours the icon. Defaults to [AppBadgeTone.info], or
   /// [AppBadgeTone.error] when [isDestructive].
@@ -69,7 +69,7 @@ class AppConfirmSheet extends StatefulWidget {
     required String title,
     required String confirmLabel,
     String? message,
-    AppSvgIconData? icon,
+    IconData? icon,
     AppBadgeTone? tone,
     String cancelLabel = 'Cancel',
     bool isDestructive = false,
@@ -161,7 +161,7 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (widget.icon != null) ...[
-              AppSvgIcon(widget.icon, size: 36, color: tone.base),
+              AppIcon(widget.icon, size: 36, color: tone.base),
               const SizedBox(height: 14),
             ],
             AppText(
@@ -187,8 +187,8 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  AppSvgIcon(
-                    AppSvgIcons.circleAlert500,
+                  AppIcon(
+                    AppIcons.circleAlert,
                     size: 16,
                     color: AppBadgeTone.error.strong,
                   ),

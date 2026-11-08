@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// A fixed icon slot and a label, laid out the way the sign-in buttons are:
 /// the mark is centred in a square slot, an optional optical [markOffsetY]
@@ -23,7 +23,7 @@ class AppIconLabel extends StatelessWidget {
     this.hugContent = false,
   });
 
-  final AppSvgIconData icon;
+  final IconData icon;
   final String label;
   final TextStyle style;
   final Color iconColor;
@@ -43,7 +43,7 @@ class AppIconLabel extends StatelessWidget {
     dimension: iconSize,
     child: Transform.translate(
       offset: Offset(0, markOffsetY),
-      child: AppSvgIcon(icon, size: iconSize, color: iconColor),
+      child: AppIcon(icon, size: iconSize, color: iconColor),
     ),
   );
 

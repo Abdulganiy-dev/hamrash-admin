@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:hamrash_admin/services/image_cache_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// A reusable cached network image widget with customizable properties
 ///
@@ -38,7 +38,7 @@ import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 ///   height: 100,
 ///   placeholder: Container(
 ///     color: Colors.grey,
-///     child: AppSvgIcon(AppSvgIcons.image),
+///     child: AppIcon(AppIcons.image),
 ///   ),
 /// )
 ///
@@ -49,7 +49,7 @@ import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 ///   height: 100,
 ///   errorWidget: Container(
 ///     color: Colors.red,
-///     child: AppSvgIcon(AppSvgIcons.circleAlert),
+///     child: AppIcon(AppIcons.circleAlert),
 ///   ),
 /// )
 ///
@@ -153,8 +153,8 @@ class CachedNetworkImageWidget extends StatelessWidget {
                 ),
               ),
             )
-          : AppSvgIcon(
-              AppSvgIcons.image,
+          : AppIcon(
+              AppIcons.image,
               size: (width != null && height != null)
                   ? (width! < height! ? width! * 0.4 : height! * 0.4)
                   : 24,
@@ -170,8 +170,8 @@ class CachedNetworkImageWidget extends StatelessWidget {
       height: height,
       color: backgroundColor ?? CupertinoColors.systemGrey5,
       alignment: alignment,
-      child: AppSvgIcon(
-        AppSvgIcons.triangleAlert,
+      child: AppIcon(
+        AppIcons.triangleAlert,
         size: (width != null && height != null)
             ? (width! < height! ? width! * 0.4 : height! * 0.4)
             : 24,

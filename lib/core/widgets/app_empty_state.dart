@@ -7,7 +7,7 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Centred message for a screen or list with nothing to show: a plain icon
 /// (no background), a title, one line of explanation and one clear next step.
@@ -17,7 +17,7 @@ import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 ///
 /// ```dart
 /// AppEmptyState(
-///   icon: AppSvgIcons.users300,
+///   icon: AppIcons.users,
 ///   title: 'No students in JSS 2 Gold yet',
 ///   subtitle: 'Add them one by one, or import the class list from a spreadsheet.',
 ///   actionLabel: 'Add student',
@@ -28,7 +28,7 @@ import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 ///
 /// AppEmptyState(
 ///   compact: true,
-///   icon: AppSvgIcons.search300,
+///   icon: AppIcons.search,
 ///   title: 'No matches for “$query”',
 ///   subtitle: 'Check the spelling, or search by admission number.',
 ///   actionLabel: 'Clear search',
@@ -52,9 +52,9 @@ class AppEmptyState extends StatelessWidget {
     this.topPadding = AppSpacing.xxl,
   });
 
-  /// Shown on its own, no tile or circle behind it. Thin SVG weights
-  /// (e.g. `AppSvgIcons.users300`) suit the large size.
-  final AppSvgIconData icon;
+  /// Shown on its own, no tile or circle behind it. Large sizes suit these
+  /// glyphs; Lucide keeps the same stroke at every size.
+  final IconData icon;
 
   /// What's missing or what failed, e.g. "No payments today".
   final String title;
@@ -105,9 +105,9 @@ class AppEmptyState extends StatelessWidget {
               color: iconTileColor,
               borderRadius: BorderRadius.circular(AppRadius.dialog),
             ),
-            child: AppSvgIcon(icon, size: 32, color: iconColor),
+            child: AppIcon(icon, size: 32, color: iconColor),
           )
-        : AppSvgIcon(icon, size: compact ? 36 : 56, color: iconColor);
+        : AppIcon(icon, size: compact ? 36 : 56, color: iconColor);
 
     return Padding(
       padding: EdgeInsets.only(top: topPadding),
@@ -177,7 +177,7 @@ class AppEmptyState extends StatelessWidget {
 ///
 /// ```dart
 /// AppInlineState(
-///   icon: AppSvgIcons.wallet,
+///   icon: AppIcons.wallet,
 ///   title: 'No payments today',
 ///   message: 'Payments you record show up here.',
 ///   actionLabel: 'Record',
@@ -203,20 +203,20 @@ class AppInlineState extends StatelessWidget {
     required this.title,
     this.message = 'The rest of the page still works.',
     VoidCallback? onRetry,
-  }) : icon = AppSvgIcons.circleAlert,
+  }) : icon = AppIcons.circleAlert,
        iconColor = LightColors.errorErrorDefault,
        actionLabel = 'Retry',
-       actionIcon = AppSvgIcons.refreshCw500,
+       actionIcon = AppIcons.refreshCw,
        onAction = onRetry;
 
-  final AppSvgIconData icon;
+  final IconData icon;
   final Color iconColor;
   final String title;
   final String? message;
   final String? actionLabel;
 
   /// Small icon before [actionLabel], e.g. a refresh arrow.
-  final AppSvgIconData? actionIcon;
+  final IconData? actionIcon;
   final VoidCallback? onAction;
 
   @override
@@ -224,7 +224,7 @@ class AppInlineState extends StatelessWidget {
     return AppCard(
       child: Row(
         children: [
-          AppSvgIcon(icon, size: 24, color: iconColor),
+          AppIcon(icon, size: 24, color: iconColor),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -275,7 +275,7 @@ class _TextLink extends StatelessWidget {
   const _TextLink({required this.label, required this.onTap, this.icon});
 
   final String label;
-  final AppSvgIconData? icon;
+  final IconData? icon;
   final VoidCallback onTap;
 
   @override
@@ -293,7 +293,7 @@ class _TextLink extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              AppSvgIcon(
+              AppIcon(
                 icon,
                 size: 16,
                 color: LightColors.primaryPrimaryDefault,

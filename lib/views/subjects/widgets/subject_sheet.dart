@@ -7,7 +7,7 @@ import 'package:hamrash_admin/core/widgets/app_text_field.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/app_sheet_link_action.dart';
 import 'package:hamrash_admin/core/widgets/app_sheet_error.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// 7.7 · Add a subject, or change one's name and code. Pops the subject's
 /// id once saved.
@@ -164,7 +164,7 @@ class _SubjectSheetState extends State<SubjectSheet> {
             if (widget.onToggleActive case final toggle?) ...[
               const SizedBox(height: AppSpacing.md),
               AppSheetLinkAction(
-                icon: saved.isActive ? AppSvgIcons.eyeOff : AppSvgIcons.eye,
+                icon: saved.isActive ? AppIcons.eyeOff : AppIcons.eye,
                 label: saved.isActive
                     ? 'Switch off this subject'
                     : 'Switch on this subject',
@@ -180,7 +180,7 @@ class _SubjectSheetState extends State<SubjectSheet> {
                     : AppSpacing.ms,
               ),
               AppSheetLinkAction(
-                icon: AppSvgIcons.trash2,
+                icon: AppIcons.trash2,
                 label: 'Remove subject',
                 isDestructive: true,
                 helper: widget.removeBlockedReason,

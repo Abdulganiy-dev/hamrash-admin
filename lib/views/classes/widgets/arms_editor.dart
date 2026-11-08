@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_field_style.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Picks a class's arms: the chosen ones as dark chips (tap to remove),
 /// common names to add with one tap, and a field for anything else.
@@ -191,8 +191,8 @@ class _ArmsEditorState extends State<ArmsEditor> {
             children: [
               const Padding(
                 padding: EdgeInsets.only(top: 1),
-                child: AppSvgIcon(
-                  AppSvgIcons.triangleAlert,
+                child: AppIcon(
+                  AppIcons.triangleAlert,
                   size: 14,
                   color: LightColors.warningWarningText,
                 ),
@@ -285,8 +285,8 @@ class _CustomArmField extends StatelessWidget {
                     color: AppPalette.stone100,
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: const AppSvgIcon(
-                    AppSvgIcons.plus600,
+                  child: const AppIcon(
+                    AppIcons.plus,
                     size: 16,
                     color: LightColors.primaryPrimaryDefault,
                   ),

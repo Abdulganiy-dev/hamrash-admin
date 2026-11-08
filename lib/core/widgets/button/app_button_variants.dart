@@ -1,7 +1,6 @@
 import 'package:hamrash_admin/core/widgets/button/app_button.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:flutter/material.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// Primary call-to-action — solid aubergine; use [child] for the label.
 class AppPrimaryButton extends StatelessWidget {
@@ -297,18 +296,18 @@ class AppDestructiveButton extends StatelessWidget {
   }
 }
 
-/// Icon-only control using an SVG glyph with the same press scale as [AppButton].
-class AppSvgIconButton extends StatelessWidget {
-  const AppSvgIconButton({
+/// Icon-only control using a Lucide glyph with the same press scale as [AppButton].
+class AppIconButton extends StatelessWidget {
+  const AppIconButton({
     super.key,
-    required this.leadingSvgIcon,
+    required this.leadingIcon,
     this.onPressed,
     this.isDisabled = false,
     this.isLoading = false,
     this.width,
     this.height,
     this.iconSize,
-    this.leadingSvgIconSize,
+    this.leadingIconSize,
     this.padding,
     this.enableHaptic = true,
     this.loadingIndicatorSize,
@@ -319,7 +318,7 @@ class AppSvgIconButton extends StatelessWidget {
     this.foregroundColorType,
   });
 
-  final AppSvgIconData leadingSvgIcon;
+  final IconData leadingIcon;
   final VoidCallback? onPressed;
   final bool isDisabled;
   final bool isLoading;
@@ -327,7 +326,7 @@ class AppSvgIconButton extends StatelessWidget {
   final double? height;
   final double? iconSize;
 
-  final double? leadingSvgIconSize;
+  final double? leadingIconSize;
   final EdgeInsetsGeometry? padding;
   final bool enableHaptic;
   final double? loadingIndicatorSize;
@@ -342,8 +341,8 @@ class AppSvgIconButton extends StatelessWidget {
     return AppButton(
       type: AppButtonType.icon,
       text: '',
-      leadingSvgIcon: leadingSvgIcon,
-      leadingSvgIconSize: leadingSvgIconSize,
+      leadingIcon: leadingIcon,
+      leadingIconSize: leadingIconSize,
       onPressed: onPressed,
       isDisabled: isDisabled,
       isLoading: isLoading,

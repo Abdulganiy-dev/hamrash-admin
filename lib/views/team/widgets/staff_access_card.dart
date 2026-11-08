@@ -3,7 +3,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 
@@ -67,8 +67,8 @@ class StaffAccessCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    const AppSvgIcon(
-                      AppSvgIcons.chevronRight500,
+                    const AppIcon(
+                      AppIcons.chevronRight,
                       size: 16,
                       color: AppPalette.stone400,
                     ),

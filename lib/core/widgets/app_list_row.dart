@@ -8,7 +8,7 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/image_view.dart';
 import 'package:hamrash_admin/core/widgets/local_image.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Picture on the left of a list row. People are round (photos, initials);
 /// things are rounded squares (icon tiles).
@@ -39,14 +39,14 @@ class AppListLeading {
 
   /// Icon tile for things (fees, classes, exams). [tone] colours the tile.
   const AppListLeading.icon(
-    AppSvgIconData icon, {
+    IconData icon, {
     AppBadgeTone tone = AppBadgeTone.info,
   }) : this._(icon: icon, tone: tone);
 
   final String? url;
   final String? path;
   final String? name;
-  final AppSvgIconData? icon;
+  final IconData? icon;
   final AppBadgeTone tone;
 
   /// A dashed aubergine ring over the edge: an invite not claimed yet.
@@ -263,8 +263,8 @@ class AppCompactList extends StatelessWidget {
                     colorType: AppTextColor.primary,
                   ),
                   const SizedBox(width: 4),
-                  const AppSvgIcon(
-                    AppSvgIcons.chevronRight500,
+                  const AppIcon(
+                    AppIcons.chevronRight,
                     size: 18,
                     color: LightColors.primaryPrimaryDefault,
                   ),
@@ -338,8 +338,8 @@ class _Chevron extends StatelessWidget {
     return SizedBox(
       width: size + 4,
       height: size + 4,
-      child: AppSvgIcon(
-        AppSvgIcons.chevronRight500,
+      child: AppIcon(
+        AppIcons.chevronRight,
         size: size + 4,
         color: AppPalette.stone400,
       ),
@@ -397,7 +397,7 @@ class AppLeadingPicture extends StatelessWidget {
     if (leading.icon != null) {
       return ColoredBox(
         color: leading.tone.mute,
-        child: AppSvgIcon(
+        child: AppIcon(
           leading.icon,
           size: size >= 52 ? 24 : 20,
           color: leading.tone.strong,

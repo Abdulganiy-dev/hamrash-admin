@@ -8,7 +8,7 @@ import 'package:hamrash_admin/core/widgets/app_list_row.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/onboarding/widgets/auth_onboarding_widgets.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// 08 · Choose a school. Shown when someone is on the team at more than one
 /// school and none was opened before (or they asked to switch).
@@ -61,7 +61,7 @@ class PickSchoolScreen extends StatelessWidget {
                 name: school.name,
               ),
               _ => AppListLeading.icon(
-                AppSvgIcons.graduationCap,
+                AppIcons.graduationCap,
                 tone: _tones[index % _tones.length],
               ),
             },
@@ -109,8 +109,8 @@ class _JoinAnotherSchool extends StatelessWidget {
                 color: AppPalette.stone100,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const AppSvgIcon(
-                AppSvgIcons.plus,
+              child: const AppIcon(
+                AppIcons.plus,
                 size: 22,
                 color: AppPalette.stone700,
               ),

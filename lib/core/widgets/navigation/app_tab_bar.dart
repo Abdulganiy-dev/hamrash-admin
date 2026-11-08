@@ -3,7 +3,7 @@ import 'package:motor/motor.dart';
 
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import '../app_badge.dart';
-import '../app_svg_icon.dart';
+import '../app_icons.dart';
 import '../button/bouncy_button.dart';
 import 'app_nav_metrics.dart';
 
@@ -16,11 +16,11 @@ class AppTabItem {
     this.count,
   });
 
-  /// The bundled SVG icon for this tab.
-  final AppSvgIconData icon;
+  /// The Lucide icon for this tab.
+  final IconData icon;
 
-  /// Optional heavier SVG for the selected tab.
-  final AppSvgIconData? activeIcon;
+  /// Optional icon used while the tab is selected.
+  final IconData? activeIcon;
 
   /// Not shown; read out by screen readers.
   final String label;
@@ -30,8 +30,8 @@ class AppTabItem {
 }
 
 /// Icon-only tabs grouped in the centre of the page-colour bar, with no
-/// background, border or shadow. The selected tab uses the active tint with a heavier
-/// stroke and a shared dot that slides between tabs on a spring; the icon
+/// background, border or shadow. The selected tab uses the active tint and a
+/// shared dot that slides between tabs on a spring; the icon
 /// pops in on a spring and the others are muted. Usually built for you by
 /// [AppTabShell].
 class AppTabBar extends StatefulWidget {
@@ -245,7 +245,7 @@ class _TabState extends State<_Tab> with SingleTickerProviderStateMixin {
                         TweenAnimationBuilder<Color?>(
                           tween: ColorTween(end: color),
                           duration: _colorDuration,
-                          builder: (context, value, _) => AppSvgIcon(
+                          builder: (context, value, _) => AppIcon(
                             selected
                                 ? (item.activeIcon ?? item.icon)
                                 : item.icon,

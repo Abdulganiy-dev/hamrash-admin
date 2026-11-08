@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 
@@ -20,7 +20,7 @@ class StaffDangerAction extends StatelessWidget {
   final String label;
   final String caption;
   final VoidCallback? onPressed;
-  final AppSvgIconData? icon;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -35,7 +35,7 @@ class StaffDangerAction extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
-                AppSvgIcon(icon, size: 16, color: LightColors.errorErrorText),
+                AppIcon(icon, size: 16, color: LightColors.errorErrorText),
                 const SizedBox(width: AppSpacing.sm),
               ],
               Flexible(

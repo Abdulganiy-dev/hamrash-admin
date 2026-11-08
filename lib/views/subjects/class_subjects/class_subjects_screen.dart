@@ -26,7 +26,7 @@ import 'package:hamrash_admin/views/subjects/class_subjects/widgets/add_subjects
 import 'package:hamrash_admin/views/subjects/widgets/subject_list_card.dart';
 import 'package:hamrash_admin/views/subjects/widgets/subject_sheet.dart';
 import 'package:stacked/stacked.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// 7.3–7.5, 7.8 · What one class takes. Pops `true` when something was
 /// saved, so the subjects page reloads.
@@ -59,7 +59,7 @@ class ClassSubjectsScreen extends StatelessWidget {
                   schoolClass != null &&
                   model.arms.isNotEmpty)
                 AppNavIconButton(
-                  icon: AppSvgIcons.plus,
+                  icon: AppIcons.plus,
                   semanticLabel: 'Add subjects',
                   onPressed: () => actions.addSubjects(context),
                 ),
@@ -70,7 +70,7 @@ class ClassSubjectsScreen extends StatelessWidget {
                 ? const _Loading()
                 : schoolClass == null || model.arms.isEmpty
                 ? const AppEmptyState(
-                    icon: AppSvgIcons.layers,
+                    icon: AppIcons.layers,
                     title: 'No arms to give subjects to',
                     subtitle:
                         'This class was switched off, removed, or has no '
@@ -142,7 +142,7 @@ class _Body extends StatelessWidget {
         ],
         if (compulsory.isEmpty && optional.isEmpty)
           AppEmptyState(
-            icon: AppSvgIcons.bookOpen,
+            icon: AppIcons.bookOpen,
             compact: true,
             title: 'No subjects yet',
             subtitle: 'Add the subjects ${model.targetLabel} take.',
@@ -159,7 +159,7 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 10),
           SubjectListCard(
             subjects: compulsory,
-            trailingIcon: AppSvgIcons.ellipsis,
+            trailingIcon: AppIcons.ellipsis,
             onTap: onTap,
           ),
           const SizedBox(height: 20),
@@ -172,7 +172,7 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 10),
           SubjectListCard(
             subjects: optional,
-            trailingIcon: AppSvgIcons.ellipsis,
+            trailingIcon: AppIcons.ellipsis,
             onTap: onTap,
           ),
         ],
@@ -198,8 +198,8 @@ class _CopyLink extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppSvgIcon(
-              AppSvgIcons.copy,
+            const AppIcon(
+              AppIcons.copy,
               size: 16,
               color: LightColors.primaryPrimaryDefault,
             ),
@@ -277,19 +277,19 @@ class _ClassSubjectsActions {
         [
           AppSheetAction(
             label: compulsory ? 'Make optional' : 'Make compulsory',
-            icon: compulsory ? AppSvgIcons.toggleLeft : AppSvgIcons.toggleRight,
+            icon: compulsory ? AppIcons.toggleLeft : AppIcons.toggleRight,
             onTap: () => _setCompulsory(subject, !compulsory),
           ),
           AppSheetAction(
             label: 'Edit name or code',
-            icon: AppSvgIcons.pencil,
+            icon: AppIcons.pencil,
             onTap: () => _edit(context, subject),
           ),
         ],
         [
           AppSheetAction(
             label: 'Remove from $_where',
-            icon: AppSvgIcons.circleMinus,
+            icon: AppIcons.circleMinus,
             isDestructive: true,
             disabledReason: model.removeBlockedReason(subject),
             onTap: () => _remove(context, subject),
@@ -330,7 +330,7 @@ class _ClassSubjectsActions {
     final where = _where;
     final removed = await AppConfirmSheet.show(
       context,
-      icon: AppSvgIcons.circleMinus,
+      icon: AppIcons.circleMinus,
       isDestructive: true,
       title: 'Remove ${subject.name} from $where?',
       message:
@@ -354,7 +354,7 @@ class _ClassSubjectsActions {
           for (final to in model.copyTargets)
             AppSheetAction(
               label: model.schoolClass!.armLabel(to.name),
-              icon: AppSvgIcons.copy,
+              icon: AppIcons.copy,
               onTap: () => _confirmCopy(context, from, to),
             ),
         ],
@@ -369,7 +369,7 @@ class _ClassSubjectsActions {
   ) async {
     final copied = await AppConfirmSheet.show(
       context,
-      icon: AppSvgIcons.copy,
+      icon: AppIcons.copy,
       tone: AppBadgeTone.info,
       title: "Copy ${from.name}'s subjects to ${to.name}?",
       message:

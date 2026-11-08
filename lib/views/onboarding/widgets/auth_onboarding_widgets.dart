@@ -11,7 +11,7 @@ import 'package:hamrash_admin/core/widgets/app_keyboard_bar.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/blur_transition.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 class AuthScreenFrame extends StatelessWidget {
   const AuthScreenFrame({
@@ -344,7 +344,7 @@ class JoinCodeEntryField extends StatelessWidget {
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      AppSvgIcon(AppSvgIcons.clipboardPaste, size: 16),
+                      AppIcon(AppIcons.clipboardPaste, size: 16),
                       SizedBox(width: 6),
                       AppText(
                         'Paste',
@@ -381,8 +381,8 @@ class JoinCodeEntryField extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const AppSvgIcon(
-                AppSvgIcons.circleAlert500,
+              const AppIcon(
+                AppIcons.circleAlert,
                 size: 14,
                 color: LightColors.errorErrorDefault,
               ),
@@ -452,8 +452,8 @@ class AuthWarningBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppSvgIcon(
-            AppSvgIcons.info,
+          AppIcon(
+            AppIcons.info,
             size: 20,
             color: LightColors.warningWarningText,
           ),
@@ -613,7 +613,7 @@ class _RolePill extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (showPlus) ...[
-          AppSvgIcon(AppSvgIcons.plus, size: 14, color: tone.strong),
+          AppIcon(AppIcons.plus, size: 14, color: tone.strong),
           const SizedBox(width: AppSpacing.xs),
         ],
         AppText(
@@ -646,8 +646,8 @@ class SchoolIdentity extends StatelessWidget {
           color: AppPalette.aubergine500,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const AppSvgIcon(
-          AppSvgIcons.school,
+        child: const AppIcon(
+          AppIcons.school,
           color: AppPalette.white,
           size: 26,
         ),

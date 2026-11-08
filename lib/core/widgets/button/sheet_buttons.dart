@@ -3,7 +3,7 @@ import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:flutter/material.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 class SheetButton extends StatelessWidget {
   const SheetButton({
@@ -22,7 +22,7 @@ class SheetButton extends StatelessWidget {
   final VoidCallback? onPressed;
 
   static Widget badgeIcon({
-    required AppSvgIconData icon,
+    required IconData icon,
     required Color backgroundColor,
     required Color iconColor,
   }) {
@@ -34,7 +34,7 @@ class SheetButton extends StatelessWidget {
         color: backgroundColor,
         borderRadius: AppRadius.brChip,
       ),
-      child: AppSvgIcon(icon, size: 16, color: iconColor),
+      child: AppIcon(icon, size: 16, color: iconColor),
     );
   }
 

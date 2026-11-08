@@ -3,7 +3,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// 6.2 · Above the sections while classes still have no arms.
 class ArmsBanner extends StatelessWidget {
@@ -37,8 +37,8 @@ class ArmsBanner extends StatelessWidget {
                 color: AppPalette.white,
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: const AppSvgIcon(
-                AppSvgIcons.layers,
+              child: const AppIcon(
+                AppIcons.layers,
                 size: 20,
                 color: LightColors.primaryPrimaryDefault,
               ),

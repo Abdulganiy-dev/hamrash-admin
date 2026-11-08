@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 
 void main() {
@@ -11,7 +11,7 @@ void main() {
       body: Center(
         child: AppSectionAction(
           label: 'Change',
-          icon: AppSvgIcons.pencil,
+          icon: AppIcons.pencil,
           semanticLabel: 'Change details',
           onPressed: onPressed,
         ),
@@ -39,7 +39,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byType(AppSectionAction),
-        matching: find.byType(AppSvgIcon),
+        matching: find.byType(AppIcon),
       ),
       findsOneWidget,
     );
@@ -102,7 +102,7 @@ void main() {
 
     final icon = find.descendant(
       of: find.byType(AppSectionAction),
-      matching: find.byType(AppSvgIcon),
+      matching: find.byType(AppIcon),
     );
     final label = find.descendant(
       of: find.byType(AppSectionAction),

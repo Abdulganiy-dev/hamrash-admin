@@ -73,6 +73,7 @@ dependencies:
   stupid_simple_sheet: ^0.9.1+1
   motor: ^1.1.0
   flutter_svg: ^2.2.4
+  lucide_icons_flutter: ^3.1.14+2
 
 dev_dependencies:
   flutter_test:
@@ -133,7 +134,6 @@ flutter:
     - assets/images/
     - assets/icon/
     - assets/svg/
-    - assets/svg/icons/
 
   fonts:
     - family: Nunito

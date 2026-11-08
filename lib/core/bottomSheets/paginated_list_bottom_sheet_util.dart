@@ -15,7 +15,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 export 'paginated_list_controller.dart';
 
@@ -281,7 +281,7 @@ class _PaginatedSelectionBodyState<I>
     }
     return const AppEmptyState(
       compact: true,
-      icon: AppSvgIcons.search300,
+      icon: AppIcons.search,
       title: 'No options found',
       subtitle: 'Try a different search.',
     );

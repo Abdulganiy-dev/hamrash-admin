@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/academic_calendar/session_draft_model.dart';
 import 'package:intl/intl.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// One term: its number, name and dates, and for the current term "Now"
 /// and which week the school is in.
@@ -108,8 +108,8 @@ class SessionTermRow extends StatelessWidget {
               ),
               if (onTap != null) ...[
                 const SizedBox(width: 8),
-                AppSvgIcon(
-                  AppSvgIcons.chevronRight,
+                AppIcon(
+                  AppIcons.chevronRight,
                   size: 18,
                   color: current ? AppPalette.stone900 : AppPalette.stone400,
                 ),

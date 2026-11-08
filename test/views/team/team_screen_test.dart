@@ -13,7 +13,7 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
 import 'package:hamrash_admin/core/widgets/app_shimmer.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/team_screen.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_avatar.dart';
@@ -156,8 +156,8 @@ void main() {
         of: find.byType(StaffListCard),
         matching: find.byWidgetPredicate(
           (widget) =>
-              widget is AppSvgIcon &&
-              widget.icon == AppSvgIcons.chevronRight500,
+              widget is AppIcon &&
+              widget.icon == AppIcons.chevronRight,
         ),
       ),
       findsNothing,

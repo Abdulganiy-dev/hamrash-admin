@@ -9,7 +9,7 @@ import 'package:hamrash_admin/core/widgets/navigation/app_tab_shell.dart';
 import 'package:hamrash_admin/core/widgets/standard_app_bar.dart';
 
 import 'package:flutter/material.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 enum DefaultScaffoldAppBarType { standard, custom, none }
 
@@ -194,7 +194,7 @@ class DefaultScaffold extends StatelessWidget {
 
   Widget _buildDefaultLeading(BuildContext context) {
     return AppNavIconButton(
-      icon: AppSvgIcons.chevronLeft500,
+      icon: AppIcons.chevronLeft,
       iconSize: 22,
       iconColor: AppPalette.stone900,
       semanticLabel: 'Back',

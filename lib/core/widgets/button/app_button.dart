@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:motor/motor.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
 /// Height of a medium button ([AppButtonSize.medium]).
 const double kAppButtonDefaultHeight = 48;
@@ -25,13 +25,13 @@ class AppButton extends StatefulWidget {
   final String? text;
 
   /// The icon to display (required for icon type, optional for others)
-  final AppSvgIconData? icon;
+  final IconData? icon;
 
-  /// Optional alternate SVG icon used in place of [icon].
-  final AppSvgIconData? leadingSvgIcon;
+  /// Optional alternate icon used in place of [icon].
+  final IconData? leadingIcon;
 
-  /// Source size for the alternate SVG icon. Defaults to 24.
-  final double? leadingSvgIconSize;
+  /// Source size for the alternate icon. Defaults to 24.
+  final double? leadingIconSize;
 
   /// The callback when button is pressed
   final VoidCallback? onPressed;
@@ -111,8 +111,8 @@ class AppButton extends StatefulWidget {
     this.radius,
     this.useGradient = false,
     this.icon,
-    this.leadingSvgIcon,
-    this.leadingSvgIconSize,
+    this.leadingIcon,
+    this.leadingIconSize,
     this.onPressed,
     this.isDisabled = false,
     this.width,
@@ -135,17 +135,17 @@ class AppButton extends StatefulWidget {
     this.loadingIndicatorColor,
     this.child,
   }) : assert(
-         icon == null || leadingSvgIcon == null,
-         'Provide either icon or leadingSvgIcon, not both.',
+         icon == null || leadingIcon == null,
+         'Provide either icon or leadingIcon, not both.',
        ),
        assert(
          type == AppButtonType.icon
              ? (icon != null ||
-                   leadingSvgIcon != null ||
+                   leadingIcon != null ||
                    customLabel != null ||
                    child != null)
              : (text != null || customLabel != null || child != null),
-         'Text, child, or customLabel is required for non-icon buttons; icon, leadingSvgIcon, child, or customLabel for icon button',
+         'Text, child, or customLabel is required for non-icon buttons; icon, leadingIcon, child, or customLabel for icon button',
        ),
        assert(
          backgroundColor == null || backgroundColorType == null,
@@ -596,17 +596,17 @@ class _AppButtonState extends State<AppButton> {
   }
 
   Widget _buildLeadingGraphic(Color fgColor, double outerSize) {
-    if (widget.leadingSvgIcon != null) {
+    if (widget.leadingIcon != null) {
       return Padding(
         padding: EdgeInsets.zero,
-        child: AppSvgIcon(
-          widget.leadingSvgIcon!,
-          size: widget.leadingSvgIconSize ?? 24,
+        child: AppIcon(
+          widget.leadingIcon!,
+          size: widget.leadingIconSize ?? 24,
           color: fgColor,
         ),
       );
     }
-    return AppSvgIcon(widget.icon, size: outerSize, color: fgColor);
+    return AppIcon(widget.icon, size: outerSize, color: fgColor);
   }
 
   /// Paint for filled types: disabled look first, then any caller-supplied
@@ -653,14 +653,14 @@ class _AppButtonState extends State<AppButton> {
         case AppButtonType.icon:
           buttonContent = _buildLeadingGraphic(
             fgColor,
-            widget.iconSize ?? widget.leadingSvgIconSize ?? 24,
+            widget.iconSize ?? widget.leadingIconSize ?? 24,
           );
           break;
         case AppButtonType.text:
           buttonContent = AppText(widget.text!, style: textStyle);
           break;
         default:
-          if (widget.icon != null || widget.leadingSvgIcon != null) {
+          if (widget.icon != null || widget.leadingIcon != null) {
             buttonContent = Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
