@@ -8,6 +8,7 @@ import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
+import 'package:hamrash_admin/core/widgets/blur_transition.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
@@ -61,13 +62,18 @@ class TeamScreen extends StatelessWidget {
                 onPressed: () => _addStaff(context, model),
               ),
           ],
-          body: model.error != null
-              ? LoadErrorView(onRetry: model.load)
-              : model.loading
-              ? const _Loading()
-              : model.showEmptyState
-              ? const _Empty()
-              : _List(model: model),
+          body: _BodyCrossfade(
+            child: model.error != null
+                ? LoadErrorView(
+                    key: const ValueKey('error'),
+                    onRetry: model.load,
+                  )
+                : model.loading
+                ? const _Loading(key: ValueKey('loading'))
+                : model.showEmptyState
+                ? const _Empty(key: ValueKey('empty'))
+                : _List(key: const ValueKey('content'), model: model),
+          ),
           bottomNavigationBar: model.ready && model.canAdd
               ? _AddBar(onPressed: () => _addStaff(context, model))
               : null,
@@ -110,7 +116,7 @@ class TeamScreen extends StatelessWidget {
 }
 
 class _List extends StatefulWidget {
-  const _List({required this.model});
+  const _List({super.key, required this.model});
 
   final TeamViewModel model;
 
@@ -383,7 +389,7 @@ class _MoreFooter extends StatelessWidget {
 /// 8.2 · No one but the owner yet: the tinted tile, one line of explanation
 /// and the pinned "Add staff member" bar.
 class _Empty extends StatelessWidget {
-  const _Empty();
+  const _Empty({super.key});
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -434,7 +440,7 @@ class _AddBar extends StatelessWidget {
 
 /// [TeamSkeleton] where the page's content starts.
 class _Loading extends StatelessWidget {
-  const _Loading();
+  const _Loading({super.key});
 
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
@@ -451,4 +457,45 @@ class _Loading extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// Crossfades the page body between loading, error, empty and the list, so a
+/// filter change dissolves into the new rows instead of dropping the whole
+/// page back to a skeleton.
+///
+/// Each branch in [TeamScreen.build] carries a [Key] that changes only when
+/// the *state* changes — never with the data — so the list keeps its scroll
+/// position across rebuilds.
+class _BodyCrossfade extends StatelessWidget {
+  const _BodyCrossfade({required this.child});
+
+  final Widget child;
+
+  /// Long enough to read as a change of page, short enough that the tap still
+  /// feels answered.
+  static const _duration = Duration(milliseconds: 260);
+
+  @override
+  Widget build(BuildContext context) {
+    // Reduced motion keeps the crossfade (it is what explains the change) and
+    // drops the blur and most of the length.
+    final reduced = MediaQuery.disableAnimationsOf(context);
+    final duration = reduced ? const Duration(milliseconds: 120) : _duration;
+
+    return AnimatedSwitcher(
+      duration: duration,
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      layoutBuilder: (currentChild, previousChildren) => Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          for (final previous in previousChildren)
+            IgnorePointer(child: previous),
+          ?currentChild,
+        ],
+      ),
+      transitionBuilder: BlurTransition.builder(maxBlur: reduced ? 0 : 5),
+      child: child,
+    );
+  }
 }

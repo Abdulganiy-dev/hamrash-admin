@@ -75,8 +75,8 @@ class ClassStructureService {
   }) => _run(
     'updateSection',
     () => _update('sections', section.id, {
-      'name': ?name,
-      'is_active': ?isActive,
+      if (name != null) 'name': name,
+      if (isActive != null) 'is_active': isActive,
     }),
     log: (_) => {'id': section.id},
     duplicate: "There's already a section called $name.",
