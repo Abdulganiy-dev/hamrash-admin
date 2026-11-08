@@ -59,7 +59,7 @@ void main() {
     expect(find.text('LGA'), findsOneWidget);
     expect(find.text('Home address'), findsOneWidget);
     expect(find.text('Date of birth'), findsOneWidget);
-    expect(find.textContaining('Start date'), findsOneWidget);
+    expect(find.textContaining('Employment date'), findsOneWidget);
     expect(find.text('State of origin'), findsOneWidget);
     expect(find.text('Choose a state first'), findsOneWidget);
 

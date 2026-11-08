@@ -219,7 +219,7 @@ class _Form extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
               AppDateField(
-                label: 'Start date',
+                label: 'Employment date',
                 value: model.employmentDate,
                 placeholder: 'Select date',
                 isOptional: true,
