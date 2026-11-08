@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
-import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/academic_calendar/session_draft_model.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
@@ -64,7 +64,12 @@ class SessionSummaryCard extends StatelessWidget {
         if (readOnly)
           const _Pill(icon: AppIcons.lock, label: 'Read-only')
         else if (onEdit != null)
-          BouncyButton(onPressed: onEdit, child: const _Pill(label: 'Edit')),
+          AppSectionAction(
+            label: 'Edit',
+            icon: AppIcons.pencil,
+            semanticLabel: 'Edit session',
+            onPressed: onEdit,
+          ),
       ],
     ),
   );

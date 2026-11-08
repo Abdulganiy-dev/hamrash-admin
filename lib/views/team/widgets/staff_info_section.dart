@@ -3,26 +3,36 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 
-/// A titled list on the page background: a header (title and one trailing
-/// widget), then [StaffInfoRow]s with a hairline above each.
+/// A titled list on the page background: a header (title and an optional
+/// action or caption), then [StaffInfoRow]s with a hairline above each.
 class StaffInfoSection extends StatelessWidget {
   const StaffInfoSection({
     super.key,
     required this.title,
     required this.rows,
+    this.action,
     this.trailing,
-    this.headerHeight = 32,
+    this.headerHeight,
     this.headerKey,
-  });
+  }) : assert(
+         trailing == null || action == null,
+         'Provide either trailing or action, not both.',
+       );
 
   final String title;
 
-  /// A section action or a small caption, at the header's right edge.
+  /// Section action at the header's right edge, e.g. Change.
+  final AppSectionAction? action;
+
+  /// A small non-action widget at the header's right edge, e.g. a caption.
   final Widget? trailing;
-  final double headerHeight;
+
+  /// Defaults to 44 when there is an [action] (its tap box), else 32.
+  final double? headerHeight;
   final Key? headerKey;
   final List<Widget> rows;
 
@@ -32,10 +42,11 @@ class StaffInfoSection extends StatelessWidget {
     children: [
       SizedBox(
         key: headerKey,
-        height: headerHeight,
+        height: headerHeight ?? (action == null ? 32 : 44),
         child: Row(
           children: [
             Expanded(child: StaffSectionTitle(title)),
+            ?action,
             ?trailing,
           ],
         ),

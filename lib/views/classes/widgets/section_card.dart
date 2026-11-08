@@ -4,6 +4,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
@@ -40,8 +41,14 @@ class SectionCard extends StatelessWidget {
         AppSectionHeader(
           title: section.name,
           caption: section.isActive ? count : 'Switched off · $count',
-          actionLabel: onEdit == null ? null : 'Edit',
-          onAction: onEdit,
+          action: onEdit == null
+              ? null
+              : AppSectionAction(
+                  label: 'Edit',
+                  icon: AppIcons.pencil,
+                  semanticLabel: 'Edit ${section.name}',
+                  onPressed: onEdit,
+                ),
         ),
         const SizedBox(height: 10),
         AppCard(

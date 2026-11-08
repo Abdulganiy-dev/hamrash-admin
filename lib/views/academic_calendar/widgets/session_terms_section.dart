@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
-import 'package:hamrash_admin/core/widgets/app_text.dart';
-import 'package:hamrash_admin/core/constants/app_typography.dart';
-import 'package:hamrash_admin/core/widgets/button/app_button.dart';
-import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
+import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/views/academic_calendar/session_draft_model.dart';
 import 'package:hamrash_admin/views/academic_calendar/widgets/session_term_row.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
@@ -28,23 +25,14 @@ class SessionTermsSection extends StatelessWidget {
     children: [
       AppSectionHeader(
         title: 'Terms',
-        trailing:
-            onAddTerm == null
-                ? null
-                : AppButton(
-                  type: AppButtonType.text,
-                  text: 'Add a term',
-                  isDisabled: model.draft.terms.length >= 6,
-                  onPressed: onAddTerm,
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AppIcon(AppIcons.plus, size: 16),
-                      SizedBox(width: 4),
-                      AppText('Add a term', variant: AppTextVariant.subtitle),
-                    ],
-                  ),
-                ),
+        action: onAddTerm == null
+            ? null
+            : AppSectionAction(
+                label: 'Add a term',
+                icon: AppIcons.plus,
+                semanticLabel: 'Add a term',
+                onPressed: model.draft.terms.length >= 6 ? null : onAddTerm,
+              ),
       ),
       if (onAddTerm == null) const SizedBox(height: 12),
       AppCard(

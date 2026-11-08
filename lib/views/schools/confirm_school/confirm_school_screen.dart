@@ -6,6 +6,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_divider.dart';
+import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_text_field.dart';
@@ -154,7 +155,12 @@ class _DetailsCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 14),
-                _EditLink(onTap: () => _edit(context, SchoolField.name)),
+                AppSectionAction(
+                  label: 'Edit',
+                  icon: AppIcons.pencil,
+                  semanticLabel: 'Edit school name',
+                  onPressed: () => _edit(context, SchoolField.name),
+                ),
               ],
             ),
           ),

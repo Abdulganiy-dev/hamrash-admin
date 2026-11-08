@@ -166,8 +166,7 @@ class _Content extends StatelessWidget {
   Widget _details(BuildContext context) => StaffInfoSection(
     title: 'Details',
     headerKey: const ValueKey('details-header'),
-    headerHeight: 44,
-    trailing: model.canEditDetails
+    action: model.canEditDetails
         ? AppSectionAction(
             label: 'Change',
             icon: AppIcons.pencil,

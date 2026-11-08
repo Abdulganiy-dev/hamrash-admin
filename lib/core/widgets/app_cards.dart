@@ -5,6 +5,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
+import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/widgets/app_surface.dart';
 
 /// Elevation shadows. Light mode only — dark surfaces separate by color, so
@@ -50,7 +51,15 @@ class AppShadows {
 /// and any action button below it, outside the card.
 ///
 /// ```dart
-/// AppSectionHeader(title: 'Your classes', actionLabel: 'See all', onAction: _openClasses),
+/// AppSectionHeader(
+///   title: 'Your classes',
+///   action: AppSectionAction(
+///     label: 'See all',
+///     icon: AppIcons.chevronRight,
+///     semanticLabel: 'See all classes',
+///     onPressed: _openClasses,
+///   ),
+/// ),
 /// const SizedBox(height: AppSpacing.ms),
 /// AppCard(child: ...),
 /// ```
@@ -137,18 +146,21 @@ class AppFlatCard extends StatelessWidget {
   }
 }
 
-/// Title (and optional link) that sits above a card, outside it.
+/// Title (and optional caption) that sits above a card, outside it.
+///
+/// A section-level action goes in [action]: the header lays it out flush
+/// right in a 44 tall row, the same as the Details header on a staff page.
+/// [trailing] is for anything that is not an action, e.g. a count or a tag.
 class AppSectionHeader extends StatelessWidget {
   const AppSectionHeader({
     super.key,
     required this.title,
     this.caption,
-    this.actionLabel,
-    this.onAction,
+    this.action,
     this.trailing,
   }) : assert(
-         trailing == null || actionLabel == null,
-         'Provide either trailing or actionLabel, not both.',
+         trailing == null || action == null,
+         'Provide either trailing or action, not both.',
        );
 
   final String title;
@@ -156,60 +168,48 @@ class AppSectionHeader extends StatelessWidget {
   /// Muted note right after the title, e.g. "3 classes".
   final String? caption;
 
-  /// Text link on the right, e.g. "See all".
-  final String? actionLabel;
-  final VoidCallback? onAction;
+  /// Section action on the right, e.g. Edit or Add a term.
+  final AppSectionAction? action;
 
-  /// Custom widget on the right instead of a text link.
+  /// Custom non-action widget on the right, e.g. a count or a status tag.
   final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
-    Widget? end = trailing;
-    if (actionLabel != null) {
-      end = GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onAction,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-          child: AppText(
-            actionLabel!,
-            variant: AppTextVariant.subtitle,
-            colorType: AppTextColor.textBrand,
-          ),
+    final row = Row(
+      children: [
+        Expanded(
+          child: caption == null
+              ? AppText(title, variant: AppTextVariant.title)
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Flexible(
+                      child: AppText(title, variant: AppTextVariant.title),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    AppText(
+                      caption!,
+                      style: AppTypography.caption.copyWith(
+                        fontSize: 13,
+                        height: 18 / 13,
+                        color: AppPalette.stone500,
+                      ),
+                    ),
+                  ],
+                ),
         ),
-      );
-    }
+        ?action,
+        ?trailing,
+      ],
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-      child: Row(
-        children: [
-          Expanded(
-            child: caption == null
-                ? AppText(title, variant: AppTextVariant.title)
-                : Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Flexible(
-                        child: AppText(title, variant: AppTextVariant.title),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      AppText(
-                        caption!,
-                        style: AppTypography.caption.copyWith(
-                          fontSize: 13,
-                          height: 18 / 13,
-                          color: AppPalette.stone500,
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
-          ?end,
-        ],
-      ),
+      // The action already carries a 44 tall tap box; give the row the same
+      // height so the title and action share one centre line.
+      child: action == null ? row : SizedBox(height: 44, child: row),
     );
   }
 }
