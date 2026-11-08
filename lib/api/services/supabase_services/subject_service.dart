@@ -1,4 +1,5 @@
 import 'package:hamrash_admin/api/models/subjects/subject.dart';
+import 'package:hamrash_admin/api/models/team/teaching.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -16,6 +17,10 @@ class SubjectService {
       'Only the owner, admins, the principal and vice principals can change '
       'subjects.';
 
+  static const assignmentsLeadersOnly =
+      'Only the owner, admins, the principal and vice principals can change '
+      'who teaches what.';
+
   /// Every subject at the school, in report-card order.
   Future<List<Subject>> listSubjects(String organizationId) => _run(
     'listSubjects',
@@ -28,11 +33,10 @@ class SubjectService {
           .order('name');
       return rows.map(Subject.fromJson).toList();
     },
-    log:
-        (subjects) => {
-          'organization_id': organizationId,
-          'count': subjects.length,
-        },
+    log: (subjects) => {
+      'organization_id': organizationId,
+      'count': subjects.length,
+    },
   );
 
   /// Which subject every arm at the school takes.
@@ -77,8 +81,10 @@ class SubjectService {
               params: {'p_organization_id': organizationId},
             )
             as int,
-    log:
-        (subjects) => {'organization_id': organizationId, 'subjects': subjects},
+    log: (subjects) => {
+      'organization_id': organizationId,
+      'subjects': subjects,
+    },
   );
 
   /// Adds a subject at the end of the report card. Returns its id.
@@ -90,17 +96,16 @@ class SubjectService {
   }) => _run(
     'addSubject',
     () async {
-      final row =
-          await _supabase
-              .from('subjects')
-              .insert({
-                'organization_id': organizationId,
-                'name': name,
-                'code': code,
-                'sort_order': sortOrder,
-              })
-              .select('id')
-              .single();
+      final row = await _supabase
+          .from('subjects')
+          .insert({
+            'organization_id': organizationId,
+            'name': name,
+            'code': code,
+            'sort_order': sortOrder,
+          })
+          .select('id')
+          .single();
       return row['id'] as String;
     },
     log: (id) => {'id': id},
@@ -216,6 +221,118 @@ class SubjectService {
     log: (added) => {'from': fromArmId, 'to': toArmId, 'added': added},
   );
 
+  /// One teacher assignment in [sessionId], or null when nobody teaches
+  /// [subjectId] in [armId] yet.
+  Future<TeachingAssignment?> getTeachingAssignment({
+    required String organizationId,
+    required String sessionId,
+    required String armId,
+    required String subjectId,
+  }) => _run(
+    'getTeachingAssignment',
+    () async {
+      final row = await _supabase
+          .from('teaching_assignments')
+          .select(TeachingAssignment.columns)
+          .eq('organization_id', organizationId)
+          .eq('session_id', sessionId)
+          .eq('arm_id', armId)
+          .eq('subject_id', subjectId)
+          .maybeSingle();
+      return row == null ? null : TeachingAssignment.fromJson(row);
+    },
+    log: (row) => {
+      'arm_id': armId,
+      'subject_id': subjectId,
+      'staff_id': row?.staffId,
+    },
+  );
+
+  /// Every teacher set for [sessionId], with subject, class and arm names.
+  Future<List<TeachingAssignment>> listTeachingAssignments({
+    required String organizationId,
+    required String sessionId,
+  }) => _run(
+    'listTeachingAssignments',
+    () async {
+      final rows = await _supabase
+          .from('teaching_assignments')
+          .select(TeachingAssignment.columns)
+          .eq('organization_id', organizationId)
+          .eq('session_id', sessionId);
+      return rows.map(TeachingAssignment.fromJson).toList();
+    },
+    log: (rows) => {'session_id': sessionId, 'count': rows.length},
+  );
+
+  /// One staff member's teaching assignments for a session.
+  Future<List<TeachingAssignment>> listStaffTeachingAssignments({
+    required String organizationId,
+    required String staffId,
+    required String sessionId,
+  }) => _run(
+    'listStaffTeachingAssignments',
+    () async {
+      final rows = await _supabase
+          .from('teaching_assignments')
+          .select(TeachingAssignment.columns)
+          .eq('organization_id', organizationId)
+          .eq('session_id', sessionId)
+          .eq('staff_id', staffId);
+      return rows.map(TeachingAssignment.fromJson).toList();
+    },
+    log: (rows) => {'staff_id': staffId, 'count': rows.length},
+  );
+
+  /// Gives [subjectId] in [armId] to [staffId]. The arm must take the
+  /// subject; the database refuses otherwise.
+  Future<void> addTeachingAssignment({
+    required String organizationId,
+    required String sessionId,
+    required String armId,
+    required String subjectId,
+    required String staffId,
+  }) => _run(
+    'addTeachingAssignment',
+    () async {
+      await _supabase.from('teaching_assignments').insert({
+        'organization_id': organizationId,
+        'session_id': sessionId,
+        'arm_id': armId,
+        'subject_id': subjectId,
+        'staff_id': staffId,
+      });
+    },
+    log: (_) => {'arm_id': armId, 'subject_id': subjectId, 'staff_id': staffId},
+    forbidden: assignmentsLeadersOnly,
+    duplicate:
+        'That subject already has a teacher in this arm. Reload and try '
+        'again.',
+    invalid:
+        "That subject isn't on this arm yet. Add it to the arm's subjects "
+        'first.',
+  );
+
+  /// Replaces the teacher on an existing assignment.
+  Future<void> changeTeachingAssignmentTeacher(
+    TeachingAssignment row, {
+    required String staffId,
+  }) => _run(
+    'changeTeachingAssignmentTeacher',
+    () async {
+      final changed = await _supabase
+          .from('teaching_assignments')
+          .update({'staff_id': staffId})
+          .eq('session_id', row.sessionId)
+          .eq('arm_id', row.armId)
+          .eq('subject_id', row.subjectId)
+          .select('staff_id');
+      refuseIfNothingChanged(changed, assignmentsLeadersOnly);
+    },
+    log: (_) => {'subject_id': row.subjectId, 'staff_id': staffId},
+    forbidden: assignmentsLeadersOnly,
+  );
+
   Future<void> _update(String id, Map<String, Object?> values) async {
     if (values.isEmpty) return;
     final changed = await _supabase
@@ -226,10 +343,9 @@ class SubjectService {
     refuseIfNothingChanged(changed, leadersOnly);
   }
 
-  static String _taken(String name, String? code) =>
-      code == null
-          ? "There's already a subject called $name."
-          : "There's already a subject called $name, or with the code $code.";
+  static String _taken(String name, String? code) => code == null
+      ? "There's already a subject called $name."
+      : "There's already a subject called $name, or with the code $code.";
 
   Future<T> _run<T>(
     String name,
@@ -237,13 +353,15 @@ class SubjectService {
     required Map<String, Object?> Function(T result) log,
     String? duplicate,
     String? inUse,
+    String? invalid,
+    String? forbidden,
   }) => runRefusable(
     name,
     body,
     log: log,
-    forbidden: leadersOnly,
+    forbidden: forbidden ?? leadersOnly,
     duplicate: duplicate,
     inUse: inUse,
-    invalid: 'Codes are 2 to 10 letters or numbers, with no spaces.',
+    invalid: invalid ?? 'Codes are 2 to 10 letters or numbers, with no spaces.',
   );
 }

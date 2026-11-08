@@ -20,6 +20,7 @@ class ChoiceListSheet<T> extends StatefulWidget {
     required this.searchHint,
     required this.items,
     required this.labelBuilder,
+    this.captionBuilder,
     this.subtitle,
     this.selected,
   });
@@ -31,6 +32,9 @@ class ChoiceListSheet<T> extends StatefulWidget {
   final String searchHint;
   final List<T> items;
   final String Function(T item) labelBuilder;
+
+  /// A quiet line under the label, e.g. "3 arms" or "Compulsory".
+  final String Function(T item)? captionBuilder;
   final T? selected;
 
   static Future<T?> show<T>({
@@ -39,6 +43,7 @@ class ChoiceListSheet<T> extends StatefulWidget {
     required String searchHint,
     required List<T> items,
     required String Function(T item) labelBuilder,
+    String Function(T item)? captionBuilder,
     T? selected,
     String? subtitle,
   }) => Navigator.of(context).push<T>(
@@ -50,6 +55,7 @@ class ChoiceListSheet<T> extends StatefulWidget {
         searchHint: searchHint,
         items: items,
         labelBuilder: labelBuilder,
+        captionBuilder: captionBuilder,
         selected: selected,
       ),
     ),
@@ -136,6 +142,7 @@ class _ChoiceListSheetState<T> extends State<ChoiceListSheet<T>> {
                     final item = visible[index];
                     return AppSelectionRow(
                       title: widget.labelBuilder(item),
+                      subtitle: widget.captionBuilder?.call(item),
                       control: AppRadio<T>(
                         value: item,
                         groupValue: widget.selected,

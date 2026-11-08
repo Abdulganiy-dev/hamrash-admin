@@ -1,4 +1,6 @@
+import 'package:hamrash_admin/api/models/academic_calendar/academic_session.dart';
 import 'package:hamrash_admin/api/models/class_structure/class_structure.dart';
+import 'package:hamrash_admin/api/models/team/teaching.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -20,6 +22,10 @@ class ClassStructureService {
       'Only the owner, admins, the principal and vice principals can change '
       'classes and arms.';
 
+  static const classTeachersLeadersOnly =
+      'Only the owner, admins, the principal and vice principals can change '
+      'class teachers.';
+
   /// Every section with its classes and arms, in teaching order.
   Future<List<SchoolSection>> getStructure(String organizationId) => _run(
     'getStructure',
@@ -36,6 +42,21 @@ class ClassStructureService {
       'organization_id': organizationId,
       'sections': sections.length,
     },
+  );
+
+  /// The school's current session, or null when none is marked current.
+  Future<AcademicSession?> getCurrentSession(String organizationId) => _run(
+    'getCurrentSession',
+    () async {
+      final row = await _supabase
+          .from('academic_sessions')
+          .select(AcademicSession.columns)
+          .eq('organization_id', organizationId)
+          .eq('is_current', true)
+          .maybeSingle();
+      return row == null ? null : AcademicSession.fromJson(row);
+    },
+    log: (session) => {'organization_id': organizationId, 'id': session?.id},
   );
 
   /// Nursery 1–3, Primary 1–6 and JSS 1–SS 3, with SS 3 graduating. Only
@@ -214,6 +235,98 @@ class ClassStructureService {
         'refresh and try again.',
   );
 
+  /// The class teachers of [sessionId] with their names and arm, for one arm
+  /// when [armId] is given and for the whole school otherwise. Every member
+  /// can read them; only leaders can change them.
+  Future<List<ClassTeacher>> listClassTeachers({
+    required String organizationId,
+    required String sessionId,
+    String? armId,
+  }) => _run(
+    'listClassTeachers',
+    () async {
+      var query = _supabase
+          .from('class_teachers')
+          .select(ClassTeacher.columns)
+          .eq('organization_id', organizationId)
+          .eq('session_id', sessionId);
+      if (armId != null) query = query.eq('arm_id', armId);
+      final rows = await query.order('is_lead', ascending: false);
+      return rows.map(ClassTeacher.fromJson).toList();
+    },
+    log: (rows) => {
+      'session_id': sessionId,
+      'arm_id': armId,
+      'count': rows.length,
+    },
+  );
+
+  /// One staff member's class-teacher rows for a session, lead first.
+  Future<List<ClassTeacher>> getStaffClassTeachers({
+    required String organizationId,
+    required String staffId,
+    required String sessionId,
+  }) => _run('getStaffClassTeachers', () async {
+    final rows = await _supabase
+        .from('class_teachers')
+        .select(ClassTeacher.columns)
+        .eq('organization_id', organizationId)
+        .eq('session_id', sessionId)
+        .eq('staff_id', staffId)
+        .order('is_lead', ascending: false);
+    return rows.map(ClassTeacher.fromJson).toList();
+  }, log: (rows) => {'staff_id': staffId, 'count': rows.length});
+
+  /// Puts [staffId] on [armId] as its lead or an assistant. Making someone
+  /// the lead demotes the arm's previous lead in the same write.
+  Future<void> addClassTeacher({
+    required String organizationId,
+    required String sessionId,
+    required String armId,
+    required String staffId,
+    required bool isLead,
+  }) => _run(
+    'addClassTeacher',
+    () async {
+      await _supabase.from('class_teachers').insert({
+        'organization_id': organizationId,
+        'session_id': sessionId,
+        'arm_id': armId,
+        'staff_id': staffId,
+        'is_lead': isLead,
+      });
+    },
+    log: (_) => {'arm_id': armId, 'staff_id': staffId, 'is_lead': isLead},
+    forbidden: classTeachersLeadersOnly,
+    duplicate: 'That person is already on this arm. Reload and try again.',
+    invalid: 'An arm can have one lead and two assistants. Free a slot first.',
+  );
+
+  /// Moves an existing class teacher to lead or assistant in the same slot.
+  Future<void> updateClassTeacherRole(
+    ClassTeacher row, {
+    required bool isLead,
+  }) => _run(
+    'updateClassTeacherRole',
+    () async {
+      final changed = await _supabase
+          .from('class_teachers')
+          .update({'is_lead': isLead})
+          .eq('session_id', row.sessionId)
+          .eq('arm_id', row.armId)
+          .eq('staff_id', row.staffId)
+          .select('staff_id');
+      refuseIfNothingChanged(changed, classTeachersLeadersOnly);
+    },
+    log: (_) => {
+      'arm_id': row.armId,
+      'staff_id': row.staffId,
+      'is_lead': isLead,
+    },
+    forbidden: classTeachersLeadersOnly,
+    invalid: 'An arm can have one lead and two assistants. Free a slot first.',
+  );
+
   Future<int> _insertArms(
     String organizationId,
     Map<String, List<String>> armsByClass,
@@ -257,13 +370,15 @@ class ClassStructureService {
     required Map<String, Object?> Function(T result) log,
     String? duplicate,
     String? inUse,
+    String? invalid,
+    String? forbidden,
   }) => runRefusable(
     name,
     body,
     log: log,
-    forbidden: leadersOnly,
+    forbidden: forbidden ?? leadersOnly,
     duplicate: duplicate,
     inUse: inUse,
-    invalid: 'Every name needs at least one letter or number.',
+    invalid: invalid ?? 'Every name needs at least one letter or number.',
   );
 }

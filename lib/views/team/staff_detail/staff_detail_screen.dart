@@ -19,8 +19,11 @@ import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
+import 'package:hamrash_admin/core/widgets/navigation/app_nav_button.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_view_model.dart';
+import 'package:hamrash_admin/views/team/staff_teaching/teaching_setup_view_model.dart';
+import 'package:hamrash_admin/views/team/staff_teaching/widgets/teaching_setup_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/change_details_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/invite_ready_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/invite_sheet.dart';
@@ -47,6 +50,25 @@ class StaffDetailScreen extends StatelessWidget {
   final MemberSchool school;
   final String staffId;
 
+  /// Either teaching sheet: the homeroom and subject setup. A save closes
+  /// the flow, refreshes the page and says what was set.
+  Future<void> _openTeaching(
+    BuildContext context,
+    StaffDetailViewModel model,
+  ) async {
+    final change = await TeachingSetupSheet.show(
+      context,
+      school: school,
+      staff: model.member,
+    );
+    if (change == null || !context.mounted) return;
+    await model.reload();
+    AppToast.show(switch (change) {
+      TeachingChange.homeroom => 'Homeroom set',
+      TeachingChange.subject => 'Subject set',
+    });
+  }
+
   @override
   Widget build(BuildContext context) =>
       ViewModelBuilder<StaffDetailViewModel>.reactive(
@@ -62,6 +84,15 @@ class StaffDetailScreen extends StatelessWidget {
             showBackButton: true,
             onBackPressed: () => NavigationService.popScreen(model.changed),
             backgroundColor: AppPalette.linen,
+            actions: [
+              if (model.canSetTeaching)
+                AppNavIconButton(
+                  icon: AppIcons.graduationCap,
+                  iconColor: LightColors.primaryPrimaryDefault,
+                  semanticLabel: 'Teaching setup',
+                  onPressed: () => _openTeaching(context, model),
+                ),
+            ],
             body:
                 content ??
                 (model.error != null

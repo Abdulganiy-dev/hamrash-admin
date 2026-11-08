@@ -73,6 +73,10 @@ class StaffDetailViewModel extends BaseViewModel {
   /// offered.
   bool get canRemove => school.canManageAccess && !isOwnerRow;
 
+  /// Teaching setup belongs to teaching staff only. The record must have
+  /// loaded first, so the action waits with the page.
+  bool get canSetTeaching => _staff?.staffType == 'teaching';
+
   /// Leaders edit a staff member's own details; the database allows owner,
   /// admin, principal and vice principal.
   bool get canEditDetails => school.canRunSetup;
