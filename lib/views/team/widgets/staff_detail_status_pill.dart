@@ -5,7 +5,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 
-/// The staff page's status pill: a 7px dot, a bordered 24 tall pill and the
+/// The staff page's status pill: a 7px dot, a bordered 26 tall pill and the
 /// short state label. The list keeps its own smaller flat pill.
 class StaffDetailStatusPill extends StatelessWidget {
   const StaffDetailStatusPill({super.key, required this.access});
@@ -51,8 +51,8 @@ class StaffDetailStatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final tone = _tone;
     return Container(
-      height: 24,
-      padding: const EdgeInsets.only(left: 8, right: 10),
+      height: 26,
+      padding: const EdgeInsets.only(left: 9, right: 11),
       decoration: BoxDecoration(
         color: tone.fill,
         borderRadius: AppRadius.brPill,

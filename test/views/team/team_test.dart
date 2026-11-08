@@ -327,7 +327,7 @@ void main() {
       );
 
       expect(model.access, StaffAccess.notOnApp);
-      expect(model.identityMeta, 'Teacher');
+      expect(model.identityMeta, 'Teacher · Non-teaching');
       expect(model.canInvite, isTrue);
       expect(model.canManageAccess, isFalse);
       expect(model.canRemove, isFalse);
@@ -343,7 +343,7 @@ void main() {
         );
 
         expect(model.access, StaffAccess.invitePending);
-        expect(model.identityMeta, 'Bursar');
+        expect(model.identityMeta, 'Bursar · Non-teaching');
         expect(model.displayCode, 'K7M2-QX9P');
         expect(model.canCancelInvite, isTrue);
         expect(
@@ -358,7 +358,7 @@ void main() {
       final (model, _) = await loaded(_admin, memberIds: ['m-owner']);
 
       expect(model.access, StaffAccess.onApp);
-      expect(model.identityMeta, 'Admin');
+      expect(model.identityMeta, 'Admin · Non-teaching');
       expect(model.joinedCaption, 'Joined 3 Sep');
       expect(model.canManageAccess, isTrue);
       expect(model.canRemove, isTrue);
@@ -369,7 +369,7 @@ void main() {
       final (model, _) = await loaded(_owner, memberIds: ['m-owner']);
 
       expect(model.access, StaffAccess.owner);
-      expect(model.identityMeta, 'Owner');
+      expect(model.identityMeta, 'Owner · Non-teaching');
       expect(model.canManageAccess, isFalse);
       expect(model.canRemove, isFalse);
       expect(model.isOwnerRow, isTrue);

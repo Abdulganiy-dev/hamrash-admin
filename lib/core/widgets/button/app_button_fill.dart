@@ -106,9 +106,7 @@ class AppButtonFill {
       color: _lerpColor(a.color, b.color, t),
       border: _lerpColor(a.border, b.border, t),
       gradient:
-          hasGradient
-              ? LinearGradient.lerp(aGradient, bGradient, t)
-              : null,
+          hasGradient ? LinearGradient.lerp(aGradient, bGradient, t) : null,
     );
   }
 

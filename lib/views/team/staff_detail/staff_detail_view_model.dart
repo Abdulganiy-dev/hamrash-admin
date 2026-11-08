@@ -107,26 +107,46 @@ class StaffDetailViewModel extends BaseViewModel {
   String get staffTypeLabel =>
       member.staffType == 'teaching' ? 'Teaching' : 'Non-teaching';
 
-  /// "Maths Teacher" for no login or an invite, the login's role once they
-  /// are on the app. No app name here.
+  /// "Bursar · Non-teaching": the job title (the role's name when there is
+  /// none) and the staff type, under the name.
   String get identityMeta {
-    if (isOnApp || isSuspended) return role.teamLabel;
     final jobTitle = member.jobTitle?.trim();
-    return jobTitle == null || jobTitle.isEmpty ? role.teamLabel : jobTitle;
+    final title =
+        jobTitle == null || jobTitle.isEmpty ? role.teamLabel : jobTitle;
+    return '$title · $staffTypeLabel';
+  }
+
+  /// Private details are for leaders only; the page is leaders-only already,
+  /// this keeps the guard next to the data.
+  bool get showPersonal => school.canRunSetup;
+
+  /// "12 Mar 1991", or null when not added.
+  String? get dateOfBirthLabel {
+    final date = member.privateDetails?.dateOfBirth;
+    return date == null ? null : AppDateFormat.dayMonthYear(date);
+  }
+
+  String? get genderLabel => member.gender?.label;
+
+  /// "Ikeja, Lagos": LGA then state. Whichever is known when only one is.
+  String? get livesInLabel {
+    final details = member.privateDetails;
+    final parts = [
+      details?.residenceLga?.trim(),
+      details?.residenceState?.trim(),
+    ].whereType<String>().where((part) => part.isNotEmpty);
+    return parts.isEmpty ? null : parts.join(', ');
+  }
+
+  String? get homeAddress {
+    final address = member.privateDetails?.address?.trim();
+    return address == null || address.isEmpty ? null : address;
   }
 
   /// "Joined 3 Sep", or null when the login has no joined date.
   String? get joinedCaption {
     final joined = login?.joinedAt;
     return joined == null ? null : 'Joined ${AppDateFormat.dayMonth(joined)}';
-  }
-
-  /// The contact sheet's line: "{Job title} · {Staff app|Admin app}".
-  String get contactSubtitle {
-    final jobTitle = member.jobTitle?.trim();
-    final label =
-        jobTitle == null || jobTitle.isEmpty ? role.teamLabel : jobTitle;
-    return '$label · ${role.appLabel}';
   }
 
   /// The role the invite sheet starts on, kept inside what the viewer may

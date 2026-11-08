@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
@@ -149,12 +150,12 @@ void main() {
     expect(find.byType(AppCard), findsOneWidget);
     expect(find.byType(StaffListDivider), findsNWidgets(_allStaff.length - 1));
 
-    // Faint stone-100, inset to the text column: 16 + 44 avatar + 12 = 72.
+    // Faint (stone-50), inset to the text column: 16 + 44 avatar + 12 = 72.
     final divider = find.byType(StaffListDivider).first;
     final fill = tester.widget<ColoredBox>(
       find.descendant(of: divider, matching: find.byType(ColoredBox)),
     );
-    expect(fill.color, AppPalette.stone100);
+    expect(fill.color, AppDivider.faint);
     final box = tester.getRect(divider);
     final line = tester.getRect(
       find.descendant(of: divider, matching: find.byType(ColoredBox)),
@@ -195,13 +196,12 @@ void main() {
 
     expect(tester.getSize(find.byType(AppCard)).width, 390 - 32);
 
-    final row =
-        find
-            .ancestor(
-              of: find.text('Amina Bello'),
-              matching: find.byType(Container),
-            )
-            .first;
+    final row = find
+        .ancestor(
+          of: find.text('Amina Bello'),
+          matching: find.byType(Container),
+        )
+        .first;
     // 12 above and below the 44 avatar, before the 1px divider.
     expect(tester.getSize(row).height, 68);
     expect(tester.takeException(), isNull);

@@ -10,7 +10,9 @@ abstract final class AppIcons {
   static const arrowLeftRight = LucideIcons.arrowLeftRight;
   static const award = LucideIcons.award;
   static const bell = LucideIcons.bell;
+  static const briefcase = LucideIcons.briefcase;
   static const bookOpen = LucideIcons.bookOpen;
+  static const cake = LucideIcons.cake;
   static const calendar = LucideIcons.calendar;
   static const camera = LucideIcons.camera;
   static const check = LucideIcons.check;
@@ -31,6 +33,7 @@ abstract final class AppIcons {
   static const eye = LucideIcons.eye;
   static const eyeOff = LucideIcons.eyeOff;
   static const graduationCap = LucideIcons.graduationCap;
+  static const hash = LucideIcons.hash;
   static const house = LucideIcons.house;
   static const image = LucideIcons.image;
   static const info = LucideIcons.info;
@@ -42,6 +45,7 @@ abstract final class AppIcons {
   static const mail = LucideIcons.mail;
   static const messageCircle = LucideIcons.messageCircle;
   static const messageSquare = LucideIcons.messageSquare;
+  static const mapPin = LucideIcons.mapPin;
   static const minus = LucideIcons.minus;
   static const pencil = LucideIcons.pencil;
   static const phone = LucideIcons.phone;
@@ -50,11 +54,13 @@ abstract final class AppIcons {
   static const school = LucideIcons.school;
   static const search = LucideIcons.search;
   static const share = LucideIcons.share;
+  static const shield = LucideIcons.shield;
   static const timer = LucideIcons.timer;
   static const toggleLeft = LucideIcons.toggleLeft;
   static const toggleRight = LucideIcons.toggleRight;
   static const trash2 = LucideIcons.trash2;
   static const triangleAlert = LucideIcons.triangleAlert;
+  static const user = LucideIcons.user;
   static const userPlus = LucideIcons.userPlus;
   static const users = LucideIcons.users;
   static const wallet = LucideIcons.wallet;

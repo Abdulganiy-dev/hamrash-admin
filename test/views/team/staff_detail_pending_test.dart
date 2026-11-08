@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
+import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
-import 'package:hamrash_admin/views/team/widgets/invite_ready_sheet.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_detail_identity.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_details_card.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_invite_card.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_invite_code_field.dart';
 
 class _FakeTeam implements TeamService {
   _FakeTeam(this.member);
@@ -30,6 +30,7 @@ final _member = StaffMember(
   lastName: 'Ade',
   jobTitle: 'Teacher',
   phone: '+2348030000000',
+  email: 'tunde@example.com',
   staffType: 'teaching',
   status: StaffRecordStatus.active,
   createdAt: DateTime(2026, 11, 8),
@@ -64,51 +65,48 @@ void main() {
   });
 
   Future<void> pump(WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(
       MaterialApp(home: StaffDetailScreen(school: _school, staffId: 's1')),
     );
     await tester.pumpAndSettle();
   }
 
-  testWidgets('the pending invite is one card, not a big code block', (
+  testWidgets('the pending invite shows the code field and share button', (
     tester,
   ) async {
     await pump(tester);
 
     expect(find.text('Invite pending'), findsOneWidget);
+    expect(find.text('Teacher · Teaching'), findsOneWidget);
+
+    expect(find.byType(StaffInviteCodeField), findsOneWidget);
+    expect(find.text('INVITE CODE'), findsOneWidget);
+    expect(find.text('Never expires'), findsOneWidget);
+    expect(find.text('K7M2-QX9P'), findsOneWidget);
     expect(
-      find.descendant(
-        of: find.byType(StaffDetailIdentity),
-        matching: find.text('Teacher'),
-      ),
+      tester.getSize(find.byKey(const ValueKey('invite-code-field'))).height,
+      64,
+    );
+    expect(
+      tester.getSize(find.byKey(const ValueKey('invite-copy-button'))),
+      const Size(36, 36),
+    );
+    expect(
+      find.widgetWithText(AppPrimaryButton, 'Share invite'),
       findsOneWidget,
     );
+    expect(find.text('EXPIRES'), findsNothing);
+    expect(find.text('Invite to Hamrash'), findsNothing);
 
-    expect(find.byType(StaffInviteCard), findsOneWidget);
-    expect(find.text('INVITE CODE'), findsOneWidget);
-    expect(find.text('K7M2-QX9P'), findsOneWidget);
-    expect(find.text('EXPIRES'), findsOneWidget);
-    expect(find.text('Never'), findsOneWidget);
-    expect(find.text('Invited today'), findsNothing);
-    expect(find.text('Share code'), findsNothing);
-    expect(find.text('View invite code'), findsNothing);
-    expect(find.text('Tap or long-press to copy'), findsNothing);
-
-    // Details holds only staff number/type and phone/email.
-    expect(find.text('Staff no.'), findsOneWidget);
+    // Details hold the record; no Access section for an unused invite.
+    expect(find.text('Staff number'), findsOneWidget);
     expect(find.text('Staff type'), findsOneWidget);
     expect(find.text('Phone'), findsOneWidget);
-    expect(find.text('Email'), findsOneWidget);
-    expect(find.text('Job title'), findsNothing);
-    expect(find.text('Role'), findsNothing);
-    expect(find.text('Record'), findsNothing);
-    expect(
-      find.descendant(
-        of: find.byType(StaffDetailsCard),
-        matching: find.text('Change'),
-      ),
-      findsNothing,
-    );
+    expect(find.text('Email'), findsNWidgets(2)); // action label and row
+    expect(find.text('Access'), findsNothing);
 
     expect(find.text('Cancel invite', skipOffstage: false), findsOneWidget);
     expect(
@@ -120,17 +118,74 @@ void main() {
     );
   });
 
-  testWidgets('tapping the invite card opens the invite-ready sheet', (
+  testWidgets('copy puts the raw code on the clipboard and shows a check', (
     tester,
   ) async {
+    String? copied;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copied = (call.arguments as Map)['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
     await pump(tester);
 
-    await tester.tap(find.byType(StaffInviteCard));
-    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('invite-copy-button')));
+    await tester.pump();
+    expect(copied, 'K7M2QX9P');
+    final icon = tester.widget<Icon>(
+      find.descendant(
+        of: find.byKey(const ValueKey('invite-copy-button')),
+        matching: find.byType(Icon),
+      ),
+    );
+    expect(icon.icon, AppIcons.check);
 
-    expect(find.byType(InviteReadySheet), findsOneWidget);
-    expect(find.text("Tunde's invite is ready"), findsOneWidget);
-    expect(find.text('K7M2'), findsOneWidget);
-    expect(find.text('QX9P'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 2));
+    final after = tester.widget<Icon>(
+      find.descendant(
+        of: find.byKey(const ValueKey('invite-copy-button')),
+        matching: find.byType(Icon),
+      ),
+    );
+    expect(after.icon, AppIcons.copy);
+  });
+
+  testWidgets('Share invite opens the native share sheet with the message', (
+    tester,
+  ) async {
+    final shared = <Map<Object?, Object?>>[];
+    const channel = MethodChannel('dev.fluttercommunity.plus/share');
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+      call,
+    ) async {
+      if (call.method == 'share') {
+        shared.add(call.arguments as Map<Object?, Object?>);
+      }
+      return 'dev.fluttercommunity.plus/share/unavailable';
+    });
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        null,
+      ),
+    );
+    await pump(tester);
+
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Share invite'));
+    await tester.pump();
+
+    expect(shared, hasLength(1));
+    expect(shared.single['text'], contains('K7M2-QX9P'));
+    expect(shared.single['text'], contains("Hi Tunde, you've been added"));
   });
 }

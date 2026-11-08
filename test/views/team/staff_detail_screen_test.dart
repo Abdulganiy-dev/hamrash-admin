@@ -18,11 +18,8 @@ import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
 import 'package:hamrash_admin/views/team/widgets/change_details_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/choice_list_sheet.dart';
-import 'package:hamrash_admin/views/team/widgets/contact_sheet.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_access_card.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_danger_action.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_details_card.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_detail_identity.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
 import 'package:url_launcher_platform_interface/link.dart';
 import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
 
@@ -172,6 +169,11 @@ void main() {
     MemberSchool? school,
     _FakeTeam? team,
   }) async {
+    if (tester.view.devicePixelRatio != 1) {
+      tester.view.physicalSize = const Size(390, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+    }
     locator.registerSingleton<TeamService>(team ?? _FakeTeam(member));
     await tester.pumpWidget(
       MaterialApp(
@@ -202,7 +204,6 @@ void main() {
   testWidgets('not on the app: neutral state, invite block and empty details', (
     tester,
   ) async {
-    final handle = tester.ensureSemantics();
     await pump(
       tester,
       _member(
@@ -215,47 +216,29 @@ void main() {
     );
 
     expect(find.text('Not on app'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(StaffDetailIdentity),
-        matching: find.text('Maths Teacher'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Maths Teacher · Non-teaching'), findsOneWidget);
     expect(find.text('Invite to Hamrash'), findsOneWidget);
     expect(
       find.text('They get a code to join. It never expires.'),
       findsOneWidget,
     );
-    expect(find.text("Tunde doesn't have a login yet"), findsNothing);
 
-    // Details has only the two bands: staff number/type, phone/email.
     expect(find.text('Details'), findsOneWidget);
-    expect(find.text('Job title'), findsNothing);
-    expect(find.text('Record'), findsNothing);
-    expect(find.text('Role'), findsNothing);
+    expect(find.text('Staff number'), findsOneWidget);
     expect(find.text('Staff type'), findsOneWidget);
     expect(find.text('Non-teaching'), findsOneWidget);
-    expect(find.text('Staff no.'), findsOneWidget);
-    expect(find.text('Not set'), findsOneWidget);
-    expect(find.text('Not added'), findsNWidgets(2)); // phone and email
     expect(find.text('Phone'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(StaffDetailsCard),
-        matching: find.text('Email'),
-      ),
-      findsOneWidget,
-    );
+    // Staff number, phone, email and the four Personal rows have nothing.
+    expect(find.text('Not added'), findsNWidgets(7));
+    expect(find.text('Role'), findsNothing);
+    expect(find.text('Access'), findsNothing);
+    expect(find.text('Suspend access'), findsNothing);
 
-    // One round contact button; no leftover action row.
-    expect(
-      tester.getSize(find.byKey(const ValueKey('staff-contact-button'))),
-      const Size(44, 44),
-    );
-    expect(find.bySemanticsLabel('Contact Tunde'), findsOneWidget);
-    expect(find.text('Call'), findsNothing);
-    expect(find.text('Message'), findsNothing);
+    // The three action circles are there, Call, Message and Email greyed.
+    for (final label in ['Call', 'Message', 'Email']) {
+      expect(find.text(label), findsWidgets);
+    }
+    expect(find.text('Contact'), findsNothing);
 
     expect(
       find.text('Remove from staff list', skipOffstage: false),
@@ -269,46 +252,54 @@ void main() {
       findsOneWidget,
     );
     expect(launcher.opened, isEmpty);
-    handle.dispose();
   });
 
-  testWidgets('on the app: success pill, record and the Access card', (
+  testWidgets('on the app: success pill, details, personal and Access', (
     tester,
   ) async {
-    await pump(tester, _member(login: _login()));
+    final member = _member(
+      login: _login(),
+      gender: StaffGender.female,
+    ).copyWith(
+      privateDetails: StaffPrivateDetails(
+        dateOfBirth: DateTime(1991, 3, 12),
+        address: '14 Bode Thomas, Surulere, Lagos',
+        residenceState: 'Lagos',
+        residenceLga: 'Ikeja',
+      ),
+    );
+    await pump(tester, member);
 
     expect(find.text('On app'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(StaffDetailIdentity),
-        matching: find.text('Teacher'),
-      ),
-      findsOneWidget,
-    );
-    expect(find.text("Tunde doesn't have a login yet"), findsNothing);
+    expect(find.text('Teacher · Teaching'), findsOneWidget);
 
     expect(find.text('KCL/STF/0001'), findsOneWidget);
     expect(find.text('0803 000 0000'), findsOneWidget);
     expect(find.text('tunde@example.com'), findsOneWidget);
-    expect(find.text('Job title'), findsNothing);
-    expect(find.text('Record'), findsNothing);
-    expect(find.text('Role'), findsNothing);
+
+    expect(find.text('Personal'), findsOneWidget);
+    expect(find.text('LEADER ONLY'), findsOneWidget);
+    expect(find.text('Date of birth'), findsOneWidget);
+    expect(find.text('12 Mar 1991'), findsOneWidget);
+    expect(find.text('Gender'), findsOneWidget);
+    expect(find.text('Female'), findsOneWidget);
+    expect(find.text('Lives in'), findsOneWidget);
+    expect(find.text('Ikeja, Lagos'), findsOneWidget);
+    expect(find.text('Home address'), findsOneWidget);
+    expect(find.text('14 Bode Thomas, Surulere, Lagos'), findsOneWidget);
+    expect(find.text('Not added'), findsNothing);
 
     expect(find.text('Access'), findsOneWidget);
     expect(find.text('Joined 3 Sep'), findsOneWidget);
-    expect(find.text('Change role'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(StaffAccessCard),
-        matching: find.text('Teacher'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Role'), findsOneWidget);
+    expect(find.text('Teacher'), findsOneWidget);
     expect(find.text('Suspend access'), findsOneWidget);
     expect(
       find.text("They stay on the list but can't sign in."),
       findsOneWidget,
     );
+    expect(find.text('Invite to Hamrash'), findsNothing);
+    expect(find.byType(StaffInfoRow), findsNWidgets(9));
 
     expect(
       find.text('Remove from staff list', skipOffstage: false),
@@ -320,6 +311,32 @@ void main() {
     );
   });
 
+  testWidgets('Personal shows the one residence part that is known', (
+    tester,
+  ) async {
+    final member = _member(login: _login()).copyWith(
+      privateDetails: const StaffPrivateDetails(residenceState: 'Lagos'),
+    );
+    await pump(tester, member);
+    expect(find.text('Lagos'), findsOneWidget);
+  });
+
+  testWidgets('a long address wraps and right-aligns without overflow', (
+    tester,
+  ) async {
+    final member = _member(login: _login()).copyWith(
+      privateDetails: const StaffPrivateDetails(
+        address:
+            '22 Ogunlana Drive, Off Adeniran Ogunsanya Street, Surulere, Lagos',
+      ),
+    );
+    await pump(tester, member);
+    final address = find.textContaining('22 Ogunlana Drive');
+    expect(tester.getSize(address).height, greaterThan(20));
+    expect(tester.getSize(address).width, lessThanOrEqualTo(190));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('a suspended login reads in the error tone and offers restore', (
     tester,
   ) async {
@@ -329,32 +346,28 @@ void main() {
     );
 
     expect(find.text('Suspended'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(StaffDetailIdentity),
-        matching: find.text('Teacher'),
-      ),
-      findsOneWidget,
-    );
     expect(find.text('Access'), findsOneWidget);
     expect(find.text('Joined 3 Sep'), findsOneWidget);
     expect(find.text('Restore access'), findsOneWidget);
     expect(find.text('They can sign in again.'), findsOneWidget);
   });
 
-  testWidgets('a principal does not see the Access card', (tester) async {
+  testWidgets('a principal sees Personal but not the Access section', (
+    tester,
+  ) async {
     await pump(
       tester,
       _member(login: _login()),
       school: _school(role: OrganizationMemberRole.principal),
     );
+    expect(find.text('Personal'), findsOneWidget);
     expect(find.text('Access'), findsNothing);
-    expect(find.text('Change role'), findsNothing);
+    expect(find.text('Role'), findsNothing);
     expect(find.text('Change'), findsOneWidget);
     expect(find.byType(StaffDangerAction), findsNothing);
   });
 
-  testWidgets("the owner's own record has no Access card", (tester) async {
+  testWidgets("the owner's own record has no Access section", (tester) async {
     await pump(
       tester,
       _member(
@@ -364,130 +377,61 @@ void main() {
       school: _school(memberIds: ['m1']),
     );
     expect(find.text('On app'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(StaffDetailIdentity),
-        matching: find.text('Owner'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Owner · Teaching'), findsOneWidget);
     expect(find.text('Access'), findsNothing);
     expect(find.byType(StaffDangerAction), findsNothing);
   });
 
-  Future<void> openContact(WidgetTester tester) async {
-    await tester.tap(find.byKey(const ValueKey('staff-contact-button')));
-    await tester.pumpAndSettle();
-  }
-
-  Future<void> tapContactRow(WidgetTester tester, String label) async {
-    await tester.tap(
-      find.descendant(
-        of: find.byType(ContactSheet),
-        matching: find.text(label),
-      ),
-    );
-    await tester.pumpAndSettle();
-  }
-
-  testWidgets('the contact sheet opens with all three ways to reach them', (
+  testWidgets('the Role row opens the picker and saves the new role', (
     tester,
   ) async {
-    final handle = tester.ensureSemantics();
-    await pump(tester, _member(login: _login()));
-    await openContact(tester);
+    final member = _member(login: _login());
+    final service = _FakeTeam(member);
+    await pump(tester, member, team: service);
 
-    expect(find.byType(ContactSheet), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(ContactSheet),
-        matching: find.text('Contact Tunde'),
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Teacher · Staff app'), findsOneWidget);
-    final sheet = find.byType(ContactSheet);
-    for (final label in ['Call', 'Message', 'Email']) {
-      expect(
-        find.descendant(of: sheet, matching: find.text(label)),
-        findsOneWidget,
-      );
-    }
-    expect(
-      find.descendant(of: sheet, matching: find.text('0803 000 0000')),
-      findsNWidgets(2),
-    );
-    expect(
-      find.descendant(of: sheet, matching: find.text('tunde@example.com')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: sheet, matching: find.text('Not added')),
-      findsNothing,
-    );
-    expect(find.bySemanticsLabel('Call Tunde, 0803 000 0000'), findsOneWidget);
-    handle.dispose();
+    await tester.tap(find.text('Role'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('role-row-admin')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Use Admin'));
+    await tester.pumpAndSettle();
+    expect(service.changedRole, 'admin');
   });
 
-  testWidgets('contact rows launch tel, sms and mailto after closing', (
+  testWidgets('Suspend access asks for confirmation', (tester) async {
+    final member = _member(login: _login());
+    final service = _FakeTeam(member);
+    await pump(tester, member, team: service);
+
+    await tester.tap(find.byKey(const ValueKey('access-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text("Suspend Tunde's access?"), findsOneWidget);
+  });
+
+  testWidgets('the action circles launch tel, sms and mailto', (tester) async {
+    await pump(tester, _member(login: _login()));
+
+    await tester.tap(find.byKey(const ValueKey('action-call')));
+    await tester.tap(find.byKey(const ValueKey('action-message')));
+    await tester.tap(find.byKey(const ValueKey('action-email')));
+    await tester.pump();
+    expect(launcher.opened, [
+      'tel:+2348030000000',
+      'sms:+2348030000000',
+      'mailto:tunde@example.com',
+    ]);
+  });
+
+  testWidgets('a missing phone or email greys the matching circles', (
     tester,
   ) async {
-    await pump(tester, _member(login: _login()));
+    await pump(tester, _member(login: _login(), phone: null, email: ''));
 
-    await openContact(tester);
-    await tapContactRow(tester, 'Call');
-    expect(launcher.opened, ['tel:+2348030000000']);
-    expect(find.byType(ContactSheet), findsNothing);
-
-    await openContact(tester);
-    await tapContactRow(tester, 'Message');
-    expect(launcher.opened.last, 'sms:+2348030000000');
-
-    await openContact(tester);
-    await tapContactRow(tester, 'Email');
-    expect(launcher.opened.last, 'mailto:tunde@example.com');
-  });
-
-  testWidgets('a missing phone disables Call and Message only', (tester) async {
-    await pump(tester, _member(login: _login(), phone: null));
-    await openContact(tester);
-
-    expect(
-      find.descendant(
-        of: find.byType(ContactSheet),
-        matching: find.text('Not added'),
-      ),
-      findsNWidgets(2),
-    );
-
-    await tapContactRow(tester, 'Call');
+    await tester.tap(find.byKey(const ValueKey('action-call')));
+    await tester.tap(find.byKey(const ValueKey('action-message')));
+    await tester.tap(find.byKey(const ValueKey('action-email')));
+    await tester.pump();
     expect(launcher.opened, isEmpty);
-    expect(find.byType(ContactSheet), findsOneWidget);
-
-    await tapContactRow(tester, 'Message');
-    expect(launcher.opened, isEmpty);
-    expect(find.byType(ContactSheet), findsOneWidget);
-
-    await tapContactRow(tester, 'Email');
-    expect(launcher.opened, ['mailto:tunde@example.com']);
-  });
-
-  testWidgets('a missing email disables Email only', (tester) async {
-    await pump(tester, _member(login: _login(), email: ''));
-    await openContact(tester);
-
-    expect(
-      find.descendant(
-        of: find.byType(ContactSheet),
-        matching: find.text('Not added'),
-      ),
-      findsOneWidget,
-    );
-    expect(find.bySemanticsLabel('Email Tunde, Not added'), findsOneWidget);
-
-    await tapContactRow(tester, 'Email');
-    expect(launcher.opened, isEmpty);
-    expect(find.byType(ContactSheet), findsOneWidget);
   });
 
   testWidgets('the danger action is a pinned bottom bar', (tester) async {
@@ -509,26 +453,6 @@ void main() {
     );
   });
 
-  testWidgets('the details card has two bands of two columns', (tester) async {
-    await pump(tester, _member(login: _login()));
-
-    final card = tester.getRect(find.byType(StaffDetailsCard));
-    for (final band in [1, 2]) {
-      expect(
-        tester.getSize(find.byKey(ValueKey('details-band-$band'))).height,
-        56,
-      );
-      final divider = find.byKey(ValueKey('details-divider-$band'));
-      expect(tester.getSize(divider).width, 1);
-      expect(
-        tester.getCenter(divider).dx,
-        closeTo(card.center.dx, 1),
-        reason: 'band $band divider must be exactly centred',
-      );
-    }
-    expect(find.byKey(const ValueKey('details-hairline-1')), findsOneWidget);
-  });
-
   testWidgets('the details header is 44 tall and Change is flush right', (
     tester,
   ) async {
@@ -540,8 +464,25 @@ void main() {
     expect(tester.getSize(action).height, 44);
     expect(
       tester.getTopRight(action).dx,
-      closeTo(tester.getTopRight(find.byType(StaffDetailsCard)).dx, 0.5),
+      closeTo(tester.getTopRight(header).dx, 0.5),
     );
+  });
+
+  testWidgets('rows are 54 tall, hairline-separated and fill the gutters', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pump(tester, _member(login: _login()));
+
+    final rows = find.byType(StaffInfoRow);
+    final first = tester.getRect(rows.first);
+    expect(first.left, 16);
+    expect(first.width, 390 - 32);
+    // 1px hairline on top of a 54 row.
+    expect(first.height, 55);
+    expect(find.byType(StaffRowDivider), findsWidgets);
   });
 
   testWidgets('a non-leader has no Change button', (tester) async {
@@ -802,14 +743,14 @@ void main() {
     double width,
     StaffMember member,
   ) async {
-    tester.view.physicalSize = Size(width, 844);
+    tester.view.physicalSize = Size(width, 2000);
     tester.view.devicePixelRatio = 1;
     tester.view.padding = FakeViewPadding.zero;
     addTearDown(tester.view.reset);
     await pump(tester, member);
   }
 
-  testWidgets('long names and emails fit at 390', (tester) async {
+  testWidgets('long names, emails and addresses fit at 390', (tester) async {
     await pumpAtWidth(
       tester,
       390,
@@ -819,12 +760,20 @@ void main() {
         jobTitle: 'Vice principal',
         email: 'avery.long.email.address.for.one.teacher@example.school',
         login: _login(),
+      ).copyWith(
+        privateDetails: const StaffPrivateDetails(
+          address:
+              '22 Ogunlana Drive, Off Adeniran Ogunsanya Street, Surulere, '
+              'Lagos',
+          residenceLga: 'Ibadan North-East',
+          residenceState: 'Akwa Ibom',
+        ),
       ),
     );
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('long names and emails fit at 320', (tester) async {
+  testWidgets('long names, emails and addresses fit at 320', (tester) async {
     await pumpAtWidth(
       tester,
       320,
@@ -834,6 +783,14 @@ void main() {
         jobTitle: 'Vice principal',
         email: 'avery.long.email.address.for.one.teacher@example.school',
         login: _login(),
+      ).copyWith(
+        privateDetails: const StaffPrivateDetails(
+          address:
+              '22 Ogunlana Drive, Off Adeniran Ogunsanya Street, Surulere, '
+              'Lagos',
+          residenceLga: 'Ibadan North-East',
+          residenceState: 'Akwa Ibom',
+        ),
       ),
     );
     expect(tester.takeException(), isNull);
