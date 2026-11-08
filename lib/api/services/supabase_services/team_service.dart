@@ -1,6 +1,8 @@
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_details_changes.dart';
+import 'package:hamrash_admin/api/models/team/staff_filter.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_page.dart';
 import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -33,33 +35,57 @@ class TeamService {
       'Only the owner, admins, the principal and vice principals can change '
       'staff details.';
 
-  /// Every staff record at the school, with its login and private details
-  /// when the caller may read them.
-  Future<List<StaffMember>> listStaff(String organizationId) => _run(
-    'listStaff',
+  /// How many staff one page of the list holds.
+  static const pageSize = 30;
+
+  /// One page of the school's staff (`list_staff`): the search, filters and
+  /// sort run on the server, which also returns the chip counts and the
+  /// cursor for the next page. Pass [cursor] from the previous page, and
+  /// start again with null when [filter] changes. Rows carry the login but no
+  /// private details.
+  Future<StaffPage> listStaffPage({
+    required String organizationId,
+    StaffFilter filter = StaffFilter.initial,
+    int limit = pageSize,
+    String? cursor,
+  }) => _run(
+    'listStaffPage',
     () async {
-      final rows = await _supabase
-          .from('staff')
-          .select(StaffMember.columns)
-          .eq('organization_id', organizationId)
-          .order('first_name')
-          .order('last_name');
-      final privateRows = await _supabase
-          .from('staff_private_details')
-          .select('staff_id,${StaffPrivateDetails.columns}')
-          .eq('organization_id', organizationId);
-      final byStaff = {
-        for (final row in privateRows)
-          row['staff_id'] as String: StaffPrivateDetails.fromJson(row),
-      };
-      return [
-        for (final row in rows)
-          StaffMember.fromJson(
-            row,
-          ).copyWith(privateDetails: byStaff[row['id'] as String]),
-      ];
+      try {
+        final result = await _supabase.rpc(
+          'list_staff',
+          params: {
+            'p_organization_id': organizationId,
+            'p_search': filter.trimmedSearch.isEmpty
+                ? null
+                : filter.trimmedSearch,
+            'p_login': filter.login.value,
+            'p_roles': filter.roles.isEmpty
+                ? null
+                : [for (final role in filter.roles) role.value],
+            'p_staff_type': filter.staffType.value,
+            'p_statuses': filter.statuses.isEmpty
+                ? null
+                : [for (final status in filter.statuses) status.value],
+            'p_sort': filter.sort.value,
+            'p_limit': limit,
+            'p_cursor': cursor,
+          },
+        );
+        return StaffPage.fromJson(Map<String, dynamic>.from(result as Map));
+      } on PostgrestException catch (error) {
+        // The function refuses bad arguments and stale cursors with 22023
+        // and a message written for people.
+        if (error.code == '22023') throw SupabaseRefusal(error.message);
+        rethrow;
+      }
     },
-    log: (staff) => {'organization_id': organizationId, 'count': staff.length},
+    log: (page) => {
+      'organization_id': organizationId,
+      'count': page.rows.length,
+      'total': page.total,
+      'has_more': page.nextCursor != null,
+    },
   );
 
   /// One staff record, for the detail page after a change.

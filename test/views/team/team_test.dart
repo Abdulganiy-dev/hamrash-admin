@@ -3,7 +3,9 @@ import 'package:hamrash_admin/api/models/organization_models/member_school.dart'
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_job_title.dart';
+import 'package:hamrash_admin/api/models/team/staff_filter.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_page.dart';
 import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
 import 'package:hamrash_admin/api/models/team/invite_code.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
@@ -12,6 +14,8 @@ import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/views/team/add_staff/add_staff_view_model.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_view_model.dart';
 import 'package:hamrash_admin/views/team/team_view_model.dart';
+
+import 'staff_page_fake.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final _now = DateTime(2026, 11, 8, 12);
@@ -145,7 +149,17 @@ class _Team extends TeamService {
   String? createdResidenceLga;
 
   @override
-  Future<List<StaffMember>> listStaff(String organizationId) async => people;
+  Future<StaffPage> listStaffPage({
+    required String organizationId,
+    StaffFilter filter = StaffFilter.initial,
+    int limit = TeamService.pageSize,
+    String? cursor,
+  }) async => fakeStaffPage(
+    people,
+    filter: filter,
+    limit: limit,
+    cursor: cursor,
+  );
 
   @override
   Future<StaffMember> getStaff(String staffId) async =>
@@ -284,26 +298,25 @@ void main() {
       return (model, service);
     }
 
-    test('filters and counts follow where each login has got to', () async {
+    test('the login filter and the counts come from the server', () async {
       final (model, _) = await loaded();
 
-      expect(model.allCount, 4);
-      expect(model.onAppCount, 2); // owner and admin
-      expect(model.notOnAppCount, 2); // invite pending and no login
+      expect(model.counts.all, 4);
+      expect(model.counts.onApp, 2); // owner and admin
+      expect(model.counts.notOnApp, 1); // no login; the invite is "Code ready"
+      expect(model.counts.codeReady, 1);
 
-      model.pickFilter(TeamFilter.onApp);
-      expect(
-        model.visibleStaff.map((person) => person.firstName),
-        containsAll(['Amina', 'Chidi']),
+      await model.applyFilter(
+        const StaffFilter(login: StaffLoginFilter.onApp),
       );
-      expect(model.visibleStaff, hasLength(2));
-
-      model.pickFilter(TeamFilter.notOnApp);
-      expect(
-        model.visibleStaff.map((person) => person.firstName),
-        containsAll(['Ada', 'Tunde']),
-      );
-      expect(model.visibleStaff, hasLength(2));
+      expect(model.staff.map((person) => person.firstName), [
+        'Amina',
+        'Chidi',
+      ]);
+      expect(model.total, 2);
+      // The counts don't move when only the login changes.
+      expect(model.counts.all, 4);
+      expect(model.counts.notOnApp, 1);
     });
 
     test('says the role and where the person is', () async {
@@ -334,15 +347,6 @@ void main() {
       expect(model.subtitleFor(exited), endsWith(' · exited'));
     });
 
-    test('puts the owner first, then names in order', () async {
-      final (model, _) = await loaded();
-      expect(model.staff.first.id, 'own');
-      expect(model.staff.skip(1).map((person) => person.firstName), [
-        'Ada',
-        'Chidi',
-        'Tunde',
-      ]);
-    });
   });
 
   group('StaffDetailViewModel', () {

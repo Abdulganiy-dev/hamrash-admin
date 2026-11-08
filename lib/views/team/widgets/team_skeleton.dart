@@ -5,8 +5,8 @@ import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_shimmer.dart';
 
-/// 8.1 · The team list while it loads: three filter chips, then one card of
-/// hairline-separated rows — the same shape as the finished page.
+/// 8.1 · The team list while it loads: one card of hairline-separated rows,
+/// the same shape as the finished page.
 class TeamSkeleton extends StatelessWidget {
   const TeamSkeleton({super.key});
 
@@ -19,19 +19,6 @@ class TeamSkeleton extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const AppShimmer(
-        onPage: true,
-        child: Row(
-          children: [
-            ShimmerBox(width: 62, height: 40, radius: AppRadius.pill),
-            SizedBox(width: AppSpacing.sm),
-            ShimmerBox(width: 92, height: 40, radius: AppRadius.pill),
-            SizedBox(width: AppSpacing.sm),
-            ShimmerBox(width: 108, height: 40, radius: AppRadius.pill),
-          ],
-        ),
-      ),
-      const SizedBox(height: AppSpacing.md),
       AppCard(
         padding: const EdgeInsets.symmetric(vertical: _verticalPadding),
         child: AppShimmer(

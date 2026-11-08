@@ -6,7 +6,9 @@ import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_filter.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_page.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
@@ -15,13 +17,20 @@ import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
 import 'package:hamrash_admin/core/widgets/app_shimmer.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
+import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
+import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
+import 'package:hamrash_admin/core/widgets/navigation/app_nav_button.dart';
+import 'package:hamrash_admin/core/widgets/app_spinner.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_filter_sheet.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/team_screen.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_avatar.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_list_card.dart';
 import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
 
-/// Only `listStaff` is used by the list; everything else would be a real
+import 'staff_page_fake.dart';
+
+/// Only `listStaffPage` is used by the list; everything else would be a real
 /// database call, which these tests never make.
 class _FakeTeam implements TeamService {
   _FakeTeam(this.people);
@@ -29,11 +38,49 @@ class _FakeTeam implements TeamService {
   List<StaffMember> people;
 
   /// Set to keep the page in its loading state until the test completes it.
-  Completer<List<StaffMember>>? pending;
+  Completer<StaffPage>? pending;
+
+  /// Answers the list with no rows, but counts that still see everyone, as
+  /// if the people matching were removed before the list loaded.
+  bool listComesBackEmpty = false;
+
+  /// Makes every page after the first fail.
+  bool failMore = false;
+
+  /// Holds back every page after the first until the test completes it.
+  Completer<StaffPage>? moreGate;
+
+  final calls = <({StaffFilter filter, String? cursor, int limit})>[];
 
   @override
-  Future<List<StaffMember>> listStaff(String organizationId) =>
-      pending?.future ?? Future.value([...people]);
+  Future<StaffPage> listStaffPage({
+    required String organizationId,
+    StaffFilter filter = StaffFilter.initial,
+    int limit = TeamService.pageSize,
+    String? cursor,
+  }) {
+    calls.add((filter: filter, cursor: cursor, limit: limit));
+    if (cursor != null && failMore) return Future.error(Exception('offline'));
+    if (cursor != null && moreGate != null) return moreGate!.future;
+    if (pending != null) return pending!.future;
+    final page = fakeStaffPage(
+      people,
+      filter: filter,
+      limit: limit,
+      cursor: cursor,
+    );
+    if (listComesBackEmpty) {
+      return Future.value(
+        StaffPage(
+          rows: const [],
+          nextCursor: null,
+          total: 0,
+          counts: page.counts,
+        ),
+      );
+    }
+    return Future.value(page);
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -280,11 +327,11 @@ void main() {
     expect(find.text('Add staff member'), findsOneWidget);
   });
 
-  testWidgets('loading shows chips and one card of skeleton rows', (
+  testWidgets('loading shows one card of skeleton rows', (
     tester,
   ) async {
     final service = _FakeTeam(_allStaff)
-      ..pending = Completer<List<StaffMember>>();
+      ..pending = Completer<StaffPage>();
     locator.registerSingleton<TeamService>(service);
     addTearDown(locator.reset);
 
@@ -295,7 +342,14 @@ void main() {
     expect(find.byType(AppCard), findsOneWidget);
 
     // Let the load finish so nothing is left pending.
-    service.pending!.complete(<StaffMember>[]);
+    service.pending!.complete(
+      const StaffPage(
+        rows: [],
+        nextCursor: null,
+        total: 0,
+        counts: StaffCounts.zero,
+      ),
+    );
     await tester.pumpAndSettle();
   });
 
@@ -321,5 +375,291 @@ void main() {
 
     // Drop the shimmer animation before the test ends.
     await tester.pumpWidget(const SizedBox());
+  });
+
+  group('search and filters', () {
+    final filterButton = find.byWidgetPredicate(
+      (widget) =>
+          widget is AppNavIconButton && widget.icon == AppIcons.slidersHorizontal,
+    );
+    final sheetButton = find.descendant(
+      of: find.byType(StaffFilterSheet),
+      matching: find.byType(AppPrimaryButton),
+    );
+
+    // Tall, because test text is wide and the sheet would scroll.
+    void tallView(WidgetTester tester) {
+      tester.view.physicalSize = const Size(390, 2600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+    }
+
+    /// Opens 8.17, changes the draft and taps "Show results".
+    Future<void> apply(
+      WidgetTester tester, {
+      String? search,
+      String? role,
+    }) async {
+      await tester.tap(filterButton);
+      await tester.pumpAndSettle();
+      if (search != null) await tester.enterText(find.byType(TextField), search);
+      if (role != null) await tester.tap(find.text(role));
+      await tester.tap(sheetButton);
+      await tester.pumpAndSettle();
+    }
+
+    int applied(WidgetTester tester) =>
+        tester.widget<AppNavIconButton>(filterButton).appliedCount;
+
+    testWidgets('the filter button sits left of + and shows no badge', (
+      tester,
+    ) async {
+      tallView(tester);
+      await _pumpTeam(tester, _FakeTeam(_allStaff));
+
+      expect(filterButton, findsOneWidget);
+      expect(applied(tester), 0);
+      final plus = find.byWidgetPredicate(
+        (widget) => widget is AppNavIconButton && widget.icon == AppIcons.plus,
+      );
+      expect(
+        tester.getRect(filterButton).right + 8,
+        tester.getRect(plus).left,
+      );
+      // No applied-filters row until something is applied.
+      expect(find.textContaining(' of '), findsNothing);
+    });
+
+    testWidgets('applying a filter badges the button and lists the chips', (
+      tester,
+    ) async {
+      tallView(tester);
+      final service = _FakeTeam(_allStaff);
+      await _pumpTeam(tester, service);
+
+      await apply(tester, role: 'Admin');
+
+      expect(service.calls.last.filter.roles, {OrganizationMemberRole.admin});
+      expect(service.calls.last.cursor, isNull);
+      expect(applied(tester), 1);
+      expect(
+        find.descendant(of: filterButton, matching: find.text('1')),
+        findsOneWidget,
+      );
+      // One chip with its ×, and "1 of 4": matches of everyone the filters
+      // other than the login leave.
+      expect(find.text('Admin'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.ancestor(
+            of: find.text('Admin'),
+            matching: find.byType(BouncyButton),
+          ),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is AppIcon && widget.icon == AppIcons.x,
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('1 of 1'), findsOneWidget);
+      expect(find.text('Chidi Eze'), findsOneWidget);
+      expect(find.text('Amina Bello'), findsNothing);
+
+      // The × takes the filter off and everyone is back.
+      await tester.tap(find.text('Admin'));
+      await tester.pumpAndSettle();
+      expect(service.calls.last.filter.isDefault, isTrue);
+      expect(applied(tester), 0);
+      expect(find.text('Amina Bello'), findsOneWidget);
+      expect(find.textContaining(' of '), findsNothing);
+    });
+
+    testWidgets('the login filter works through the sheet', (tester) async {
+      tallView(tester);
+      final service = _FakeTeam(_allStaff);
+      await _pumpTeam(tester, service);
+
+      // No quick chips on the page any more.
+      expect(find.byType(AppFilterChip), findsNothing);
+
+      await tester.tap(filterButton);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('On app'));
+      await tester.tap(sheetButton);
+      await tester.pumpAndSettle();
+
+      expect(service.calls.last.filter.login, StaffLoginFilter.onApp);
+      expect(applied(tester), 1);
+      expect(find.text('On app'), findsOneWidget); // the applied chip
+      expect(find.text('2 of 4'), findsOneWidget);
+      expect(find.text('Amina Bello'), findsOneWidget);
+      expect(find.text('Ada Nwosu'), findsNothing);
+    });
+
+    testWidgets('search and filters with no match: "No staff match"', (
+      tester,
+    ) async {
+      tallView(tester);
+      final service = _FakeTeam(_allStaff);
+      await _pumpTeam(tester, service);
+      service.listComesBackEmpty = true;
+
+      await apply(tester, search: 'zzz', role: 'Bursar');
+
+      expect(find.byType(StaffListCard), findsNothing);
+      expect(find.text('No staff match'), findsOneWidget);
+      expect(
+        find.text(
+          'Nothing matches “zzz” with these filters. Try fewer filters or a '
+          'different spelling.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('“zzz”'), findsOneWidget);
+      expect(find.text('Bursar'), findsOneWidget);
+      // The pinned add bar stays.
+      expect(find.text('Add staff member'), findsOneWidget);
+
+      service.listComesBackEmpty = false;
+      await tester.tap(find.text('Clear filters'));
+      await tester.pumpAndSettle();
+      expect(service.calls.last.filter, StaffFilter.initial);
+      expect(find.byType(StaffListCard), findsOneWidget);
+      expect(applied(tester), 0);
+    });
+
+    testWidgets('a search alone with no match offers "Clear search"', (
+      tester,
+    ) async {
+      tallView(tester);
+      final service = _FakeTeam(_allStaff);
+      await _pumpTeam(tester, service);
+      service.listComesBackEmpty = true;
+
+      await apply(tester, search: 'Ada');
+
+      expect(find.text('No results for “Ada”'), findsOneWidget);
+      expect(
+        find.text('Check the spelling, or search by staff number.'),
+        findsOneWidget,
+      );
+      expect(find.text('Clear filters'), findsNothing);
+
+      service.listComesBackEmpty = false;
+      await tester.tap(find.text('Clear search'));
+      await tester.pumpAndSettle();
+      expect(service.calls.last.filter.search, '');
+      expect(find.byType(StaffListCard), findsOneWidget);
+    });
+
+    testWidgets('filters alone with no match: "No staff match these filters"', (
+      tester,
+    ) async {
+      tallView(tester);
+      final service = _FakeTeam(_allStaff);
+      await _pumpTeam(tester, service);
+      service.listComesBackEmpty = true;
+
+      await apply(tester, role: 'Bursar');
+
+      expect(find.text('No staff match these filters'), findsOneWidget);
+      expect(find.text('Try removing a filter.'), findsOneWidget);
+      expect(find.text('Clear filters'), findsOneWidget);
+    });
+
+    testWidgets('the list pages in as the end comes near', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final service = _FakeTeam([
+        for (var i = 0; i < 70; i++) _staff(id: 'p$i', firstName: 'P$i'),
+      ]);
+      await _pumpTeam(tester, service);
+
+      expect(find.byType(StaffListDivider), findsNWidgets(29));
+      expect(service.calls.where((call) => call.cursor != null), isEmpty);
+
+      final list = find.byType(CustomScrollView);
+      await tester.drag(list, const Offset(0, -600));
+      await tester.pumpAndSettle();
+      expect(service.calls.where((call) => call.cursor != null), isEmpty);
+
+      await tester.drag(list, const Offset(0, -2500));
+      await tester.pumpAndSettle();
+      expect(service.calls.last.cursor, '30');
+      expect(find.byType(StaffListDivider), findsNWidgets(59));
+
+      // Last page: 10 more, then no more requests.
+      await tester.drag(list, const Offset(0, -6000));
+      await tester.pumpAndSettle();
+      await tester.drag(list, const Offset(0, -6000));
+      await tester.pumpAndSettle();
+      expect(find.byType(StaffListDivider), findsNWidgets(69));
+      final requests = service.calls.length;
+      await tester.drag(list, const Offset(0, -6000));
+      await tester.pumpAndSettle();
+      expect(service.calls.length, requests);
+    });
+
+    testWidgets('a failed page shows a retry row', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final service = _FakeTeam([
+        for (var i = 0; i < 70; i++) _staff(id: 'p$i', firstName: 'P$i'),
+      ])..failMore = true;
+      await _pumpTeam(tester, service);
+
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -6000));
+      await tester.pumpAndSettle();
+
+      final retry = find.text('Couldn’t load more. Tap to retry');
+      expect(retry, findsOneWidget);
+      expect(find.byType(StaffListDivider), findsNWidgets(29));
+
+      service.failMore = false;
+      await tester.tap(retry);
+      await tester.pumpAndSettle();
+      expect(retry, findsNothing);
+      expect(find.byType(StaffListDivider), findsNWidgets(59));
+    });
+
+    testWidgets('while the next page loads, a spinner sits under the card', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final service = _FakeTeam([
+        for (var i = 0; i < 70; i++) _staff(id: 'p$i', firstName: 'P$i'),
+      ]);
+      await _pumpTeam(tester, service);
+
+      final gate = service.moreGate = Completer<StaffPage>();
+
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -1400));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(service.calls.last.cursor, '30');
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // The spinner joined the end of the list; bring it into view.
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -200));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(AppSpinner), findsOneWidget);
+
+      gate.complete(fakeStaffPage(service.people, cursor: '30'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AppSpinner), findsNothing);
+    });
+
+    testWidgets('with no staff there is nothing to filter', (tester) async {
+      await _pumpTeam(tester, _FakeTeam(const []));
+
+      expect(filterButton, findsNothing);
+    });
   });
 }

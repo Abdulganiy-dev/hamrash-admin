@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
+import 'package:hamrash_admin/api/models/team/staff_filter.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
+import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
+import 'package:hamrash_admin/core/widgets/app_spinner.dart';
+import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/app_chip_row.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
@@ -17,6 +22,7 @@ import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/team/add_staff/add_staff_screen.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
 import 'package:hamrash_admin/views/team/team_view_model.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_filter_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_list_card.dart';
 import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
 import 'package:stacked/stacked.dart';
@@ -39,7 +45,17 @@ class TeamScreen extends StatelessWidget {
           onBackPressed: () => NavigationService.popScreen(model.changed),
           backgroundColor: AppPalette.linen,
           actions: [
-            if (model.canAdd && !model.loading && model.error == null)
+            if (model.ready && !model.showEmptyState)
+              AppNavIconButton(
+                icon: AppIcons.slidersHorizontal,
+                iconColor: LightColors.primaryPrimaryDefault,
+                appliedCount: model.filter.activeCount,
+                semanticLabel: model.filter.activeCount == 0
+                    ? 'Filter staff'
+                    : 'Filter staff, ${model.filter.activeCount} applied',
+                onPressed: () => _openFilter(context, model),
+              ),
+            if (model.canAdd && model.ready)
               AppNavIconButton(
                 icon: AppIcons.plus,
                 iconSize: 18,
@@ -55,15 +71,21 @@ class TeamScreen extends StatelessWidget {
               : model.showEmptyState
               ? const _Empty()
               : _List(model: model),
-          bottomNavigationBar:
-              !model.loading && model.error == null && model.canAdd
+          bottomNavigationBar: model.ready && model.canAdd
               ? _AddBar(onPressed: () => _addStaff(context, model))
               : null,
         ),
       );
 
-  /// The form pops the new person, so this page opens their detail page and
-  /// keeps one back stack: Team → Detail.
+
+  static Future<void> _openFilter(
+    BuildContext context,
+    TeamViewModel model,
+  ) async {
+    final next = await StaffFilterSheet.show(context, initial: model.filter);
+    if (next != null) await model.applyFilter(next);
+  }
+
   static Future<void> _addStaff(
     BuildContext context,
     TeamViewModel model,
@@ -91,64 +113,275 @@ class TeamScreen extends StatelessWidget {
   }
 }
 
-class _List extends StatelessWidget {
+class _List extends StatefulWidget {
   const _List({required this.model});
 
   final TeamViewModel model;
 
   @override
-  Widget build(BuildContext context) => AppRefreshScrollView.children(
-    onRefresh: model.refresh,
-    // The chip row runs edge to edge; everything else keeps the page margin.
-    padding: EdgeInsets.zero,
-    children: [
-      AppChipRow(
-        children: [
-          AppFilterChip(
-            label: 'All',
-            count: model.allCount,
-            selected: model.filter == TeamFilter.all,
-            onTap: () => model.pickFilter(TeamFilter.all),
-          ),
-          AppFilterChip(
-            label: 'On app',
-            count: model.onAppCount,
-            selected: model.filter == TeamFilter.onApp,
-            onTap: () => model.pickFilter(TeamFilter.onApp),
-          ),
-          AppFilterChip(
-            label: 'Not on app',
-            count: model.notOnAppCount,
-            selected: model.filter == TeamFilter.notOnApp,
-            onTap: () => model.pickFilter(TeamFilter.notOnApp),
-          ),
-        ],
-      ),
-      // The chips carry 4px above and below their 40px pill (a 48px tap
-      // area), so 8 here leaves the 16px gap the page draws.
-      const SizedBox(height: AppSpacing.sm),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
-        child: model.visibleStaff.isEmpty
-            ? AppEmptyState(
-                icon: AppIcons.users,
-                compact: true,
-                title: model.filter == TeamFilter.onApp
-                    ? 'No one on the app yet'
-                    : 'No one here yet',
-                subtitle: 'Try another filter.',
-                topPadding: AppSpacing.sm,
-              )
-            : StaffListCard(
-                staff: model.visibleStaff,
+  State<_List> createState() => _ListState();
+}
+
+class _ListState extends State<_List> {
+  /// Start the next page this far before the end of the list.
+  static const _loadMoreExtent = 300.0;
+
+  final _controller = ScrollController();
+
+  TeamViewModel get model => widget.model;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_loadMoreNearEnd);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _loadMoreNearEnd() {
+    if (!_controller.hasClients || !model.hasMore) return;
+    if (_controller.position.extentAfter < _loadMoreExtent) model.loadMore();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // A short page can leave the end in view with nothing to scroll.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadMoreNearEnd();
+    });
+
+    final filter = model.filter;
+    return AppRefreshScrollView(
+      controller: _controller,
+      onRefresh: model.refresh,
+      padding: EdgeInsets.zero,
+      slivers: [
+        if (!filter.isDefault)
+          SliverToBoxAdapter(child: _AppliedFilters(model: model)),
+        if (model.showNoResults)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _NoResults(model: model),
+          )
+        else ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.screen,
+              ),
+              child: StaffListCard(
+                staff: model.staff,
                 subtitleFor: model.subtitleFor,
                 onOpen: (person) =>
                     TeamScreen._openStaff(context, model, person.id),
               ),
-      ),
-      const SizedBox(height: AppSpacing.md),
-    ],
+            ),
+          ),
+          SliverToBoxAdapter(child: _MoreFooter(model: model)),
+          const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+        ],
+      ],
+    );
+  }
+}
+
+/// 8.1a · What the list is narrowed by, each with a × to take it off, and
+/// how many of the school's people that leaves.
+class _AppliedFilters extends StatelessWidget {
+  const _AppliedFilters({required this.model});
+
+  final TeamViewModel model;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(
+      AppSpacing.screen,
+      AppSpacing.none,
+      AppSpacing.screen,
+      AppSpacing.md,
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final chip in model.filter.chips)
+                _AppliedChip(
+                  label: chip.label,
+                  onRemove: () => model.removeChip(chip),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        // Lines up with the chips' 32px height.
+        SizedBox(
+          height: 32,
+          child: Center(
+            child: AppText(
+              '${model.total} of ${model.counts.all}',
+              style: AppTypography.body.copyWith(
+                fontSize: 13,
+                height: 18 / 13,
+                fontWeight: FontWeight.w600,
+                color: LightColors.textMuted,
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
   );
+}
+
+/// A removable applied filter: 32 tall, tinted, with a small ×.
+class _AppliedChip extends StatelessWidget {
+  const _AppliedChip({required this.label, required this.onRemove});
+
+  final String label;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: 'Remove $label filter',
+    excludeSemantics: true,
+    child: BouncyButton(
+      onPressed: onRemove,
+      child: Container(
+        height: 32,
+        padding: const EdgeInsets.only(left: 12, right: 10),
+        decoration: BoxDecoration(
+          color: LightColors.primaryPrimaryMute,
+          borderRadius: AppRadius.brPill,
+          border: Border.all(color: LightColors.primaryPrimaryDefault),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppText(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.body.copyWith(
+                fontSize: 13,
+                height: 18 / 13,
+                fontWeight: FontWeight.w600,
+                color: LightColors.primaryPrimaryText,
+              ),
+            ),
+            const SizedBox(width: 6),
+            const AppIcon(
+              AppIcons.x,
+              size: 12,
+              color: LightColors.primaryPrimaryDefault,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// 8.1b · A search or filters that match no one.
+class _NoResults extends StatelessWidget {
+  const _NoResults({required this.model});
+
+  final TeamViewModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    final filter = model.filter;
+    final search = filter.trimmedSearch;
+    final hasSearch = search.isNotEmpty;
+    final hasFilters = filter.chips.length > (hasSearch ? 1 : 0);
+
+    final String title;
+    final String subtitle;
+    final String action;
+    final VoidCallback onAction;
+    if (hasSearch && hasFilters) {
+      title = 'No staff match';
+      subtitle =
+          'Nothing matches “$search” with these filters. Try fewer filters '
+          'or a different spelling.';
+      action = 'Clear filters';
+      onAction = model.clearFilters;
+    } else if (hasSearch) {
+      title = 'No results for “$search”';
+      subtitle = 'Check the spelling, or search by staff number.';
+      action = 'Clear search';
+      onAction = model.clearSearch;
+    } else {
+      title = 'No staff match these filters';
+      subtitle = 'Try removing a filter.';
+      action = 'Clear filters';
+      onAction = model.clearFilters;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screen,
+        vertical: AppSpacing.md,
+      ),
+      child: AppEmptyState(
+        icon: AppIcons.search,
+        compact: true,
+        title: title,
+        subtitle: subtitle,
+        actionLabel: action,
+        onAction: onAction,
+        topPadding: AppSpacing.none,
+      ),
+    );
+  }
+}
+
+/// Under the list: a spinner while the next page loads, or a retry row when
+/// it didn't.
+class _MoreFooter extends StatelessWidget {
+  const _MoreFooter({required this.model});
+
+  final TeamViewModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    if (model.loadMoreError != null) {
+      return Semantics(
+        button: true,
+        label: 'Couldn’t load more. Tap to retry',
+        excludeSemantics: true,
+        child: BouncyButton(
+          onPressed: model.retryLoadMore,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Center(
+              child: AppText(
+                'Couldn’t load more. Tap to retry',
+                style: AppTypography.subtitle.copyWith(
+                  color: LightColors.primaryPrimaryText,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    if (model.loadingMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+        child: Center(child: AppSpinner()),
+      );
+    }
+    return const SizedBox.shrink();
+  }
 }
 
 /// 8.2 · No one but the owner yet: the tinted tile, one line of explanation

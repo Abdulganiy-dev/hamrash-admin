@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
+import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/constants/radius_containers.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
@@ -12,6 +15,7 @@ import 'package:hamrash_admin/core/widgets/app_icons.dart';
 ///
 /// ```dart
 /// AppNavIconButton(icon: AppIcons.bell, count: 4, onPressed: openInbox)
+/// AppNavIconButton(icon: AppIcons.slidersHorizontal, appliedCount: 3, ...)
 /// ```
 class AppNavIconButton extends StatelessWidget {
   const AppNavIconButton({
@@ -20,6 +24,7 @@ class AppNavIconButton extends StatelessWidget {
     required this.onPressed,
     this.count,
     this.showDot = false,
+    this.appliedCount = 0,
     this.iconSize = 20,
     this.iconColor = AppPalette.stone700,
     this.semanticLabel,
@@ -35,13 +40,19 @@ class AppNavIconButton extends StatelessWidget {
   /// shows.
   final bool showDot;
 
+  /// A filter button with filters applied: when above 0 the button turns
+  /// light aubergine and an aubergine count badge sits on its top-right.
+  /// Takes the place of [count] and [showDot].
+  final int appliedCount;
+
   final double iconSize;
   final Color iconColor;
   final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
-    final showCount = count != null && count! > 0;
+    final applied = appliedCount > 0;
+    final showCount = !applied && count != null && count! > 0;
 
     return Semantics(
       button: true,
@@ -56,14 +67,26 @@ class AppNavIconButton extends StatelessWidget {
               height: AppNavMetrics.buttonSize,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppPalette.white,
+                color: applied
+                    ? LightColors.primaryPrimaryMute
+                    : AppPalette.white,
                 shape: BoxShape.circle,
-                border: Border.all(color: LightColors.strokeColourStrokeCard),
+                border: Border.all(
+                  color: applied
+                      ? LightColors.primaryPrimaryThin
+                      : LightColors.strokeColourStrokeCard,
+                ),
                 boxShadow: AppShadows.floating,
               ),
               child: AppIcon(icon, size: iconSize, color: iconColor),
             ),
-            if (showCount)
+            if (applied)
+              Positioned(
+                top: -6,
+                right: -6,
+                child: _AppliedBadge(count: appliedCount),
+              )
+            else if (showCount)
               Positioned(
                 top: -4,
                 right: -4,
@@ -92,6 +115,35 @@ class AppNavIconButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The aubergine count on a filter button: 18 tall, white 2px ring.
+class _AppliedBadge extends StatelessWidget {
+  const _AppliedBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(minWidth: 18),
+    height: 18,
+    padding: const EdgeInsets.symmetric(horizontal: 5),
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: LightColors.primaryPrimaryDefault,
+      borderRadius: AppRadius.brBadge,
+      border: Border.all(color: AppPalette.white, width: 2),
+    ),
+    child: AppText(
+      count > 99 ? '99+' : '$count',
+      style: AppTypography.overline.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0,
+        height: 14 / 11,
+        color: AppPalette.white,
+      ),
+    ),
+  );
 }
 
 /// Floating picture for the app bar: the user's avatar or the school logo.

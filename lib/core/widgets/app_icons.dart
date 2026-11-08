@@ -55,6 +55,7 @@ abstract final class AppIcons {
   static const search = LucideIcons.search;
   static const share = LucideIcons.share;
   static const shield = LucideIcons.shield;
+  static const slidersHorizontal = LucideIcons.slidersHorizontal;
   static const timer = LucideIcons.timer;
   static const toggleLeft = LucideIcons.toggleLeft;
   static const toggleRight = LucideIcons.toggleRight;

@@ -157,6 +157,7 @@ class AppSheet extends StatelessWidget {
     this.title,
     this.subtitle,
     this.leading,
+    this.headerAction,
     this.footer,
     this.scrollableBody = true,
     this.showCloseButton = true,
@@ -173,6 +174,10 @@ class AppSheet extends StatelessWidget {
   final Widget? leading;
 
   final Widget body;
+
+  /// A quiet text action in the header, before the close button (e.g.
+  /// "Reset" on a filter sheet).
+  final Widget? headerAction;
 
   /// Pinned below the body (stays above the keyboard). Usually one primary
   /// button, or a secondary + primary pair stacked with a 16px gap
@@ -279,6 +284,7 @@ class AppSheet extends StatelessWidget {
               title: title,
               subtitle: subtitle,
               leading: leading,
+              action: headerAction,
               showCloseButton: showCloseButton,
             ),
           ),
@@ -334,12 +340,14 @@ class _Header extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.leading,
+    required this.action,
     required this.showCloseButton,
   });
 
   final String? title;
   final String? subtitle;
   final Widget? leading;
+  final Widget? action;
   final bool showCloseButton;
 
   @override
@@ -379,6 +387,7 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
+          if (action != null) ...[const SizedBox(width: 8), action!],
           if (showCloseButton) ...[
             const SizedBox(width: 8),
             const AppSheetCloseButton(),

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_details_changes.dart';
+import 'package:hamrash_admin/api/models/team/staff_filter.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
@@ -80,47 +81,125 @@ Map<String, dynamic> _staff({
 };
 
 void main() {
-  test('reads staff with their login embedded through the member FK', () async {
-    final (service, requests) = _service((request) {
-      if (request.url.path.endsWith('/staff_private_details')) {
-        return _json([
-          {
-            'staff_id': 's1',
-            'address': '1 School Road',
-            'residence_state': 'Lagos',
-            'residence_lga': 'Ikeja',
-          },
-        ], request);
-      }
-      return _json([
+  group('listStaffPage', () {
+    Map<String, dynamic> page({String? cursor = 'abc', int total = 31}) => {
+      'rows': [
         _staff(member: _login()),
         _staff(id: 's2', firstName: 'Chinedu', jobTitle: 'Teacher'),
-      ], request);
+      ],
+      'next_cursor': cursor,
+      'total': total,
+      'counts': {
+        'all': 40,
+        'on_app': 30,
+        'code_ready': 4,
+        'not_on_app': 5,
+        'suspended': 1,
+      },
+    };
+
+    test('sends the filter to list_staff as its parameters', () async {
+      final (service, requests) = _service(
+        (request) => _json(page(), request),
+      );
+
+      await service.listStaffPage(
+        organizationId: 'kings',
+        filter: const StaffFilter(
+          search: '  ada ',
+          login: StaffLoginFilter.codeReady,
+          roles: {OrganizationMemberRole.teacher, OrganizationMemberRole.admin},
+          staffType: StaffTypeFilter.teaching,
+          statuses: {StaffRecordStatus.active, StaffRecordStatus.onLeave},
+          sort: StaffSort.newest,
+        ),
+        cursor: 'next',
+      );
+
+      expect(requests, hasLength(1));
+      expect(requests.single.url.path, '/rest/v1/rpc/list_staff');
+      final body = jsonDecode(requests.single.body) as Map<String, dynamic>;
+      expect(body['p_organization_id'], 'kings');
+      expect(body['p_search'], 'ada');
+      expect(body['p_login'], 'code_ready');
+      expect(body['p_roles'], unorderedEquals(['teacher', 'admin']));
+      expect(body['p_staff_type'], 'teaching');
+      expect(body['p_statuses'], unorderedEquals(['active', 'on_leave']));
+      expect(body['p_sort'], 'newest');
+      expect(body['p_limit'], 30);
+      expect(body['p_cursor'], 'next');
     });
 
-    final staff = await service.listStaff('kings');
+    test('the default filter asks for active staff by name, page 1', () async {
+      final (service, requests) = _service(
+        (request) => _json(page(), request),
+      );
 
-    expect(requests, hasLength(2));
-    final url = requests.first.url;
-    expect(url.path, '/rest/v1/staff');
-    expect(url.queryParameters['organization_id'], 'eq.kings');
-    expect(
-      url.queryParameters['select'],
-      contains('member:organization_members!staff_member_fkey'),
-    );
+      await service.listStaffPage(organizationId: 'kings', limit: 1);
 
-    expect(staff, hasLength(2));
-    expect(staff.first.fullName, 'Ada Okafor');
-    expect(staff.first.role, OrganizationMemberRole.bursar);
-    expect(staff.first.access, StaffAccess.invitePending);
-    expect(staff.first.login?.claimCode, 'K7M2QX9P');
-    expect(staff.last.hasLogin, isFalse);
-    expect(staff.last.access, StaffAccess.notOnApp);
-    expect(staff.last.role, OrganizationMemberRole.teacher);
-    expect(staff.first.privateDetails?.address, '1 School Road');
-    expect(staff.first.privateDetails?.residenceState, 'Lagos');
-    expect(staff.first.privateDetails?.residenceLga, 'Ikeja');
-    expect(requests.last.url.path, '/rest/v1/staff_private_details');
+      final body = jsonDecode(requests.single.body) as Map;
+      expect(body['p_search'], isNull);
+      expect(body['p_login'], 'all');
+      expect(body['p_roles'], isNull);
+      expect(body['p_staff_type'], isNull);
+      expect(body['p_statuses'], ['active']);
+      expect(body['p_sort'], 'name');
+      expect(body['p_limit'], 1);
+      expect(body['p_cursor'], isNull);
+    });
+
+    test('reads the rows, cursor, total and counts', () async {
+      final (service, _) = _service((request) => _json(page(), request));
+
+      final result = await service.listStaffPage(organizationId: 'kings');
+
+      expect(result.rows, hasLength(2));
+      expect(result.rows.first.fullName, 'Ada Okafor');
+      expect(result.rows.first.role, OrganizationMemberRole.bursar);
+      expect(result.rows.first.access, StaffAccess.invitePending);
+      expect(result.rows.first.login?.claimCode, 'K7M2QX9P');
+      expect(result.rows.last.hasLogin, isFalse);
+      expect(result.rows.last.privateDetails, isNull);
+      expect(result.nextCursor, 'abc');
+      expect(result.total, 31);
+      expect(result.counts.all, 40);
+      expect(result.counts.onApp, 30);
+      expect(result.counts.codeReady, 4);
+      expect(result.counts.notOnApp, 5);
+      expect(result.counts.suspended, 1);
+    });
+
+    test('the last page has no cursor', () async {
+      final (service, _) = _service(
+        (request) => _json(page(cursor: null, total: 2), request),
+      );
+
+      final result = await service.listStaffPage(organizationId: 'kings');
+
+      expect(result.nextCursor, isNull);
+    });
+
+    test('a refusal (22023) reads as its own message', () async {
+      final (service, _) = _service(
+        (request) => _refused(
+          '22023',
+          request,
+          'This page cursor is not valid for this list. Load the list again '
+          'from the start',
+        ),
+      );
+
+      await expectLater(
+        service.listStaffPage(organizationId: 'kings', cursor: 'stale'),
+        throwsA(
+          isA<SupabaseRefusal>().having(
+            (error) => error.message,
+            'message',
+            startsWith('This page cursor is not valid'),
+          ),
+        ),
+      );
+    });
   });
 
   test('adds a staff record through create_staff', () async {

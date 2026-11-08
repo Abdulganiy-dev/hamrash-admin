@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_filter.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_page.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
@@ -14,6 +16,8 @@ import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
 import 'package:hamrash_admin/views/team/team_screen.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_danger_action.dart';
+
+import 'staff_page_fake.dart';
 
 /// Footer layout on the three team screens. The screens are pumped at the
 /// 390x844 artboard size with a 34px home-indicator inset, so the measurements
@@ -32,7 +36,13 @@ class _FakeTeam implements TeamService {
   Future<StaffMember> getStaff(String staffId) async => member!;
 
   @override
-  Future<List<StaffMember>> listStaff(String organizationId) async => people;
+  Future<StaffPage> listStaffPage({
+    required String organizationId,
+    StaffFilter filter = StaffFilter.initial,
+    int limit = TeamService.pageSize,
+    String? cursor,
+  }) async =>
+      fakeStaffPage(people, filter: filter, limit: limit, cursor: cursor);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
