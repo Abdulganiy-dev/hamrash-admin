@@ -848,6 +848,124 @@ window.SNIPPETS = {
    "security": "definer",
    "sql": "create function public.redeem_platform_join_code(\n  p_code      text,\n  p_full_name text,\n  p_email     text default null\n)\nreturns public.platform_admins\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_sub      text := (select auth.jwt() ->> 'sub');\n  v_existing public.platform_admins;\n  v_admin    public.platform_admins;\nbegin\n  if v_sub is null or v_sub = '' then\n    raise exception 'Not authenticated' using errcode = '28000';\n  end if;\n\n  -- Already on the team: nothing to redeem.\n  select pa.* into v_existing from public.platform_admins pa where pa.clerk_user_id = v_sub;\n  if found then\n    if v_existing.is_active then\n      return v_existing;\n    end if;\n    raise exception 'Your platform access was turned off. Ask a Hamrash admin to turn it back on.'\n      using errcode = '42501';\n  end if;\n\n  if nullif(trim(p_full_name), '') is null then\n    raise exception 'Enter your full name to join the Hamrash team' using errcode = '22023';\n  end if;\n\n  if not exists (\n    select 1 from private.platform_join_code c\n    where c.is_enabled\n      and c.code_hash = private.platform_code_hash(p_code)\n  ) then\n    return null;\n  end if;\n\n  insert into public.platform_admins (clerk_user_id, full_name, email)\n  values (v_sub, trim(p_full_name), nullif(trim(p_email), ''))\n  returning * into v_admin;\n\n  return v_admin;\nend;\n$$;"
   },
+  "register_student": {
+   "calls": [
+    "my_org_ids",
+    "phone_digits"
+   ],
+   "doc": "register_student p_parents is a jsonb array. Each item is EITHER an existing parent: { \"parent_id\": \"<uuid>\", \"relationship\": \"mother\", \"is_primary_contact\": true } OR a new one (the same fields as create_parent): { \"first_name\": \"Ngozi\", \"last_name\": \"Okafor\", \"phone\": \"08035550142\", \"title\": \"Mrs\", \"gender\": \"female\", \"alt_phone\": null, \"email\": null, \"occupation\": null, \"address\": null, \"photo_id\": null, \"photo_url\": null, \"relationship\": \"mother\", \"is_primary_contact\": true } An item with a parent_id is always treated as existing; its other fields (other than relationship and is_primary_contact) are ignored. is_primary_contact must be a JSON boolean; missing = false. Returns one jsonb object: { \"student\":     { students row, as create_student returns it }, \"parent_ids\":  [ uuid, \u2026 ],          -- in the order of p_parents \"placement\":   { \"session_id\": uuid, \"arm_id\": uuid }, \"subject_ids\": [ uuid, \u2026 ]           -- the optional subjects saved (no duplicates) }",
+   "file": "supabase/migrations/20261109120000_31_register_student_rpc.sql",
+   "lines": [
+    63,
+    348
+   ],
+   "migration": 31,
+   "params": [
+    {
+     "default": null,
+     "name": "p_organization_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_first_name",
+     "type": "text"
+    },
+    {
+     "default": null,
+     "name": "p_last_name",
+     "type": "text"
+    },
+    {
+     "default": null,
+     "name": "p_parents",
+     "type": "jsonb"
+    },
+    {
+     "default": null,
+     "name": "p_arm_id",
+     "type": "uuid"
+    },
+    {
+     "default": "null",
+     "name": "p_session_id",
+     "type": "uuid"
+    },
+    {
+     "default": "'{}'",
+     "name": "p_optional_subject_ids",
+     "type": "uuid[]"
+    },
+    {
+     "default": "null",
+     "name": "p_middle_name",
+     "type": "text"
+    },
+    {
+     "default": "null",
+     "name": "p_admission_number",
+     "type": "text"
+    },
+    {
+     "default": "null",
+     "name": "p_gender",
+     "type": "public.gender"
+    },
+    {
+     "default": "null",
+     "name": "p_admission_date",
+     "type": "date"
+    },
+    {
+     "default": "null",
+     "name": "p_photo_id",
+     "type": "text"
+    },
+    {
+     "default": "null",
+     "name": "p_photo_url",
+     "type": "text"
+    },
+    {
+     "default": "null",
+     "name": "p_date_of_birth",
+     "type": "date"
+    },
+    {
+     "default": "null",
+     "name": "p_address",
+     "type": "text"
+    },
+    {
+     "default": "null",
+     "name": "p_state_of_origin",
+     "type": "text"
+    },
+    {
+     "default": "null",
+     "name": "p_lga",
+     "type": "text"
+    },
+    {
+     "default": "null",
+     "name": "p_blood_group",
+     "type": "text"
+    },
+    {
+     "default": "null",
+     "name": "p_genotype",
+     "type": "text"
+    },
+    {
+     "default": "null",
+     "name": "p_medical_notes",
+     "type": "text"
+    }
+   ],
+   "returns": "jsonb",
+   "security": "invoker",
+   "sql": "create function public.register_student(\n  p_organization_id      uuid,\n  p_first_name           text,\n  p_last_name            text,\n  p_parents              jsonb,\n  p_arm_id               uuid,\n  p_session_id           uuid          default null,\n  p_optional_subject_ids uuid[]        default '{}',\n  p_middle_name          text          default null,\n  p_admission_number     text          default null,\n  p_gender               public.gender default null,\n  p_admission_date       date          default null,\n  p_photo_id             text          default null,\n  p_photo_url            text          default null,\n  p_date_of_birth        date          default null,\n  p_address              text          default null,\n  p_state_of_origin      text          default null,\n  p_lga                  text          default null,\n  p_blood_group          text          default null,\n  p_genotype             text          default null,\n  p_medical_notes        text          default null\n)\nreturns jsonb\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_leaders     constant public.member_role[] := array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[];\n  v_item        jsonb;\n  v_n           int;\n  v_primaries   int := 0;\n  v_rel         text;\n  v_pid         uuid;\n  v_phone       text;\n  v_digits      text;\n  v_existing    record;\n  v_seen_ids    uuid[] := '{}';\n  v_seen_phones text[] := '{}';\n  v_arm         record;\n  v_session     record;\n  v_session_id  uuid;\n  v_subject_ids uuid[];\n  v_subject     record;\n  v_student     public.students;\n  v_parent      public.parents;\n  v_parent_ids  uuid[] := '{}';\nbegin\n  -- \u2500\u2500 who \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if p_organization_id is null\n     or p_organization_id not in (select private.my_org_ids(v_leaders)) then\n    raise exception 'Only the school''s leaders can register students' using errcode = '42501';\n  end if;\n\n  -- \u2500\u2500 the student \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if nullif(trim(p_first_name), '') is null or nullif(trim(p_last_name), '') is null then\n    raise exception 'Enter the student''s first and last name' using errcode = '22023';\n  end if;\n\n  if nullif(trim(p_admission_number), '') is not null and exists (\n    select 1 from public.students s\n    where s.organization_id = p_organization_id\n      and s.admission_number = trim(p_admission_number)\n  ) then\n    raise exception 'Admission number % is already used in this school. Leave it blank to generate one', trim(p_admission_number)\n      using errcode = '23505';\n  end if;\n\n  -- \u2500\u2500 parents \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if p_parents is null or jsonb_typeof(p_parents) <> 'array' or jsonb_array_length(p_parents) = 0 then\n    raise exception 'Add at least one parent or guardian' using errcode = '22023';\n  end if;\n\n  for v_item in select e from jsonb_array_elements(p_parents) as t(e) loop\n    if jsonb_typeof(v_item) <> 'object' then\n      raise exception 'Each parent must be an object with a relationship' using errcode = '22023';\n    end if;\n\n    v_rel := nullif(trim(v_item ->> 'relationship'), '');\n    if v_rel is null or v_rel not in ('father', 'mother', 'guardian', 'other') then\n      raise exception 'Choose how each parent is related to the student: father, mother, guardian or other'\n        using errcode = '22023';\n    end if;\n\n    if coalesce(v_item -> 'is_primary_contact' = 'true'::jsonb, false) then\n      v_primaries := v_primaries + 1;\n    end if;\n\n    if nullif(trim(v_item ->> 'parent_id'), '') is not null then\n      -- existing parent\n      begin\n        v_pid := (v_item ->> 'parent_id')::uuid;\n      exception when invalid_text_representation then\n        raise exception 'One of the parents has an id that isn''t valid' using errcode = '22023';\n      end;\n\n      if v_pid = any (v_seen_ids) then\n        raise exception 'The same parent is listed twice. Add each parent once' using errcode = '22023';\n      end if;\n      v_seen_ids := v_seen_ids || v_pid;\n\n      if not exists (\n        select 1 from public.parents p\n        where p.id = v_pid and p.organization_id = p_organization_id\n      ) then\n        raise exception 'That parent isn''t in this school. Search for them again, or add them as a new parent'\n          using errcode = 'P0002';\n      end if;\n    else\n      -- new parent\n      v_phone := nullif(trim(v_item ->> 'phone'), '');\n      if nullif(trim(v_item ->> 'first_name'), '') is null\n         or nullif(trim(v_item ->> 'last_name'), '') is null\n         or v_phone is null then\n        raise exception 'Enter each new parent''s first name, last name and phone number' using errcode = '22023';\n      end if;\n\n      if nullif(trim(v_item ->> 'gender'), '') is not null\n         and trim(v_item ->> 'gender') not in ('male', 'female') then\n        raise exception 'A parent''s gender must be male or female' using errcode = '22023';\n      end if;\n\n      v_digits := coalesce(private.phone_digits(v_phone), v_phone);\n      if v_digits = any (v_seen_phones) then\n        raise exception 'Two new parents have the same phone number %. Add each parent once', v_phone\n          using errcode = '22023';\n      end if;\n      v_seen_phones := v_seen_phones || v_digits;\n\n      select p.id, p.first_name, p.last_name into v_existing\n      from public.parents p\n      where p.organization_id = p_organization_id\n        and (p.phone = v_phone or private.phone_digits(p.phone) = v_digits)\n      limit 1;\n      if found then\n        raise exception '% % is already a parent in this school with phone %. Choose them as an existing parent instead of adding them again',\n          v_existing.first_name, v_existing.last_name, v_phone\n          using errcode = '23505';\n      end if;\n    end if;\n  end loop;\n\n  if v_primaries = 0 then\n    raise exception 'Choose one parent as the primary contact' using errcode = '22023';\n  elsif v_primaries > 1 then\n    raise exception 'Only one parent can be the primary contact' using errcode = '22023';\n  end if;\n\n  -- \u2500\u2500 class and arm \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  select a.id, a.name, a.is_active, c.name as class_name, c.is_active as class_active\n  into v_arm\n  from public.class_arms a\n  join public.classes c on c.id = a.class_id\n  where a.id = p_arm_id\n    and a.organization_id = p_organization_id;\n  if not found then\n    raise exception 'Choose a class and arm in this school' using errcode = 'P0002';\n  end if;\n  if not v_arm.class_active then\n    raise exception '% is switched off. Choose another class, or switch it back on first', v_arm.class_name\n      using errcode = 'P0001';\n  end if;\n  if not v_arm.is_active then\n    raise exception '% % is switched off. Choose another arm, or switch it back on first', v_arm.class_name, v_arm.name\n      using errcode = 'P0001';\n  end if;\n\n  -- \u2500\u2500 session \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if p_session_id is null then\n    select s.id, s.closed_at into v_session\n    from public.academic_sessions s\n    where s.organization_id = p_organization_id\n      and s.is_current;\n    if not found then\n      raise exception 'This school has no current session. Set one up in the calendar first' using errcode = 'P0001';\n    end if;\n  else\n    select s.id, s.closed_at into v_session\n    from public.academic_sessions s\n    where s.id = p_session_id\n      and s.organization_id = p_organization_id;\n    if not found then\n      raise exception 'Session not found in this school' using errcode = 'P0002';\n    end if;\n  end if;\n  if v_session.closed_at is not null then\n    raise exception 'That session is closed. Nothing new can be added to it; use the current session.'\n      using errcode = 'P0001';\n  end if;\n  v_session_id := v_session.id;\n\n  -- \u2500\u2500 optional subjects \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  -- Same rule as private.check_student_subject: offered by the arm, and\n  -- optional there. Duplicates and nulls in the array are dropped.\n  select coalesce(array_agg(distinct x), '{}') into v_subject_ids\n  from unnest(coalesce(p_optional_subject_ids, '{}'::uuid[])) as t(x)\n  where x is not null;\n\n  for v_subject in\n    select x as id, sj.name, asub.is_compulsory, asub.subject_id is not null as offered\n    from unnest(v_subject_ids) as t(x)\n    left join public.subjects sj on sj.id = x and sj.organization_id = p_organization_id\n    left join public.arm_subjects asub on asub.arm_id = p_arm_id and asub.subject_id = x\n  loop\n    if not v_subject.offered then\n      raise exception '% isn''t offered to %. Choose from the arm''s optional subjects',\n        coalesce(v_subject.name, 'That subject'), v_arm.class_name || ' ' || v_arm.name\n        using errcode = '23514';\n    end if;\n    if v_subject.is_compulsory then\n      raise exception '% is compulsory for %, so every student already takes it',\n        v_subject.name, v_arm.class_name || ' ' || v_arm.name\n        using errcode = '23514';\n    end if;\n  end loop;\n\n  -- \u2500\u2500 writes \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  -- 1. student + private details (create_student runs as the caller too)\n  v_student := public.create_student(\n    p_organization_id  => p_organization_id,\n    p_first_name       => trim(p_first_name),\n    p_last_name        => trim(p_last_name),\n    p_middle_name      => nullif(trim(p_middle_name), ''),\n    p_admission_number => nullif(trim(p_admission_number), ''),\n    p_gender           => p_gender,\n    p_admission_date   => p_admission_date,\n    p_photo_id         => p_photo_id,\n    p_photo_url        => p_photo_url,\n    p_status           => 'active',\n    p_date_of_birth    => p_date_of_birth,\n    p_address          => p_address,\n    p_state_of_origin  => p_state_of_origin,\n    p_lga              => p_lga,\n    p_blood_group      => p_blood_group,\n    p_genotype         => p_genotype,\n    p_medical_notes    => p_medical_notes\n  );\n\n  -- 2 + 3. new parents, then every link (in the order given)\n  for v_item, v_n in select e, i from jsonb_array_elements(p_parents) with ordinality as t(e, i) order by i loop\n    if nullif(trim(v_item ->> 'parent_id'), '') is not null then\n      v_pid := (v_item ->> 'parent_id')::uuid;\n    else\n      v_parent := public.create_parent(\n        p_organization_id => p_organization_id,\n        p_first_name      => trim(v_item ->> 'first_name'),\n        p_last_name       => trim(v_item ->> 'last_name'),\n        p_phone           => trim(v_item ->> 'phone'),\n        p_title           => nullif(trim(v_item ->> 'title'), ''),\n        p_gender          => nullif(trim(v_item ->> 'gender'), '')::public.gender,\n        p_alt_phone       => nullif(trim(v_item ->> 'alt_phone'), ''),\n        p_photo_id        => nullif(trim(v_item ->> 'photo_id'), ''),\n        p_photo_url       => nullif(trim(v_item ->> 'photo_url'), ''),\n        p_is_active       => true,\n        p_email           => nullif(trim(v_item ->> 'email'), ''),\n        p_occupation      => nullif(trim(v_item ->> 'occupation'), ''),\n        p_address         => nullif(trim(v_item ->> 'address'), '')\n      );\n      v_pid := v_parent.id;\n    end if;\n\n    insert into public.student_parents (organization_id, student_id, parent_id, relationship, is_primary_contact)\n    values (p_organization_id, v_student.id, v_pid,\n            trim(v_item ->> 'relationship')::public.parent_relationship,\n            coalesce(v_item -> 'is_primary_contact' = 'true'::jsonb, false));\n\n    v_parent_ids := v_parent_ids || v_pid;\n  end loop;\n\n  -- 4. placement for the session\n  insert into public.student_placements (organization_id, student_id, session_id, arm_id)\n  values (p_organization_id, v_student.id, v_session_id, p_arm_id);\n\n  -- 5. optional subjects (private.check_student_subject still checks each)\n  insert into public.student_subjects (organization_id, student_id, session_id, subject_id)\n  select p_organization_id, v_student.id, v_session_id, x\n  from unnest(v_subject_ids) as t(x);\n\n  return jsonb_build_object(\n    'student',     to_jsonb(v_student),\n    'parent_ids',  to_jsonb(v_parent_ids),\n    'placement',   jsonb_build_object('session_id', v_session_id, 'arm_id', p_arm_id),\n    'subject_ids', to_jsonb(v_subject_ids)\n  );\nend;\n$$;"
+  },
   "reopen_session": {
    "calls": [
     "my_org_ids"
@@ -2306,6 +2424,7 @@ window.SNIPPETS = {
    "usedBy": {
     "functions": [
      "arm_subject_usage",
+     "register_student",
      "reopen_session",
      "session_usage"
     ],
@@ -2946,7 +3065,8 @@ window.SNIPPETS = {
    "sql": "create function private.phone_digits(p_phone text)\nreturns text\nlanguage sql\nimmutable\nset search_path = ''\nas $$\n  select nullif(\n    regexp_replace(\n      regexp_replace(\n        regexp_replace(p_phone, '\\D', '', 'g'),\n        '^234', ''),\n      '^0+', ''),\n    '');\n$$;",
    "usedBy": {
     "functions": [
-     "list_staff"
+     "list_staff",
+     "register_student"
     ],
     "policies": [],
     "private": [],

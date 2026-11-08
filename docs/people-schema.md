@@ -1,6 +1,6 @@
 # People Schema: staff, students, parents
 
-> **Status:** applied to the live project through migration 29. Migration `20261108130000` (30, `list_staff`) is in the repo but **not yet applied**. Migration `20261108120000` (2026-11-08) added staff residence state and LGA. Migration `20261007210000` (2026-10-07) created the tables, and migration `20261011130000` (2026-10-11) split staff into a public profile and private details. SQL: [`…03_create_people.sql`](../supabase/migrations/20261007210000_03_create_people.sql), [`…05_split_staff_private_details.sql`](../supabase/migrations/20261011130000_05_split_staff_private_details.sql). Test: [`supabase/tests/02_people_access_test.sql`](../supabase/tests/02_people_access_test.sql). Builds on [organization-schema.md](organization-schema.md).
+> **Status:** applied to the live project through migration 30 (`list_staff`). Migration `20261109120000` (31, `register_student`) is in the repo but **not yet applied**. Migration `20261108120000` (2026-11-08) added staff residence state and LGA. Migration `20261007210000` (2026-10-07) created the tables, and migration `20261011130000` (2026-10-11) split staff into a public profile and private details. SQL: [`…03_create_people.sql`](../supabase/migrations/20261007210000_03_create_people.sql), [`…05_split_staff_private_details.sql`](../supabase/migrations/20261011130000_05_split_staff_private_details.sql). Test: [`supabase/tests/02_people_access_test.sql`](../supabase/tests/02_people_access_test.sql). Builds on [organization-schema.md](organization-schema.md).
 
 ---
 
@@ -70,7 +70,7 @@ final staff = await supabase.rpc('create_staff', params: {
 
 They run with the caller's own permissions, so the usual rules apply: only leaders can add or edit staff.
 
-### Listing staff *(migration 30, not yet applied)*
+### Listing staff *(migration 30)*
 The Staffs list (8.1) and its filter sheet (8.17) read one page at a time through `list_staff`. Search, filters, sorting, chip counts and paging all happen in the database. It returns the staff profile and its login only, never private details.
 
 ```dart
@@ -164,6 +164,65 @@ Exactly one row per parent, **created automatically** with the parent and remove
 | `is_primary_contact` | At most one per student. Setting a new primary automatically clears the old one. |
 
 Deleting a student or parent removes their links. Nothing else cascades.
+
+### Registering a student: one call *(migration 31, not yet applied)*
+The Add Student wizard (student → parents → class and arm → optional subjects → review) saves everything with `register_student`, in **one transaction**: the student and their private details, any new parents, the links, the placement for the session and the optional subjects. A refusal keeps nothing. SQL: [`…31_register_student_rpc.sql`](../supabase/migrations/20261109120000_31_register_student_rpc.sql). Test: [`supabase/tests/19_register_student_access_test.sql`](../supabase/tests/19_register_student_access_test.sql).
+
+```dart
+final result = await supabase.rpc('register_student', params: {
+  'p_organization_id': orgId,
+  'p_first_name': 'Chidi', 'p_last_name': 'Okafor',
+  'p_gender': 'male', 'p_date_of_birth': '2014-03-02',
+  'p_parents': [
+    // an existing parent, e.g. a sibling's (found by phone first)
+    {'parent_id': motherId, 'relationship': 'mother', 'is_primary_contact': true},
+    // a new parent: the same fields as create_parent
+    {'first_name': 'Emeka', 'last_name': 'Okafor', 'phone': '08035550143',
+     'title': 'Mr', 'gender': 'male', 'email': 'emeka@example.ng',
+     'relationship': 'father', 'is_primary_contact': false},
+  ],
+  'p_arm_id': armId,
+  'p_session_id': null,               // the school's current session
+  'p_optional_subject_ids': [frenchId],
+}) as Map<String, dynamic>;
+// { student: {students row}, parent_ids: [...], placement: {session_id, arm_id}, subject_ids: [...] }
+```
+
+| Param | Default | Meaning |
+|---|---|---|
+| `p_organization_id` | required | The school. |
+| `p_first_name`, `p_last_name` | required | |
+| `p_parents` | required | jsonb array, at least one item. An item with `parent_id` reuses that parent (its other fields are ignored); otherwise it creates one from `first_name`, `last_name`, `phone` (required), `title`, `gender`, `alt_phone`, `email`, `occupation`, `address`, `photo_id`, `photo_url`. Every item has `relationship` (`father`, `mother`, `guardian`, `other`) and `is_primary_contact` (a JSON boolean; missing = false). |
+| `p_arm_id` | required | The class arm. |
+| `p_session_id` | null | null = the school's current session. |
+| `p_optional_subject_ids` | `{}` | Optional subjects of the arm. Duplicates are dropped. |
+| `p_middle_name`, `p_admission_number`, `p_gender`, `p_admission_date`, `p_photo_id`, `p_photo_url`, `p_date_of_birth`, `p_address`, `p_state_of_origin`, `p_lga`, `p_blood_group`, `p_genotype`, `p_medical_notes` | null | The same student fields as `create_student`. A blank admission number is generated. The student is always saved as `active`. |
+
+Every rule is checked before anything is written, so the wizard gets one readable message:
+
+| Refused when | Code | Message |
+|---|---|---|
+| The caller isn't a leader of the school (or the school is suspended) | `42501` | Only the school's leaders can register students |
+| Blank student name | `22023` | Enter the student's first and last name |
+| Admission number already used | `23505` | Admission number … is already used in this school. Leave it blank to generate one |
+| No parents | `22023` | Add at least one parent or guardian |
+| Bad relationship | `22023` | Choose how each parent is related to the student: father, mother, guardian or other |
+| Same `parent_id` twice | `22023` | The same parent is listed twice. Add each parent once |
+| Two new parents with the same phone | `22023` | Two new parents have the same phone number …. Add each parent once |
+| `parent_id` not in this school | `P0002` | That parent isn't in this school. Search for them again, or add them as a new parent |
+| New parent missing name or phone | `22023` | Enter each new parent's first name, last name and phone number |
+| New parent's phone matches a parent in the school | `23505` | {name} is already a parent in this school with phone …. Choose them as an existing parent instead of adding them again |
+| No primary contact / more than one | `22023` | Choose one parent as the primary contact / Only one parent can be the primary contact |
+| Arm not in the school | `P0002` | Choose a class and arm in this school |
+| Arm or its class switched off | `P0001` | {JSS 1 A} is switched off. Choose another arm, or switch it back on first |
+| No current session (when `p_session_id` is null) | `P0001` | This school has no current session. Set one up in the calendar first |
+| Session not in the school | `P0002` | Session not found in this school |
+| Session closed | `P0001` | That session is closed. Nothing new can be added to it; use the current session. |
+| Subject not offered by the arm | `23514` | {Subject} isn't offered to {JSS 1 A}. Choose from the arm's optional subjects |
+| Subject compulsory on the arm | `23514` | {Subject} is compulsory for {JSS 1 A}, so every student already takes it |
+
+- **New parents are never merged.** Phones are compared by their digits (`0803…`, `803…` and `+234803…` match), and a match is refused so the app reuses the existing parent. The app searches by phone before offering "Add a new parent".
+- **Security.** It runs as the caller (security invoker) and writes through `create_student`, `create_parent` and the normal tables, so RLS and the column grants still decide. No grant was widened. `private.check_student_subject` and the closed-session triggers still run as a backstop.
 
 ---
 
