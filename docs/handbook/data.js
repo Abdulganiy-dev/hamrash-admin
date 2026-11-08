@@ -10,7 +10,7 @@ window.HANDBOOK = {
   meta: {
     updated: '2026-11-08',
     migrationsInRepo: 29, // highest migration number in supabase/migrations/
-    migrationsLive: 28, // highest one applied to the live project (ccvyhbyrtobdsecqvhcr)
+    migrationsLive: 29, // highest one applied to the live project (ccvyhbyrtobdsecqvhcr)
   },
 
   // Screens exported from Paper (file “Hamrash”, page “Hmarash Admin”) into screens/.
@@ -604,7 +604,7 @@ window.HANDBOOK = {
           trigger: 'Staffs → **+** or **Add staff member** → names, job title, phone and email → Save staff member.',
           touches: ['rpc create_staff', '~insert staff', '~insert staff_private_details'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
-          steps: ['Writes the staff profile and its private details row in one transaction, leaving the staff number to the database.', 'Stores the job title label; “Other staff” is stored as “Staff”.', 'Teacher is `teaching`; every other job title is `non_teaching`.', 'Saving opens the new person’s page; there is no login until they are invited.'],
+          steps: ['Writes the staff profile and its private details row in one transaction, leaving the staff number to the database.', 'Also saves the optional middle name, gender, home address and residence state/LGA. Empty text is stored as null.', 'Stores the job title label; “Other staff” is stored as “Staff”.', 'Teacher is `teaching`; every other job title is `non_teaching`.', 'Saving opens the new person’s page; there is no login until they are invited.'],
           refusals: [
             { when: 'Blank first or last name', code: '23514', text: 'The form asks for both names before Save works.' },
             { when: 'Not a leader', code: '42501', text: '“Only the owner, admins, the principal and vice principals can add staff.”' },
@@ -846,7 +846,7 @@ window.HANDBOOK = {
     { n: 26, title: 'Shared team code', text: 'Replaces per-person platform invites with one team code; `platform_admins.joined_at`.', drops: true },
     { n: 27, title: 'No school code', text: 'Drops `organizations.code` (`HMR-XXXXXX`).', drops: true },
     { n: 28, title: 'Deleting a person revokes their login', text: 'Deleting a staff, student or parent record deletes their invite or suspends their login; principals and VPs issue staff logins for their tier.' },
-    { n: 29, title: 'Staff residence state and LGA', text: 'Adds `staff_private_details.residence_state` and `residence_lga`; `create_staff` and `update_staff` accept and save them. **Not applied yet.**', drops: true },
+    { n: 29, title: 'Staff residence state and LGA', text: 'Adds `staff_private_details.residence_state` and `residence_lga`; `create_staff` and `update_staff` accept and save them.', drops: true },
   ],
 
   // ────────────────────────────────────────────────────────────────────

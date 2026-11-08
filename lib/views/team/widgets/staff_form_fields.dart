@@ -31,13 +31,17 @@ class StaffFormSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
-          AppText(
-            title,
-            style: AppTypography.body.copyWith(
-              fontSize: 16,
-              height: 22 / 16,
-              fontWeight: FontWeight.w800,
-              color: LightColors.textStrong,
+          Flexible(
+            child: AppText(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.body.copyWith(
+                fontSize: 16,
+                height: 22 / 16,
+                fontWeight: FontWeight.w800,
+                color: LightColors.textStrong,
+              ),
             ),
           ),
           if (optional) ...[

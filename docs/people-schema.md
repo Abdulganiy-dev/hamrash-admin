@@ -1,6 +1,6 @@
 # People Schema: staff, students, parents
 
-> **Status:** applied to the live project through migration 28. Migration `20261108120000` (2026-11-08) adds staff residence state and LGA and is **in the repo, waiting for approval before it is applied**. Migration `20261007210000` (2026-10-07) created the tables, and migration `20261011130000` (2026-10-11) split staff into a public profile and private details. SQL: [`…03_create_people.sql`](../supabase/migrations/20261007210000_03_create_people.sql), [`…05_split_staff_private_details.sql`](../supabase/migrations/20261011130000_05_split_staff_private_details.sql). Test: [`supabase/tests/02_people_access_test.sql`](../supabase/tests/02_people_access_test.sql). Builds on [organization-schema.md](organization-schema.md).
+> **Status:** applied to the live project through migration 29. Migration `20261108120000` (2026-11-08) added staff residence state and LGA. Migration `20261007210000` (2026-10-07) created the tables, and migration `20261011130000` (2026-10-11) split staff into a public profile and private details. SQL: [`…03_create_people.sql`](../supabase/migrations/20261007210000_03_create_people.sql), [`…05_split_staff_private_details.sql`](../supabase/migrations/20261011130000_05_split_staff_private_details.sql). Test: [`supabase/tests/02_people_access_test.sql`](../supabase/tests/02_people_access_test.sql). Builds on [organization-schema.md](organization-schema.md).
 
 ---
 

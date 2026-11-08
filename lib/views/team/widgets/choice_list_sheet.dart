@@ -102,10 +102,7 @@ class _ChoiceListSheetState<T> extends State<ChoiceListSheet<T>> {
   @override
   Widget build(BuildContext context) {
     final visible = _visible;
-    final listHeight = math.min(
-      392.0,
-      MediaQuery.sizeOf(context).height * 0.5,
-    );
+    final listHeight = math.min(392.0, MediaQuery.sizeOf(context).height * 0.5);
 
     return AppSheet(
       title: widget.title,
@@ -121,10 +118,7 @@ class _ChoiceListSheetState<T> extends State<ChoiceListSheet<T>> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppSearchField(
-            hintText: widget.searchHint,
-            onChanged: _search,
-          ),
+          AppSearchField(hintText: widget.searchHint, onChanged: _search),
           const SizedBox(height: AppSpacing.ms),
           SizedBox(
             height: listHeight,
