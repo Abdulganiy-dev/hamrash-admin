@@ -101,7 +101,9 @@ class StaffDetailIdentity extends StatelessWidget {
           dimension: avatarSize,
           child: CustomPaint(
             foregroundPainter: _pending ? const _DashedCircleRing() : null,
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: tint.fill,

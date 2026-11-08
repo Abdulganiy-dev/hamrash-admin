@@ -9,6 +9,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
+import 'package:hamrash_admin/core/widgets/animated_section_content.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/utils/phone_format.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
@@ -97,23 +98,7 @@ class _Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The top gap of each block, from the Paper frames.
-    final blocks = <(double, Widget)>[
-      (
-        0,
-        StaffDetailIdentity(
-          member: _member,
-          access: model.access,
-          meta: model.identityMeta,
-        ),
-      ),
-      if (model.isNotOnApp) (24, _noLogin(context)),
-      if (model.isPending) (26, _pending(context)),
-      (24, _details(context)),
-      if (model.showPersonal) (28, _personal()),
-      if (model.showAccess) (28, _access(context)),
-    ];
-
+    final reduced = MediaQuery.disableAnimationsOf(context);
     return AppRefreshScrollView.children(
       onRefresh: model.refresh,
       padding: const EdgeInsets.fromLTRB(
@@ -123,12 +108,46 @@ class _Content extends StatelessWidget {
         AppSpacing.lg,
       ),
       children: [
-        for (final (gap, block) in blocks) ...[
-          if (gap > 0) SizedBox(height: gap),
-          block,
-        ],
+        StaffDetailIdentity(
+          member: _member,
+          access: model.access,
+          meta: model.identityMeta,
+        ),
+        // One slot for whatever the login allows next: the invite, the unused
+        // code, or nothing. One slot means the change morphs instead of
+        // jumping.
+        AnimatedSectionContent(
+          duration: Duration(milliseconds: reduced ? 120 : 260),
+          maxBlur: reduced ? 0 : 5,
+          child: _actionSlot(context),
+        ),
+        const SizedBox(height: 24),
+        _details(context),
+        if (model.showPersonal) ...[const SizedBox(height: 28), _personal()],
+        if (model.showAccess) ...[const SizedBox(height: 28), _access(context)],
       ],
     );
+  }
+
+  /// 8.15 / 8.16 · The block between the identity and Details: the invite
+  /// button and its note, the unused invite's code, or nothing. The key is the
+  /// access state — that key change is what drives the crossfade.
+  Widget _actionSlot(BuildContext context) {
+    if (model.isNotOnApp) {
+      return Padding(
+        key: ValueKey(model.access),
+        padding: const EdgeInsets.only(top: 24),
+        child: _noLogin(context),
+      );
+    }
+    if (model.isPending) {
+      return Padding(
+        key: ValueKey(model.access),
+        padding: const EdgeInsets.only(top: 24),
+        child: _pending(context),
+      );
+    }
+    return SizedBox.shrink(key: ValueKey(model.access));
   }
 
   /// 8.15 · Nothing to sign in with yet.

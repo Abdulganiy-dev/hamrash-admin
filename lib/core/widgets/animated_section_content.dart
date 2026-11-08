@@ -42,7 +42,11 @@ class AnimatedSectionContent extends StatelessWidget {
             : AnimatedSwitcher.defaultTransitionBuilder,
         layoutBuilder: (currentChild, previousChildren) => Stack(
           alignment: Alignment.topCenter,
-          children: [...previousChildren, ?currentChild],
+          children: [
+            for (final previous in previousChildren)
+              ExcludeSemantics(child: IgnorePointer(child: previous)),
+            ?currentChild,
+          ],
         ),
         child: child,
       ),
