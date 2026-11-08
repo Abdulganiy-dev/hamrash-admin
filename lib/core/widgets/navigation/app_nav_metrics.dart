@@ -28,10 +28,10 @@ class AppNavMetrics {
   static const double tabBarSideInset = AppSpacing.screen;
 
   /// How far below the app bar content fades out.
-  static const double appBarFadeExtent = 32;
+  static const double appBarFadeExtent = 16;
 
   /// How far above the tab bar content fades out.
-  static const double tabBarFadeExtent = 64;
+  static const double tabBarFadeExtent = 32;
 
   /// Gap between the app bar row and the first piece of content, such as a
   /// screen title.

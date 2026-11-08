@@ -70,18 +70,6 @@ class SchoolService {
         count('arm_subjects', column: 'arm_id'),
         count('grade_boundaries'),
         count('score_columns'),
-        _supabase
-            .from('organization_members')
-            .select('id')
-            .eq('organization_id', id)
-            .inFilter('role', [
-              'admin',
-              'principal',
-              'vice_principal',
-              'bursar',
-            ])
-            .limit(1)
-            .then((rows) => rows.length),
         count('students'),
         // The owner's own staff record is made when they join, so the school
         // has added staff once there are two.
@@ -94,8 +82,8 @@ class SchoolService {
         if (results[1] > 0) SetupStep.classes,
         if (results[2] > 0) SetupStep.subjects,
         if (results[3] > 0 && results[4] > 0) SetupStep.grading,
-        if (results[5] > 0) SetupStep.team,
-        if (results[6] > 0 && results[7] > 1) SetupStep.people,
+        if (results[6] > 1) SetupStep.staff,
+        if (results[5] > 0) SetupStep.students,
       });
     },
     log: (progress) => {

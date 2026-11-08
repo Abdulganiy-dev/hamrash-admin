@@ -21,6 +21,7 @@ class AppListLeading {
     this.name,
     this.icon,
     this.tone = AppBadgeTone.info,
+    this.pending = false,
   });
 
   /// Photo from the internet (cached).
@@ -31,8 +32,10 @@ class AppListLeading {
   const AppListLeading.local(String path, {String? name})
     : this._(path: path, name: name);
 
-  /// Initials from a name, for people without a photo.
-  const AppListLeading.initials(String name) : this._(name: name);
+  /// Initials from a name, for people without a photo. [pending] draws a
+  /// dashed aubergine ring: an invite that hasn't been claimed yet.
+  const AppListLeading.initials(String name, {bool pending = false})
+    : this._(name: name, pending: pending);
 
   /// Icon tile for things (fees, classes, exams). [tone] colours the tile.
   const AppListLeading.icon(
@@ -45,6 +48,9 @@ class AppListLeading {
   final String? name;
   final AppSvgIconData? icon;
   final AppBadgeTone tone;
+
+  /// A dashed aubergine ring over the edge: an invite not claimed yet.
+  final bool pending;
 
   bool get _isPerson => icon == null;
 }
@@ -360,20 +366,28 @@ class AppLeadingPicture extends StatelessWidget {
     final innerRadius = round ? size / 2 : outerRadius - 3;
     final innerSize = size - 6; // 1px border + 2px gap on each side
 
-    return Container(
-      width: size,
-      height: size,
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: AppPalette.white,
-        borderRadius: BorderRadius.circular(outerRadius),
-        border: Border.all(color: AppPalette.stone200),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(innerRadius),
-        child: SizedBox.square(
-          dimension: innerSize,
-          child: _content(innerSize),
+    return SizedBox.square(
+      dimension: size,
+      child: CustomPaint(
+        foregroundPainter: leading.pending
+            ? _DashedRingPainter(radius: (size - 2) / 2)
+            : null,
+        child: Container(
+          width: size,
+          height: size,
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: AppPalette.white,
+            borderRadius: BorderRadius.circular(outerRadius),
+            border: Border.all(color: AppPalette.stone200),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(innerRadius),
+            child: SizedBox.square(
+              dimension: innerSize,
+              child: _content(innerSize),
+            ),
+          ),
         ),
       ),
     );
@@ -444,4 +458,39 @@ class _Initials extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Dashed aubergine ring around a pending invite's initials avatar.
+class _DashedRingPainter extends CustomPainter {
+  const _DashedRingPainter({required this.radius});
+
+  final double radius;
+
+  static const _dash = 4.0;
+  static const _gap = 3.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppPalette.aubergine400
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+    final circle = Path()
+      ..addOval(
+        Rect.fromCircle(
+          center: Offset(size.width / 2, size.height / 2),
+          radius: radius,
+        ),
+      );
+    for (final metric in circle.computeMetrics()) {
+      for (var d = 0.0; d < metric.length; d += _dash + _gap) {
+        canvas.drawPath(metric.extractPath(d, d + _dash), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedRingPainter oldDelegate) =>
+      oldDelegate.radius != radius;
 }

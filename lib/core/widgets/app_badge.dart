@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
-import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// What a badge means. Colour follows meaning, never decoration.
@@ -170,15 +170,17 @@ class AppBadge extends StatelessWidget {
   }
 }
 
-/// Tappable chip for filtering or picking options. 36 tall with a 44 tap
-/// area, 8px corners so it never looks like a status badge.
+/// Tappable chip for filtering or picking options. A 40 tall pill with
+/// 999px corners — never a status badge — inside a 48 tall tap area.
 ///
 /// ```dart
 /// AppFilterChip(label: 'JSS 2', selected: isJss2, onTap: () => toggle('JSS 2'))
 /// AppFilterChip(label: 'Absent', count: 3, onTap: _showAbsent)
 /// AppFilterChip(label: 'Term 2', selected: true, onRemove: _clearTerm)
+/// AppFilterChip(label: 'Gold', suggestion: true, onTap: _addGold)
+/// AppFilterChip(label: 'Primary 1A', selected: true, locked: true, onTap: _whyLocked)
 /// ```
-class AppFilterChip extends StatelessWidget {
+class AppFilterChip extends StatefulWidget {
   const AppFilterChip({
     super.key,
     required this.label,
@@ -187,6 +189,8 @@ class AppFilterChip extends StatelessWidget {
     this.onRemove,
     this.count,
     this.enabled = true,
+    this.locked = false,
+    this.suggestion = false,
   });
 
   final String label;
@@ -196,79 +200,168 @@ class AppFilterChip extends StatelessWidget {
   /// Shows a trailing × that calls this (for applied filters).
   final VoidCallback? onRemove;
 
-  /// Optional count pill after the label.
+  /// Count shown inline after the label as " · 3".
   final int? count;
 
   final bool enabled;
 
+  /// In use elsewhere: shows a trailing lock instead of the ×.
+  final bool locked;
+
+  /// A name that can be added: shows a leading +.
+  final bool suggestion;
+
+  @override
+  State<AppFilterChip> createState() => _AppFilterChipState();
+}
+
+class _AppFilterChipState extends State<AppFilterChip> {
+  bool _pressed = false;
+
+  bool get _interactive =>
+      widget.enabled && (widget.onTap != null || widget.onRemove != null);
+
+  void _pressDown(TapDownDetails _) {
+    if (_interactive && !_pressed) setState(() => _pressed = true);
+  }
+
+  void _pressUp([TapUpDetails? _]) {
+    if (_pressed) setState(() => _pressed = false);
+  }
+
+  void _tap() {
+    if (!widget.enabled) return;
+    HapticHelpers.vibrate(VibrationType.light);
+    (widget.onTap ?? widget.onRemove)?.call();
+  }
+
+  void _remove() {
+    if (!widget.enabled) return;
+    HapticHelpers.vibrate(VibrationType.light);
+    widget.onRemove?.call();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final pressed = _pressed && _interactive;
+
     final Color fill;
     final Color border;
-    final Color text;
-    if (!enabled) {
+    final Color labelColor;
+    final Color countColor;
+    if (!widget.enabled) {
       fill = AppPalette.stone100;
       border = AppPalette.stone200;
-      text = AppPalette.stone400;
-    } else if (selected) {
-      fill = LightColors.primaryPrimaryMute;
-      border = LightColors.primaryPrimaryThin;
-      text = LightColors.primaryPrimaryText;
+      labelColor = LightColors.textDisabled;
+      countColor = LightColors.textDisabled;
+    } else if (widget.selected) {
+      // Light aubergine tint. Selection reads from the fill, the aubergine
+      // border and the aubergine label. Flat fill, no check mark.
+      fill = pressed ? AppPalette.aubergine100 : LightColors.primaryPrimaryMute;
+      border = LightColors.primaryPrimaryDefault;
+      labelColor = LightColors.primaryPrimaryText;
+      countColor = AppPalette.aubergine400;
     } else {
-      fill = AppPalette.white;
-      border = AppPalette.stone200;
-      text = AppPalette.stone700;
+      fill = pressed ? AppPalette.stone100 : AppPalette.white;
+      border = LightColors.textMuted;
+      labelColor = LightColors.textStrong;
+      countColor = LightColors.textBody;
     }
 
-    final showCheck = selected && onRemove == null && enabled;
+    // Selected chips never get a leading icon, so they keep the 16 side
+    // padding. Only a suggestion leads with a +.
+    final leading = widget.suggestion ? AppSvgIcons.plus : null;
+    final trailing = widget.locked
+        ? AppSvgIcons.lock
+        : (widget.onRemove != null ? AppSvgIcons.x500 : null);
+
+    final textStyle = AppTypography.body.copyWith(
+      fontSize: 14,
+      height: 20 / 14,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0,
+    );
+
+    final label = Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: widget.label,
+            style: textStyle.copyWith(color: labelColor),
+          ),
+          if (widget.count case final count?)
+            TextSpan(
+              text: ' · $count',
+              style: textStyle.copyWith(color: countColor),
+            ),
+        ],
+      ),
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
+    );
+
+    final Color? leadingColor = leading == null
+        ? null
+        : (leading == AppSvgIcons.plus && !widget.selected
+              ? LightColors.textBody
+              : labelColor);
+
     final chip = Container(
-      height: 36,
+      height: 40,
+      constraints: const BoxConstraints(minWidth: 48),
       padding: EdgeInsets.only(
-        left: showCheck ? 10 : 14,
-        right: onRemove != null
-            ? 8
-            : (count != null ? 6 : (showCheck ? 12 : 14)),
+        left: leading == null ? 16 : 12,
+        right: trailing == null ? 16 : 12,
       ),
       decoration: BoxDecoration(
         color: fill,
-        borderRadius: AppRadius.brChip,
+        borderRadius: AppRadius.brPill,
         border: Border.all(color: border),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (showCheck) ...[
-            AppSvgIcon(AppSvgIcons.check600, size: 16, color: text),
-            const SizedBox(width: 6),
-          ],
-          AppText(
+      child: Center(
+        widthFactor: 1,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (leading != null) ...[
+              AppSvgIcon(leading, size: 14, color: leadingColor),
+              const SizedBox(width: 6),
+            ],
             label,
-            style: AppTypography.body.copyWith(
-              fontWeight: FontWeight.w600,
-              color: text,
-            ),
-          ),
-          if (count != null) ...[
-            const SizedBox(width: 8),
-            AppCountBadge(count: count!),
+            if (trailing != null) ...[
+              const SizedBox(width: 6),
+              if (widget.onRemove != null && !widget.locked)
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: _remove,
+                  child: AppSvgIcon(trailing, size: 14, color: labelColor),
+                )
+              else
+                AppSvgIcon(trailing, size: 14, color: labelColor),
+            ],
           ],
-          if (onRemove != null) ...[
-            const SizedBox(width: 6),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: enabled ? onRemove : null,
-              child: AppSvgIcon(AppSvgIcons.x500, size: 18, color: text),
-            ),
-          ],
-        ],
+        ),
       ),
     );
 
-    // 44 tall tap area around the 36 tall chip.
-    return BouncyButton(
-      onPressed: enabled ? (onTap ?? onRemove) : null,
-      isDisabled: !enabled,
-      child: SizedBox(height: 44, child: Center(widthFactor: 1, child: chip)),
+    // 48 tall tap area around the 40 tall chip.
+    return Semantics(
+      button: _interactive,
+      selected: widget.selected,
+      enabled: widget.enabled,
+      label: widget.count == null
+          ? widget.label
+          : '${widget.label}, ${widget.count}',
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: _pressDown,
+        onTapUp: _pressUp,
+        onTapCancel: _pressUp,
+        onTap: _interactive ? _tap : null,
+        child: SizedBox(height: 48, child: Center(widthFactor: 1, child: chip)),
+      ),
     );
   }
 }

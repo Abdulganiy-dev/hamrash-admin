@@ -1,6 +1,6 @@
 # Hamrash SVG icons
 
-63 SVG files exported for the icons previously used in the app. Each used weight variant is kept as a separate file so its stroke width matches the previous rendering. The application now renders these bundled assets and has no Lucide package dependency.
+64 SVG files exported for the icons previously used in the app. Each used weight variant is kept as a separate file so its stroke width matches the previous rendering. The application now renders these bundled assets and has no Lucide package dependency.
 Strokes use currentColor for tinting. Files are exported assets; app widgets still use AppSvgIcons. Two incorrect embedded previews (circleHelp and trash2) were corrected with their matching SVG artwork.
 
 ## Files
@@ -54,6 +54,7 @@ Strokes use currentColor for tinting. Files are exported assets; app widgets sti
 - school.svg — AppSvgIcons.school
 - search.svg — AppSvgIcons.search
 - search300.svg — AppSvgIcons.search300
+- share.svg — AppSvgIcons.share
 - timer.svg — AppSvgIcons.timer
 - toggle-left.svg — AppSvgIcons.toggleLeft
 - toggle-right.svg — AppSvgIcons.toggleRight
@@ -69,4 +70,4 @@ Strokes use currentColor for tinting. Files are exported assets; app widgets sti
 - x500.svg — AppSvgIcons.x500
 - x600.svg — AppSvgIcons.x600
 
-Unique glyphs: 49; exported variants: 63.
+Unique glyphs: 50; exported variants: 64.

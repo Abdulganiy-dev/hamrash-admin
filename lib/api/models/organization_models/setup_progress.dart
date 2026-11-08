@@ -5,8 +5,8 @@ enum SetupStep {
   classes('Classes and arms', 'Sections, classes and their arms'),
   subjects('Subjects', 'What each class takes'),
   grading('Grading', 'Grade scale and CA weights'),
-  team('Invite your team', 'Admins, principal, VP and bursar'),
-  people('Add staff and students', 'One at a time for now');
+  staff('Staff', 'Add your staff and invite them to the app'),
+  students('Add students', 'One at a time for now');
 
   const SetupStep(this.title, this.hint);
 

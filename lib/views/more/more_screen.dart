@@ -14,6 +14,7 @@ import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/academic_calendar/sessions/academic_sessions_screen.dart';
 import 'package:hamrash_admin/views/classes/classes_screen.dart';
 import 'package:hamrash_admin/views/subjects/subjects_screen.dart';
+import 'package:hamrash_admin/views/team/team_screen.dart';
 import 'package:hamrash_admin/views/more/more_view_model.dart';
 import 'package:hamrash_admin/views/more/widgets/more_account_card.dart';
 import 'package:hamrash_admin/views/more/widgets/more_school_card.dart';
@@ -109,6 +110,8 @@ class MoreScreen extends StatelessWidget {
         await _openPage(context, model, ClassesScreen(school: school));
       case SchoolArea.subjects:
         await _openPage(context, model, SubjectsScreen(school: school));
+      case SchoolArea.team:
+        await _openPage(context, model, TeamScreen(school: school));
       default:
         AppToast.show('${area.title} is coming soon');
     }

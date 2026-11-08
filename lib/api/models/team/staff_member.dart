@@ -1,0 +1,182 @@
+import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
+
+/// How a staff member's record reads at a glance. The owner's row, a claimed
+/// login, an invite nobody has used yet, no login at all, and a suspended
+/// login each get their own badge.
+enum StaffAccess {
+  owner('Owner', 'Owner'),
+  onApp('On app', 'On app'),
+  invitePending('Code ready', 'Invite pending'),
+  notOnApp('Not on app', 'Not on app'),
+  suspended('Suspended', 'Suspended');
+
+  const StaffAccess(this.label, this.detailLabel);
+
+  /// The short badge on the team list.
+  final String label;
+
+  /// The pill on the staff detail page, where "invite pending" says more
+  /// than "code ready".
+  final String detailLabel;
+}
+
+/// The staff record's own status, separate from the login.
+enum StaffRecordStatus {
+  active('active'),
+  onLeave('on_leave'),
+  exited('exited');
+
+  const StaffRecordStatus(this.value);
+
+  final String value;
+
+  static StaffRecordStatus fromJson(String value) =>
+      StaffRecordStatus.values.firstWhere(
+        (status) => status.value == value,
+        orElse: () => throw FormatException('Unknown staff status: $value'),
+      );
+}
+
+/// A login attached to a staff record, embedded from `organization_members`.
+class StaffLogin {
+  const StaffLogin({
+    required this.id,
+    required this.role,
+    required this.status,
+    this.claimCode,
+    this.joinedAt,
+    required this.createdAt,
+    this.clerkUserId,
+  });
+
+  final String id;
+  final OrganizationMemberRole role;
+  final OrganizationMemberStatus status;
+
+  /// The raw 8 characters. Shown as `K7M2-QX9P`.
+  final String? claimCode;
+  final DateTime? joinedAt;
+  final DateTime createdAt;
+  final String? clerkUserId;
+
+  static const columns =
+      'id,role,status,claim_code,joined_at,created_at,clerk_user_id';
+
+  factory StaffLogin.fromJson(Map<String, dynamic> json) => StaffLogin(
+    id: json['id'] as String,
+    role: OrganizationMemberRole.fromJson(json['role'] as String),
+    status: OrganizationMemberStatus.fromJson(json['status'] as String),
+    claimCode: json['claim_code'] as String?,
+    joinedAt: switch (json['joined_at']) {
+      final String value => DateTime.parse(value),
+      _ => null,
+    },
+    createdAt: DateTime.parse(json['created_at'] as String),
+    clerkUserId: json['clerk_user_id'] as String?,
+  );
+}
+
+/// One person on the school's staff list, with their login when they have
+/// one. The staff record and the login are separate: most records start with
+/// no login, and an invite can be cancelled without touching the record.
+class StaffMember {
+  const StaffMember({
+    required this.id,
+    required this.firstName,
+    required this.lastName,
+    this.jobTitle,
+    this.phone,
+    this.email,
+    this.photoUrl,
+    required this.staffType,
+    required this.status,
+    required this.createdAt,
+    this.memberId,
+    this.login,
+  });
+
+  final String id;
+  final String firstName;
+  final String lastName;
+  final String? jobTitle;
+  final String? phone;
+  final String? email;
+  final String? photoUrl;
+
+  /// `teaching` or `non_teaching`.
+  final String staffType;
+  final StaffRecordStatus status;
+  final DateTime createdAt;
+
+  /// The membership this record points at, set only by `invite_staff`.
+  final String? memberId;
+
+  /// The embedded `organization_members` row, or null when there's no login.
+  final StaffLogin? login;
+
+  /// The staff row plus its login, embedded through the member FK.
+  static const columns =
+      'id,first_name,last_name,job_title,phone,email,photo_url,staff_type,'
+      'status,created_at,member_id,'
+      'member:organization_members!staff_member_fkey(${StaffLogin.columns})';
+
+  factory StaffMember.fromJson(Map<String, dynamic> json) {
+    final member = json['member'];
+    return StaffMember(
+      id: json['id'] as String,
+      firstName: json['first_name'] as String,
+      lastName: json['last_name'] as String,
+      jobTitle: json['job_title'] as String?,
+      phone: json['phone'] as String?,
+      email: json['email'] as String?,
+      photoUrl: json['photo_url'] as String?,
+      staffType: json['staff_type'] as String,
+      status: StaffRecordStatus.fromJson(json['status'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String),
+      memberId: json['member_id'] as String?,
+      login: member is Map
+          ? StaffLogin.fromJson(Map<String, dynamic>.from(member))
+          : null,
+    );
+  }
+
+  String get fullName => '$firstName $lastName'.trim();
+
+  String get firstNameOnly => firstName;
+
+  bool get hasLogin => login != null;
+
+  /// Staff who have left can't be given a login; the database refuses it.
+  bool get canBeInvited => status != StaffRecordStatus.exited;
+
+  StaffAccess get access {
+    final login = this.login;
+    if (login == null) return StaffAccess.notOnApp;
+    return switch (login.status) {
+      OrganizationMemberStatus.invited => StaffAccess.invitePending,
+      OrganizationMemberStatus.suspended => StaffAccess.suspended,
+      OrganizationMemberStatus.active =>
+        login.role == OrganizationMemberRole.owner
+            ? StaffAccess.owner
+            : StaffAccess.onApp,
+    };
+  }
+
+  /// The role the record is, or would be: the login's role when it has one,
+  /// otherwise the job title's usual role.
+  OrganizationMemberRole get role => login?.role ?? roleForJobTitle(jobTitle);
+
+  /// "Teacher" from "Teacher", "Maths Teacher" or "Senior Teacher".
+  static OrganizationMemberRole roleForJobTitle(String? jobTitle) {
+    final title = (jobTitle ?? '').toLowerCase();
+    if (title.contains('owner')) return OrganizationMemberRole.owner;
+    if (title.contains('vice') && title.contains('principal')) {
+      return OrganizationMemberRole.vicePrincipal;
+    }
+    if (title.contains('principal')) return OrganizationMemberRole.principal;
+    if (title.contains('admin')) return OrganizationMemberRole.admin;
+    if (title.contains('bursar')) return OrganizationMemberRole.bursar;
+    if (title.contains('teacher')) return OrganizationMemberRole.teacher;
+    return OrganizationMemberRole.staff;
+  }
+}

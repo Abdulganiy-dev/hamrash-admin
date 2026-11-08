@@ -47,6 +47,22 @@ class MemberSchool {
       roles.contains(OrganizationMemberRole.owner) ||
       roles.contains(OrganizationMemberRole.admin);
 
+  /// The database lets every school leader issue some staff login; the role
+  /// itself decides which.
+  bool get canIssueLogins => canRunSetup;
+
+  /// Only the owner and admins change a member's role or status, cancel
+  /// their invite, or remove their staff record.
+  bool get canManageAccess => canInviteAdmins;
+
+  /// Whether this person may invite [role] at this school, matching the
+  /// `organization_members` insert policy. The owner row is never offered.
+  bool canInviteRole(OrganizationMemberRole role) {
+    if (role == OrganizationMemberRole.owner) return false;
+    if (canInviteAdmins) return true;
+    return role.isLeaderTierRole;
+  }
+
   /// Mirrors the database's row-level rules:
   /// - calendar, classes, subjects and grading: every member reads them,
   ///   school leaders change them;

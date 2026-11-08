@@ -261,7 +261,7 @@ void main() {
         );
         expect(model.school.canRunSetup, isTrue);
         expect(model.canOpen(SetupStep.academicCalendar), isTrue);
-        expect(model.canOpen(SetupStep.team), isTrue);
+        expect(model.canOpen(SetupStep.staff), isTrue);
         expect(model.canOpen(SetupStep.schoolDetails), isFalse);
         expect(model.hintFor(SetupStep.schoolDetails), 'The owner does this');
       }

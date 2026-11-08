@@ -22,6 +22,15 @@ class AppPalette {
 
   // Stone — warm gray that ends in espresso (900), the heading color.
   static const white = Color(0xFFFFFFFF);
+
+  // White at fixed opacities, for text and glass fills on the aubergine
+  // surfaces. Use these rather than `Colors.white70` and friends so the
+  // transparency is the same everywhere.
+  static const white70 = Color(0xB3FFFFFF);
+  static const white40 = Color(0x66FFFFFF);
+  static const white20 = Color(0x33FFFFFF);
+  static const white12 = Color(0x1FFFFFFF);
+
   static const stone50 = Color(0xFFFBF9F4);
   static const stone100 = Color(0xFFF3F0E8);
   static const stone200 = Color(0xFFE6DFD2);

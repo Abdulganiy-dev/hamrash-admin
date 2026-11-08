@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_field_style.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -121,13 +122,29 @@ class _ArmsEditorState extends State<ArmsEditor> {
             children: [
               for (final arm in widget.arms)
                 if (widget.locked[arm] case final why?)
-                  _ArmChip(
-                    label: arm,
-                    locked: true,
-                    onTap: () => setState(() => _lockedReason = why),
+                  Semantics(
+                    button: true,
+                    label: 'Arm $arm, in use',
+                    excludeSemantics: true,
+                    child: AppFilterChip(
+                      label: arm,
+                      selected: true,
+                      locked: true,
+                      onTap: () => setState(() => _lockedReason = why),
+                    ),
                   )
                 else
-                  _ArmChip(label: arm, onTap: () => _remove(arm)),
+                  Semantics(
+                    button: true,
+                    label: 'Remove arm $arm',
+                    excludeSemantics: true,
+                    child: AppFilterChip(
+                      label: arm,
+                      selected: true,
+                      onTap: () => _remove(arm),
+                      onRemove: () => _remove(arm),
+                    ),
+                  ),
             ],
           ),
           const SizedBox(height: 10),
@@ -145,7 +162,16 @@ class _ArmsEditorState extends State<ArmsEditor> {
             runSpacing: 8,
             children: [
               for (final arm in suggestions)
-                _SuggestionChip(label: arm, onAdd: () => _add(arm)),
+                Semantics(
+                  button: true,
+                  label: 'Add arm $arm',
+                  excludeSemantics: true,
+                  child: AppFilterChip(
+                    label: arm,
+                    suggestion: true,
+                    onTap: () => _add(arm),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 10),
@@ -186,103 +212,6 @@ class _ArmsEditorState extends State<ArmsEditor> {
       ],
     );
   }
-}
-
-/// A chosen arm. Tapping it removes it, or for a [locked] arm says why it
-/// can't go.
-class _ArmChip extends StatelessWidget {
-  const _ArmChip({
-    required this.label,
-    required this.onTap,
-    this.locked = false,
-  });
-
-  final String label;
-  final VoidCallback onTap;
-  final bool locked;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    label: locked ? 'Arm $label, in use' : 'Remove arm $label',
-    excludeSemantics: true,
-    child: BouncyButton(
-      onPressed: onTap,
-      child: Container(
-        height: 34,
-        padding: const EdgeInsets.only(left: 14, right: 10),
-        decoration: BoxDecoration(
-          color: LightColors.primaryPrimaryDefault,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppText(
-              label,
-              style: AppTypography.body.copyWith(
-                fontWeight: FontWeight.w700,
-                height: 18 / 14,
-                color: AppPalette.white,
-              ),
-            ),
-            const SizedBox(width: 6),
-            AppSvgIcon(
-              locked ? AppSvgIcons.lock : AppSvgIcons.x600,
-              size: locked ? 12 : 14,
-              color: locked ? AppPalette.aubergine200 : AppPalette.white,
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-/// A common arm name to add with one tap.
-class _SuggestionChip extends StatelessWidget {
-  const _SuggestionChip({required this.label, required this.onAdd});
-
-  final String label;
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    label: 'Add arm $label',
-    excludeSemantics: true,
-    child: BouncyButton(
-      onPressed: onAdd,
-      child: Container(
-        height: 34,
-        padding: const EdgeInsets.only(left: 10, right: 14),
-        decoration: BoxDecoration(
-          color: AppPalette.white,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: AppPalette.stone200),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AppSvgIcon(
-              AppSvgIcons.plus600,
-              size: 14,
-              color: AppPalette.stone600,
-            ),
-            const SizedBox(width: 4),
-            AppText(
-              label,
-              style: AppTypography.body.copyWith(
-                fontWeight: FontWeight.w600,
-                height: 18 / 14,
-                color: LightColors.textStrong,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 /// "Add your own, e.g. Science" with a + button inside.

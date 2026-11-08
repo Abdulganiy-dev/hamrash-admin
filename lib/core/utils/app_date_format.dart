@@ -69,6 +69,22 @@ abstract final class AppDateFormat {
     return '${(days / 7).round()} weeks';
   }
 
+  /// "today", "yesterday", "tomorrow", otherwise "3 Sep" (with the year when
+  /// it isn't this year). For "added today", "code shared 5 Nov".
+  static String relative(DateTime date, {DateTime? now}) {
+    final today = dateOnly(now ?? DateTime.now());
+    final days = dateOnly(date).difference(today).inDays;
+    return switch (days) {
+      0 => 'today',
+      -1 => 'yesterday',
+      1 => 'tomorrow',
+      _ =>
+        date.year == today.year
+            ? DateFormat('d MMM').format(date)
+            : DateFormat('d MMM y').format(date),
+    };
+  }
+
   /// "October 2026".
   static String month(DateTime date) => DateFormat('MMMM y').format(date);
 }

@@ -29,6 +29,64 @@ enum OrganizationMemberRole {
     _ => false,
   };
 
+  bool get isStaffAppRole => !isAdminAppRole;
+
+  /// The app this role signs in to: "Hamrash Admin" or "Hamrash Staff".
+  String get appName => isAdminAppRole ? 'Hamrash Admin' : 'Hamrash Staff';
+
+  /// The same app, short: "Admin app" or "Staff app".
+  String get appLabel => isAdminAppRole ? 'Admin app' : 'Staff app';
+
+  /// In a sentence: "the Hamrash admin app".
+  String get appInSentence =>
+      isAdminAppRole ? 'the Hamrash admin app' : 'the Hamrash staff app';
+
+  /// How the team screens write the role: "Vice principal", not
+  /// "Vice Principal".
+  String get teamLabel => switch (this) {
+    OrganizationMemberRole.vicePrincipal => 'Vice principal',
+    _ => displayName,
+  };
+
+  /// The role at the start of a sentence: "Teachers sign in…".
+  String get pluralLabel => switch (this) {
+    OrganizationMemberRole.owner => 'Owners',
+    OrganizationMemberRole.admin => 'Admins',
+    OrganizationMemberRole.principal => 'Principals',
+    OrganizationMemberRole.vicePrincipal => 'Vice principals',
+    OrganizationMemberRole.bursar => 'Bursars',
+    OrganizationMemberRole.teacher => 'Teachers',
+    OrganizationMemberRole.staff => 'Staff',
+    OrganizationMemberRole.parent => 'Parents',
+    OrganizationMemberRole.student => 'Students',
+  };
+
+  /// The one-line explanation beside a role in the picker.
+  String get teamDescription => switch (this) {
+    OrganizationMemberRole.owner => 'Runs the school · Admin app',
+    OrganizationMemberRole.admin =>
+      'Runs the school with the owner · Admin app',
+    OrganizationMemberRole.principal =>
+      'Leads teaching and the team · Admin app',
+    OrganizationMemberRole.vicePrincipal =>
+      'Supports the principal · Admin app',
+    OrganizationMemberRole.bursar => 'Fees and school records · Admin app',
+    OrganizationMemberRole.teacher => 'Classes and results · Staff app',
+    OrganizationMemberRole.staff => 'Day-to-day school work · Staff app',
+    OrganizationMemberRole.parent => 'Their children · Family app',
+    OrganizationMemberRole.student => 'Their own work · Family app',
+  };
+
+  /// The roles principals and vice principals may invite (migration 17).
+  bool get isLeaderTierRole => switch (this) {
+    OrganizationMemberRole.principal ||
+    OrganizationMemberRole.vicePrincipal ||
+    OrganizationMemberRole.bursar ||
+    OrganizationMemberRole.teacher ||
+    OrganizationMemberRole.staff => true,
+    _ => false,
+  };
+
   static OrganizationMemberRole fromJson(String value) =>
       OrganizationMemberRole.values.firstWhere(
         (role) => role.value == value,

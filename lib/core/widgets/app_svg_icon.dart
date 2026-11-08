@@ -93,6 +93,7 @@ abstract final class AppSvgIcons {
   static const school = AppSvgIconData('assets/svg/icons/school.svg');
   static const search = AppSvgIconData('assets/svg/icons/search.svg');
   static const search300 = AppSvgIconData('assets/svg/icons/search300.svg');
+  static const share = AppSvgIconData('assets/svg/icons/share.svg');
   static const timer = AppSvgIconData('assets/svg/icons/timer.svg');
   static const toggleLeft = AppSvgIconData('assets/svg/icons/toggle-left.svg');
   static const toggleRight = AppSvgIconData(

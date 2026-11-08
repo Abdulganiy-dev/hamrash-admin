@@ -7,8 +7,10 @@ import 'package:hamrash_admin/core/bottomSheets/app_confirm_sheet.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_chip_row.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
@@ -104,20 +106,16 @@ class _Body extends StatelessWidget {
       onRefresh: model.refresh,
       children: [
         if (tabs.isNotEmpty) ...[
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final (i, id) in tabs.indexed) ...[
-                  if (i > 0) const SizedBox(width: 8),
-                  AppFilterChip(
-                    label: model.tabLabel(id),
-                    selected: model.armId == id,
-                    onTap: () => model.pickArm(id),
-                  ),
-                ],
-              ],
-            ),
+          AppChipRow(
+            inset: AppSpacing.none,
+            children: [
+              for (final id in tabs)
+                AppFilterChip(
+                  label: model.tabLabel(id),
+                  selected: model.armId == id,
+                  onTap: () => model.pickArm(id),
+                ),
+            ],
           ),
           if (model.note case final note?) ...[
             const SizedBox(height: 8),

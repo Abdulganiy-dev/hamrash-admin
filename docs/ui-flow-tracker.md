@@ -73,7 +73,8 @@ Schema exists (`staff`, `students`, `parents`, `student_parents`). See [people-s
 - [ ] 11.7 Add staff, issue and re-issue a claim code
 - [ ] 11.8 Class teachers and teaching assignments: who teaches what, in which arm
 - [ ] 11.9 Student subjects: electives
-- [ ] 11.10 Team and invites: invite, cancel an unclaimed invite, change a role, suspend ❓ the More tab has team management in code but no Paper artboard; check what shipped and design it properly
+- [x] 11.10 Staffs: staff list (All · On app · Not on app), add a staff member, staff page, invite with a shareable code, cancel an unclaimed invite, change an unused invite's role, change an active role, suspend and restore access, remove from the staff list. Left: editing a staff member's own details (`update_staff`), photos and private details.
+  - 11.6 and 11.7's staff list, staff page, Add staff and claim-code parts ship with this; class and subject assignments, on-leave/exited status changes, and editing a record are still open.
 
 ### 12 · Promotion ⬜
 Decisions: [academic-structure.md → Promotion](academic-structure.md#promotion-decided-not-built-yet). Needs results first.

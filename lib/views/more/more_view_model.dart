@@ -40,7 +40,8 @@ class MoreViewModel extends BaseViewModel {
     SchoolArea.classes => _doneOr(SetupStep.classes),
     SchoolArea.subjects => _doneOr(SetupStep.subjects),
     SchoolArea.grading => _doneOr(SetupStep.grading),
-    SchoolArea.team => _team?.label ?? 'Admins, principal, VP and bursar',
+    SchoolArea.team =>
+      _team?.label ?? 'Add your staff and invite them to the app',
     SchoolArea.schoolDetails => 'Logo, address, contacts',
   };
 

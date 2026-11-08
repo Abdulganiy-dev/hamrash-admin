@@ -4,7 +4,7 @@ enum SchoolArea {
   classes('Classes and arms'),
   subjects('Subjects'),
   grading('Grading'),
-  team('Team and invites'),
+  team('Staffs'),
   schoolDetails('School details');
 
   const SchoolArea(this.title);

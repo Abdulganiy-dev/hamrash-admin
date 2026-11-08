@@ -1,0 +1,283 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
+import 'package:hamrash_admin/api/models/team/staff_job_title.dart';
+import 'package:hamrash_admin/api/models/team/staff_member.dart';
+import 'package:hamrash_admin/core/constants/app_colors.dart';
+import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
+import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_keyboard_bar.dart';
+import 'package:hamrash_admin/core/widgets/app_list_row.dart';
+import 'package:hamrash_admin/core/widgets/app_sheet_error.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
+import 'package:hamrash_admin/core/widgets/app_text_field.dart';
+import 'package:hamrash_admin/core/widgets/app_toast.dart';
+import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
+import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
+import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
+import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
+import 'package:hamrash_admin/core/widgets/pickers/app_picker_field.dart';
+import 'package:hamrash_admin/services/navigation_service.dart';
+import 'package:hamrash_admin/views/team/add_staff/add_staff_view_model.dart';
+import 'package:stacked/stacked.dart';
+
+/// What the add form pops: the person it made (to open their page), and
+/// whether anything was added at all (so the list reloads).
+class AddStaffOutcome {
+  const AddStaffOutcome({this.created, required this.addedAny});
+
+  final StaffMember? created;
+  final bool addedAny;
+}
+
+/// 8.3 · Add Staff Members: who they are, their job title, and how to reach
+/// them. Saving goes straight to their staff page; "Save and add another"
+/// stays here.
+class AddStaffScreen extends StatelessWidget {
+  const AddStaffScreen({super.key, required this.school});
+
+  final MemberSchool school;
+
+  @override
+  Widget build(BuildContext context) =>
+      ViewModelBuilder<AddStaffViewModel>.reactive(
+        viewModelBuilder: () => AddStaffViewModel(school: school),
+        builder: (context, model, _) {
+          final keyboardOpen = AppKeyboardBar.isKeyboardOpen(context);
+          return PopScope(
+            canPop: false,
+            onPopInvokedWithResult: (didPop, _) {
+              if (!didPop) _close(model);
+            },
+            child: DefaultScaffold(
+              title: 'Add Staff Members',
+              showBackButton: true,
+              onBackPressed: () => _close(model),
+              backgroundColor: AppPalette.linen,
+              extendBody: keyboardOpen,
+              body: _Form(model: model),
+              bottomNavigationBar: keyboardOpen
+                  ? const AppKeyboardBar()
+                  : _SaveBar(
+                      model: model,
+                      onSave: () => _save(model),
+                      onSaveAnother: () => _saveAnother(model),
+                    ),
+            ),
+          );
+        },
+      );
+
+  static void _close(AddStaffViewModel model) => NavigationService.popScreen(
+    model.addedAny ? const AddStaffOutcome(addedAny: true) : null,
+  );
+
+  static Future<void> _save(AddStaffViewModel model) async {
+    final result = await model.save();
+    if (result.staff case final staff?) {
+      AppToast.show('${staff.fullName} added to staff');
+      NavigationService.popScreen(
+        AddStaffOutcome(created: staff, addedAny: true),
+      );
+    }
+  }
+
+  static Future<void> _saveAnother(AddStaffViewModel model) async {
+    final result = await model.save();
+    if (result.staff case final staff?) {
+      AppToast.show('${staff.fullName} added to staff');
+      model.clearForAnother();
+    }
+  }
+}
+
+class _Form extends StatelessWidget {
+  const _Form({required this.model});
+
+  final AddStaffViewModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      child: Builder(
+        builder: (context) => Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.screen,
+            ScaffoldInsets.bodyTopInsetOf(context),
+            AppSpacing.screen,
+            AppSpacing.lg + keyboard,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppText(
+                'Who are you adding?',
+                style: AppTypography.h2.copyWith(color: LightColors.textStrong),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              AppCard(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    AppLeadingPicture(
+                      leading: AppListLeading.initials(model.previewName),
+                      size: 52,
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AppText(
+                            model.previewName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            variant: AppTextVariant.title,
+                          ),
+                          const SizedBox(height: AppSpacing.xxs),
+                          AppText(
+                            model.previewSubtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            variant: AppTextVariant.body,
+                            colorType: AppTextColor.textBody,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: AppTextField(
+                      label: 'First name',
+                      hintText: 'Chinedu',
+                      controller: model.firstName,
+                      errorText: model.firstNameProblem,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      onChanged: (_) => model.changed(),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.ms),
+                  Expanded(
+                    child: AppTextField(
+                      label: 'Last name',
+                      hintText: 'Obi',
+                      controller: model.lastName,
+                      errorText: model.lastNameProblem,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      onChanged: (_) => model.changed(),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.ml),
+              AppSelectField<StaffJobTitleOption>(
+                label: 'Job title',
+                value: model.jobTitle,
+                items: StaffJobTitleOption.values,
+                labelBuilder: (option) => option.label,
+                onChanged: model.pickJobTitle,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              const AppSectionHeader(title: 'Reach them', caption: 'Optional'),
+              const SizedBox(height: AppSpacing.stack),
+              AppTextField(
+                label: 'Phone',
+                prefixText: '+234',
+                hintText: '8030000000',
+                controller: model.phone,
+                errorText: model.phoneProblem,
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(13),
+                ],
+                onChanged: (_) => model.changed(),
+              ),
+              const SizedBox(height: AppSpacing.ml),
+              AppTextField(
+                label: 'Email',
+                isOptional: true,
+                hintText: 'chinedu@example.com',
+                controller: model.email,
+                errorText: model.emailProblem,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.done,
+                onChanged: (_) => model.changed(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SaveBar extends StatelessWidget {
+  const _SaveBar({
+    required this.model,
+    required this.onSave,
+    required this.onSaveAnother,
+  });
+
+  final AddStaffViewModel model;
+  final VoidCallback onSave;
+  final VoidCallback onSaveAnother;
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    top: false,
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screen,
+        AppSpacing.sm,
+        AppSpacing.screen,
+        AppSpacing.md,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (model.error case final message?) AppSheetError(message),
+          AppPrimaryButton(
+            size: AppButtonSize.large,
+            isLoading: model.saving,
+            loadingText: 'Saving…',
+            isDisabled: !model.canSave,
+            onPressed: onSave,
+            child: const Text('Save staff member'),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          BouncyButton(
+            onPressed: model.saving ? null : onSaveAnother,
+            isDisabled: !model.canSave,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: AppText(
+                'Save and add another',
+                textAlign: TextAlign.center,
+                style: AppTypography.button.copyWith(
+                  color: model.canSave
+                      ? LightColors.primaryPrimaryText
+                      : LightColors.textDisabled,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
