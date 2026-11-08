@@ -4,6 +4,7 @@ import 'package:hamrash_admin/core/bottomSheets/app_confirm_sheet.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
@@ -227,6 +228,9 @@ class _SaveBar extends StatelessWidget {
             },
             child: const Text('Save changes'),
           ),
+          // The text button's tap area already puts 12 above its label; 4 more
+          // makes the visible gap 16.
+          const SizedBox(height: AppSpacing.xs),
           AppButton(
             type: AppButtonType.text,
             text: 'Undo changes',

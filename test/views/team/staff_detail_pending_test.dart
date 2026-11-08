@@ -10,6 +10,7 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_invite_code.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
+import 'package:hamrash_admin/views/team/widgets/quick_action_pill.dart';
 
 /// Only `getStaff` is used by the page; everything else would be a real
 /// database call, which these tests never make.
@@ -76,6 +77,10 @@ void main() {
     expect(find.text('INVITE CODE · TEACHER'), findsOneWidget);
     expect(find.text('Invited today'), findsOneWidget);
 
+    // The identity row names the state and where the login has got to.
+    expect(find.text('Invite pending'), findsOneWidget);
+    expect(find.text('Teacher · Staff app'), findsOneWidget);
+
     // The code and its helper.
     expect(find.text('K7M2'), findsOneWidget);
     expect(find.text('-'), findsOneWidget);
@@ -91,6 +96,46 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Share code'), findsOneWidget);
+
+    // Details drops Record for the invite's Role, which can be changed.
+    expect(find.text('Details'), findsOneWidget);
+    expect(find.text('Staff no.'), findsOneWidget);
+    expect(find.text('Not set'), findsOneWidget);
+    expect(find.text('Role'), findsOneWidget);
+    expect(find.text('Change'), findsOneWidget);
+    expect(find.text('Record'), findsNothing);
+
+    // The phone is there, so Call and Message work; no email yet.
+    expect(
+      tester
+          .widget<QuickActionPill>(find.widgetWithText(QuickActionPill, 'Call'))
+          .onTap,
+      isNotNull,
+    );
+    expect(
+      tester
+          .widget<QuickActionPill>(
+            find.widgetWithText(QuickActionPill, 'Message'),
+          )
+          .onTap,
+      isNotNull,
+    );
+    expect(
+      tester
+          .widget<QuickActionPill>(find.widgetWithText(QuickActionPill, 'Email'))
+          .onTap,
+      isNull,
+    );
+
+    // The quiet action at the bottom is the cancel.
+    expect(find.text('Cancel invite', skipOffstage: false), findsWidgets);
+    expect(
+      find.text(
+        'The code stops working. Tunde stays on the staff list.',
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
 
     // No card, border or well around the code.
     expect(

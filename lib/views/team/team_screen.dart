@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
-import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_chip_row.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
-import 'package:hamrash_admin/core/widgets/app_list_row.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
@@ -19,7 +17,7 @@ import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/team/add_staff/add_staff_screen.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
 import 'package:hamrash_admin/views/team/team_view_model.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_status_pill.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_list_card.dart';
 import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
 import 'package:stacked/stacked.dart';
 
@@ -44,6 +42,8 @@ class TeamScreen extends StatelessWidget {
             if (model.canAdd && !model.loading && model.error == null)
               AppNavIconButton(
                 icon: AppSvgIcons.plus,
+                iconSize: 18,
+                iconColor: LightColors.primaryPrimaryDefault,
                 semanticLabel: 'Add staff member',
                 onPressed: () => _addStaff(context, model),
               ),
@@ -53,23 +53,10 @@ class TeamScreen extends StatelessWidget {
               : model.loading
               ? const _Loading()
               : model.showEmptyState
-              ? AppEmptyState(
-                  icon: AppSvgIcons.users,
-                  title: 'No staff yet',
-                  subtitle:
-                      'Add each person who works at the school. You can '
-                      'invite them to the app now or later.',
-                  actionLabel: model.canAdd ? 'Add staff member' : null,
-                  onAction: model.canAdd
-                      ? () => _addStaff(context, model)
-                      : null,
-                )
+              ? const _Empty()
               : _List(model: model),
           bottomNavigationBar:
-              !model.loading &&
-                  model.error == null &&
-                  !model.isEmpty &&
-                  model.canAdd
+              !model.loading && model.error == null && model.canAdd
               ? _AddBar(onPressed: () => _addStaff(context, model))
               : null,
         ),
@@ -137,40 +124,58 @@ class _List extends StatelessWidget {
           ),
         ],
       ),
+      // The chips carry 4px above and below their 40px pill (a 48px tap
+      // area), so 8 here leaves the 16px gap the page draws.
+      const SizedBox(height: AppSpacing.sm),
       Padding(
-        padding: AppSpacing.screenPadding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: AppSpacing.md),
-            if (model.visibleStaff.isEmpty)
-              AppEmptyState(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
+        child: model.visibleStaff.isEmpty
+            ? AppEmptyState(
                 icon: AppSvgIcons.users,
                 compact: true,
                 title: model.filter == TeamFilter.onApp
                     ? 'No one on the app yet'
                     : 'No one here yet',
                 subtitle: 'Try another filter.',
+                topPadding: AppSpacing.sm,
               )
-            else
-              for (final (index, person) in model.visibleStaff.indexed) ...[
-                if (index > 0) const SizedBox(height: AppSpacing.stack),
-                AppListRow(
-                  leading: AppListLeading.initials(
-                    person.fullName,
-                    pending: person.access == StaffAccess.invitePending,
-                  ),
-                  title: person.fullName,
-                  subtitle: model.subtitleFor(person),
-                  badge: StaffStatusPill(access: person.access),
-                  onTap: () => TeamScreen._openStaff(context, model, person.id),
-                ),
-              ],
-            const SizedBox(height: AppSpacing.lg),
-          ],
-        ),
+            : StaffListCard(
+                staff: model.visibleStaff,
+                subtitleFor: model.subtitleFor,
+                onOpen: (person) =>
+                    TeamScreen._openStaff(context, model, person.id),
+              ),
       ),
+      const SizedBox(height: AppSpacing.md),
     ],
+  );
+}
+
+/// 8.2 · No one but the owner yet: the tinted tile, one line of explanation
+/// and the pinned "Add staff member" bar.
+class _Empty extends StatelessWidget {
+  const _Empty();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.fromLTRB(
+      AppSpacing.screen,
+      ScaffoldInsets.bodyTopInsetOf(context),
+      AppSpacing.screen,
+      0,
+    ),
+    child: const Center(
+      child: AppEmptyState(
+        icon: AppSvgIcons.userPlus,
+        iconColor: LightColors.categoryTealText,
+        iconTileColor: LightColors.categoryTealMute,
+        title: 'No staff yet',
+        subtitle:
+            'Add each person who works at the school. You can invite them '
+            'to the app now or later.',
+        topPadding: AppSpacing.none,
+      ),
+    ),
   );
 }
 

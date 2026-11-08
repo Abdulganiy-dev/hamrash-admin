@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
@@ -8,6 +9,10 @@ import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 /// Quiet icon-and-text action under a sheet's main button, e.g. "Remove
 /// term" or "Switch off this class". When it can't be used, it greys out
 /// and [helper] says why.
+///
+/// The label's box has no top padding and 4 under it, so the 16px gap a
+/// footer puts above it reads as 16 to the text. Two link actions stack 12
+/// apart: the 4 under the first plus the 12 reads as 16.
 ///
 /// ```dart
 /// AppSheetLinkAction(
@@ -52,7 +57,7 @@ class AppSheetLinkAction extends StatelessWidget {
           isDisabled: onPressed == null,
           onPressed: onPressed,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
+            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hamrash_admin/api/models/subjects/subject.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_text_field.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/app_sheet_link_action.dart';
@@ -160,8 +161,8 @@ class _SubjectSheetState extends State<SubjectSheet> {
             child: Text(saved == null ? 'Add subject' : 'Save subject'),
           ),
           if (saved != null && hasActions) ...[
-            const SizedBox(height: 12),
-            if (widget.onToggleActive case final toggle?)
+            if (widget.onToggleActive case final toggle?) ...[
+              const SizedBox(height: AppSpacing.md),
               AppSheetLinkAction(
                 icon: saved.isActive ? AppSvgIcons.eyeOff : AppSvgIcons.eye,
                 label: saved.isActive
@@ -169,8 +170,15 @@ class _SubjectSheetState extends State<SubjectSheet> {
                     : 'Switch on this subject',
                 onPressed: _saving ? null : () => _closeThen(toggle),
               ),
+            ],
             if (widget.onRemove case final remove?) ...[
-              const SizedBox(height: 12),
+              // 12 after another link: its 4px under-label padding completes
+              // the 16. 16 when it follows the main button.
+              SizedBox(
+                height: widget.onToggleActive == null
+                    ? AppSpacing.md
+                    : AppSpacing.ms,
+              ),
               AppSheetLinkAction(
                 icon: AppSvgIcons.trash2,
                 label: 'Remove subject',

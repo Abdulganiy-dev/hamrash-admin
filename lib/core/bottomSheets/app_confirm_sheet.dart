@@ -3,6 +3,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
@@ -213,7 +214,7 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             confirm,
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.md),
             AppSecondaryButton(
               useGradient: true,
               width: double.infinity,

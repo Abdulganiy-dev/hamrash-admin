@@ -111,14 +111,14 @@ class SchoolPausedScreen extends StatelessWidget {
           ),
         ),
         if (onSwitchSchool != null) ...[
-          const SizedBox(height: AppSpacing.ms),
+          const SizedBox(height: AppSpacing.md),
           AppSecondaryButton(
             size: AppButtonSize.large,
             onPressed: onSwitchSchool,
             child: const AppText('Switch school'),
           ),
         ],
-        const SizedBox(height: AppSpacing.ms),
+        const SizedBox(height: AppSpacing.md),
         AuthTextLink(label: 'Sign out', onTap: onSignOut),
       ],
     ),

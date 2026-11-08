@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/class_structure/class_structure.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_text_field.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/app_sheet_link_action.dart';
@@ -203,7 +204,7 @@ class _ClassSheetState extends State<ClassSheet> {
             child: Text(saved == null ? 'Add class' : 'Save class'),
           ),
           if (saved != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             AppSheetLinkAction(
               icon: saved.isActive ? AppSvgIcons.eyeOff : AppSvgIcons.eye,
               label: saved.isActive
@@ -213,7 +214,7 @@ class _ClassSheetState extends State<ClassSheet> {
                   ? null
                   : () => _closeThen(widget.onToggleActive!),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.ms),
             AppSheetLinkAction(
               icon: AppSvgIcons.trash2,
               label: 'Remove class',

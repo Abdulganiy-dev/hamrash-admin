@@ -88,6 +88,7 @@ class StaffMember {
     this.phone,
     this.email,
     this.photoUrl,
+    this.staffNumber,
     required this.staffType,
     required this.status,
     required this.createdAt,
@@ -103,6 +104,10 @@ class StaffMember {
   final String? email;
   final String? photoUrl;
 
+  /// The school's own number, e.g. `KCL/STF/0001`. Null when it wasn't read
+  /// or the record has none.
+  final String? staffNumber;
+
   /// `teaching` or `non_teaching`.
   final String staffType;
   final StaffRecordStatus status;
@@ -116,8 +121,8 @@ class StaffMember {
 
   /// The staff row plus its login, embedded through the member FK.
   static const columns =
-      'id,first_name,last_name,job_title,phone,email,photo_url,staff_type,'
-      'status,created_at,member_id,'
+      'id,first_name,last_name,job_title,phone,email,photo_url,'
+      'staff_number,staff_type,status,created_at,member_id,'
       'member:organization_members!staff_member_fkey(${StaffLogin.columns})';
 
   factory StaffMember.fromJson(Map<String, dynamic> json) {
@@ -130,6 +135,7 @@ class StaffMember {
       phone: json['phone'] as String?,
       email: json['email'] as String?,
       photoUrl: json['photo_url'] as String?,
+      staffNumber: json['staff_number'] as String?,
       staffType: json['staff_type'] as String,
       status: StaffRecordStatus.fromJson(json['status'] as String),
       createdAt: DateTime.parse(json['created_at'] as String),

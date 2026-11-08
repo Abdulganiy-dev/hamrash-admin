@@ -45,6 +45,7 @@ class StaffDetailViewModel extends BaseViewModel {
   StaffAccess get access => member.access;
   OrganizationMemberRole get role => member.role;
 
+  bool get isNotOnApp => access == StaffAccess.notOnApp;
   bool get isPending => access == StaffAccess.invitePending;
   bool get isOnApp =>
       access == StaffAccess.onApp || access == StaffAccess.owner;
@@ -66,6 +67,10 @@ class StaffDetailViewModel extends BaseViewModel {
   /// Only the owner and admins change roles and status.
   bool get canManageAccess => school.canManageAccess && !isOwnerRow;
 
+  /// The Access card belongs to someone with a login. The owner's own row
+  /// never shows it.
+  bool get showAccess => canManageAccess && (isOnApp || isSuspended);
+
   /// Only the owner and admins remove a record; the owner's own is never
   /// offered.
   bool get canRemove => school.canManageAccess && !isOwnerRow;
@@ -73,13 +78,40 @@ class StaffDetailViewModel extends BaseViewModel {
   /// The same tiers as inviting: a principal can't cancel an admin's invite.
   bool get canCancelInvite => isPending && school.canInviteRole(role);
 
-  /// "Admin · joined 3 Sep", "Teacher · Staff app", "Owner · you".
+  /// The one action at the bottom: cancel an unused invite, or remove the
+  /// record. Null when the viewer may do neither.
+  bool get showDanger => isPending ? canCancelInvite : canRemove;
+
+  String get dangerLabel =>
+      isPending ? 'Cancel invite' : 'Remove from staff list';
+
+  String get dangerCaption => switch (access) {
+    StaffAccess.invitePending =>
+      'The code stops working. ${member.firstNameOnly} stays on the staff '
+          'list.',
+    StaffAccess.onApp ||
+    StaffAccess.owner ||
+    StaffAccess.suspended => 'Also removes their login.',
+    StaffAccess.notOnApp => 'Their record is removed. Nothing else changes.',
+  };
+
+  /// "Teaching" or "Non-teaching", as the details card writes it.
+  String get staffTypeLabel =>
+      member.staffType == 'teaching' ? 'Teaching' : 'Non-teaching';
+
+  /// "Admin · joined 3 Sep", "Maths Teacher · Staff app",
+  /// "Teacher · access suspended", "Owner · you".
   String get identitySubtitle {
     final roleLabel = role.teamLabel;
     if (isOwnerRow) return isMe ? 'Owner · you' : 'Owner';
     if (login == null || isPending) {
-      return '$roleLabel · ${role.appLabel}';
+      final jobTitle = member.jobTitle?.trim();
+      final label = jobTitle == null || jobTitle.isEmpty
+          ? roleLabel
+          : jobTitle;
+      return '$label · ${role.appLabel}';
     }
+    if (isSuspended) return '$roleLabel · access suspended';
     final joined = login!.joinedAt;
     return joined == null
         ? roleLabel

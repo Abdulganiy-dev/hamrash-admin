@@ -100,7 +100,7 @@ class SignInScreen extends StatelessWidget {
                     markOffsetY: kAppleMarkOffsetY,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.ms),
+                const SizedBox(height: AppSpacing.md),
                 AppSecondaryButton(
                   size: AppButtonSize.large,
                   isLoading: model.pending == SignInProvider.google,

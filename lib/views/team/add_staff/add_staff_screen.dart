@@ -259,7 +259,9 @@ class _SaveBar extends StatelessWidget {
             onPressed: onSave,
             child: const Text('Save staff member'),
           ),
-          const SizedBox(height: AppSpacing.xs),
+          // 8 here + 8 of padding above the label = 16 visible between the
+          // two buttons.
+          const SizedBox(height: AppSpacing.sm),
           BouncyButton(
             onPressed: model.saving ? null : onSaveAnother,
             isDisabled: !model.canSave,

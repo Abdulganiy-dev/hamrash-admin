@@ -169,7 +169,8 @@ class AppSheet extends StatelessWidget {
   final Widget body;
 
   /// Pinned below the body (stays above the keyboard). Usually one primary
-  /// button, or a secondary + primary pair.
+  /// button, or a secondary + primary pair stacked with a 16px gap
+  /// ([AppSpacing.md]) — the same gap every two stacked buttons use.
   final Widget? footer;
 
   /// Wrap [body] in a scroll view that fades out under the header once

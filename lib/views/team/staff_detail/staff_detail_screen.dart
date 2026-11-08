@@ -8,7 +8,6 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_invite_code.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
@@ -22,11 +21,14 @@ import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_view_model.dart';
 import 'package:hamrash_admin/views/team/widgets/invite_ready_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/invite_sheet.dart';
+import 'package:hamrash_admin/views/team/widgets/icon_label.dart';
 import 'package:hamrash_admin/views/team/widgets/role_picker_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/share_invite.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_access_card.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_danger_action.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_identity_header.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_rows_card.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_detail_identity.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_details_card.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_quick_actions.dart';
 import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
 import 'package:stacked/stacked.dart';
 
@@ -49,17 +51,30 @@ class StaffDetailScreen extends StatelessWidget {
         viewModelBuilder: () =>
             StaffDetailViewModel(school: school, staffId: staffId),
         onViewModelReady: (model) => model.load(),
-        builder: (context, model, _) => DefaultScaffold(
-          title: 'Staff',
-          showBackButton: true,
-          onBackPressed: () => NavigationService.popScreen(model.changed),
-          backgroundColor: AppPalette.linen,
-          body: model.error != null
-              ? LoadErrorView(onRetry: model.load)
-              : model.loading
-              ? const _Loading()
-              : _Content(model: model),
-        ),
+        builder: (context, model, _) {
+          final content = model.error == null && !model.loading
+              ? _Content(model: model)
+              : null;
+          return DefaultScaffold(
+            title: 'Staff',
+            showBackButton: true,
+            onBackPressed: () => NavigationService.popScreen(model.changed),
+            backgroundColor: AppPalette.linen,
+            body: content ??
+                (model.error != null
+                    ? LoadErrorView(onRetry: model.load)
+                    : const _Loading()),
+            bottomNavigationBar: content != null && model.showDanger
+                ? _DangerBar(
+                    label: model.dangerLabel,
+                    caption: model.dangerCaption,
+                    onPressed: model.isPending
+                        ? () => content._cancelInvite(context)
+                        : () => content._remove(context),
+                  )
+                : null,
+          );
+        },
       );
 }
 
@@ -71,23 +86,43 @@ class _Content extends StatelessWidget {
   StaffMember get _member => model.member;
 
   @override
-  Widget build(BuildContext context) => AppRefreshScrollView.children(
-    onRefresh: model.refresh,
-    children: [
-      StaffIdentityHeader(
+  Widget build(BuildContext context) {
+    final blocks = <Widget>[
+      StaffDetailIdentity(
         member: _member,
-        subtitle: model.identitySubtitle,
         access: model.access,
+        meta: model.identitySubtitle,
       ),
-      const SizedBox(height: AppSpacing.lg),
-      switch (model.access) {
-        StaffAccess.notOnApp => _noLogin(context),
-        StaffAccess.invitePending => _pending(context),
-        _ => _hasLogin(context),
-      },
-      const SizedBox(height: AppSpacing.xl),
+      StaffQuickActions(
+        firstName: _member.firstNameOnly,
+        phone: _member.phone,
+        email: _member.email,
+      ),
+      if (model.isNotOnApp) _noLogin(context),
+      if (model.isPending) _pending(context),
+      _details(context),
+      if (model.showAccess) _access(context),
+    ];
+
+    return AppRefreshScrollView.children(
+      onRefresh: model.refresh,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.ms,
+      ),
+      children: _spaced(blocks),
+    );
+  }
+
+  /// A 24px gap between the page's blocks.
+  List<Widget> _spaced(List<Widget> blocks) => [
+    for (var i = 0; i < blocks.length; i++) ...[
+      if (i > 0) const SizedBox(height: AppSpacing.lg),
+      blocks[i],
     ],
-  );
+  ];
 
   /// 8.4 · Nothing to sign in with yet.
   Widget _noLogin(BuildContext context) => Column(
@@ -95,42 +130,29 @@ class _Content extends StatelessWidget {
     children: [
       AppText(
         "${_member.firstNameOnly} doesn't have a login yet",
-        style: AppTypography.h3.copyWith(color: LightColors.textStrong),
+        style: AppTypography.h3.copyWith(
+          height: 26 / 20,
+          fontWeight: FontWeight.w800,
+          color: LightColors.textStrong,
+        ),
       ),
-      const SizedBox(height: AppSpacing.xs),
+      const SizedBox(height: AppSpacing.sm),
       AppText(
         'Send them an invite code. They sign in with Apple or Google, then '
         'enter the code to join the school.',
         style: AppTypography.body.copyWith(
           fontSize: 15,
           height: 22 / 15,
+          fontWeight: FontWeight.w500,
           color: LightColors.textBody,
         ),
       ),
       if (model.canInvite) ...[
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.ms),
         AppPrimaryButton(
           size: AppButtonSize.large,
           onPressed: () => _invite(context),
           child: const Text('Invite to Hamrash'),
-        ),
-      ],
-      const SizedBox(height: AppSpacing.lg),
-      const AppSectionHeader(title: 'Details'),
-      const SizedBox(height: AppSpacing.sm),
-      StaffRowsCard(
-        children: [
-          StaffRow(title: 'Job title', value: _member.jobTitle ?? ''),
-          StaffRow(title: 'Phone', value: _member.phone ?? ''),
-          StaffRow(title: 'Email', value: _member.email ?? ''),
-        ],
-      ),
-      if (model.canRemove) ...[
-        const SizedBox(height: AppSpacing.xl),
-        StaffDangerAction(
-          label: 'Remove from staff list',
-          caption: 'Their record is removed. Nothing else changes.',
-          onPressed: () => _remove(context),
         ),
       ],
     ],
@@ -147,7 +169,11 @@ class _Content extends StatelessWidget {
             Expanded(
               child: AppText(
                 'Invite code · ${model.role.teamLabel}'.toUpperCase(),
-                style: InviteCodeDisplay.labelStyle,
+                style: AppTypography.label.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.96,
+                  color: LightColors.textBody,
+                ),
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -155,129 +181,80 @@ class _Content extends StatelessWidget {
               model.invitedLine,
               style: AppTypography.label.copyWith(
                 fontSize: 13,
-                height: 20 / 13,
-                color: LightColors.textBody,
+                height: 18 / 13,
+                fontWeight: FontWeight.w600,
+                color: LightColors.textMuted,
               ),
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         InviteCodeDisplay(code: model.rawCode),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.sm),
         AppText(
           'Waiting for $firstName to sign in and enter it. Nothing is '
           "emailed, and the code doesn't expire.",
           style: AppTypography.body.copyWith(
+            height: 20 / 14,
             fontWeight: FontWeight.w500,
             color: LightColors.textBody,
           ),
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         AppPrimaryButton(
           size: AppButtonSize.large,
           onPressed: () => _share(context, model.currentShareMessage),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AppSvgIcon(AppSvgIcons.share, size: 20),
-              SizedBox(width: AppSpacing.sm),
-              Text('Share code'),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        StaffRowsCard(
-          children: [
-            StaffRow(
-              title: 'Role',
-              value: model.role.teamLabel,
-              trailing: model.canCancelInvite
-                  ? AppText(
-                      'Change',
-                      style: AppTypography.button.copyWith(
-                        color: LightColors.textBrand,
-                      ),
-                    )
-                  : null,
-              showChevron: false,
-              onTap: model.canCancelInvite
-                  ? () => _changeInviteRole(context)
-                  : null,
+          child: IconLabel(
+            icon: AppSvgIcons.share,
+            label: 'Share code',
+            iconColor: AppPalette.white,
+            gap: AppSpacing.sm,
+            style: AppTypography.body.copyWith(
+              fontSize: 17,
+              height: 20 / 17,
+              fontWeight: FontWeight.w700,
+              color: AppPalette.white,
             ),
-            StaffRow(title: 'Phone', value: _member.phone ?? ''),
-          ],
-        ),
-        if (model.canCancelInvite) ...[
-          const SizedBox(height: AppSpacing.xl),
-          StaffDangerAction(
-            label: 'Cancel invite',
-            caption:
-                'The code stops working. $firstName stays on the staff list.',
-            onPressed: () => _cancelInvite(context),
           ),
-        ],
+        ),
       ],
     );
   }
 
+  Widget _details(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const _SectionTitle('Details'),
+      const SizedBox(height: AppSpacing.ms),
+      StaffDetailsCard(
+        jobTitle: _member.jobTitle,
+        staffType: model.staffTypeLabel,
+        staffNumber: _member.staffNumber,
+        status: _member.status,
+        phone: _member.phone,
+        email: _member.email,
+        roleLabel: model.isPending ? model.role.teamLabel : null,
+        onChangeRole: model.isPending && model.canCancelInvite
+            ? () => _changeInviteRole(context)
+            : null,
+      ),
+    ],
+  );
+
   /// 8.10 · They have used the code. Access is the only thing left.
-  Widget _hasLogin(BuildContext context) {
-    final firstName = _member.firstNameOnly;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AppText(
-          '$firstName is signed in.',
-          style: AppTypography.body.copyWith(
-            fontSize: 15,
-            height: 22 / 15,
-            color: LightColors.textBody,
-          ),
-        ),
-        if (model.canManageAccess) ...[
-          const SizedBox(height: AppSpacing.lg),
-          const AppSectionHeader(title: 'Access'),
-          const SizedBox(height: AppSpacing.sm),
-          StaffRowsCard(
-            children: [
-              StaffRow(
-                title: 'Change role',
-                value: model.role.teamLabel,
-                onTap: () => _changeRole(context),
-              ),
-              StaffRow(
-                title: model.isSuspended ? 'Restore access' : 'Suspend access',
-                subtitle: model.isSuspended
-                    ? 'They can sign in again.'
-                    : "They stay on the list but can't sign in.",
-                isWarning: !model.isSuspended,
-                showChevron: false,
-                trailing: AppSvgIcon(
-                  model.isSuspended
-                      ? AppSvgIcons.lockOpen
-                      : AppSvgIcons.circlePause,
-                  size: 20,
-                  color: model.isSuspended
-                      ? LightColors.successSuccessDefault
-                      : LightColors.warningWarningDefault,
-                ),
-                onTap: () => _toggleAccess(context),
-              ),
-            ],
-          ),
-        ],
-        if (model.canRemove) ...[
-          const SizedBox(height: AppSpacing.xl),
-          StaffDangerAction(
-            label: 'Remove from staff list',
-            caption: 'Also removes their login.',
-            onPressed: () => _remove(context),
-          ),
-        ],
-      ],
-    );
-  }
+  Widget _access(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const _SectionTitle('Access'),
+      const SizedBox(height: AppSpacing.ms),
+      StaffAccessCard(
+        roleLabel: model.role.teamLabel,
+        isSuspended: model.isSuspended,
+        onChangeRole: () => _changeRole(context),
+        onToggleAccess: () => _toggleAccess(context),
+      ),
+    ],
+  );
 
   Future<T?> _sheet<T>(
     BuildContext context,
@@ -417,6 +394,61 @@ class _Content extends StatelessWidget {
       NavigationService.popScreen(true);
     }
   }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => AppText(
+    title,
+    style: AppTypography.title.copyWith(
+      height: 20 / 16,
+      fontWeight: FontWeight.w800,
+      color: LightColors.textStrong,
+    ),
+  );
+}
+
+/// The pinned action at the bottom of the page. It sits in the scaffold's
+/// bottom bar, so the SafeArea keeps it clear of the home indicator and the
+/// scroll content above never runs behind it.
+class _DangerBar extends StatelessWidget {
+  const _DangerBar({
+    required this.label,
+    required this.caption,
+    required this.onPressed,
+  });
+
+  final String label;
+  final String caption;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: const BoxDecoration(
+      color: AppPalette.linen,
+      border: Border(top: BorderSide(color: AppPalette.stone200)),
+    ),
+    child: SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.ms,
+          AppSpacing.md,
+          AppSpacing.sm,
+        ),
+        child: StaffDangerAction(
+          label: label,
+          caption: caption,
+          onPressed: onPressed,
+        ),
+      ),
+    ),
+  );
 }
 
 /// [StaffDetailSkeleton] where the page's content starts.

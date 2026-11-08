@@ -73,8 +73,8 @@ Schema exists (`staff`, `students`, `parents`, `student_parents`). See [people-s
 - [ ] 11.7 Add staff, issue and re-issue a claim code
 - [ ] 11.8 Class teachers and teaching assignments: who teaches what, in which arm
 - [ ] 11.9 Student subjects: electives
-- [x] 11.10 Staffs: staff list (All · On app · Not on app), add a staff member, staff page, invite with a shareable code, cancel an unclaimed invite, change an unused invite's role, change an active role, suspend and restore access, remove from the staff list. Left: editing a staff member's own details (`update_staff`), photos and private details.
-  - 11.6 and 11.7's staff list, staff page, Add staff and claim-code parts ship with this; class and subject assignments, on-leave/exited status changes, and editing a record are still open.
+- [x] 11.10 Staffs: staff list (All · On app · Not on app), add a staff member, staff page (identity and status, Call / Message / Email, details grid, invite or access state, pinned remove/cancel bar), invite with a shareable code, cancel an unclaimed invite, change an unused invite's role, change an active role, suspend and restore access, remove from the staff list. Left: editing a staff member's own details (`update_staff`), photos and private details.
+  - 11.6 and 11.7's staff list, staff page, Add staff and claim-code parts ship with this; class and subject assignments, on-leave/exited status changes, and editing a record are still open. The staff page reads `staff_number`, `staff_type` and `status` and shows the record status read-only.
 
 ### 12 · Promotion ⬜
 Decisions: [academic-structure.md → Promotion](academic-structure.md#promotion-decided-not-built-yet). Needs results first.

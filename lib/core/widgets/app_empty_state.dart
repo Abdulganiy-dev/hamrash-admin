@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
+import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
@@ -41,6 +42,7 @@ class AppEmptyState extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.iconColor,
+    this.iconTileColor,
     this.actionLabel,
     this.onAction,
     this.secondaryLabel,
@@ -63,6 +65,11 @@ class AppEmptyState extends StatelessWidget {
   /// Defaults to aubergine, or stone-400 when [compact].
   final Color? iconColor;
 
+  /// Puts the icon on a 72px rounded tile of this colour and steps the title
+  /// up to [AppTypography.h2] (8.2's "No staff yet"). Leave null for the
+  /// plain icon every other screen uses.
+  final Color? iconTileColor;
+
   /// The one next step. A filled button, or a text link when [compact].
   final String? actionLabel;
   final VoidCallback? onAction;
@@ -84,6 +91,23 @@ class AppEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasAction = actionLabel != null && onAction != null;
     final hasSecondary = secondaryLabel != null && onSecondary != null;
+    final tiled = iconTileColor != null;
+
+    final iconColor =
+        this.iconColor ??
+        (compact ? AppPalette.stone400 : LightColors.primaryPrimaryDefault);
+    final iconWidget = tiled
+        ? Container(
+            width: 72,
+            height: 72,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: iconTileColor,
+              borderRadius: BorderRadius.circular(AppRadius.dialog),
+            ),
+            child: AppSvgIcon(icon, size: 32, color: iconColor),
+          )
+        : AppSvgIcon(icon, size: compact ? 36 : 56, color: iconColor);
 
     return Padding(
       padding: EdgeInsets.only(top: topPadding),
@@ -93,31 +117,27 @@ class AppEmptyState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AppSvgIcon(
-                icon,
-                size: compact ? 36 : 56,
-                color:
-                    iconColor ??
-                    (compact
-                        ? AppPalette.stone400
-                        : LightColors.primaryPrimaryDefault),
-              ),
-              SizedBox(height: compact ? 12 : 20),
+              iconWidget,
+              SizedBox(height: tiled ? AppSpacing.ms : (compact ? 12 : 20)),
               AppText(
                 title,
                 textAlign: TextAlign.center,
                 colorType: AppTextColor.textStrong,
-                style: compact
+                style: tiled
+                    ? AppTypography.h2
+                    : compact
                     ? AppTypography.title.copyWith(fontWeight: FontWeight.w800)
                     : AppTypography.h3,
               ),
               if (subtitle != null) ...[
-                SizedBox(height: compact ? 2 : 6),
+                SizedBox(height: tiled ? AppSpacing.ms : (compact ? 2 : 6)),
                 AppText(
                   subtitle!,
                   textAlign: TextAlign.center,
                   colorType: AppTextColor.textBody,
-                  style: compact
+                  style: tiled
+                      ? AppTypography.body
+                      : compact
                       ? AppTypography.body
                       : AppTypography.body.copyWith(
                           fontSize: 15,
@@ -140,7 +160,7 @@ class AppEmptyState extends StatelessWidget {
                       ),
               ],
               if (hasSecondary) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 _TextLink(label: secondaryLabel!, onTap: onSecondary!),
               ],
             ],
@@ -263,7 +283,12 @@ class _TextLink extends StatelessWidget {
     return BouncyButton(
       onPressed: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        // A 44px tap box, centred on the label. A button above it sits 4
+        // away, so the label reads 16 from that button.
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.ms,
+          horizontal: AppSpacing.xs,
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

@@ -97,6 +97,8 @@ class AppBadge extends StatelessWidget {
     this.tone = AppBadgeTone.neutral,
     this.style = AppBadgeStyle.subtle,
     this.icon,
+    this.showBorder = true,
+    this.labelStyle,
   });
 
   AppBadge.status(
@@ -118,6 +120,12 @@ class AppBadge extends StatelessWidget {
 
   /// Optional 12px leading icon (subtle and solid only).
   final AppSvgIconData? icon;
+
+  /// Off for the flat pill used on the staff list, which has a fill only.
+  final bool showBorder;
+
+  /// Overrides the label style. Its colour is always [tone]'s foreground.
+  final TextStyle? labelStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +159,9 @@ class AppBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: solid ? tone.strong : tone.mute,
         borderRadius: AppRadius.brBadge,
-        border: Border.all(color: solid ? tone.strong : tone.thin),
+        border: showBorder
+            ? Border.all(color: solid ? tone.strong : tone.thin)
+            : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -162,7 +172,9 @@ class AppBadge extends StatelessWidget {
           ],
           AppText(
             label,
-            style: AppTypography.label.copyWith(color: foreground),
+            style: (labelStyle ?? AppTypography.label).copyWith(
+              color: foreground,
+            ),
           ),
         ],
       ),

@@ -80,11 +80,16 @@ abstract final class AppSvgIcons {
   static const lock = AppSvgIconData('assets/svg/icons/lock.svg');
   static const lockOpen = AppSvgIconData('assets/svg/icons/lock-open.svg');
   static const logOut = AppSvgIconData('assets/svg/icons/log-out.svg');
+  static const mail = AppSvgIconData('assets/svg/icons/mail.svg');
+  static const messageCircle = AppSvgIconData(
+    'assets/svg/icons/message-circle.svg',
+  );
   static const messageSquare = AppSvgIconData(
     'assets/svg/icons/message-square.svg',
   );
   static const minus600 = AppSvgIconData('assets/svg/icons/minus600.svg');
   static const pencil = AppSvgIconData('assets/svg/icons/pencil.svg');
+  static const phone = AppSvgIconData('assets/svg/icons/phone.svg');
   static const plus = AppSvgIconData('assets/svg/icons/plus.svg');
   static const plus600 = AppSvgIconData('assets/svg/icons/plus600.svg');
   static const refreshCw500 = AppSvgIconData(

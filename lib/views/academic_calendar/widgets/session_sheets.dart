@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/utils/app_date_format.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_text_field.dart';
@@ -157,7 +158,7 @@ class _EditSessionSheetState extends State<EditSessionSheet> {
             child: const Text('Save session'),
           ),
           if (widget.showRemove) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             AppSheetLinkAction(
               icon: AppSvgIcons.trash2,
               isDestructive: true,
@@ -297,7 +298,7 @@ class _EditTermSheetState extends State<EditTermSheet> {
             child: Text(_adding ? 'Add term' : 'Save term'),
           ),
           if (!_adding) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             AppSheetLinkAction(
               icon: AppSvgIcons.trash2,
               isDestructive: true,

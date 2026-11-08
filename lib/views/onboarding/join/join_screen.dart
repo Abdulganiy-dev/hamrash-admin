@@ -229,7 +229,9 @@ class _JoinContent extends StatelessWidget {
           variant: AppTextVariant.button,
         ),
       ),
-      const SizedBox(height: AppSpacing.sm),
+      // The text button's 48px tap area already puts 14 above its label; 2
+      // more makes the visible gap 16.
+      const SizedBox(height: AppSpacing.xxs),
       TextButton(
         onPressed: model.signOut,
         style: TextButton.styleFrom(

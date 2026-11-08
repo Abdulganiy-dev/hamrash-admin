@@ -45,9 +45,12 @@ Strokes use currentColor for tinting. Files are exported assets; app widgets sti
 - lock.svg — AppSvgIcons.lock
 - lock-open.svg — AppSvgIcons.lockOpen
 - log-out.svg — AppSvgIcons.logOut
+- mail.svg — AppSvgIcons.mail
+- message-circle.svg — AppSvgIcons.messageCircle
 - message-square.svg — AppSvgIcons.messageSquare
 - minus600.svg — AppSvgIcons.minus600
 - pencil.svg — AppSvgIcons.pencil
+- phone.svg — AppSvgIcons.phone
 - plus.svg — AppSvgIcons.plus
 - plus600.svg — AppSvgIcons.plus600
 - refresh-cw500.svg — AppSvgIcons.refreshCw500

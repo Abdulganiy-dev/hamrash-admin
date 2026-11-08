@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
+import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 
 /// The quiet red action at the bottom of a staff page, with one line saying
-/// what it does and doesn't touch.
+/// what it does and doesn't touch. Sits on its own at the bottom of the page.
 class StaffDangerAction extends StatelessWidget {
   const StaffDangerAction({
     super.key,
@@ -28,11 +28,9 @@ class StaffDangerAction extends StatelessWidget {
     children: [
       BouncyButton(
         onPressed: onPressed,
+        enableHaptic: true,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.ms,
-            vertical: AppSpacing.sm,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.ms),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -42,7 +40,10 @@ class StaffDangerAction extends StatelessWidget {
               ],
               AppText(
                 label,
-                style: AppTypography.button.copyWith(
+                style: AppTypography.body.copyWith(
+                  fontSize: 16,
+                  height: 24 / 16,
+                  fontWeight: FontWeight.w700,
                   color: LightColors.errorErrorText,
                 ),
               ),
@@ -50,10 +51,16 @@ class StaffDangerAction extends StatelessWidget {
           ),
         ),
       ),
+      const SizedBox(height: AppSpacing.xs),
       AppText(
         caption,
         textAlign: TextAlign.center,
-        style: AppTypography.caption.copyWith(color: AppPalette.stone500),
+        style: AppTypography.caption.copyWith(
+          fontSize: 13,
+          height: 18 / 13,
+          fontWeight: FontWeight.w600,
+          color: LightColors.textBody,
+        ),
       ),
     ],
   );

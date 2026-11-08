@@ -580,6 +580,7 @@ window.HANDBOOK = {
         'Owners and admins issue any role except owner. Principals and vice principals issue principal, VP, bursar, teacher and staff only.',
         'Teacher and staff codes open **Hamrash Staff**; every other role opens **Hamrash Admin**. Codes never expire.',
         'The owner’s own row has no actions: the school must keep an active owner, and removing their record is refused.',
+        'The staff page reads the record’s name, `staff_number`, `staff_type` and `status` (`active`, `on_leave`, `exited`) with its login: the status pill, Call / Message / Email, the invite or access state, the details grid and one pinned bottom action.',
       ],
       ops: [
         {

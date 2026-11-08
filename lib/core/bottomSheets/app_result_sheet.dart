@@ -5,6 +5,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/utils/view_util.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button.dart';
@@ -217,7 +218,9 @@ class _AppResultSheetState extends State<AppResultSheet> {
             child: AppText(widget.primaryLabel ?? type.defaultLabel),
           ),
           if (widget.secondaryLabel != null) ...[
-            const SizedBox(height: 8),
+            // The text button's 48px tap area already puts 12 above its label;
+            // 4 more makes the visible gap 16.
+            const SizedBox(height: AppSpacing.xs),
             AppButton(
               type: AppButtonType.text,
               width: double.infinity,
