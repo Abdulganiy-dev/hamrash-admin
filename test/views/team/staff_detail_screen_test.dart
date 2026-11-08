@@ -12,6 +12,7 @@ import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/widgets/app_segmented_control.dart';
 import 'package:hamrash_admin/core/widgets/app_text_field.dart';
+import 'package:hamrash_admin/core/widgets/pickers/app_date_fields.dart';
 import 'package:hamrash_admin/core/widgets/pickers/app_picker_field.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
@@ -19,6 +20,7 @@ import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
 import 'package:hamrash_admin/views/team/widgets/change_details_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/choice_list_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_danger_action.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_form_fields.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
 import 'package:url_launcher_platform_interface/link.dart';
 import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
@@ -228,8 +230,8 @@ void main() {
     expect(find.text('Staff type'), findsOneWidget);
     expect(find.text('Non-teaching'), findsOneWidget);
     expect(find.text('Phone'), findsOneWidget);
-    // Staff number, phone, email and the four Personal rows have nothing.
-    expect(find.text('Not added'), findsNWidgets(7));
+    // Staff number, phone, email, status-adjacent rows and Personal have nothing.
+    expect(find.text('Not added'), findsNWidgets(9));
     expect(find.text('Role'), findsNothing);
     expect(find.text('Access'), findsNothing);
     expect(find.text('Suspend access'), findsNothing);
@@ -257,17 +259,17 @@ void main() {
   testWidgets('on the app: success pill, details, personal and Access', (
     tester,
   ) async {
-    final member = _member(
-      login: _login(),
-      gender: StaffGender.female,
-    ).copyWith(
-      privateDetails: StaffPrivateDetails(
-        dateOfBirth: DateTime(1991, 3, 12),
-        address: '14 Bode Thomas, Surulere, Lagos',
-        residenceState: 'Lagos',
-        residenceLga: 'Ikeja',
-      ),
-    );
+    final member = _member(login: _login(), gender: StaffGender.female)
+        .copyWith(
+          privateDetails: StaffPrivateDetails(
+            dateOfBirth: DateTime(1991, 3, 12),
+            address: '14 Bode Thomas, Surulere, Lagos',
+            stateOfOrigin: 'Imo',
+            employmentDate: DateTime(2020, 9, 1),
+            residenceState: 'Lagos',
+            residenceLga: 'Ikeja',
+          ),
+        );
     await pump(tester, member);
 
     expect(find.text('On app'), findsOneWidget);
@@ -285,6 +287,12 @@ void main() {
     expect(find.text('Female'), findsOneWidget);
     expect(find.text('Lives in'), findsOneWidget);
     expect(find.text('Ikeja, Lagos'), findsOneWidget);
+    expect(find.text('From'), findsOneWidget);
+    expect(find.text('Imo'), findsOneWidget);
+    expect(find.text('Status'), findsOneWidget);
+    expect(find.text('Active'), findsOneWidget);
+    expect(find.text('Employment date'), findsOneWidget);
+    expect(find.text('1 Sep 2020'), findsOneWidget);
     expect(find.text('Home address'), findsOneWidget);
     expect(find.text('14 Bode Thomas, Surulere, Lagos'), findsOneWidget);
     expect(find.text('Not added'), findsNothing);
@@ -299,7 +307,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Invite to Hamrash'), findsNothing);
-    expect(find.byType(StaffInfoRow), findsNWidgets(9));
+    expect(find.byType(StaffInfoRow), findsNWidgets(12));
 
     expect(
       find.text('Remove from staff list', skipOffstage: false),
@@ -640,6 +648,42 @@ void main() {
           .selected,
       StaffGender.male,
     );
+    expect(
+      tester
+          .widget<AppDateField>(
+            find.widgetWithText(AppDateField, 'Date of birth'),
+          )
+          .value,
+      DateTime(1990, 5, 1),
+    );
+    expect(find.text('1 May 1990'), findsOneWidget);
+    expect(
+      tester
+          .widget<AppSegmentedControl<StaffRecordStatus>>(
+            find.descendant(
+              of: find.byType(ChangeDetailsSheet),
+              matching: find.byType(AppSegmentedControl<StaffRecordStatus>),
+            ),
+          )
+          .selected,
+      StaffRecordStatus.active,
+    );
+    expect(
+      tester
+          .widget<AppDateField>(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is AppDateField && widget.label == 'Employment date',
+            ),
+          )
+          .value,
+      DateTime(2020, 9, 1),
+    );
+    expect(find.text('1 Sep 2020'), findsOneWidget);
+    expect(
+      tester.widget<StaffStateField>(find.byType(StaffStateField)).value,
+      'Lagos',
+    );
 
     await tester.enterText(field('First name'), 'Chidi');
     await tester.enterText(
@@ -699,6 +743,7 @@ void main() {
     expect(service.savedChanges?.middleName, 'Emeka');
     expect(service.savedChanges?.lastName, 'Ade');
     expect(service.savedChanges?.gender, StaffGender.female);
+    expect(service.savedChanges?.dateOfBirth, DateTime(1990, 5, 1));
     expect(service.savedChanges?.jobTitle, 'Teacher');
     expect(service.savedChanges?.staffType, 'teaching');
     expect(service.savedChanges?.phone, '+2348030000000');
@@ -706,6 +751,9 @@ void main() {
     expect(service.savedChanges?.address, '9 New Road');
     expect(service.savedChanges?.residenceState, 'Oyo');
     expect(service.savedChanges?.residenceLga, 'Ibadan North');
+    expect(service.savedChanges?.status, StaffRecordStatus.active);
+    expect(service.savedChanges?.employmentDate, DateTime(2020, 9, 1));
+    expect(service.savedChanges?.stateOfOrigin, 'Lagos');
     expect(service.savedStaff?.middleName, 'Chidi');
     expect(service.savedStaff?.gender, StaffGender.male);
     expect(service.savedStaff?.photoId, 'photo-1');
@@ -715,6 +763,67 @@ void main() {
     expect(service.savedPrivate?.dateOfBirth, DateTime(1990, 5, 1));
     expect(service.savedPrivate?.employmentDate, DateTime(2020, 9, 1));
     expect(find.byType(ChangeDetailsSheet), findsNothing);
+  });
+
+  testWidgets('status and state of origin change and save', (tester) async {
+    final member = _member(login: _login());
+    final privates = StaffPrivateDetails(
+      stateOfOrigin: 'Lagos',
+      employmentDate: DateTime(2020, 9, 1),
+    );
+    final service = _FakeTeam(
+      member,
+      editRecord: (staff: member, privateDetails: privates),
+    );
+    tester.view.physicalSize = const Size(390, 1500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pump(tester, member, team: service);
+    await openChangeDetails(tester);
+
+    await tester.tap(find.text('On leave'));
+    await tester.pump();
+    await tester.tap(find.byType(StaffStateField));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(ChoiceListSheet<String>),
+        matching: find.byType(TextField),
+      ),
+      'Imo',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Imo').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Save changes'));
+    await tester.pumpAndSettle();
+
+    expect(service.savedChanges?.status, StaffRecordStatus.onLeave);
+    expect(service.savedChanges?.stateOfOrigin, 'Imo');
+    expect(service.savedChanges?.employmentDate, DateTime(2020, 9, 1));
+  });
+
+  testWidgets('marking someone exited asks for confirmation', (tester) async {
+    final member = _member(login: _login());
+    final service = _FakeTeam(member);
+    tester.view.physicalSize = const Size(390, 1500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pump(tester, member, team: service);
+    await openChangeDetails(tester);
+
+    await tester.tap(find.text('Exited'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Save changes'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mark Tunde as exited?'), findsOneWidget);
+    expect(find.textContaining('login is not removed'), findsOneWidget);
+    expect(service.savedChanges, isNull);
+
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Mark as exited'));
+    await tester.pumpAndSettle();
+    expect(service.savedChanges?.status, StaffRecordStatus.exited);
   });
 
   testWidgets('a refused save stays in the sheet with its message', (

@@ -119,7 +119,7 @@ class StaffDetailIdentity extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         AppText(
-          member.fullName,
+          member.fullNameWithMiddle,
           textAlign: TextAlign.center,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -151,13 +151,12 @@ class StaffDetailIdentity extends StatelessWidget {
               icon: AppIcons.phone,
               label: 'Call',
               semanticLabel: 'Call $firstName',
-              onPressed:
-                  phone == null
-                      ? null
-                      : () => _launch(
-                        Uri(scheme: 'tel', path: _e164),
-                        "Couldn't open the phone app.",
-                      ),
+              onPressed: phone == null
+                  ? null
+                  : () => _launch(
+                      Uri(scheme: 'tel', path: _e164),
+                      "Couldn't open the phone app.",
+                    ),
             ),
             const SizedBox(width: 28),
             _ActionCircle(
@@ -165,13 +164,12 @@ class StaffDetailIdentity extends StatelessWidget {
               icon: AppIcons.messageCircle,
               label: 'Message',
               semanticLabel: 'Message $firstName',
-              onPressed:
-                  phone == null
-                      ? null
-                      : () => _launch(
-                        Uri(scheme: 'sms', path: _e164),
-                        "Couldn't open Messages.",
-                      ),
+              onPressed: phone == null
+                  ? null
+                  : () => _launch(
+                      Uri(scheme: 'sms', path: _e164),
+                      "Couldn't open Messages.",
+                    ),
             ),
             const SizedBox(width: 28),
             _ActionCircle(
@@ -179,13 +177,12 @@ class StaffDetailIdentity extends StatelessWidget {
               icon: AppIcons.mail,
               label: 'Email',
               semanticLabel: 'Email $firstName',
-              onPressed:
-                  email == null
-                      ? null
-                      : () => _launch(
-                        Uri(scheme: 'mailto', path: email),
-                        "Couldn't open your email app.",
-                      ),
+              onPressed: email == null
+                  ? null
+                  : () => _launch(
+                      Uri(scheme: 'mailto', path: email),
+                      "Couldn't open your email app.",
+                    ),
             ),
           ],
         ),
@@ -249,8 +246,9 @@ class _ActionCircle extends StatelessWidget {
               style: AppTypography.caption.copyWith(
                 fontWeight: FontWeight.w700,
                 height: 15 / 12,
-                color:
-                    _enabled ? LightColors.textBody : LightColors.textDisabled,
+                color: _enabled
+                    ? LightColors.textBody
+                    : LightColors.textDisabled,
               ),
             ),
           ],
@@ -270,19 +268,18 @@ class _DashedCircleRing extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = LightColors.primaryPrimaryThin
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = _width
-          ..strokeCap = StrokeCap.round;
-    final circle =
-        Path()..addOval(
-          Rect.fromCircle(
-            center: Offset(size.width / 2, size.height / 2),
-            radius: (size.width - _width) / 2,
-          ),
-        );
+    final paint = Paint()
+      ..color = LightColors.primaryPrimaryThin
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _width
+      ..strokeCap = StrokeCap.round;
+    final circle = Path()
+      ..addOval(
+        Rect.fromCircle(
+          center: Offset(size.width / 2, size.height / 2),
+          radius: (size.width - _width) / 2,
+        ),
+      );
     for (final metric in circle.computeMetrics()) {
       for (var d = 0.0; d < metric.length; d += _dash + _gap) {
         canvas.drawPath(metric.extractPath(d, d + _dash), paint);

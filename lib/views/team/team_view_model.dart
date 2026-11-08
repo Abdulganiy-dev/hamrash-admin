@@ -40,14 +40,13 @@ class TeamViewModel extends BaseViewModel {
 
   int get allCount => staff.length;
 
-  int get onAppCount =>
-      staff
-          .where(
-            (person) =>
-                person.access == StaffAccess.onApp ||
-                person.access == StaffAccess.owner,
-          )
-          .length;
+  int get onAppCount => staff
+      .where(
+        (person) =>
+            person.access == StaffAccess.onApp ||
+            person.access == StaffAccess.owner,
+      )
+      .length;
 
   int get notOnAppCount => allCount - onAppCount;
 
@@ -73,8 +72,18 @@ class TeamViewModel extends BaseViewModel {
   bool get showEmptyState => !loading && _error == null && isEmpty;
 
   /// "Owner · you", "Admin · joined 3 Sep", "Bursar · code shared 5 Nov",
-  /// "Teacher · added today", "Teacher · suspended".
+  /// "Teacher · added today", "Teacher · suspended". A non-active record
+  /// gets " · on leave" or " · exited" as the suffix.
   String subtitleFor(StaffMember person) {
+    final base = _subtitleFor(person);
+    return switch (person.status) {
+      StaffRecordStatus.active => base,
+      StaffRecordStatus.onLeave => '$base · on leave',
+      StaffRecordStatus.exited => '$base · exited',
+    };
+  }
+
+  String _subtitleFor(StaffMember person) {
     final login = person.login;
     final role = person.role.teamLabel;
     if (login == null) {

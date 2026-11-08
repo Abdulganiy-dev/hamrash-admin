@@ -175,7 +175,9 @@ void main() {
     locator.registerSingleton<TeamService>(_FakeTeam(member: _member()));
 
     await tester.pumpWidget(
-      MaterialApp(home: StaffDetailScreen(school: _school, staffId: 's1')),
+      MaterialApp(
+        home: StaffDetailScreen(school: _school, staffId: 's1'),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -183,13 +185,12 @@ void main() {
     _expectFullWidthBar(tester, title);
     expect(tester.getSize(_barSurface).height, 72 + _homeIndicator);
     expect(find.byKey(const ValueKey('bottom-bar-fade')), findsNothing);
-    final caption =
-        find
-            .descendant(
-              of: find.byType(StaffDangerAction),
-              matching: find.byType(AppText),
-            )
-            .last;
+    final caption = find
+        .descendant(
+          of: find.byType(StaffDangerAction),
+          matching: find.byType(AppText),
+        )
+        .last;
     expect(title, findsOneWidget);
     expect(caption, findsOneWidget);
     _expectCentred(tester, title);
@@ -205,7 +206,9 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(home: StaffDetailScreen(school: _school, staffId: 's1')),
+      MaterialApp(
+        home: StaffDetailScreen(school: _school, staffId: 's1'),
+      ),
     );
     await tester.pumpAndSettle();
 

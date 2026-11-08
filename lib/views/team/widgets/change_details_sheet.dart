@@ -5,11 +5,14 @@ import 'package:hamrash_admin/api/models/team/staff_details_changes.dart';
 import 'package:hamrash_admin/api/models/team/staff_job_title.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
+import 'package:hamrash_admin/core/bottomSheets/app_confirm_sheet.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
+import 'package:hamrash_admin/core/widgets/app_badge.dart';
+import 'package:hamrash_admin/core/utils/app_date_format.dart';
 import 'package:hamrash_admin/core/utils/phone_format.dart';
 import 'package:hamrash_admin/core/utils/validation_util.dart';
 import 'package:hamrash_admin/core/widgets/app_segmented_control.dart';
@@ -19,6 +22,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_text_field.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
+import 'package:hamrash_admin/core/widgets/pickers/app_date_fields.dart';
 import 'package:hamrash_admin/core/widgets/pickers/app_picker_field.dart';
 import 'package:hamrash_admin/views/team/widgets/role_picker_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_form_fields.dart';
@@ -79,6 +83,10 @@ class _ChangeDetailsSheetState extends State<ChangeDetailsSheet> {
   late String _staffType;
   late OrganizationMemberRole _role;
   late StaffGender? _gender;
+  DateTime? _dateOfBirth;
+  late StaffRecordStatus _status;
+  DateTime? _employmentDate;
+  String? _stateOfOrigin;
   String? _residenceState;
   String? _residenceLga;
 
@@ -103,6 +111,10 @@ class _ChangeDetailsSheetState extends State<ChangeDetailsSheet> {
     _role = widget.role;
     _staffType = _member.staffType;
     _gender = _member.gender;
+    _dateOfBirth = widget.privateDetails.dateOfBirth;
+    _status = _member.status;
+    _employmentDate = widget.privateDetails.employmentDate;
+    _stateOfOrigin = widget.privateDetails.stateOfOrigin;
     _residenceState = widget.privateDetails.residenceState;
     _residenceLga = widget.privateDetails.residenceLga;
 
@@ -179,13 +191,23 @@ class _ChangeDetailsSheetState extends State<ChangeDetailsSheet> {
     return text.isEmpty ? null : text;
   }
 
+  static bool _dateChanged(DateTime? value, DateTime? original) {
+    if (value == null && original == null) return false;
+    if (value == null || original == null) return true;
+    return !AppDateFormat.isSameDay(value, original);
+  }
+
   bool get _changed =>
       _firstName.text.trim() != _member.firstName.trim() ||
       _lastName.text.trim() != _member.lastName.trim() ||
       _storedMiddleName != _clean(_member.middleName) ||
       _gender != _member.gender ||
+      _dateChanged(_dateOfBirth, widget.privateDetails.dateOfBirth) ||
       _jobTitleValue != (_member.jobTitle?.trim() ?? '') ||
       _staffType != _member.staffType ||
+      _status != _member.status ||
+      _dateChanged(_employmentDate, widget.privateDetails.employmentDate) ||
+      _stateOfOrigin != _clean(widget.privateDetails.stateOfOrigin) ||
       _storedPhone != PhoneFormat.stored(_member.phone ?? '') ||
       _storedEmail != _clean(_member.email) ||
       _storedAddress != _clean(widget.privateDetails.address) ||
@@ -210,6 +232,20 @@ class _ChangeDetailsSheetState extends State<ChangeDetailsSheet> {
   void _pickGender(StaffGender value) {
     setState(() {
       _gender = value;
+      _error = null;
+    });
+  }
+
+  void _pickDateOfBirth(DateTime value) {
+    setState(() {
+      _dateOfBirth = value;
+      _error = null;
+    });
+  }
+
+  void _pickEmploymentDate(DateTime value) {
+    setState(() {
+      _employmentDate = value;
       _error = null;
     });
   }
@@ -265,6 +301,20 @@ class _ChangeDetailsSheetState extends State<ChangeDetailsSheet> {
 
   Future<void> _save() async {
     if (!_canSave) return;
+    if (_status == StaffRecordStatus.exited &&
+        _member.status != StaffRecordStatus.exited) {
+      final confirmed = await AppConfirmSheet.show(
+        context,
+        icon: AppIcons.clock,
+        tone: AppBadgeTone.warning,
+        title: 'Mark ${_member.firstNameOnly} as exited?',
+        message:
+            'They stay on the staff list but are no longer active. Their '
+            'login is not removed.',
+        confirmLabel: 'Mark as exited',
+      );
+      if (confirmed != true || !mounted) return;
+    }
     setState(() {
       _saving = true;
       _error = null;
@@ -275,8 +325,12 @@ class _ChangeDetailsSheetState extends State<ChangeDetailsSheet> {
         middleName: _storedMiddleName,
         lastName: _lastName.text.trim(),
         gender: _gender,
+        dateOfBirth: _dateOfBirth,
         jobTitle: _jobTitleValue,
         staffType: _staffType,
+        status: _status,
+        employmentDate: _employmentDate,
+        stateOfOrigin: _stateOfOrigin,
         phone: _storedPhone,
         email: _storedEmail,
         address: _storedAddress,
@@ -373,11 +427,10 @@ class _ChangeDetailsSheetState extends State<ChangeDetailsSheet> {
           items: _titleLabels,
           labelBuilder: (label) => label,
           placeholder: 'Choose…',
-          onChanged:
-              (label) => setState(() {
-                _titleLabel = label;
-                _error = null;
-              }),
+          onChanged: (label) => setState(() {
+            _titleLabel = label;
+            _error = null;
+          }),
         ),
         const SizedBox(height: AppSpacing.md),
         const _FieldLabel('Staff type'),
@@ -388,17 +441,64 @@ class _ChangeDetailsSheetState extends State<ChangeDetailsSheet> {
             AppSegmentOption(value: 'non_teaching', label: 'Non-teaching'),
           ],
           selected: _staffType,
-          onChanged:
-              (value) => setState(() {
-                _staffType = value;
-                _error = null;
-              }),
+          onChanged: (value) => setState(() {
+            _staffType = value;
+            _error = null;
+          }),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        const _FieldLabel('Status'),
+        const SizedBox(height: AppSpacing.sm),
+        AppSegmentedControl<StaffRecordStatus>(
+          options: const [
+            AppSegmentOption(value: StaffRecordStatus.active, label: 'Active'),
+            AppSegmentOption(
+              value: StaffRecordStatus.onLeave,
+              label: 'On leave',
+            ),
+            AppSegmentOption(value: StaffRecordStatus.exited, label: 'Exited'),
+          ],
+          selected: _status,
+          onChanged: (value) => setState(() {
+            _status = value;
+            _error = null;
+          }),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        AppDateField(
+          label: 'Employment date',
+          value: _employmentDate,
+          placeholder: 'Select date',
+          isOptional: true,
+          firstDate: DateTime(1940),
+          lastDate: DateTime.now(),
+          valueFormatter: AppDateFormat.dayMonthYear,
+          onChanged: _pickEmploymentDate,
         ),
         const SizedBox(height: AppSpacing.lg),
         StaffFormSection(
           title: 'About them',
           optional: true,
-          children: [StaffGenderField(value: _gender, onChanged: _pickGender)],
+          children: [
+            StaffGenderField(value: _gender, onChanged: _pickGender),
+            AppDateField(
+              label: 'Date of birth',
+              value: _dateOfBirth,
+              placeholder: 'Select date',
+              firstDate: DateTime(1940),
+              lastDate: DateTime.now(),
+              valueFormatter: AppDateFormat.dayMonthYear,
+              onChanged: _pickDateOfBirth,
+            ),
+            StaffStateField(
+              value: _stateOfOrigin,
+              onChanged: (value) => setState(() {
+                _stateOfOrigin = value;
+                _error = null;
+              }),
+              sheetSubtitle: 'For ${_member.fullName}',
+            ),
+          ],
         ),
         const SizedBox(height: AppSpacing.lg),
         StaffFormSection(

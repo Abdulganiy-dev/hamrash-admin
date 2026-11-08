@@ -49,14 +49,13 @@ class StaffDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       ViewModelBuilder<StaffDetailViewModel>.reactive(
-        viewModelBuilder:
-            () => StaffDetailViewModel(school: school, staffId: staffId),
+        viewModelBuilder: () =>
+            StaffDetailViewModel(school: school, staffId: staffId),
         onViewModelReady: (model) => model.load(),
         builder: (context, model, _) {
-          final content =
-              model.error == null && !model.loading
-                  ? _Content(model: model)
-                  : null;
+          final content = model.error == null && !model.loading
+              ? _Content(model: model)
+              : null;
           return DefaultScaffold(
             title: 'Staff',
             showBackButton: true,
@@ -67,17 +66,15 @@ class StaffDetailScreen extends StatelessWidget {
                 (model.error != null
                     ? LoadErrorView(onRetry: model.load)
                     : const _Loading()),
-            bottomNavigationBar:
-                content != null && model.showDanger
-                    ? _DangerBar(
-                      label: model.dangerLabel,
-                      caption: model.dangerCaption,
-                      onPressed:
-                          model.isPending
-                              ? () => content._cancelInvite(context)
-                              : () => content._remove(context),
-                    )
-                    : null,
+            bottomNavigationBar: content != null && model.showDanger
+                ? _DangerBar(
+                    label: model.dangerLabel,
+                    caption: model.dangerCaption,
+                    onPressed: model.isPending
+                        ? () => content._cancelInvite(context)
+                        : () => content._remove(context),
+                  )
+                : null,
             // The footer draws its own top hairline.
             bottomBarFade: false,
           );
@@ -91,6 +88,12 @@ class _Content extends StatelessWidget {
   final StaffDetailViewModel model;
 
   StaffMember get _member => model.member;
+
+  Color get _statusDot => switch (_member.status) {
+    StaffRecordStatus.active => LightColors.successSuccessDefault,
+    StaffRecordStatus.onLeave => LightColors.warningWarningDefault,
+    StaffRecordStatus.exited => AppPalette.stone400,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -153,48 +156,25 @@ class _Content extends StatelessWidget {
   );
 
   /// 8.16 · The code is made; nobody has used it.
-  Widget _pending(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      StaffInviteCodeField(code: model.rawCode),
-      const SizedBox(height: 10),
-      Builder(
-        builder:
-            (context) => AppPrimaryButton(
-              size: AppButtonSize.large,
-              onPressed:
-                  model.rawCode.isEmpty
-                      ? null
-                      : () => shareInvite(
-                        model.currentShareMessage,
-                        origin: shareOriginOf(context),
-                      ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AppIcon(AppIcons.share, size: 17),
-                  SizedBox(width: AppSpacing.sm),
-                  Text('Share invite'),
-                ],
-              ),
-            ),
-      ),
-    ],
+  Widget _pending(BuildContext context) => StaffInviteCodeField(
+    code: model.rawCode,
+    onShare: model.rawCode.isEmpty
+        ? null
+        : (origin) => shareInvite(model.currentShareMessage, origin: origin),
   );
 
   Widget _details(BuildContext context) => StaffInfoSection(
     title: 'Details',
     headerKey: const ValueKey('details-header'),
     headerHeight: 44,
-    trailing:
-        model.canEditDetails
-            ? AppSectionAction(
-              label: 'Change',
-              icon: AppIcons.pencil,
-              semanticLabel: 'Change details',
-              onPressed: () => _changeDetails(context),
-            )
-            : null,
+    trailing: model.canEditDetails
+        ? AppSectionAction(
+            label: 'Change',
+            icon: AppIcons.pencil,
+            semanticLabel: 'Change details',
+            onPressed: () => _changeDetails(context),
+          )
+        : null,
     rows: [
       StaffInfoRow(
         icon: AppIcons.hash,
@@ -205,6 +185,21 @@ class _Content extends StatelessWidget {
         icon: AppIcons.briefcase,
         label: 'Staff type',
         value: model.staffTypeLabel,
+      ),
+      StaffInfoRow(
+        icon: switch (_member.status) {
+          StaffRecordStatus.active => AppIcons.circleCheck,
+          StaffRecordStatus.onLeave => AppIcons.clock,
+          StaffRecordStatus.exited => AppIcons.circleMinus,
+        },
+        label: 'Status',
+        value: model.statusLabel,
+        valueDot: _statusDot,
+      ),
+      StaffInfoRow(
+        icon: AppIcons.calendar,
+        label: 'Employment date',
+        value: model.employmentDateLabel,
       ),
       StaffInfoRow(
         icon: AppIcons.phone,
@@ -243,6 +238,11 @@ class _Content extends StatelessWidget {
         value: model.livesInLabel,
       ),
       StaffInfoRow(
+        icon: AppIcons.mapPin,
+        label: 'From',
+        value: model.stateOfOrigin,
+      ),
+      StaffInfoRow(
         icon: AppIcons.house,
         label: 'Home address',
         value: model.homeAddress,
@@ -275,8 +275,9 @@ class _Content extends StatelessWidget {
           title: 'Change role',
           lockAdmin: !model.school.canInviteAdmins,
           viewerName: _member.fullName,
-          viewerRole:
-              model.school.roles.isEmpty ? null : model.school.roles.first,
+          viewerRole: model.school.roles.isEmpty
+              ? null
+              : model.school.roles.first,
         ),
       );
 
@@ -291,8 +292,9 @@ class _Content extends StatelessWidget {
         noteFor: model.inviteNoteFor,
         onCreate: model.invite,
         viewerName: _member.fullName,
-        viewerRole:
-            model.school.roles.isEmpty ? null : model.school.roles.first,
+        viewerRole: model.school.roles.isEmpty
+            ? null
+            : model.school.roles.first,
       ),
     );
     if (code == null || !context.mounted) return;
@@ -313,6 +315,18 @@ class _Content extends StatelessWidget {
   /// 8.11 · Read the whole record, then let a leader change the editable
   /// fields. The role in the sheet applies immediately.
   Future<void> _changeDetails(BuildContext context) async {
+    // One tap only: a second tap while the sheet is loading or open is
+    // ignored.
+    if (model.openingDetails) return;
+    model.openingDetails = true;
+    try {
+      await _openChangeDetails(context);
+    } finally {
+      model.openingDetails = false;
+    }
+  }
+
+  Future<void> _openChangeDetails(BuildContext context) async {
     final record = await model.loadEditDetails();
     if (!context.mounted) return;
     if (record == null) {
@@ -332,10 +346,12 @@ class _Content extends StatelessWidget {
         canChangeRole: model.canChangeRoleInSheet,
         lockAdmin: !model.school.canInviteAdmins,
         viewerName: _member.fullName,
-        viewerRole:
-            model.school.roles.isEmpty ? null : model.school.roles.first,
-        onChangeRole:
-            model.isPending ? model.changeInviteRole : model.changeRole,
+        viewerRole: model.school.roles.isEmpty
+            ? null
+            : model.school.roles.first,
+        onChangeRole: model.isPending
+            ? model.changeInviteRole
+            : model.changeRole,
         onSave: model.saveDetails,
       ),
     );
@@ -358,15 +374,13 @@ class _Content extends StatelessWidget {
       context,
       icon: suspend ? AppIcons.circlePause : AppIcons.lockOpen,
       tone: suspend ? AppBadgeTone.warning : AppBadgeTone.success,
-      title:
-          suspend
-              ? "Suspend $firstName's access?"
-              : "Restore $firstName's access?",
-      message:
-          suspend
-              ? "They stay on the staff list but can't sign in until you restore "
-                  'them.'
-              : 'They can sign in again to the app they already use.',
+      title: suspend
+          ? "Suspend $firstName's access?"
+          : "Restore $firstName's access?",
+      message: suspend
+          ? "They stay on the staff list but can't sign in until you restore "
+                'them.'
+          : 'They can sign in again to the app they already use.',
       confirmLabel: suspend ? 'Suspend access' : 'Restore access',
       onConfirm: () => model.setSuspended(suspend),
     );
@@ -396,11 +410,10 @@ class _Content extends StatelessWidget {
       icon: AppIcons.trash2,
       isDestructive: true,
       title: 'Remove $name from the staff list?',
-      message:
-          model.isOnApp
-              ? 'Their record is removed, and so is their login. They can no '
-                  'longer sign in.'
-              : 'Their record is removed. Nothing else changes.',
+      message: model.isOnApp
+          ? 'Their record is removed, and so is their login. They can no '
+                'longer sign in.'
+          : 'Their record is removed. Nothing else changes.',
       confirmLabel: 'Remove from staff',
       onConfirm: model.remove,
     );
@@ -458,16 +471,15 @@ class _Loading extends StatelessWidget {
   Widget build(BuildContext context) => SingleChildScrollView(
     physics: const NeverScrollableScrollPhysics(),
     child: Builder(
-      builder:
-          (context) => Padding(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.screen,
-              ScaffoldInsets.bodyTopInsetOf(context),
-              AppSpacing.screen,
-              0,
-            ),
-            child: const StaffDetailSkeleton(),
-          ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.screen,
+          ScaffoldInsets.bodyTopInsetOf(context),
+          AppSpacing.screen,
+          0,
+        ),
+        child: const StaffDetailSkeleton(),
+      ),
     ),
   );
 }

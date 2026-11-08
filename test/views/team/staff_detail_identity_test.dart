@@ -102,6 +102,23 @@ void main() {
     }
   });
 
+  testWidgets('the header shows the middle name', (tester) async {
+    await pump(
+      tester,
+      access: StaffAccess.onApp,
+      member: StaffMember(
+        id: 's1',
+        firstName: 'Tunde',
+        middleName: 'Emeka',
+        lastName: 'Ade',
+        staffType: 'teaching',
+        status: StaffRecordStatus.active,
+        createdAt: DateTime(2026, 11, 8),
+      ),
+    );
+    expect(find.text('Tunde Emeka Ade'), findsOneWidget);
+  });
+
   testWidgets('invite pending: aubergine avatar with a dashed ring', (
     tester,
   ) async {
@@ -110,15 +127,14 @@ void main() {
     final decoration = avatarDecoration(tester);
     expect(decoration.color, LightColors.primaryPrimaryMute);
     expect(decoration.border, isNull);
-    final painter =
-        tester
-            .widget<CustomPaint>(
-              find.descendant(
-                of: find.byKey(const ValueKey('identity-avatar')),
-                matching: find.byType(CustomPaint),
-              ),
-            )
-            .foregroundPainter;
+    final painter = tester
+        .widget<CustomPaint>(
+          find.descendant(
+            of: find.byKey(const ValueKey('identity-avatar')),
+            matching: find.byType(CustomPaint),
+          ),
+        )
+        .foregroundPainter;
     expect(painter, isNotNull);
     expect(find.text('Invite pending'), findsOneWidget);
   });
@@ -182,7 +198,11 @@ void main() {
   });
 
   testWidgets('a missing email disables Email only', (tester) async {
-    await pump(tester, access: StaffAccess.onApp, member: _member(email: ' '));
+    await pump(
+      tester,
+      access: StaffAccess.onApp,
+      member: _member(email: ' '),
+    );
 
     await tester.tap(find.byKey(const ValueKey('action-email')));
     await tester.pump();

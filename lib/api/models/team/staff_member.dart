@@ -39,13 +39,16 @@ enum StaffGender {
 
 /// The staff record's own status, separate from the login.
 enum StaffRecordStatus {
-  active('active'),
-  onLeave('on_leave'),
-  exited('exited');
+  active('active', 'Active'),
+  onLeave('on_leave', 'On leave'),
+  exited('exited', 'Exited');
 
-  const StaffRecordStatus(this.value);
+  const StaffRecordStatus(this.value, this.label);
 
   final String value;
+
+  /// How the app writes it.
+  final String label;
 
   static StaffRecordStatus fromJson(String value) =>
       StaffRecordStatus.values.firstWhere(
@@ -149,6 +152,9 @@ class StaffMember {
   /// edit sheet or when the caller can't read it.
   final StaffPrivateDetails? privateDetails;
 
+  /// Their date of birth, from the private details leaders can read.
+  DateTime? get dateOfBirth => privateDetails?.dateOfBirth;
+
   /// The staff row plus its login, embedded through the member FK.
   static const columns =
       'id,first_name,middle_name,last_name,job_title,gender,phone,email,'
@@ -177,10 +183,9 @@ class StaffMember {
       status: StaffRecordStatus.fromJson(json['status'] as String),
       createdAt: DateTime.parse(json['created_at'] as String),
       memberId: json['member_id'] as String?,
-      login:
-          member is Map
-              ? StaffLogin.fromJson(Map<String, dynamic>.from(member))
-              : null,
+      login: member is Map
+          ? StaffLogin.fromJson(Map<String, dynamic>.from(member))
+          : null,
       privateDetails: switch (private) {
         final Map value => StaffPrivateDetails.fromJson(
           Map<String, dynamic>.from(value),
@@ -215,6 +220,12 @@ class StaffMember {
   );
 
   String get fullName => '$firstName $lastName'.trim();
+
+  /// "First Middle Last" (middle omitted when blank), for the detail header.
+  String get fullNameWithMiddle {
+    final middle = middleName?.trim() ?? '';
+    return [firstName, if (middle.isNotEmpty) middle, lastName].join(' ');
+  }
 
   String get firstNameOnly => firstName;
 

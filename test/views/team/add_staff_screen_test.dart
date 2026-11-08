@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
+import 'package:hamrash_admin/core/widgets/app_segmented_control.dart';
 import 'package:hamrash_admin/core/widgets/pickers/app_picker_field.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/add_staff/add_staff_screen.dart';
@@ -56,7 +58,16 @@ void main() {
     expect(find.text('State'), findsOneWidget);
     expect(find.text('LGA'), findsOneWidget);
     expect(find.text('Home address'), findsOneWidget);
+    expect(find.text('Date of birth'), findsOneWidget);
+    expect(find.textContaining('Start date'), findsOneWidget);
+    expect(find.text('State of origin'), findsOneWidget);
     expect(find.text('Choose a state first'), findsOneWidget);
+
+    final gender = tester.widget<AppSegmentedControl<StaffGender>>(
+      find.byType(AppSegmentedControl<StaffGender>),
+    );
+    expect(gender.selected, isNull);
+    expect(find.text('Date of birth'), findsOneWidget);
   });
 
   testWidgets('LGA waits for a state and a new state clears it', (

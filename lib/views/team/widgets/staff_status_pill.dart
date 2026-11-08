@@ -38,7 +38,8 @@ class StaffStatusPill extends StatelessWidget {
     detail ? access.detailLabel : access.label,
     tone: _tone,
     showBorder: !onList,
-    labelStyle:
-        onList ? AppTypography.overline.copyWith(letterSpacing: 0) : null,
+    labelStyle: onList
+        ? AppTypography.overline.copyWith(letterSpacing: 0)
+        : null,
   );
 }

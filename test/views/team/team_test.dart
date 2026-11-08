@@ -4,6 +4,7 @@ import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_job_title.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
 import 'package:hamrash_admin/api/models/team/invite_code.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
@@ -136,6 +137,9 @@ class _Team extends TeamService {
   String? createdStaffType;
   String? createdMiddleName;
   StaffGender? createdGender;
+  DateTime? createdDateOfBirth;
+  DateTime? createdEmploymentDate;
+  String? createdStateOfOrigin;
   String? createdAddress;
   String? createdResidenceState;
   String? createdResidenceLga;
@@ -146,6 +150,18 @@ class _Team extends TeamService {
   @override
   Future<StaffMember> getStaff(String staffId) async =>
       people.firstWhere((person) => person.id == staffId);
+
+  int editReads = 0;
+
+  @override
+  Future<({StaffMember staff, StaffPrivateDetails privateDetails})>
+  getStaffForEditing(String staffId) async {
+    editReads++;
+    return (
+      staff: people.firstWhere((person) => person.id == staffId),
+      privateDetails: const StaffPrivateDetails(),
+    );
+  }
 
   @override
   Future<StaffMember> createStaff({
@@ -158,6 +174,9 @@ class _Team extends TeamService {
     required String staffType,
     String? middleName,
     StaffGender? gender,
+    DateTime? dateOfBirth,
+    DateTime? employmentDate,
+    String? stateOfOrigin,
     String? address,
     String? residenceState,
     String? residenceLga,
@@ -168,6 +187,9 @@ class _Team extends TeamService {
     createdStaffType = staffType;
     createdMiddleName = middleName;
     createdGender = gender;
+    createdDateOfBirth = dateOfBirth;
+    createdEmploymentDate = employmentDate;
+    createdStateOfOrigin = stateOfOrigin;
     createdAddress = address;
     createdResidenceState = residenceState;
     createdResidenceLga = residenceLga;
@@ -293,6 +315,25 @@ void main() {
       expect(model.subtitleFor(_teacher), 'Teacher · added today');
     });
 
+    test('non-active records suffix the subtitle', () async {
+      final (model, _) = await loaded();
+      final onLeave = _staff(
+        id: 'leave',
+        firstName: 'Ada',
+        jobTitle: 'Teacher',
+        status: StaffRecordStatus.onLeave,
+        login: _login(id: 'm-leave'),
+      );
+      final exited = _staff(
+        id: 'gone',
+        firstName: 'Bola',
+        jobTitle: 'Teacher',
+        status: StaffRecordStatus.exited,
+      );
+      expect(model.subtitleFor(onLeave), endsWith(' · on leave'));
+      expect(model.subtitleFor(exited), endsWith(' · exited'));
+    });
+
     test('puts the owner first, then names in order', () async {
       final (model, _) = await loaded();
       expect(model.staff.first.id, 'own');
@@ -319,6 +360,38 @@ void main() {
       await model.load();
       return (model, service);
     }
+
+    test(
+      'the Change details record is ready before the button is tapped',
+      () async {
+        final (model, service) = await loaded(_teacher);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(model.editDetailsReady, isTrue);
+        expect(service.editReads, 1);
+
+        final record = await model.loadEditDetails();
+        expect(record?.staff.id, _teacher.id);
+        // Tapping reads nothing more.
+        expect(service.editReads, 1);
+      },
+    );
+
+    test('a refresh drops the cached record and reads a fresh one', () async {
+      final (model, service) = await loaded(_teacher);
+      await Future<void>.delayed(Duration.zero);
+
+      await model.refresh();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(service.editReads, 2);
+      expect(model.editDetailsReady, isTrue);
+    });
+
+    test('the opening flag starts off so only one tap gets through', () async {
+      final (model, _) = await loaded(_teacher);
+      expect(model.openingDetails, isFalse);
+    });
 
     test('not on the app offers an invite to a leader', () async {
       final (model, _) = await loaded(
@@ -353,6 +426,27 @@ void main() {
         );
       },
     );
+
+    test('labels status, employment and state of origin', () async {
+      final staff = StaffMember(
+        id: 's1',
+        firstName: 'Ada',
+        lastName: 'Okafor',
+        jobTitle: 'Teacher',
+        staffType: 'teaching',
+        status: StaffRecordStatus.onLeave,
+        createdAt: DateTime(2026, 11, 8),
+        privateDetails: StaffPrivateDetails(
+          employmentDate: DateTime(2020, 9, 1),
+          stateOfOrigin: 'Imo',
+        ),
+      );
+      final (model, _) = await loaded(staff);
+
+      expect(model.statusLabel, 'On leave');
+      expect(model.employmentDateLabel, '1 Sep 2020');
+      expect(model.stateOfOrigin, 'Imo');
+    });
 
     test('a claimed login can be managed by its owner', () async {
       final (model, _) = await loaded(_admin, memberIds: ['m-owner']);
@@ -509,6 +603,9 @@ void main() {
       model.middleName.text = 'Emeka';
       model.pickJobTitle(StaffJobTitleOption.teacher);
       model.pickGender(StaffGender.male);
+      model.pickDateOfBirth(DateTime(1991, 3, 12));
+      model.pickEmploymentDate(DateTime(2020, 9, 1));
+      model.pickStateOfOrigin('Imo');
       model.pickState('Lagos');
       model.pickLga('Ikeja');
       model.address.text = '12 Allen Avenue';
@@ -517,9 +614,23 @@ void main() {
 
       expect(service.createdMiddleName, 'Emeka');
       expect(service.createdGender, StaffGender.male);
+      expect(service.createdDateOfBirth, DateTime(1991, 3, 12));
+      expect(service.createdEmploymentDate, DateTime(2020, 9, 1));
+      expect(service.createdStateOfOrigin, 'Imo');
       expect(service.createdAddress, '12 Allen Avenue');
       expect(service.createdResidenceState, 'Lagos');
       expect(service.createdResidenceLga, 'Ikeja');
+    });
+
+    test('gender starts empty and the date of birth is optional', () async {
+      final (model, _) = await form();
+      expect(model.gender, isNull);
+      expect(model.dateOfBirth, isNull);
+
+      model.pickGender(StaffGender.female);
+      model.pickDateOfBirth(DateTime(1991, 3, 12));
+      expect(model.gender, StaffGender.female);
+      expect(model.dateOfBirth, DateTime(1991, 3, 12));
     });
 
     test('a new state clears the LGA', () async {
@@ -560,6 +671,9 @@ void main() {
       expect(model.middleName.text, isEmpty);
       expect(model.address.text, isEmpty);
       expect(model.gender, isNull);
+      expect(model.dateOfBirth, isNull);
+      expect(model.employmentDate, isNull);
+      expect(model.stateOfOrigin, isNull);
       expect(model.residenceState, isNull);
       expect(model.residenceLga, isNull);
       expect(model.addedAny, isTrue);

@@ -73,8 +73,8 @@ class InviteReadySheet extends StatelessWidget {
           AppPrimaryButton(
             useGradient: true,
             height: 52,
-            onPressed:
-                () => shareInvite(message, origin: shareOriginOf(context)),
+            onPressed: () =>
+                shareInvite(message, origin: shareOriginOf(context)),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,

@@ -33,35 +33,33 @@ class TeamScreen extends StatelessWidget {
       ViewModelBuilder<TeamViewModel>.reactive(
         viewModelBuilder: () => TeamViewModel(school: school),
         onViewModelReady: (model) => model.load(),
-        builder:
-            (context, model, _) => DefaultScaffold(
-              title: 'Staffs',
-              showBackButton: true,
-              onBackPressed: () => NavigationService.popScreen(model.changed),
-              backgroundColor: AppPalette.linen,
-              actions: [
-                if (model.canAdd && !model.loading && model.error == null)
-                  AppNavIconButton(
-                    icon: AppIcons.plus,
-                    iconSize: 18,
-                    iconColor: LightColors.primaryPrimaryDefault,
-                    semanticLabel: 'Add staff member',
-                    onPressed: () => _addStaff(context, model),
-                  ),
-              ],
-              body:
-                  model.error != null
-                      ? LoadErrorView(onRetry: model.load)
-                      : model.loading
-                      ? const _Loading()
-                      : model.showEmptyState
-                      ? const _Empty()
-                      : _List(model: model),
-              bottomNavigationBar:
-                  !model.loading && model.error == null && model.canAdd
-                      ? _AddBar(onPressed: () => _addStaff(context, model))
-                      : null,
-            ),
+        builder: (context, model, _) => DefaultScaffold(
+          title: 'Staffs',
+          showBackButton: true,
+          onBackPressed: () => NavigationService.popScreen(model.changed),
+          backgroundColor: AppPalette.linen,
+          actions: [
+            if (model.canAdd && !model.loading && model.error == null)
+              AppNavIconButton(
+                icon: AppIcons.plus,
+                iconSize: 18,
+                iconColor: LightColors.primaryPrimaryDefault,
+                semanticLabel: 'Add staff member',
+                onPressed: () => _addStaff(context, model),
+              ),
+          ],
+          body: model.error != null
+              ? LoadErrorView(onRetry: model.load)
+              : model.loading
+              ? const _Loading()
+              : model.showEmptyState
+              ? const _Empty()
+              : _List(model: model),
+          bottomNavigationBar:
+              !model.loading && model.error == null && model.canAdd
+              ? _AddBar(onPressed: () => _addStaff(context, model))
+              : null,
+        ),
       );
 
   /// The form pops the new person, so this page opens their detail page and
@@ -131,25 +129,22 @@ class _List extends StatelessWidget {
       const SizedBox(height: AppSpacing.sm),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
-        child:
-            model.visibleStaff.isEmpty
-                ? AppEmptyState(
-                  icon: AppIcons.users,
-                  compact: true,
-                  title:
-                      model.filter == TeamFilter.onApp
-                          ? 'No one on the app yet'
-                          : 'No one here yet',
-                  subtitle: 'Try another filter.',
-                  topPadding: AppSpacing.sm,
-                )
-                : StaffListCard(
-                  staff: model.visibleStaff,
-                  subtitleFor: model.subtitleFor,
-                  onOpen:
-                      (person) =>
-                          TeamScreen._openStaff(context, model, person.id),
-                ),
+        child: model.visibleStaff.isEmpty
+            ? AppEmptyState(
+                icon: AppIcons.users,
+                compact: true,
+                title: model.filter == TeamFilter.onApp
+                    ? 'No one on the app yet'
+                    : 'No one here yet',
+                subtitle: 'Try another filter.',
+                topPadding: AppSpacing.sm,
+              )
+            : StaffListCard(
+                staff: model.visibleStaff,
+                subtitleFor: model.subtitleFor,
+                onOpen: (person) =>
+                    TeamScreen._openStaff(context, model, person.id),
+              ),
       ),
       const SizedBox(height: AppSpacing.md),
     ],
@@ -216,16 +211,15 @@ class _Loading extends StatelessWidget {
   Widget build(BuildContext context) => SingleChildScrollView(
     physics: const NeverScrollableScrollPhysics(),
     child: Builder(
-      builder:
-          (context) => Padding(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.screen,
-              ScaffoldInsets.bodyTopInsetOf(context),
-              AppSpacing.screen,
-              0,
-            ),
-            child: const TeamSkeleton(),
-          ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.screen,
+          ScaffoldInsets.bodyTopInsetOf(context),
+          AppSpacing.screen,
+          0,
+        ),
+        child: const TeamSkeleton(),
+      ),
     ),
   );
 }

@@ -69,7 +69,9 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      MaterialApp(home: StaffDetailScreen(school: _school, staffId: 's1')),
+      MaterialApp(
+        home: StaffDetailScreen(school: _school, staffId: 's1'),
+      ),
     );
     await tester.pumpAndSettle();
   }
@@ -95,9 +97,12 @@ void main() {
       const Size(36, 36),
     );
     expect(
-      find.widgetWithText(AppPrimaryButton, 'Share invite'),
-      findsOneWidget,
+      tester.getSize(find.byKey(const ValueKey('invite-share-button'))),
+      const Size(36, 36),
     );
+    // The share icon sits beside copy inside the field; no separate button.
+    expect(find.widgetWithText(AppPrimaryButton, 'Share invite'), findsNothing);
+    expect(find.text('Share invite'), findsNothing);
     expect(find.text('EXPIRES'), findsNothing);
     expect(find.text('Invite to Hamrash'), findsNothing);
 
@@ -160,7 +165,7 @@ void main() {
     expect(after.icon, AppIcons.copy);
   });
 
-  testWidgets('Share invite opens the native share sheet with the message', (
+  testWidgets('the share icon opens the native share sheet with the message', (
     tester,
   ) async {
     final shared = <Map<Object?, Object?>>[];
@@ -181,7 +186,7 @@ void main() {
     );
     await pump(tester);
 
-    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Share invite'));
+    await tester.tap(find.byKey(const ValueKey('invite-share-button')));
     await tester.pump();
 
     expect(shared, hasLength(1));

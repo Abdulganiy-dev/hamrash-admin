@@ -88,7 +88,7 @@ abstract final class AppDateFormat {
   /// "3 Sep" without the weekday, for compact headers.
   static String dayMonth(DateTime date) => DateFormat('d MMM').format(date);
 
-  /// "12 Mar 1991".
+  /// "12 Mar 1991", with the year, for dates of birth and similar.
   static String dayMonthYear(DateTime date) =>
       DateFormat('d MMM y').format(date);
 

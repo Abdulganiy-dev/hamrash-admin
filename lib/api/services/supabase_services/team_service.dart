@@ -64,21 +64,20 @@ class TeamService {
 
   /// One staff record, for the detail page after a change.
   Future<StaffMember> getStaff(String staffId) => _run('getStaff', () async {
-    final row =
-        await _supabase
-            .from('staff')
-            .select(StaffMember.columns)
-            .eq('id', staffId)
-            .single();
-    final details =
-        await _supabase
-            .from('staff_private_details')
-            .select(StaffPrivateDetails.columns)
-            .eq('staff_id', staffId)
-            .maybeSingle();
+    final row = await _supabase
+        .from('staff')
+        .select(StaffMember.columns)
+        .eq('id', staffId)
+        .single();
+    final details = await _supabase
+        .from('staff_private_details')
+        .select(StaffPrivateDetails.columns)
+        .eq('staff_id', staffId)
+        .maybeSingle();
     return StaffMember.fromJson(row).copyWith(
-      privateDetails:
-          details == null ? null : StaffPrivateDetails.fromJson(details),
+      privateDetails: details == null
+          ? null
+          : StaffPrivateDetails.fromJson(details),
     );
   }, log: (staff) => {'id': staff.id});
 
@@ -89,22 +88,20 @@ class TeamService {
   getStaffForEditing(String staffId) => _run(
     'getStaffForEditing',
     () async {
-      final row =
-          await _supabase
-              .from('staff')
-              .select(
-                'id,first_name,middle_name,last_name,gender,job_title,phone,email,'
-                'photo_id,photo_url,staff_number,staff_type,status,created_at,'
-                'member_id',
-              )
-              .eq('id', staffId)
-              .single();
-      final details =
-          await _supabase
-              .from('staff_private_details')
-              .select(StaffPrivateDetails.columns)
-              .eq('staff_id', staffId)
-              .maybeSingle();
+      final row = await _supabase
+          .from('staff')
+          .select(
+            'id,first_name,middle_name,last_name,gender,job_title,phone,email,'
+            'photo_id,photo_url,staff_number,staff_type,status,created_at,'
+            'member_id',
+          )
+          .eq('id', staffId)
+          .single();
+      final details = await _supabase
+          .from('staff_private_details')
+          .select(StaffPrivateDetails.columns)
+          .eq('staff_id', staffId)
+          .maybeSingle();
       return (
         staff: StaffMember.fromJson(row),
         privateDetails: StaffPrivateDetails.fromJson(details ?? const {}),
@@ -138,11 +135,11 @@ class TeamService {
               'p_photo_url': staff.photoUrl,
               'p_job_title': changes.jobTitle,
               'p_staff_type': changes.staffType,
-              'p_status': staff.status.value,
-              'p_date_of_birth': _dateOnly(privateDetails.dateOfBirth),
+              'p_status': changes.status.value,
+              'p_date_of_birth': _dateOnly(changes.dateOfBirth),
               'p_address': changes.address,
-              'p_state_of_origin': privateDetails.stateOfOrigin,
-              'p_employment_date': _dateOnly(privateDetails.employmentDate),
+              'p_state_of_origin': changes.stateOfOrigin,
+              'p_employment_date': _dateOnly(changes.employmentDate),
               'p_residence_state': changes.residenceState,
               'p_residence_lga': changes.residenceLga,
             },
@@ -174,6 +171,9 @@ class TeamService {
     required String staffType,
     String? middleName,
     StaffGender? gender,
+    DateTime? dateOfBirth,
+    DateTime? employmentDate,
+    String? stateOfOrigin,
     String? address,
     String? residenceState,
     String? residenceLga,
@@ -188,11 +188,14 @@ class TeamService {
               'p_last_name': lastName,
               'p_middle_name': middleName,
               'p_gender': gender?.value,
+              'p_date_of_birth': _dateOnly(dateOfBirth),
               'p_phone': phone,
               'p_email': email,
               'p_job_title': jobTitle,
               'p_staff_type': staffType,
               'p_address': address,
+              'p_state_of_origin': stateOfOrigin,
+              'p_employment_date': _dateOnly(employmentDate),
               'p_residence_state': residenceState,
               'p_residence_lga': residenceLga,
             },
@@ -259,10 +262,9 @@ class TeamService {
   }) => _run(
     'setSuspended',
     () => _updateMember(memberId, {
-      'status':
-          suspended
-              ? OrganizationMemberStatus.suspended.value
-              : OrganizationMemberStatus.active.value,
+      'status': suspended
+          ? OrganizationMemberStatus.suspended.value
+          : OrganizationMemberStatus.active.value,
     }),
     log: (_) => {'member_id': memberId, 'suspended': suspended},
     forbidden: ownersOnly,

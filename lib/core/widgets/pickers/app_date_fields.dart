@@ -29,6 +29,7 @@ class AppDateField extends StatelessWidget {
     this.quickPicks = const [],
     this.placeholder = 'Pick a date',
     this.sheetTitle,
+    this.valueFormatter,
     this.isOptional = false,
     this.helperText,
     this.errorText,
@@ -49,6 +50,9 @@ class AppDateField extends StatelessWidget {
 
   /// Defaults to [label].
   final String? sheetTitle;
+
+  /// Overrides the text shown in the field without changing the picked date.
+  final String Function(DateTime value)? valueFormatter;
   final bool isOptional;
   final String? helperText;
   final String? errorText;
@@ -60,7 +64,9 @@ class AppDateField extends StatelessWidget {
     return AppPickerField(
       label: label,
       icon: AppIcons.calendar,
-      valueText: value == null ? null : AppDateFormat.friendly(value!),
+      valueText: value == null
+          ? null
+          : (valueFormatter?.call(value!) ?? AppDateFormat.friendly(value!)),
       placeholder: placeholder,
       isOptional: isOptional,
       helperText: helperText,
@@ -144,10 +150,9 @@ class AppDateRangeField extends StatelessWidget {
     return AppPickerField(
       label: label,
       icon: AppIcons.calendar,
-      valueText:
-          range == null
-              ? null
-              : (valueFormatter?.call(range) ?? AppDateFormat.range(range)),
+      valueText: range == null
+          ? null
+          : (valueFormatter?.call(range) ?? AppDateFormat.range(range)),
       placeholder: placeholder,
       isOptional: isOptional,
       helperText:
@@ -217,15 +222,14 @@ class AppTimeField extends StatelessWidget {
     return AppPickerField(
       label: label,
       icon: AppIcons.clock,
-      valueText:
-          time == null
-              ? null
-              : MaterialLocalizations.of(context).formatTimeOfDay(
-                time,
-                alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(
-                  context,
-                ),
+      valueText: time == null
+          ? null
+          : MaterialLocalizations.of(context).formatTimeOfDay(
+              time,
+              alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(
+                context,
               ),
+            ),
       placeholder: placeholder,
       isOptional: isOptional,
       helperText: helperText,

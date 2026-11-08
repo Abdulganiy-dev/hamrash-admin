@@ -26,7 +26,10 @@ class AddStaffViewModel extends BaseViewModel {
   final email = TextEditingController();
 
   StaffJobTitleOption? jobTitle;
-  StaffGender gender = StaffGender.male;
+  StaffGender? gender;
+  DateTime? dateOfBirth;
+  DateTime? employmentDate;
+  String? stateOfOrigin;
   String? residenceState;
   String? residenceLga;
   bool _saving = false;
@@ -45,15 +48,13 @@ class AddStaffViewModel extends BaseViewModel {
 
   /// Null while the field is empty; Save stays off until both names are
   /// filled, so neither field turns red before anyone has typed.
-  String? get firstNameProblem =>
-      hasFirstName
-          ? ValidationUtil.validateFirstName(firstName.text.trim())
-          : null;
+  String? get firstNameProblem => hasFirstName
+      ? ValidationUtil.validateFirstName(firstName.text.trim())
+      : null;
 
-  String? get lastNameProblem =>
-      hasLastName
-          ? ValidationUtil.validateLastName(lastName.text.trim())
-          : null;
+  String? get lastNameProblem => hasLastName
+      ? ValidationUtil.validateLastName(lastName.text.trim())
+      : null;
 
   /// The field shows the number after the +234 prefix. Accepts a typed
   /// leading 0 or 234 too, and stores the full international number.
@@ -108,6 +109,24 @@ class AddStaffViewModel extends BaseViewModel {
     notifyListeners();
   }
 
+  void pickDateOfBirth(DateTime value) {
+    dateOfBirth = value;
+    _error = null;
+    notifyListeners();
+  }
+
+  void pickEmploymentDate(DateTime value) {
+    employmentDate = value;
+    _error = null;
+    notifyListeners();
+  }
+
+  void pickStateOfOrigin(String value) {
+    stateOfOrigin = value;
+    _error = null;
+    notifyListeners();
+  }
+
   /// A new state starts the LGA again.
   void pickState(String value) {
     residenceState = value;
@@ -146,6 +165,9 @@ class AddStaffViewModel extends BaseViewModel {
         lastName: lastName.text.trim(),
         middleName: _storedMiddleName,
         gender: gender,
+        dateOfBirth: dateOfBirth,
+        employmentDate: employmentDate,
+        stateOfOrigin: stateOfOrigin,
         phone: _storedPhone,
         email: _storedEmail,
         jobTitle: job.jobTitle,
@@ -179,7 +201,10 @@ class AddStaffViewModel extends BaseViewModel {
     address.clear();
     phone.clear();
     email.clear();
-    gender = StaffGender.male;
+    gender = null;
+    dateOfBirth = null;
+    employmentDate = null;
+    stateOfOrigin = null;
     residenceState = null;
     residenceLga = null;
     _error = null;

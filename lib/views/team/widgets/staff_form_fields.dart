@@ -99,6 +99,43 @@ class StaffGenderField extends StatelessWidget {
   );
 }
 
+/// One state picker, e.g. state of origin.
+class StaffStateField extends StatelessWidget {
+  const StaffStateField({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.label = 'State of origin',
+    this.sheetSubtitle,
+  });
+
+  final String? value;
+  final ValueChanged<String> onChanged;
+  final String label;
+  final String? sheetSubtitle;
+
+  Future<void> _pick(BuildContext context) async {
+    final picked = await ChoiceListSheet.show<String>(
+      context: context,
+      title: 'Choose a state',
+      subtitle: sheetSubtitle,
+      searchHint: 'Search states',
+      items: NigeriaLocations.states,
+      labelBuilder: (value) => value,
+      selected: value,
+    );
+    if (picked != null) onChanged(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) => AppPickerField(
+    label: label,
+    valueText: value,
+    placeholder: 'Choose',
+    onTap: () => _pick(context),
+  );
+}
+
 /// State and LGA side by side. LGA waits for a state and a state change
 /// clears it through [onStateChanged].
 class StaffLocationFields extends StatelessWidget {

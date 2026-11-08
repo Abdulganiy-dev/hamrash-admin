@@ -28,31 +28,29 @@ class StaffAccessSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tone =
-        isSuspended
-            ? (
-              fill: LightColors.successSuccessMute,
-              text: LightColors.successSuccessText,
-              icon: AppIcons.lockOpen,
-            )
-            : (
-              fill: LightColors.warningWarningMute,
-              text: LightColors.warningWarningText,
-              icon: AppIcons.circlePause,
-            );
+    final tone = isSuspended
+        ? (
+            fill: LightColors.successSuccessMute,
+            text: LightColors.successSuccessText,
+            icon: AppIcons.lockOpen,
+          )
+        : (
+            fill: LightColors.warningWarningMute,
+            text: LightColors.warningWarningText,
+            icon: AppIcons.circlePause,
+          );
 
     return StaffInfoSection(
       title: 'Access',
-      trailing:
-          joinedCaption == null
-              ? null
-              : AppText(
-                joinedCaption!,
-                style: AppTypography.caption.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: LightColors.textMuted,
-                ),
+      trailing: joinedCaption == null
+          ? null
+          : AppText(
+              joinedCaption!,
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.w600,
+                color: LightColors.textMuted,
               ),
+            ),
       rows: [
         StaffInfoRow(
           icon: AppIcons.shield,

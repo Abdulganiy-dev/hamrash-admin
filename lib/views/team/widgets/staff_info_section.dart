@@ -86,6 +86,7 @@ class StaffInfoRow extends StatelessWidget {
     this.multiline = false,
     this.onTap,
     this.semanticLabel,
+    this.valueDot,
   });
 
   final IconData icon;
@@ -94,6 +95,9 @@ class StaffInfoRow extends StatelessWidget {
   final bool multiline;
   final VoidCallback? onTap;
   final String? semanticLabel;
+
+  /// A 7px dot before the value, e.g. the record status colour.
+  final Color? valueDot;
 
   static const double rowHeight = 54;
   static const double valueMaxWidth = 190;
@@ -117,8 +121,9 @@ class StaffInfoRow extends StatelessWidget {
     );
 
     final row = Row(
-      crossAxisAlignment:
-          multiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment: multiline
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.center,
       children: [
         SizedBox(
           width: 20,
@@ -157,13 +162,9 @@ class StaffInfoRow extends StatelessWidget {
       ],
     );
 
-    final body =
-        multiline
-            ? Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: row,
-            )
-            : SizedBox(height: rowHeight, child: row);
+    final body = multiline
+        ? Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: row)
+        : SizedBox(height: rowHeight, child: row);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

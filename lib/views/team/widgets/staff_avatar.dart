@@ -122,19 +122,18 @@ class _DashedAvatarRing extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = AppPalette.aubergine300
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5
-          ..strokeCap = StrokeCap.round;
-    final circle =
-        Path()..addOval(
-          Rect.fromCircle(
-            center: Offset(size.width / 2, size.height / 2),
-            radius: (size.width - 1.5) / 2,
-          ),
-        );
+    final paint = Paint()
+      ..color = AppPalette.aubergine300
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+    final circle = Path()
+      ..addOval(
+        Rect.fromCircle(
+          center: Offset(size.width / 2, size.height / 2),
+          radius: (size.width - 1.5) / 2,
+        ),
+      );
     for (final metric in circle.computeMetrics()) {
       for (var d = 0.0; d < metric.length; d += _dash + _gap) {
         canvas.drawPath(metric.extractPath(d, d + _dash), paint);

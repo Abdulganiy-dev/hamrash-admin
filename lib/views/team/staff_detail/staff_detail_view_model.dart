@@ -111,8 +111,9 @@ class StaffDetailViewModel extends BaseViewModel {
   /// none) and the staff type, under the name.
   String get identityMeta {
     final jobTitle = member.jobTitle?.trim();
-    final title =
-        jobTitle == null || jobTitle.isEmpty ? role.teamLabel : jobTitle;
+    final title = jobTitle == null || jobTitle.isEmpty
+        ? role.teamLabel
+        : jobTitle;
     return '$title · $staffTypeLabel';
   }
 
@@ -122,7 +123,7 @@ class StaffDetailViewModel extends BaseViewModel {
 
   /// "12 Mar 1991", or null when not added.
   String? get dateOfBirthLabel {
-    final date = member.privateDetails?.dateOfBirth;
+    final date = member.dateOfBirth;
     return date == null ? null : AppDateFormat.dayMonthYear(date);
   }
 
@@ -141,6 +142,20 @@ class StaffDetailViewModel extends BaseViewModel {
   String? get homeAddress {
     final address = member.privateDetails?.address?.trim();
     return address == null || address.isEmpty ? null : address;
+  }
+
+  /// "Active", "On leave" or "Exited".
+  String get statusLabel => member.status.label;
+
+  /// "12 Mar 1991", or null when not added.
+  String? get employmentDateLabel {
+    final date = member.privateDetails?.employmentDate;
+    return date == null ? null : AppDateFormat.dayMonthYear(date);
+  }
+
+  String? get stateOfOrigin {
+    final origin = member.privateDetails?.stateOfOrigin?.trim();
+    return origin == null || origin.isEmpty ? null : origin;
   }
 
   /// "Joined 3 Sep", or null when the login has no joined date.
@@ -264,10 +279,36 @@ class StaffDetailViewModel extends BaseViewModel {
     'StaffDetail.changeRole',
   );
 
-  /// The complete record the Change details sheet needs. Null when it
-  /// couldn't be read; the page then shows a toast.
+  /// True while the Change details sheet is opening or open, so a second tap
+  /// on the button does nothing.
+  bool openingDetails = false;
+
+  Future<({StaffMember staff, StaffPrivateDetails privateDetails})?>?
+  _editPrefetch;
+
+  /// Reads the complete record for the Change details sheet in the
+  /// background as soon as the page has loaded, so the sheet opens the moment
+  /// the button is tapped instead of after a network round trip.
+  void prefetchEditDetails() {
+    if (_editRecord != null || _editPrefetch != null) return;
+    _editPrefetch = _readEditRecord().whenComplete(() => _editPrefetch = null);
+  }
+
+  /// The complete record the Change details sheet needs. Instant when the
+  /// prefetch has finished; otherwise waits for it. Null when it couldn't be
+  /// read; the page then shows a toast.
   Future<({StaffMember staff, StaffPrivateDetails privateDetails})?>
   loadEditDetails() async {
+    if (_editRecord case final ready?) return ready;
+    return await (_editPrefetch ?? _readEditRecord());
+  }
+
+  /// Whether the sheet's data is ready, so the button can open it with no
+  /// wait at all.
+  bool get editDetailsReady => _editRecord != null;
+
+  Future<({StaffMember staff, StaffPrivateDetails privateDetails})?>
+  _readEditRecord() async {
     try {
       final record = await _team.getStaffForEditing(staffId);
       _editRecord = record;
@@ -285,9 +326,11 @@ class StaffDetailViewModel extends BaseViewModel {
 
   /// Saves the fields the Change details sheet may change. Returns the
   /// reason it failed, or null when the page has been refreshed.
-  Future<String?> saveDetails(StaffDetailsChanges changes) {
-    final record = _editRecord;
-    if (record == null) return Future.value("Couldn't load their details.");
+  Future<String?> saveDetails(StaffDetailsChanges changes) async {
+    // A role change inside the sheet refreshes the page and drops the cached
+    // record, so read it again rather than failing.
+    final record = _editRecord ?? await _readEditRecord();
+    if (record == null) return "Couldn't load their details.";
     return _save(
       () => _team.updateStaffDetails(
         staff: record.staff,
@@ -350,6 +393,9 @@ class StaffDetailViewModel extends BaseViewModel {
 
   Future<void> _fetch() async {
     _staff = await _team.getStaff(staffId);
+    // The cached edit record is stale once the page data changes.
+    _editRecord = null;
+    prefetchEditDetails();
   }
 
   static String messageFor(Object error, String fallback) =>

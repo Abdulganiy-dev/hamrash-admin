@@ -2,6 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
 
+StaffMember _staff({required bool fullNameFields}) => StaffMember(
+  id: 's1',
+  firstName: 'Ada',
+  middleName: fullNameFields ? 'Chidi' : null,
+  lastName: 'Okafor',
+  staffType: 'teaching',
+  status: StaffRecordStatus.active,
+  createdAt: DateTime(2026),
+);
+
 void main() {
   test('parses middle name, gender and private details safely', () {
     final staff = StaffMember.fromJson({
@@ -48,6 +58,22 @@ void main() {
     expect(staff.middleName, isNull);
     expect(staff.gender, isNull);
     expect(staff.privateDetails, isNull);
+  });
+
+  test('fullNameWithMiddle uses the middle name only when present', () {
+    expect(_staff(fullNameFields: true).fullNameWithMiddle, 'Ada Chidi Okafor');
+    expect(_staff(fullNameFields: false).fullNameWithMiddle, 'Ada Okafor');
+  });
+
+  test('record status values and labels match staff_status', () {
+    expect(StaffRecordStatus.active.value, 'active');
+    expect(StaffRecordStatus.onLeave.value, 'on_leave');
+    expect(StaffRecordStatus.exited.value, 'exited');
+    expect(StaffRecordStatus.active.label, 'Active');
+    expect(StaffRecordStatus.onLeave.label, 'On leave');
+    expect(StaffRecordStatus.exited.label, 'Exited');
+    expect(StaffRecordStatus.fromJson('on_leave'), StaffRecordStatus.onLeave);
+    expect(() => StaffRecordStatus.fromJson('gone'), throwsFormatException);
   });
 
   test('gender values and labels match public.gender', () {

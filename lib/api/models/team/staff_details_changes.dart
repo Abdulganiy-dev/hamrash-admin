@@ -8,10 +8,14 @@ class StaffDetailsChanges {
     required this.lastName,
     required this.jobTitle,
     required this.staffType,
+    required this.status,
     required this.phone,
     required this.email,
     this.middleName,
     this.gender,
+    this.dateOfBirth,
+    this.employmentDate,
+    this.stateOfOrigin,
     this.address,
     this.residenceState,
     this.residenceLga,
@@ -21,10 +25,18 @@ class StaffDetailsChanges {
   final String? middleName;
   final String lastName;
   final StaffGender? gender;
+  final DateTime? dateOfBirth;
   final String jobTitle;
 
   /// `teaching` or `non_teaching`.
   final String staffType;
+
+  /// The record's own status, separate from the login.
+  final StaffRecordStatus status;
+
+  /// Optional private details.
+  final DateTime? employmentDate;
+  final String? stateOfOrigin;
 
   /// The stored international number, e.g. `+2348035550142`.
   final String? phone;
