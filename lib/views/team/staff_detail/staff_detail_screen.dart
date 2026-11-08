@@ -98,7 +98,6 @@ class _Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reduced = MediaQuery.disableAnimationsOf(context);
     return AppRefreshScrollView.children(
       onRefresh: model.refresh,
       padding: const EdgeInsets.fromLTRB(
@@ -116,11 +115,7 @@ class _Content extends StatelessWidget {
         // One slot for whatever the login allows next: the invite, the unused
         // code, or nothing. One slot means the change morphs instead of
         // jumping.
-        AnimatedSectionContent(
-          duration: Duration(milliseconds: reduced ? 120 : 260),
-          maxBlur: reduced ? 0 : 5,
-          child: _actionSlot(context),
-        ),
+        AnimatedSectionContent(child: _actionSlot(context)),
         const SizedBox(height: 24),
         _details(context),
         if (model.showPersonal) ...[const SizedBox(height: 28), _personal()],

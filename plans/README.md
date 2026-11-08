@@ -68,9 +68,9 @@ evidence.
   suspend/restore. 160 ms `AnimatedContainer` + `AnimatedSwitcher` would cover
   it; not planned yet.
 - **Body crossfade on the detail page** (`staff_detail_screen.dart:56-68`):
-  same defect 001 fixed, one screen over. The clean move is to promote
-  `team_screen.dart`'s private `_BodyCrossfade` into `lib/core/widgets/` and use
-  it on both.
+  still a bare ternary. The widget for it now exists —
+  `AnimatedSectionContent(morphHeight: false)`, the same one the Staffs screen
+  uses — so this is a one-line change whenever it's wanted.
 - App-bar actions and the pinned "Add staff member" bar appear the instant
   `model.ready` flips (`team_screen.dart:44-63`, `71-73`). Worth a 220 ms fade +
   8 px rise, but only if the arrival still reads as abrupt after 001.

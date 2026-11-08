@@ -77,13 +77,6 @@ class _StaffInviteCodeFieldState extends State<StaffInviteCodeField> {
                 ),
               ),
             ),
-            AppText(
-              'Never expires',
-              style: AppTypography.caption.copyWith(
-                fontWeight: FontWeight.w600,
-                color: LightColors.textMuted,
-              ),
-            ),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),

@@ -16,9 +16,11 @@
 >    constraint and rejects `?currentChild`. Use the FVM toolchain pinned in
 >    `.fvmrc` (3.44.8) for format and analyze.
 >
-> Review finding left open (LOW, optional): wrap outgoing children in
-> `ExcludeSemantics` as well as `IgnorePointer`, so the 260 ms overlap does not
-> briefly expose two content trees to a screen reader.
+> Both follow-ups have since landed in the shared widget: the outgoing children
+> are now wrapped in `ExcludeSemantics` + `IgnorePointer`, and the private
+> `_BodyCrossfade` was retired in favour of
+> `AnimatedSectionContent(morphHeight: false)` — the same crossfade, one
+> implementation shared with the staff-page action slot.
 
 ## Problem
 

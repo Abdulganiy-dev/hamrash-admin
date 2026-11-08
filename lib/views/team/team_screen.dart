@@ -8,7 +8,7 @@ import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
-import 'package:hamrash_admin/core/widgets/blur_transition.dart';
+import 'package:hamrash_admin/core/widgets/animated_section_content.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
@@ -62,7 +62,8 @@ class TeamScreen extends StatelessWidget {
                 onPressed: () => _addStaff(context, model),
               ),
           ],
-          body: _BodyCrossfade(
+          body: AnimatedSectionContent(
+            morphHeight: false,
             child: model.error != null
                 ? LoadErrorView(
                     key: const ValueKey('error'),
@@ -457,45 +458,4 @@ class _Loading extends StatelessWidget {
       ),
     ),
   );
-}
-
-/// Crossfades the page body between loading, error, empty and the list, so a
-/// filter change dissolves into the new rows instead of dropping the whole
-/// page back to a skeleton.
-///
-/// Each branch in [TeamScreen.build] carries a [Key] that changes only when
-/// the *state* changes — never with the data — so the list keeps its scroll
-/// position across rebuilds.
-class _BodyCrossfade extends StatelessWidget {
-  const _BodyCrossfade({required this.child});
-
-  final Widget child;
-
-  /// Long enough to read as a change of page, short enough that the tap still
-  /// feels answered.
-  static const _duration = Duration(milliseconds: 260);
-
-  @override
-  Widget build(BuildContext context) {
-    // Reduced motion keeps the crossfade (it is what explains the change) and
-    // drops the blur and most of the length.
-    final reduced = MediaQuery.disableAnimationsOf(context);
-    final duration = reduced ? const Duration(milliseconds: 120) : _duration;
-
-    return AnimatedSwitcher(
-      duration: duration,
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
-      layoutBuilder: (currentChild, previousChildren) => Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          for (final previous in previousChildren)
-            IgnorePointer(child: previous),
-          ?currentChild,
-        ],
-      ),
-      transitionBuilder: BlurTransition.builder(maxBlur: reduced ? 0 : 5),
-      child: child,
-    );
-  }
 }
