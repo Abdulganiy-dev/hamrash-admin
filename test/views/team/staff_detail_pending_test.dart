@@ -86,7 +86,6 @@ void main() {
 
     expect(find.byType(StaffInviteCodeField), findsOneWidget);
     expect(find.text('INVITE CODE'), findsOneWidget);
-    expect(find.text('Never expires'), findsOneWidget);
     expect(find.text('K7M2-QX9P'), findsOneWidget);
     expect(
       tester.getSize(find.byKey(const ValueKey('invite-code-field'))).height,

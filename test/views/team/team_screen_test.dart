@@ -211,7 +211,8 @@ void main() {
     expect(line.left - box.left, 72);
     expect(box.right - line.right, 16);
 
-    // No card, arrow or separate row widgets per person any more.
+    // No card or separate row widgets per person any more; each row carries
+    // one 18px chevron after its status pill.
     expect(find.byType(AppListRow), findsNothing);
     expect(
       find.descendant(
@@ -220,7 +221,7 @@ void main() {
           (widget) => widget is AppIcon && widget.icon == AppIcons.chevronRight,
         ),
       ),
-      findsNothing,
+      findsNWidgets(_allStaff.length),
     );
 
     // Names and the role line sit in that one card.

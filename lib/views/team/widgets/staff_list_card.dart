@@ -6,6 +6,7 @@ import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_divider.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_avatar.dart';
@@ -121,6 +122,12 @@ class _StaffRow extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.ms),
               StaffStatusPill(access: person.access, onList: true),
+              const SizedBox(width: AppSpacing.sm),
+              const AppIcon(
+                AppIcons.chevronRight,
+                size: 18,
+                color: AppPalette.stone400,
+              ),
             ],
           ),
         ),
