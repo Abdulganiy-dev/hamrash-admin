@@ -235,23 +235,22 @@ class ClassStructureService {
         'refresh and try again.',
   );
 
-  /// The class teachers of [sessionId] with their names and arm, for one arm
-  /// when [armId] is given and for the whole school otherwise. Every member
-  /// can read them; only leaders can change them.
-  Future<List<ClassTeacher>> listClassTeachers({
+  /// Who looks after [armId] in [sessionId], lead first, with names. Every
+  /// member can read them; only leaders can change them.
+  Future<List<ClassTeacher>> listArmClassTeachers({
     required String organizationId,
     required String sessionId,
-    String? armId,
+    required String armId,
   }) => _run(
-    'listClassTeachers',
+    'listArmClassTeachers',
     () async {
-      var query = _supabase
+      final rows = await _supabase
           .from('class_teachers')
           .select(ClassTeacher.columns)
           .eq('organization_id', organizationId)
-          .eq('session_id', sessionId);
-      if (armId != null) query = query.eq('arm_id', armId);
-      final rows = await query.order('is_lead', ascending: false);
+          .eq('session_id', sessionId)
+          .eq('arm_id', armId)
+          .order('is_lead', ascending: false);
       return rows.map(ClassTeacher.fromJson).toList();
     },
     log: (rows) => {
@@ -261,18 +260,19 @@ class ClassStructureService {
     },
   );
 
-  /// One staff member's class-teacher rows for a session, lead first.
-  Future<List<ClassTeacher>> getStaffClassTeachers({
+  /// One staff member's class-teacher rows in the school's current session,
+  /// lead first. One read: the session is joined inside, so no session id is
+  /// needed first.
+  Future<List<ClassTeacher>> getStaffHomerooms({
     required String organizationId,
     required String staffId,
-    required String sessionId,
-  }) => _run('getStaffClassTeachers', () async {
+  }) => _run('getStaffHomerooms', () async {
     final rows = await _supabase
         .from('class_teachers')
-        .select(ClassTeacher.columns)
+        .select(ClassTeacher.currentSessionColumns)
         .eq('organization_id', organizationId)
-        .eq('session_id', sessionId)
         .eq('staff_id', staffId)
+        .eq('academic_sessions.is_current', true)
         .order('is_lead', ascending: false);
     return rows.map(ClassTeacher.fromJson).toList();
   }, log: (rows) => {'staff_id': staffId, 'count': rows.length});

@@ -60,6 +60,9 @@ class StaffDetailScreen extends StatelessWidget {
       context,
       school: school,
       staff: model.member,
+      catalog: model.teachingCatalog,
+      homerooms: model.homerooms,
+      assignments: model.subjectsTaught,
     );
     if (change == null || !context.mounted) return;
     await model.reload();
@@ -149,6 +152,7 @@ class _Content extends StatelessWidget {
         AnimatedSectionContent(child: _actionSlot(context)),
         const SizedBox(height: 24),
         _details(context),
+        if (model.showTeaching) ...[const SizedBox(height: 28), _teaching()],
         if (model.showPersonal) ...[const SizedBox(height: 28), _personal()],
         if (model.showAccess) ...[const SizedBox(height: 28), _access(context)],
       ],
@@ -251,6 +255,51 @@ class _Content extends StatelessWidget {
         value: PhoneFormat.nationalDisplay(_member.phone),
       ),
       StaffInfoRow(icon: AppIcons.mail, label: 'Email', value: _member.email),
+    ],
+  );
+
+  /// Where this person teaches this session: their homeroom, then each
+  /// subject with its class and arm.
+  Widget _teaching() => StaffInfoSection(
+    title: 'Teaching',
+    trailing: model.teachingSession.isEmpty
+        ? null
+        : AppText(
+            model.teachingSession,
+            style: AppTypography.body.copyWith(
+              fontSize: 13,
+              height: 18 / 13,
+              fontWeight: FontWeight.w600,
+              color: LightColors.textMuted,
+            ),
+          ),
+    rows: [
+      if (model.homerooms.isEmpty)
+        const StaffInfoRow(
+          icon: AppIcons.school,
+          label: 'Homeroom',
+          value: 'Not assigned',
+        )
+      else
+        for (final row in model.homerooms)
+          StaffInfoRow(
+            icon: AppIcons.school,
+            label: row.isLead ? 'Lead teacher' : 'Assistant teacher',
+            value: row.armLabel,
+          ),
+      if (model.subjectsTaught.isEmpty)
+        const StaffInfoRow(
+          icon: AppIcons.bookOpen,
+          label: 'Subjects',
+          value: 'None assigned',
+        )
+      else
+        for (final row in model.subjectsTaught)
+          StaffInfoRow(
+            icon: AppIcons.bookOpen,
+            label: row.subjectName,
+            value: row.armLabel,
+          ),
     ],
   );
 
@@ -488,7 +537,7 @@ class _DangerBar extends StatelessWidget {
   Widget build(BuildContext context) => DecoratedBox(
     decoration: BoxDecoration(
       color: Theme.of(context).scaffoldBackgroundColor,
-      border: const Border(top: BorderSide(color: AppPalette.stone100)),
+      border: const Border(top: BorderSide(color: AppPalette.stone200)),
     ),
     child: SafeArea(
       top: false,

@@ -12,11 +12,15 @@ class ClassTeacher {
     required this.staffName,
     required this.className,
     required this.armName,
+    this.sessionName = '',
   });
 
   final String sessionId;
   final String armId;
   final String staffId;
+
+  /// "2026/27", when the row was read with its session (the staff page).
+  final String sessionName;
 
   /// True for the lead, false for an assistant.
   final bool isLead;
@@ -37,6 +41,12 @@ class ClassTeacher {
       'class_arms!class_teachers_arm_fkey(name,'
       'classes!class_arms_class_fkey(name))';
 
+  /// One person's rows in the current session: the same columns plus the
+  /// session, joined inside so the read needs no session id first.
+  static const currentSessionColumns =
+      '$columns,'
+      'academic_sessions!class_teachers_session_fkey!inner(name,is_current)';
+
   factory ClassTeacher.fromJson(Map<String, dynamic> json) {
     final staff = _one(json['staff']);
     final arm = _one(json['class_arms']);
@@ -51,6 +61,7 @@ class ClassTeacher {
       staffName: '$firstName $lastName'.trim(),
       className: schoolClass?['name'] as String? ?? '',
       armName: arm?['name'] as String? ?? '',
+      sessionName: _one(json['academic_sessions'])?['name'] as String? ?? '',
     );
   }
 }
@@ -68,11 +79,15 @@ class TeachingAssignment {
     required this.subjectName,
     required this.className,
     required this.armName,
+    this.sessionName = '',
   });
 
   final String sessionId;
   final String armId;
   final String subjectId;
+
+  /// "2026/27", when the row was read with its session (the staff page).
+  final String sessionName;
   final String staffId;
 
   /// "Ngozi Eze".
@@ -95,6 +110,12 @@ class TeachingAssignment {
       'class_arms!teaching_assignments_arm_fkey(name,'
       'classes!class_arms_class_fkey(name))';
 
+  /// One person's rows in the current session, with the session joined
+  /// inside so the read needs no session id first.
+  static const currentSessionColumns =
+      '$columns,'
+      'academic_sessions!teaching_assignments_session_fkey!inner(name,is_current)';
+
   factory TeachingAssignment.fromJson(Map<String, dynamic> json) {
     final staff = _one(json['staff']);
     final subject = _one(json['subjects']);
@@ -111,6 +132,39 @@ class TeachingAssignment {
       subjectName: subject?['name'] as String? ?? '',
       className: schoolClass?['name'] as String? ?? '',
       armName: arm?['name'] as String? ?? '',
+      sessionName: _one(json['academic_sessions'])?['name'] as String? ?? '',
+    );
+  }
+}
+
+/// A subject an arm takes, with its name and whether it is compulsory:
+/// what the subject picker offers once an arm is chosen.
+class SubjectOffering {
+  const SubjectOffering({
+    required this.subjectId,
+    required this.name,
+    required this.isCompulsory,
+    required this.sortOrder,
+  });
+
+  final String subjectId;
+  final String name;
+  final bool isCompulsory;
+
+  /// Report-card order.
+  final int sortOrder;
+
+  static const columns =
+      'subject_id,is_compulsory,'
+      'subjects!arm_subjects_subject_fkey(name,sort_order)';
+
+  factory SubjectOffering.fromJson(Map<String, dynamic> json) {
+    final subject = _one(json['subjects']);
+    return SubjectOffering(
+      subjectId: json['subject_id'] as String,
+      name: subject?['name'] as String? ?? '',
+      isCompulsory: json['is_compulsory'] as bool,
+      sortOrder: subject?['sort_order'] as int? ?? 0,
     );
   }
 }

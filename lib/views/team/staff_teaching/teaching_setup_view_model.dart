@@ -1,7 +1,8 @@
+import 'dart:async';
+
 import 'package:hamrash_admin/api/models/academic_calendar/academic_session.dart';
 import 'package:hamrash_admin/api/models/class_structure/class_structure.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
-import 'package:hamrash_admin/api/models/subjects/subject.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/models/team/teaching.dart';
 import 'package:hamrash_admin/api/services/supabase_services/class_structure_service.dart';
@@ -9,6 +10,7 @@ import 'package:hamrash_admin/api/services/supabase_services/subject_service.dar
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
+import 'package:hamrash_admin/views/team/staff_teaching/teaching_catalog.dart';
 
 /// Which change a teaching sheet saved, so the staff page can say so.
 enum TeachingChange { homeroom, subject }
@@ -58,9 +60,19 @@ class SubjectSave {
   final bool addSubjects;
 }
 
-/// The teaching setup behind one staff member: their homeroom, the subject
-/// sheet's pickers, and the two writes. Everything the sheets need is read
-/// once, so each choice can say what saving it would do before the tap.
+/// The teaching setup behind one staff member, read a step at a time:
+///
+///  * the menu needs the current session ([loadSession]),
+///  * either sheet then needs the classes and arms ([loadStructure]), shared
+///    through the page's [TeachingCatalog],
+///  * the homeroom sheet reads who looks after an arm only once that arm is
+///    chosen ([loadRoster]),
+///  * the subject sheet reads what the arm takes and who teaches it only once
+///    that arm is chosen ([loadArmSubjects]).
+///
+/// Each note and button is worked out from the arm's own reads, in the
+/// session that was read, so a warning always names the right class, arm and
+/// subject.
 ///
 /// Writes return the reason they failed (null when saved), the database's
 /// message when it refused, see [SupabaseRefusal].
@@ -68,6 +80,9 @@ class TeachingSetupViewModel extends BaseViewModel {
   TeachingSetupViewModel({
     required this.school,
     required this.staff,
+    required this.catalog,
+    this.homerooms = const [],
+    this.assignments = const [],
     ClassStructureService? structure,
     SubjectService? subjects,
   }) : _structure = structure ?? locator<ClassStructureService>(),
@@ -75,24 +90,38 @@ class TeachingSetupViewModel extends BaseViewModel {
 
   final MemberSchool school;
   final StaffMember staff;
+  final TeachingCatalog catalog;
+
+  /// This person's homeroom rows and subjects this session, already read by
+  /// the staff page; they only feed the menu's captions.
+  final List<ClassTeacher> homerooms;
+  final List<TeachingAssignment> assignments;
+
   final ClassStructureService _structure;
   final SubjectService _subjects;
 
   AcademicSession? _session;
+  bool _sessionLoaded = false;
+  Object? _sessionError;
+
   List<SchoolSection> _sections = const [];
-  List<Subject> _subjectsList = const [];
-  List<ArmSubject> _links = const [];
-  List<ClassTeacher> _classTeachers = const [];
-  List<ClassTeacher> _staffRows = const [];
-  List<TeachingAssignment> _assignments = const [];
-  List<TeachingAssignment> _staffAssignments = const [];
-  Object? _error;
-  bool _loaded = false;
+  bool _structureLoaded = false;
+  Object? _structureError;
+
+  final _rosters = <String, List<ClassTeacher>>{};
+  final _rostersLoading = <String>{};
+  final _rostersFailed = <String>{};
+
+  final _offerings = <String, List<SubjectOffering>>{};
+  final _armAssignments = <String, List<TeachingAssignment>>{};
+  final _armsLoading = <String>{};
+  final _armsFailed = <String>{};
+
   bool _changed = false;
 
   AcademicSession? get session => _session;
-  Object? get error => _error;
-  bool get loading => !_loaded && _error == null;
+  Object? get error => _sessionError;
+  bool get loading => !_sessionLoaded && _sessionError == null;
 
   /// Something was saved, so the staff page should reload.
   bool get changed => _changed;
@@ -107,6 +136,9 @@ class TeachingSetupViewModel extends BaseViewModel {
 
   /// "Ngozi Eze".
   String get staffName => staff.fullName;
+
+  bool get structureLoading => !_structureLoaded && _structureError == null;
+  Object? get structureError => _structureError;
 
   /// Switched-on classes with at least one switched-on arm, in teaching
   /// order. The pickers only offer what can take a teacher now.
@@ -123,7 +155,7 @@ class TeachingSetupViewModel extends BaseViewModel {
       if (arm.isActive) arm,
   ];
 
-  /// The class [armId] belongs to, or null when it is gone or switched off.
+  /// The class [armId] belongs to, or null when it is gone.
   SchoolClass? classForArm(String armId) {
     for (final section in _sections) {
       for (final schoolClass in section.classes) {
@@ -135,7 +167,7 @@ class TeachingSetupViewModel extends BaseViewModel {
     return null;
   }
 
-  /// The arm with [armId], or null when it is gone or switched off.
+  /// The arm with [armId], or null when it is gone.
   ClassArm? armById(String? armId) {
     if (armId == null) return null;
     for (final section in _sections) {
@@ -158,10 +190,10 @@ class TeachingSetupViewModel extends BaseViewModel {
 
   /// The staff member's homeroom row this session, lead first.
   ClassTeacher? get homeroom {
-    for (final row in _staffRows) {
+    for (final row in homerooms) {
       if (row.isLead) return row;
     }
-    return _staffRows.isEmpty ? null : _staffRows.first;
+    return homerooms.isEmpty ? null : homerooms.first;
   }
 
   /// "{Class}{Arm} · Lead teacher", or "Not set".
@@ -173,7 +205,7 @@ class TeachingSetupViewModel extends BaseViewModel {
   }
 
   /// How many subjects the staff member teaches this session.
-  int get subjectCount => _staffAssignments.length;
+  int get subjectCount => assignments.length;
 
   /// "3 subjects this session", or "None this session".
   String get subjectCaption {
@@ -182,68 +214,62 @@ class TeachingSetupViewModel extends BaseViewModel {
     return '$subjectCount $noun this session';
   }
 
+  // ── Homeroom: one arm's roster ──────────────────────────────────────────
+
+  /// Whether who looks after [armId] has been read.
+  bool rosterReady(String armId) => _rosters.containsKey(armId);
+  bool rosterLoading(String armId) => _rostersLoading.contains(armId);
+  bool rosterFailed(String armId) => _rostersFailed.contains(armId);
+
   /// The lead of [armId], or null when nobody leads it yet.
   ClassTeacher? leadOf(String armId) {
-    for (final row in _classTeachers) {
-      if (row.armId == armId && row.isLead) return row;
+    for (final row in _rosters[armId] ?? const <ClassTeacher>[]) {
+      if (row.isLead) return row;
     }
     return null;
   }
 
   /// The assistants of [armId] this session.
   List<ClassTeacher> assistantsOf(String armId) => [
-    for (final row in _classTeachers)
-      if (row.armId == armId && !row.isLead) row,
+    for (final row in _rosters[armId] ?? const <ClassTeacher>[])
+      if (!row.isLead) row,
   ];
 
-  /// "Lead · Ngozi Eze", or "No lead yet".
-  String armCaption(String armId) {
-    final lead = leadOf(armId);
-    return lead == null ? 'No lead yet' : 'Lead · ${lead.staffName}';
-  }
-
-  /// subject id → compulsory, for [armId]'s curriculum.
-  Map<String, bool> curriculumOf(String armId) {
-    final curriculum = <String, bool>{};
-    for (final link in _links) {
-      if (link.armId == armId) curriculum[link.subjectId] = link.isCompulsory;
+  /// The class teacher row for [staffId] on [armId], if any.
+  ClassTeacher? classTeacherFor(String armId, String staffId) {
+    for (final row in _rosters[armId] ?? const <ClassTeacher>[]) {
+      if (row.staffId == staffId) return row;
     }
-    return curriculum;
+    return null;
   }
 
-  /// The subjects on [armId]'s curriculum, in report-card order.
-  List<Subject> subjectsOn(String armId) {
-    final curriculum = curriculumOf(armId);
-    return [
-      for (final subject in _subjectsList)
-        if (curriculum.containsKey(subject.id)) subject,
-    ];
-  }
+  // ── Subject: one arm's curriculum and teachers ──────────────────────────
+
+  bool armSubjectsReady(String armId) =>
+      _offerings.containsKey(armId) && _armAssignments.containsKey(armId);
+  bool armSubjectsLoading(String armId) => _armsLoading.contains(armId);
+  bool armSubjectsFailed(String armId) => _armsFailed.contains(armId);
+
+  /// The subjects [armId] takes, in report-card order.
+  List<SubjectOffering> subjectsOn(String armId) =>
+      _offerings[armId] ?? const [];
 
   /// "Compulsory" or "Choice", for the subject picker's caption.
-  String subjectCaptionFor(String armId, Subject subject) =>
-      curriculumOf(armId)[subject.id] == true ? 'Compulsory' : 'Choice';
+  String subjectCaptionFor(SubjectOffering offering) =>
+      offering.isCompulsory ? 'Compulsory' : 'Choice';
 
-  Subject? subjectById(String? subjectId) {
+  SubjectOffering? offeringById(String armId, String? subjectId) {
     if (subjectId == null) return null;
-    for (final subject in _subjectsList) {
-      if (subject.id == subjectId) return subject;
+    for (final offering in subjectsOn(armId)) {
+      if (offering.subjectId == subjectId) return offering;
     }
     return null;
   }
 
   /// The teacher set for [subjectId] in [armId] this session, if anyone.
   TeachingAssignment? assignmentFor(String armId, String subjectId) {
-    for (final row in _assignments) {
-      if (row.armId == armId && row.subjectId == subjectId) return row;
-    }
-    return null;
-  }
-
-  /// The class teacher row for [staffId] on [armId], if any.
-  ClassTeacher? classTeacherFor(String armId, String staffId) {
-    for (final row in _classTeachers) {
-      if (row.armId == armId && row.staffId == staffId) return row;
+    for (final row in _armAssignments[armId] ?? const <TeachingAssignment>[]) {
+      if (row.subjectId == subjectId) return row;
     }
     return null;
   }
@@ -269,6 +295,18 @@ class TeachingSetupViewModel extends BaseViewModel {
       );
     }
     final label = armLabel(armId);
+    if (!rosterReady(armId)) {
+      final failed = rosterFailed(armId);
+      return HomeroomSave(
+        note: failed
+            ? "Couldn't check who looks after $label. Choose the arm again "
+                  'to retry.'
+            : 'Checking who looks after $label…',
+        tone: failed ? TeachingTone.error : TeachingTone.neutral,
+        buttonLabel: 'Save homeroom',
+        canSave: false,
+      );
+    }
     final existing = classTeacherFor(armId, staff.id);
     final role = isLead ? 'lead' : 'assistant';
 
@@ -377,7 +415,19 @@ class TeachingSetupViewModel extends BaseViewModel {
       );
     }
     final label = armLabel(armId);
-    if (curriculumOf(armId).isEmpty) {
+    if (!armSubjectsReady(armId)) {
+      final failed = armSubjectsFailed(armId);
+      return SubjectSave(
+        note: failed
+            ? "Couldn't load the subjects for $label. Choose the arm again "
+                  'to retry.'
+            : 'Checking the subjects and teachers for $label…',
+        tone: failed ? TeachingTone.error : TeachingTone.neutral,
+        buttonLabel: 'Save subject',
+        canSave: false,
+      );
+    }
+    if (subjectsOn(armId).isEmpty) {
       return SubjectSave(
         note:
             '$label has no subjects on its curriculum yet. A subject has to '
@@ -396,7 +446,7 @@ class TeachingSetupViewModel extends BaseViewModel {
         canSave: false,
       );
     }
-    final name = subjectById(subjectId)?.name ?? '';
+    final name = offeringById(armId, subjectId)?.name ?? '';
     final existing = assignmentFor(armId, subjectId);
     if (existing?.staffId == staff.id) {
       return SubjectSave(
@@ -426,44 +476,120 @@ class TeachingSetupViewModel extends BaseViewModel {
     );
   }
 
-  Future<void> load() async {
-    _error = null;
+  Future<void> loadSession() async {
+    _sessionError = null;
     notifyListeners();
     try {
-      await _fetch();
+      _session = await catalog.session();
+      _sessionLoaded = true;
     } catch (error, stackTrace) {
-      _error = error;
+      _sessionError = error;
       await handleError(
         error,
         stackTrace: stackTrace,
-        context: 'TeachingSetup.load',
+        context: 'TeachingSetup.loadSession',
         showErrorModal: false,
       );
     }
     notifyListeners();
   }
 
-  /// Re-reads everything, e.g. after subjects were added to an arm.
-  Future<void> refresh() async {
-    try {
-      await _fetch();
-      _error = null;
-    } catch (error, stackTrace) {
-      await handleError(
-        error,
-        stackTrace: stackTrace,
-        context: 'TeachingSetup.refresh',
-        showErrorModal: false,
-      );
-      rethrow;
-    } finally {
+  /// Classes and arms, from the page's cache when it already has them.
+  Future<void> loadStructure() async {
+    if (_structureLoaded) return;
+    // Only a retry has anything to redraw; a first call comes from initState.
+    if (_structureError != null) {
+      _structureError = null;
       notifyListeners();
     }
+    try {
+      _sections = await catalog.sections();
+      _structureLoaded = true;
+    } catch (error, stackTrace) {
+      _structureError = error;
+      await handleError(
+        error,
+        stackTrace: stackTrace,
+        context: 'TeachingSetup.loadStructure',
+        showErrorModal: false,
+      );
+    }
+    notifyListeners();
   }
 
-  /// Makes [staffId] the lead or an assistant of [armId]. Updates the row
-  /// when they are already on the arm, otherwise inserts one. Returns the
-  /// reason it failed, or null when it saved.
+  /// Reads who looks after [armId] this session. Called when the arm is
+  /// chosen; an arm already read in this sheet is not read again.
+  Future<void> loadRoster(String armId) async {
+    final session = _session;
+    if (session == null) return;
+    if (_rosters.containsKey(armId) || _rostersLoading.contains(armId)) return;
+    _rostersFailed.remove(armId);
+    _rostersLoading.add(armId);
+    notifyListeners();
+    try {
+      _rosters[armId] = await _structure.listArmClassTeachers(
+        organizationId: school.id,
+        sessionId: session.id,
+        armId: armId,
+      );
+    } catch (error, stackTrace) {
+      _rostersFailed.add(armId);
+      await handleError(
+        error,
+        stackTrace: stackTrace,
+        context: 'TeachingSetup.loadRoster',
+        showErrorModal: false,
+      );
+    }
+    _rostersLoading.remove(armId);
+    notifyListeners();
+  }
+
+  /// Reads what [armId] takes and who teaches each subject there this
+  /// session. Called when the arm is chosen; the two reads run together.
+  Future<void> loadArmSubjects(String armId) async {
+    final session = _session;
+    if (session == null) return;
+    if (armSubjectsReady(armId) || _armsLoading.contains(armId)) return;
+    _armsFailed.remove(armId);
+    _armsLoading.add(armId);
+    notifyListeners();
+    try {
+      final results = await Future.wait<Object>([
+        _subjects.listArmOfferings(organizationId: school.id, armId: armId),
+        _subjects.listArmTeachingAssignments(
+          organizationId: school.id,
+          sessionId: session.id,
+          armId: armId,
+        ),
+      ]);
+      _offerings[armId] = results[0] as List<SubjectOffering>;
+      _armAssignments[armId] = results[1] as List<TeachingAssignment>;
+    } catch (error, stackTrace) {
+      _armsFailed.add(armId);
+      await handleError(
+        error,
+        stackTrace: stackTrace,
+        context: 'TeachingSetup.loadArmSubjects',
+        showErrorModal: false,
+      );
+    }
+    _armsLoading.remove(armId);
+    notifyListeners();
+  }
+
+  /// Forgets what was read about arms' subjects, e.g. after subjects were
+  /// added to one, so the next choice reads it again.
+  void forgetArmSubjects() {
+    _offerings.clear();
+    _armAssignments.clear();
+    _armsFailed.clear();
+    notifyListeners();
+  }
+
+  /// Makes this person the lead or an assistant of [armId]. Updates the row
+  /// when the arm's roster already has them, otherwise inserts one. Returns
+  /// the reason it failed, or null when it saved.
   Future<String?> saveHomeroom({
     required String armId,
     required bool isLead,
@@ -471,16 +597,9 @@ class TeachingSetupViewModel extends BaseViewModel {
     final session = _session;
     if (session == null) return "There's no current session to save into.";
     if (closed) return _closedNote;
+    if (!rosterReady(armId)) return 'Still checking who looks after this arm.';
     try {
-      final roster = await _structure.listClassTeachers(
-        organizationId: school.id,
-        sessionId: session.id,
-        armId: armId,
-      );
-      ClassTeacher? existing;
-      for (final row in roster) {
-        if (row.staffId == staff.id) existing = row;
-      }
+      final existing = classTeacherFor(armId, staff.id);
       if (existing != null) {
         if (existing.isLead != isLead) {
           await _structure.updateClassTeacherRole(existing, isLead: isLead);
@@ -496,7 +615,7 @@ class TeachingSetupViewModel extends BaseViewModel {
         );
         _changed = true;
       }
-      await _fetch().catchError((_) {});
+      _rosters.remove(armId);
       return null;
     } catch (error, stackTrace) {
       await handleError(
@@ -505,7 +624,9 @@ class TeachingSetupViewModel extends BaseViewModel {
         context: 'TeachingSetup.saveHomeroom',
         showErrorModal: false,
       );
-      await _fetch().catchError((_) {});
+      // The roster may have moved under us; read it again for the next try.
+      _rosters.remove(armId);
+      unawaited(loadRoster(armId));
       return messageFor(error, "Couldn't set the homeroom. Try again.");
     } finally {
       notifyListeners();
@@ -521,13 +642,9 @@ class TeachingSetupViewModel extends BaseViewModel {
     final session = _session;
     if (session == null) return "There's no current session to save into.";
     if (closed) return _closedNote;
+    if (!armSubjectsReady(armId)) return 'Still checking this arm.';
     try {
-      final existing = await _subjects.getTeachingAssignment(
-        organizationId: school.id,
-        sessionId: session.id,
-        armId: armId,
-        subjectId: subjectId,
-      );
+      final existing = assignmentFor(armId, subjectId);
       if (existing?.staffId != staff.id) {
         if (existing == null) {
           await _subjects.addTeachingAssignment(
@@ -545,7 +662,7 @@ class TeachingSetupViewModel extends BaseViewModel {
         }
         _changed = true;
       }
-      await _fetch().catchError((_) {});
+      _armAssignments.remove(armId);
       return null;
     } catch (error, stackTrace) {
       await handleError(
@@ -554,59 +671,13 @@ class TeachingSetupViewModel extends BaseViewModel {
         context: 'TeachingSetup.saveSubject',
         showErrorModal: false,
       );
-      await _fetch().catchError((_) {});
+      // Someone may have set it first; read the arm again for the next try.
+      _armAssignments.remove(armId);
+      unawaited(loadArmSubjects(armId));
       return messageFor(error, "Couldn't set the subject. Try again.");
     } finally {
       notifyListeners();
     }
-  }
-
-  Future<void> _fetch() async {
-    final session = await _structure.getCurrentSession(school.id);
-    if (session == null) {
-      _session = null;
-      _sections = const [];
-      _subjectsList = const [];
-      _links = const [];
-      _classTeachers = const [];
-      _staffRows = const [];
-      _assignments = const [];
-      _staffAssignments = const [];
-      _loaded = true;
-      return;
-    }
-    final results = await Future.wait<Object?>([
-      _structure.getStructure(school.id),
-      _structure.listClassTeachers(
-        organizationId: school.id,
-        sessionId: session.id,
-      ),
-      _structure.getStaffClassTeachers(
-        organizationId: school.id,
-        staffId: staff.id,
-        sessionId: session.id,
-      ),
-      _subjects.listSubjects(school.id),
-      _subjects.listArmSubjects(school.id),
-      _subjects.listTeachingAssignments(
-        organizationId: school.id,
-        sessionId: session.id,
-      ),
-      _subjects.listStaffTeachingAssignments(
-        organizationId: school.id,
-        staffId: staff.id,
-        sessionId: session.id,
-      ),
-    ]);
-    _session = session;
-    _sections = results[0]! as List<SchoolSection>;
-    _classTeachers = results[1]! as List<ClassTeacher>;
-    _staffRows = results[2]! as List<ClassTeacher>;
-    _subjectsList = results[3]! as List<Subject>;
-    _links = results[4]! as List<ArmSubject>;
-    _assignments = results[5]! as List<TeachingAssignment>;
-    _staffAssignments = results[6]! as List<TeachingAssignment>;
-    _loaded = true;
   }
 
   static const _closedNote =

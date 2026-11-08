@@ -221,68 +221,59 @@ class SubjectService {
     log: (added) => {'from': fromArmId, 'to': toArmId, 'added': added},
   );
 
-  /// One teacher assignment in [sessionId], or null when nobody teaches
-  /// [subjectId] in [armId] yet.
-  Future<TeachingAssignment?> getTeachingAssignment({
+  /// The subjects [armId] takes, in report-card order, with names. Read
+  /// once an arm has been chosen.
+  Future<List<SubjectOffering>> listArmOfferings({
+    required String organizationId,
+    required String armId,
+  }) => _run('listArmOfferings', () async {
+    final rows = await _supabase
+        .from('arm_subjects')
+        .select(SubjectOffering.columns)
+        .eq('organization_id', organizationId)
+        .eq('arm_id', armId);
+    return rows.map(SubjectOffering.fromJson).toList()..sort(
+      (a, b) => a.sortOrder != b.sortOrder
+          ? a.sortOrder.compareTo(b.sortOrder)
+          : a.name.compareTo(b.name),
+    );
+  }, log: (rows) => {'arm_id': armId, 'count': rows.length});
+
+  /// Who teaches what in [armId] for [sessionId]: one row per subject that
+  /// has a teacher.
+  Future<List<TeachingAssignment>> listArmTeachingAssignments({
     required String organizationId,
     required String sessionId,
     required String armId,
-    required String subjectId,
   }) => _run(
-    'getTeachingAssignment',
-    () async {
-      final row = await _supabase
-          .from('teaching_assignments')
-          .select(TeachingAssignment.columns)
-          .eq('organization_id', organizationId)
-          .eq('session_id', sessionId)
-          .eq('arm_id', armId)
-          .eq('subject_id', subjectId)
-          .maybeSingle();
-      return row == null ? null : TeachingAssignment.fromJson(row);
-    },
-    log: (row) => {
-      'arm_id': armId,
-      'subject_id': subjectId,
-      'staff_id': row?.staffId,
-    },
-  );
-
-  /// Every teacher set for [sessionId], with subject, class and arm names.
-  Future<List<TeachingAssignment>> listTeachingAssignments({
-    required String organizationId,
-    required String sessionId,
-  }) => _run(
-    'listTeachingAssignments',
+    'listArmTeachingAssignments',
     () async {
       final rows = await _supabase
           .from('teaching_assignments')
           .select(TeachingAssignment.columns)
           .eq('organization_id', organizationId)
-          .eq('session_id', sessionId);
+          .eq('session_id', sessionId)
+          .eq('arm_id', armId);
       return rows.map(TeachingAssignment.fromJson).toList();
     },
-    log: (rows) => {'session_id': sessionId, 'count': rows.length},
+    log: (rows) => {'arm_id': armId, 'count': rows.length},
   );
 
-  /// One staff member's teaching assignments for a session.
-  Future<List<TeachingAssignment>> listStaffTeachingAssignments({
+  /// One staff member's teaching assignments in the school's current
+  /// session. One read: the session is joined inside, so no session id is
+  /// needed first.
+  Future<List<TeachingAssignment>> getStaffSubjects({
     required String organizationId,
     required String staffId,
-    required String sessionId,
-  }) => _run(
-    'listStaffTeachingAssignments',
-    () async {
-      final rows = await _supabase
-          .from('teaching_assignments')
-          .select(TeachingAssignment.columns)
-          .eq('organization_id', organizationId)
-          .eq('session_id', sessionId)
-          .eq('staff_id', staffId);
-      return rows.map(TeachingAssignment.fromJson).toList();
-    },
-    log: (rows) => {'staff_id': staffId, 'count': rows.length},
-  );
+  }) => _run('getStaffSubjects', () async {
+    final rows = await _supabase
+        .from('teaching_assignments')
+        .select(TeachingAssignment.currentSessionColumns)
+        .eq('organization_id', organizationId)
+        .eq('staff_id', staffId)
+        .eq('academic_sessions.is_current', true);
+    return rows.map(TeachingAssignment.fromJson).toList();
+  }, log: (rows) => {'staff_id': staffId, 'count': rows.length});
 
   /// Gives [subjectId] in [armId] to [staffId]. The arm must take the
   /// subject; the database refuses otherwise.

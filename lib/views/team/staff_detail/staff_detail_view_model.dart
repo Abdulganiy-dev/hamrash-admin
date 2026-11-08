@@ -4,11 +4,15 @@ import 'package:hamrash_admin/api/models/team/invite_code.dart';
 import 'package:hamrash_admin/api/models/team/staff_details_changes.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
+import 'package:hamrash_admin/api/models/team/teaching.dart';
+import 'package:hamrash_admin/api/services/supabase_services/class_structure_service.dart';
+import 'package:hamrash_admin/api/services/supabase_services/subject_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
 import 'package:hamrash_admin/core/utils/app_date_format.dart';
 import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
+import 'package:hamrash_admin/views/team/staff_teaching/teaching_catalog.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 
 /// 8.4, 8.9, 8.10 · One staff member. Everything about inviting lives here:
@@ -23,11 +27,23 @@ class StaffDetailViewModel extends BaseViewModel {
     required this.school,
     required this.staffId,
     TeamService? team,
-  }) : _team = team ?? locator<TeamService>();
+    ClassStructureService? structure,
+    SubjectService? subjects,
+  }) : _team = team ?? locator<TeamService>(),
+       _structureOverride = structure,
+       _subjectsOverride = subjects;
 
   final MemberSchool school;
   final String staffId;
   final TeamService _team;
+  final ClassStructureService? _structureOverride;
+  final SubjectService? _subjectsOverride;
+
+  /// This session's classes and subjects for a teaching staff member. Read
+  /// after the record, and left empty when that read fails: the rest of the
+  /// page doesn't depend on it.
+  List<ClassTeacher> _homerooms = const [];
+  List<TeachingAssignment> _subjectsTaught = const [];
 
   StaffMember? _staff;
   Object? _error;
@@ -76,6 +92,34 @@ class StaffDetailViewModel extends BaseViewModel {
   /// Teaching setup belongs to teaching staff only. The record must have
   /// loaded first, so the action waits with the page.
   bool get canSetTeaching => _staff?.staffType == 'teaching';
+
+  /// Teaching staff get a card of where they teach this session.
+  bool get showTeaching => canSetTeaching;
+
+  /// "2026/27", read with the rows; empty when they have none this session.
+  String get teachingSession {
+    for (final row in _homerooms) {
+      if (row.sessionName.isNotEmpty) return row.sessionName;
+    }
+    for (final row in _subjectsTaught) {
+      if (row.sessionName.isNotEmpty) return row.sessionName;
+    }
+    return '';
+  }
+
+  /// The session and the classes and arms, read the first time either
+  /// teaching sheet needs them and kept while this page is open. Refreshing
+  /// the page empties it.
+  late final TeachingCatalog teachingCatalog = TeachingCatalog(
+    organizationId: school.id,
+    structure: _structureOverride,
+  );
+
+  /// Homeroom rows, lead first.
+  List<ClassTeacher> get homerooms => _homerooms;
+
+  /// The subjects this person teaches, each with its class and arm.
+  List<TeachingAssignment> get subjectsTaught => _subjectsTaught;
 
   /// Leaders edit a staff member's own details; the database allows owner,
   /// admin, principal and vice principal.
@@ -222,6 +266,7 @@ class StaffDetailViewModel extends BaseViewModel {
 
   /// Pull to refresh: keeps the page and rethrows for the error toast.
   Future<void> refresh() async {
+    teachingCatalog.invalidate();
     try {
       await _fetch();
       _error = null;
@@ -402,6 +447,29 @@ class StaffDetailViewModel extends BaseViewModel {
     // The cached edit record is stale once the page data changes.
     _editRecord = null;
     prefetchEditDetails();
+    await _fetchTeaching();
+  }
+
+  /// Two reads, only for teaching staff: their homeroom rows and their
+  /// subjects in the current session. The session is joined inside each, so
+  /// neither waits on the other or on a session read.
+  Future<void> _fetchTeaching() async {
+    if (!canSetTeaching) return;
+    try {
+      final structure = _structureOverride ?? locator<ClassStructureService>();
+      final subjects = _subjectsOverride ?? locator<SubjectService>();
+      final results = await Future.wait<Object>([
+        structure.getStaffHomerooms(
+          organizationId: school.id,
+          staffId: staffId,
+        ),
+        subjects.getStaffSubjects(organizationId: school.id, staffId: staffId),
+      ]);
+      _homerooms = results[0] as List<ClassTeacher>;
+      _subjectsTaught = results[1] as List<TeachingAssignment>;
+    } catch (_) {
+      // Keep what was shown; the Teaching setup sheet reports its own errors.
+    }
   }
 
   static String messageFor(Object error, String fallback) =>

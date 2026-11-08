@@ -5,7 +5,6 @@ import 'package:hamrash_admin/api/models/class_structure/class_structure.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
-import 'package:hamrash_admin/api/models/subjects/subject.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/models/team/teaching.dart';
 import 'package:hamrash_admin/api/services/supabase_services/class_structure_service.dart';
@@ -16,6 +15,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/pickers/app_picker_field.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
 
 class _FakeTeam implements TeamService {
   _FakeTeam(this.member);
@@ -35,28 +35,42 @@ class _FakeStructure implements ClassStructureService {
   final AcademicSession session;
   final List<SchoolSection> sections;
   int adds = 0;
+  int homeroomReads = 0;
+  int sessionReads = 0;
+  int structureReads = 0;
+  int rosterReads = 0;
+  List<ClassTeacher> staffRows = const [];
 
   @override
-  Future<AcademicSession?> getCurrentSession(String organizationId) async =>
-      session;
+  Future<AcademicSession?> getCurrentSession(String organizationId) async {
+    sessionReads++;
+    return session;
+  }
 
   @override
-  Future<List<SchoolSection>> getStructure(String organizationId) async =>
-      sections;
+  Future<List<SchoolSection>> getStructure(String organizationId) async {
+    structureReads++;
+    return sections;
+  }
 
   @override
-  Future<List<ClassTeacher>> listClassTeachers({
+  Future<List<ClassTeacher>> listArmClassTeachers({
     required String organizationId,
     required String sessionId,
-    String? armId,
-  }) async => const [];
+    required String armId,
+  }) async {
+    rosterReads++;
+    return const [];
+  }
 
   @override
-  Future<List<ClassTeacher>> getStaffClassTeachers({
+  Future<List<ClassTeacher>> getStaffHomerooms({
     required String organizationId,
     required String staffId,
-    required String sessionId,
-  }) async => const [];
+  }) async {
+    homeroomReads++;
+    return staffRows;
+  }
 
   @override
   Future<void> addClassTeacher({
@@ -74,25 +88,45 @@ class _FakeStructure implements ClassStructureService {
 }
 
 class _FakeSubjects implements SubjectService {
-  @override
-  Future<List<Subject>> listSubjects(String organizationId) async => const [];
+  List<TeachingAssignment> staffAssignments = const [];
+  int subjectReads = 0;
+  int offeringReads = 0;
+  int assignmentReads = 0;
 
   @override
-  Future<List<ArmSubject>> listArmSubjects(String organizationId) async =>
-      const [];
-
-  @override
-  Future<List<TeachingAssignment>> listTeachingAssignments({
-    required String organizationId,
-    required String sessionId,
-  }) async => const [];
-
-  @override
-  Future<List<TeachingAssignment>> listStaffTeachingAssignments({
+  Future<List<TeachingAssignment>> getStaffSubjects({
     required String organizationId,
     required String staffId,
+  }) async {
+    subjectReads++;
+    return staffAssignments;
+  }
+
+  @override
+  Future<List<SubjectOffering>> listArmOfferings({
+    required String organizationId,
+    required String armId,
+  }) async {
+    offeringReads++;
+    return const [
+      SubjectOffering(
+        subjectId: 'maths',
+        name: 'Mathematics',
+        isCompulsory: true,
+        sortOrder: 1,
+      ),
+    ];
+  }
+
+  @override
+  Future<List<TeachingAssignment>> listArmTeachingAssignments({
+    required String organizationId,
     required String sessionId,
-  }) async => const [];
+    required String armId,
+  }) async {
+    assignmentReads++;
+    return const [];
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -159,11 +193,13 @@ final _session = AcademicSession(
 
 void main() {
   late _FakeStructure structure;
+  late _FakeSubjects subjects;
 
   setUp(() {
     structure = _FakeStructure(_session, _structure());
+    subjects = _FakeSubjects();
     locator.registerSingleton<ClassStructureService>(structure);
-    locator.registerSingleton<SubjectService>(_FakeSubjects());
+    locator.registerSingleton<SubjectService>(subjects);
   });
 
   tearDown(locator.reset);
@@ -196,6 +232,47 @@ void main() {
     expect(find.text('None this session'), findsOneWidget);
   });
 
+  testWidgets('the staff page lists the class and subjects they teach', (
+    tester,
+  ) async {
+    structure.staffRows = const [
+      ClassTeacher(
+        sessionId: 'session',
+        armId: 'arm',
+        staffId: 'staff',
+        isLead: true,
+        staffName: 'Ngozi Eze',
+        className: 'JSS 1',
+        armName: 'A',
+        sessionName: '2026/27',
+      ),
+    ];
+    subjects.staffAssignments = const [
+      TeachingAssignment(
+        sessionId: 'session',
+        armId: 'arm',
+        subjectId: 'maths',
+        staffId: 'staff',
+        staffName: 'Ngozi Eze',
+        subjectName: 'Mathematics',
+        className: 'JSS 1',
+        armName: 'A',
+      ),
+    ];
+    await pump(tester, _staff());
+
+    expect(find.widgetWithText(StaffSectionTitle, 'Teaching'), findsOneWidget);
+    expect(find.text('2026/27'), findsOneWidget);
+    expect(find.text('Lead teacher'), findsOneWidget);
+    expect(find.text('Mathematics'), findsOneWidget);
+    expect(find.text('JSS 1A'), findsNWidgets(2));
+  });
+
+  testWidgets('a non-teaching record has no Teaching card', (tester) async {
+    await pump(tester, _staff(staffType: 'non_teaching'));
+    expect(find.widgetWithText(StaffSectionTitle, 'Teaching'), findsNothing);
+  });
+
   testWidgets('a non-teaching record has no teaching action', (tester) async {
     await pump(tester, _staff(staffType: 'non_teaching'));
 
@@ -222,7 +299,6 @@ void main() {
 
     await tester.tap(find.widgetWithText(AppPickerField, 'Arm'));
     await tester.pumpAndSettle();
-    expect(find.text('No lead yet'), findsOneWidget);
     await tester.tap(find.text('JSS 1A'));
     await tester.pumpAndSettle();
 
@@ -232,5 +308,56 @@ void main() {
 
     expect(structure.adds, 1);
     expect(find.text('Teaching setup'), findsNothing);
+  });
+
+  testWidgets('each step reads only what it needs', (tester) async {
+    await pump(tester, _staff());
+
+    // The page: two reads, nothing else.
+    expect(structure.homeroomReads, 1);
+    expect(subjects.subjectReads, 1);
+    expect(structure.sessionReads, 0);
+    expect(structure.structureReads, 0);
+
+    // The menu: the session.
+    await tester.tap(find.byIcon(AppIcons.graduationCap));
+    await tester.pumpAndSettle();
+    expect(structure.sessionReads, 1);
+    expect(structure.structureReads, 0);
+
+    // The homeroom sheet: the classes, then the roster once an arm is chosen.
+    await tester.tap(find.text('Set homeroom'));
+    await tester.pumpAndSettle();
+    expect(structure.structureReads, 1);
+    expect(structure.rosterReads, 0);
+    await tester.tap(find.widgetWithText(AppPickerField, 'Class'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('JSS 1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppPickerField, 'Arm'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('JSS 1A'));
+    await tester.pumpAndSettle();
+    expect(structure.rosterReads, 1);
+    expect(subjects.offeringReads, 0);
+
+    // Back out; the subject sheet reuses the classes already read.
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Set subject'));
+    await tester.pumpAndSettle();
+    expect(structure.structureReads, 1);
+    expect(subjects.offeringReads, 0);
+    await tester.tap(find.widgetWithText(AppPickerField, 'Class'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('JSS 1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppPickerField, 'Arm'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('JSS 1A'));
+    await tester.pumpAndSettle();
+    expect(subjects.offeringReads, 1);
+    expect(subjects.assignmentReads, 1);
+    expect(structure.structureReads, 1);
   });
 }

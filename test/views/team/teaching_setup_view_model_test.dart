@@ -5,22 +5,28 @@ import 'package:hamrash_admin/api/models/class_structure/class_structure.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
-import 'package:hamrash_admin/api/models/subjects/subject.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/models/team/teaching.dart';
 import 'package:hamrash_admin/api/services/supabase_services/class_structure_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/subject_service.dart';
+import 'package:hamrash_admin/views/team/staff_teaching/teaching_catalog.dart';
 import 'package:hamrash_admin/views/team/staff_teaching/teaching_setup_view_model.dart';
 
-/// The reads the view model loads, plus the two writes each sheet makes.
-/// The roster and the single assignment are what the write's fresh read
-/// answers, so a test can put the row in place first.
+/// Counts every read, so a test can say what a step did and did not fetch.
 class _FakeStructure implements ClassStructureService {
   _FakeStructure({required this.session, required this.sections});
 
   AcademicSession? session;
   List<SchoolSection> sections;
+
+  /// What the arm's roster read answers.
   List<ClassTeacher> roster = const [];
+
+  bool failNextSession = false;
+  int sessionReads = 0;
+  int structureReads = 0;
+  int rosterReads = 0;
+  String? rosterArm;
 
   int adds = 0;
   int updates = 0;
@@ -28,26 +34,31 @@ class _FakeStructure implements ClassStructureService {
   bool? updatedIsLead;
 
   @override
-  Future<AcademicSession?> getCurrentSession(String organizationId) async =>
-      session;
+  Future<AcademicSession?> getCurrentSession(String organizationId) async {
+    sessionReads++;
+    if (failNextSession) {
+      failNextSession = false;
+      throw Exception('offline');
+    }
+    return session;
+  }
 
   @override
-  Future<List<SchoolSection>> getStructure(String organizationId) async =>
-      sections;
+  Future<List<SchoolSection>> getStructure(String organizationId) async {
+    structureReads++;
+    return sections;
+  }
 
   @override
-  Future<List<ClassTeacher>> listClassTeachers({
+  Future<List<ClassTeacher>> listArmClassTeachers({
     required String organizationId,
     required String sessionId,
-    String? armId,
-  }) async => roster;
-
-  @override
-  Future<List<ClassTeacher>> getStaffClassTeachers({
-    required String organizationId,
-    required String staffId,
-    required String sessionId,
-  }) async => const [];
+    required String armId,
+  }) async {
+    rosterReads++;
+    rosterArm = armId;
+    return roster;
+  }
 
   @override
   Future<void> addClassTeacher({
@@ -75,46 +86,35 @@ class _FakeStructure implements ClassStructureService {
 }
 
 class _FakeSubjects implements SubjectService {
-  _FakeSubjects({this.subjects = const [], this.links = const []});
+  List<SubjectOffering> offerings = const [];
 
-  List<Subject> subjects;
-  List<ArmSubject> links;
+  /// Who teaches what in the arm, as the arm's read answers.
   List<TeachingAssignment> assignments = const [];
 
-  /// What the save's fresh read answers; null means nobody has it yet.
-  TeachingAssignment? single;
-
+  int offeringReads = 0;
+  int assignmentReads = 0;
   int adds = 0;
   int updates = 0;
   String? changedStaffId;
 
   @override
-  Future<List<Subject>> listSubjects(String organizationId) async => subjects;
-
-  @override
-  Future<List<ArmSubject>> listArmSubjects(String organizationId) async =>
-      links;
-
-  @override
-  Future<List<TeachingAssignment>> listTeachingAssignments({
+  Future<List<SubjectOffering>> listArmOfferings({
     required String organizationId,
-    required String sessionId,
-  }) async => assignments;
+    required String armId,
+  }) async {
+    offeringReads++;
+    return offerings;
+  }
 
   @override
-  Future<List<TeachingAssignment>> listStaffTeachingAssignments({
-    required String organizationId,
-    required String staffId,
-    required String sessionId,
-  }) async => const [];
-
-  @override
-  Future<TeachingAssignment?> getTeachingAssignment({
+  Future<List<TeachingAssignment>> listArmTeachingAssignments({
     required String organizationId,
     required String sessionId,
     required String armId,
-    required String subjectId,
-  }) async => single;
+  }) async {
+    assignmentReads++;
+    return assignments;
+  }
 
   @override
   Future<void> addTeachingAssignment({
@@ -178,15 +178,12 @@ List<SchoolSection> _structure() => [
   ),
 ];
 
-final _subject = Subject(
-  id: 'math',
+const _maths = SubjectOffering(
+  subjectId: 'math',
   name: 'Mathematics',
-  code: 'MTH',
+  isCompulsory: true,
   sortOrder: 1,
-  isActive: true,
 );
-
-final _link = ArmSubject(armId: 'arm', subjectId: 'math', isCompulsory: true);
 
 ClassTeacher _classTeacher({
   required String staffId,
@@ -240,13 +237,20 @@ StaffMember _staff() => StaffMember(
 
 TeachingSetupViewModel _model(
   _FakeStructure structure,
-  _FakeSubjects subjects,
-) => TeachingSetupViewModel(
+  _FakeSubjects subjects, {
+  TeachingCatalog? catalog,
+}) => TeachingSetupViewModel(
   school: _school(),
   staff: _staff(),
+  catalog:
+      catalog ??
+      TeachingCatalog(organizationId: 'school', structure: structure),
   structure: structure,
   subjects: subjects,
 );
+
+ClassTeacher _row(String staffId, String name, {required bool isLead}) =>
+    _classTeacher(staffId: staffId, isLead: isLead, staffName: name);
 
 void main() {
   late _FakeStructure structure;
@@ -255,189 +259,270 @@ void main() {
 
   setUp(() async {
     structure = _FakeStructure(session: _session(), sections: _structure());
-    subjects = _FakeSubjects(subjects: [_subject], links: [_link]);
+    subjects = _FakeSubjects()..offerings = [_maths];
     model = _model(structure, subjects);
-    await model.load();
+    await model.loadSession();
+    await model.loadStructure();
   });
 
-  test('a new homeroom inserts the staff member', () async {
-    structure.roster = const [];
+  group('reads', () {
+    test('opening the menu reads only the session', () {
+      expect(structure.sessionReads, 1);
+      expect(structure.rosterReads, 0);
+      expect(subjects.offeringReads, 0);
+      expect(subjects.assignmentReads, 0);
+    });
 
-    final error = await model.saveHomeroom(armId: 'arm', isLead: true);
+    test('the classes are read once and shared by both sheets', () async {
+      final other = _model(structure, subjects, catalog: model.catalog);
+      await other.loadSession();
+      await other.loadStructure();
+      await other.loadStructure();
 
-    expect(error, isNull);
-    expect(structure.adds, 1);
-    expect(structure.updates, 0);
-    expect(structure.addedIsLead, isTrue);
-    expect(model.changed, isTrue);
+      expect(structure.structureReads, 1);
+      expect(structure.sessionReads, 1);
+      expect(other.classes.single.name, 'JSS 1');
+    });
+
+    test('invalidating the catalog reads the classes again', () async {
+      model.catalog.invalidate();
+      final other = _model(structure, subjects, catalog: model.catalog);
+      await other.loadStructure();
+
+      expect(structure.structureReads, 2);
+    });
+
+    test('a failed read is not kept, so asking again tries again', () async {
+      final catalog = TeachingCatalog(
+        organizationId: 'school',
+        structure: structure,
+      );
+      structure.failNextSession = true;
+
+      await expectLater(catalog.session(), throwsException);
+      final session = await catalog.session();
+
+      expect(session?.id, 'session');
+      expect(structure.sessionReads, 3);
+    });
+
+    test('the roster is read when an arm is chosen, once per arm', () async {
+      expect(model.rosterReady('arm'), isFalse);
+
+      await model.loadRoster('arm');
+      await model.loadRoster('arm');
+
+      expect(structure.rosterReads, 1);
+      expect(structure.rosterArm, 'arm');
+      expect(model.rosterReady('arm'), isTrue);
+    });
+
+    test('an arm’s subjects and teachers are read together', () async {
+      await model.loadArmSubjects('arm');
+      await model.loadArmSubjects('arm');
+
+      expect(subjects.offeringReads, 1);
+      expect(subjects.assignmentReads, 1);
+      expect(model.subjectsOn('arm').single.name, 'Mathematics');
+    });
   });
 
-  test('an existing homeroom switches role with an update', () async {
-    structure.roster = [_classTeacher(staffId: 'staff', isLead: true)];
+  group('saving', () {
+    test('a new homeroom inserts the staff member', () async {
+      await model.loadRoster('arm');
 
-    final error = await model.saveHomeroom(armId: 'arm', isLead: false);
+      final error = await model.saveHomeroom(armId: 'arm', isLead: true);
 
-    expect(error, isNull);
-    expect(structure.adds, 0);
-    expect(structure.updates, 1);
-    expect(structure.updatedIsLead, isFalse);
-    expect(model.changed, isTrue);
+      expect(error, isNull);
+      expect(structure.adds, 1);
+      expect(structure.updates, 0);
+      expect(structure.addedIsLead, isTrue);
+      expect(model.changed, isTrue);
+    });
+
+    test('an existing homeroom switches role with an update', () async {
+      structure.roster = [_classTeacher(staffId: 'staff', isLead: true)];
+      await model.loadRoster('arm');
+
+      final error = await model.saveHomeroom(armId: 'arm', isLead: false);
+
+      expect(error, isNull);
+      expect(structure.adds, 0);
+      expect(structure.updates, 1);
+      expect(structure.updatedIsLead, isFalse);
+      expect(model.changed, isTrue);
+    });
+
+    test('already the lead is a no-op', () async {
+      structure.roster = [_classTeacher(staffId: 'staff', isLead: true)];
+      await model.loadRoster('arm');
+
+      final error = await model.saveHomeroom(armId: 'arm', isLead: true);
+
+      expect(error, isNull);
+      expect(structure.adds, 0);
+      expect(structure.updates, 0);
+      expect(model.changed, isFalse);
+    });
+
+    test('a homeroom is not saved before the roster is read', () async {
+      final error = await model.saveHomeroom(armId: 'arm', isLead: true);
+
+      expect(error, isNotNull);
+      expect(structure.adds, 0);
+    });
+
+    test('a subject with no teacher inserts an assignment', () async {
+      await model.loadArmSubjects('arm');
+
+      final error = await model.saveSubject(armId: 'arm', subjectId: 'math');
+
+      expect(error, isNull);
+      expect(subjects.adds, 1);
+      expect(subjects.updates, 0);
+      expect(model.changed, isTrue);
+    });
+
+    test("another teacher's subject replaces them", () async {
+      subjects.assignments = [_assignment(staffId: 'other')];
+      await model.loadArmSubjects('arm');
+
+      final error = await model.saveSubject(armId: 'arm', subjectId: 'math');
+
+      expect(error, isNull);
+      expect(subjects.adds, 0);
+      expect(subjects.updates, 1);
+      expect(subjects.changedStaffId, 'staff');
+      expect(model.changed, isTrue);
+    });
+
+    test('already taught is a no-op', () async {
+      subjects.assignments = [
+        _assignment(staffId: 'staff', staffName: 'Ngozi Eze'),
+      ];
+      await model.loadArmSubjects('arm');
+
+      final error = await model.saveSubject(armId: 'arm', subjectId: 'math');
+
+      expect(error, isNull);
+      expect(subjects.adds, 0);
+      expect(subjects.updates, 0);
+      expect(model.changed, isFalse);
+    });
+
+    test('a closed session is read-only and refuses the write', () async {
+      structure.session = _session(closedAt: DateTime(2027, 7, 17));
+      model.catalog.invalidate();
+      await model.loadSession();
+      await model.loadRoster('arm');
+
+      final save = model.homeroomSave(armId: 'arm', isLead: true);
+      expect(save.readOnly, isTrue);
+      expect(save.canSave, isFalse);
+
+      final error = await model.saveHomeroom(armId: 'arm', isLead: true);
+      expect(
+        error,
+        'This session is closed. Reopen it to change who teaches where.',
+      );
+      expect(structure.adds, 0);
+      expect(model.changed, isFalse);
+    });
   });
 
-  test('already the lead is a no-op', () async {
-    structure.roster = [_classTeacher(staffId: 'staff', isLead: true)];
+  group('notes', () {
+    test('the homeroom note waits for the roster', () {
+      final waiting = model.homeroomSave(armId: 'arm', isLead: true);
 
-    final error = await model.saveHomeroom(armId: 'arm', isLead: true);
+      expect(waiting.canSave, isFalse);
+      expect(waiting.note, 'Checking who looks after JSS 1A…');
+    });
 
-    expect(error, isNull);
-    expect(structure.adds, 0);
-    expect(structure.updates, 0);
-    expect(model.changed, isFalse);
-  });
+    test('the homeroom note covers each case', () async {
+      structure.roster = [_row('lead', 'Tunde Ade', isLead: true)];
+      await model.loadRoster('arm');
 
-  test('a subject with no teacher inserts an assignment', () async {
-    subjects.single = null;
+      final warning = model.homeroomSave(armId: 'arm', isLead: true);
+      expect(warning.tone, TeachingTone.warning);
+      expect(
+        warning.note,
+        'Tunde Ade is the lead of JSS 1A. Saving makes them an assistant.',
+      );
+      expect(warning.canSave, isTrue);
 
-    final error = await model.saveSubject(armId: 'arm', subjectId: 'math');
+      final empty = model.homeroomSave(armId: null, isLead: true);
+      expect(empty.canSave, isFalse);
+    });
 
-    expect(error, isNull);
-    expect(subjects.adds, 1);
-    expect(subjects.updates, 0);
-    expect(model.changed, isTrue);
-  });
+    test('promoting an assistant names the lead it displaces', () async {
+      structure.roster = [
+        _row('lead', 'Tunde Ade', isLead: true),
+        _row('staff', 'Ngozi Eze', isLead: false),
+      ];
+      await model.loadRoster('arm');
 
-  test("another teacher's subject replaces them", () async {
-    subjects.single = _assignment(staffId: 'other');
+      final save = model.homeroomSave(armId: 'arm', isLead: true);
 
-    final error = await model.saveSubject(armId: 'arm', subjectId: 'math');
+      expect(save.canSave, isTrue);
+      expect(save.tone, TeachingTone.warning);
+      expect(
+        save.note,
+        'Ngozi Eze is an assistant of JSS 1A. Saving makes them the lead and '
+        'moves Tunde Ade to assistant.',
+      );
+      expect(save.buttonLabel, 'Switch to lead');
+    });
 
-    expect(error, isNull);
-    expect(subjects.adds, 0);
-    expect(subjects.updates, 1);
-    expect(subjects.changedStaffId, 'staff');
-    expect(model.changed, isTrue);
-  });
+    test('two assistants stop a third', () async {
+      structure.roster = [
+        _row('a', 'Ada Obi', isLead: false),
+        _row('b', 'Bola Ade', isLead: false),
+      ];
+      await model.loadRoster('arm');
 
-  test('already taught is a no-op', () async {
-    subjects.single = _assignment(staffId: 'staff', staffName: 'Ngozi Eze');
+      final save = model.homeroomSave(armId: 'arm', isLead: false);
 
-    final error = await model.saveSubject(armId: 'arm', subjectId: 'math');
+      expect(save.canSave, isFalse);
+      expect(save.tone, TeachingTone.error);
+      expect(
+        save.note,
+        'JSS 1A already has 2 assistants: Ada Obi and Bola Ade. '
+        'Save as lead, or free a slot first.',
+      );
+    });
 
-    expect(error, isNull);
-    expect(subjects.adds, 0);
-    expect(subjects.updates, 0);
-    expect(model.changed, isFalse);
-  });
+    test(
+      'a subject someone else teaches warns before replacing them',
+      () async {
+        subjects.assignments = [_assignment(staffId: 'other')];
+        await model.loadArmSubjects('arm');
 
-  test('the homeroom note covers each case', () async {
-    structure.roster = const [
-      ClassTeacher(
-        sessionId: 'session',
-        armId: 'arm',
-        staffId: 'lead',
-        isLead: true,
-        staffName: 'Tunde Ade',
-        className: 'JSS 1',
-        armName: 'A',
-      ),
-    ];
-    await model.refresh();
+        final save = model.subjectSave(armId: 'arm', subjectId: 'math');
 
-    final warning = model.homeroomSave(armId: 'arm', isLead: true);
-    expect(warning.tone, TeachingTone.warning);
-    expect(
-      warning.note,
-      'Tunde Ade is the lead of JSS 1A. Saving makes them an assistant.',
+        expect(save.canSave, isTrue);
+        expect(
+          save.note,
+          'Tunde Ade teaches Mathematics in JSS 1A. Saving replaces them.',
+        );
+      },
     );
-    expect(warning.canSave, isTrue);
 
-    final empty = model.homeroomSave(armId: null, isLead: true);
-    expect(empty.canSave, isFalse);
-  });
+    test('an arm with no subjects offers to add some', () async {
+      subjects.offerings = const [];
+      await model.loadArmSubjects('arm');
 
-  test('promoting an assistant names the lead it displaces', () async {
-    structure.roster = const [
-      ClassTeacher(
-        sessionId: 'session',
-        armId: 'arm',
-        staffId: 'lead',
-        isLead: true,
-        staffName: 'Tunde Ade',
-        className: 'JSS 1',
-        armName: 'A',
-      ),
-      ClassTeacher(
-        sessionId: 'session',
-        armId: 'arm',
-        staffId: 'staff',
-        isLead: false,
-        staffName: 'Ngozi Eze',
-        className: 'JSS 1',
-        armName: 'A',
-      ),
-    ];
-    await model.refresh();
+      final save = model.subjectSave(armId: 'arm', subjectId: null);
 
-    final save = model.homeroomSave(armId: 'arm', isLead: true);
+      expect(save.canSave, isFalse);
+      expect(save.addSubjects, isTrue);
+    });
 
-    expect(save.canSave, isTrue);
-    expect(save.tone, TeachingTone.warning);
-    expect(
-      save.note,
-      'Ngozi Eze is an assistant of JSS 1A. Saving makes them the lead and '
-      'moves Tunde Ade to assistant.',
-    );
-    expect(save.buttonLabel, 'Switch to lead');
-  });
+    test('forgetting arm subjects reads them again', () async {
+      await model.loadArmSubjects('arm');
+      model.forgetArmSubjects();
+      await model.loadArmSubjects('arm');
 
-  test('two assistants stop a third', () async {
-    structure.roster = const [
-      ClassTeacher(
-        sessionId: 'session',
-        armId: 'arm',
-        staffId: 'a',
-        isLead: false,
-        staffName: 'Ada Obi',
-        className: 'JSS 1',
-        armName: 'A',
-      ),
-      ClassTeacher(
-        sessionId: 'session',
-        armId: 'arm',
-        staffId: 'b',
-        isLead: false,
-        staffName: 'Bola Ade',
-        className: 'JSS 1',
-        armName: 'A',
-      ),
-    ];
-    await model.refresh();
-
-    final save = model.homeroomSave(armId: 'arm', isLead: false);
-
-    expect(save.canSave, isFalse);
-    expect(save.tone, TeachingTone.error);
-    expect(
-      save.note,
-      'JSS 1A already has 2 assistants: Ada Obi and Bola Ade. '
-      'Save as lead, or free a slot first.',
-    );
-  });
-
-  test('a closed session is read-only and refuses the write', () async {
-    structure.session = _session(closedAt: DateTime(2027, 7, 17));
-    await model.refresh();
-
-    final save = model.homeroomSave(armId: 'arm', isLead: true);
-    expect(save.readOnly, isTrue);
-    expect(save.canSave, isFalse);
-
-    final error = await model.saveHomeroom(armId: 'arm', isLead: true);
-    expect(
-      error,
-      'This session is closed. Reopen it to change who teaches where.',
-    );
-    expect(structure.adds, 0);
-    expect(model.changed, isFalse);
+      expect(subjects.offeringReads, 2);
+    });
   });
 }

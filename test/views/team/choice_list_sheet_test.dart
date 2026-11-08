@@ -87,4 +87,31 @@ void main() {
 
     expect(find.text('LGA 40'), findsOneWidget);
   });
+
+  testWidgets('a search that matches nothing says so', (tester) async {
+    await open(tester, items: const ['Kano', 'Lagos', 'Oyo']);
+
+    await tester.enterText(find.byType(TextField), 'zzz');
+    await tester.pumpAndSettle();
+
+    expect(find.text('No results for “zzz”'), findsOneWidget);
+    expect(find.text('Check the spelling and try again.'), findsOneWidget);
+    expect(find.text('Kano'), findsNothing);
+    // The search stays, so the query can be fixed.
+    expect(find.byType(TextField), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'kan');
+    await tester.pumpAndSettle();
+    expect(find.text('Kano'), findsOneWidget);
+    expect(find.text('No results for “kan”'), findsNothing);
+  });
+
+  testWidgets('an empty list says what is missing and has no search', (
+    tester,
+  ) async {
+    await open(tester, items: const []);
+
+    expect(find.text('Nothing to choose yet'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+  });
 }

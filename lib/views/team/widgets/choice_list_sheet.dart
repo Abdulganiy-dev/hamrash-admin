@@ -6,6 +6,8 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_divider.dart';
+import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_search_field.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
@@ -23,6 +25,9 @@ class ChoiceListSheet<T> extends StatefulWidget {
     this.captionBuilder,
     this.subtitle,
     this.selected,
+    this.emptyTitle = 'Nothing to choose yet',
+    this.emptySubtitle,
+    this.emptyIcon = AppIcons.search,
   });
 
   final String title;
@@ -37,6 +42,12 @@ class ChoiceListSheet<T> extends StatefulWidget {
   final String Function(T item)? captionBuilder;
   final T? selected;
 
+  /// What the sheet says when [items] is empty, e.g. "No arms yet". Say
+  /// what is missing and what to do about it.
+  final String emptyTitle;
+  final String? emptySubtitle;
+  final IconData emptyIcon;
+
   static Future<T?> show<T>({
     required BuildContext context,
     required String title,
@@ -46,6 +57,9 @@ class ChoiceListSheet<T> extends StatefulWidget {
     String Function(T item)? captionBuilder,
     T? selected,
     String? subtitle,
+    String emptyTitle = 'Nothing to choose yet',
+    String? emptySubtitle,
+    IconData emptyIcon = AppIcons.search,
   }) => Navigator.of(context).push<T>(
     AppSheetRoute<T>(
       size: AppSheetSize.floating,
@@ -57,6 +71,9 @@ class ChoiceListSheet<T> extends StatefulWidget {
         labelBuilder: labelBuilder,
         captionBuilder: captionBuilder,
         selected: selected,
+        emptyTitle: emptyTitle,
+        emptySubtitle: emptySubtitle,
+        emptyIcon: emptyIcon,
       ),
     ),
   );
@@ -106,9 +123,31 @@ class _ChoiceListSheetState<T> extends State<ChoiceListSheet<T>> {
     if (_scrollController.hasClients) _scrollController.jumpTo(0);
   }
 
+  /// Nothing to choose from at all, or a search that matches nothing.
+  Widget _empty(bool noItems) => Center(
+    child: SingleChildScrollView(
+      child: noItems
+          ? AppEmptyState(
+              compact: true,
+              icon: widget.emptyIcon,
+              title: widget.emptyTitle,
+              subtitle: widget.emptySubtitle,
+              topPadding: AppSpacing.none,
+            )
+          : AppEmptyState(
+              compact: true,
+              icon: AppIcons.search,
+              title: 'No results for “${_query.trim()}”',
+              subtitle: 'Check the spelling and try again.',
+              topPadding: AppSpacing.none,
+            ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final visible = _visible;
+    final noItems = widget.items.isEmpty;
     final listHeight = math.min(392.0, MediaQuery.sizeOf(context).height * 0.5);
 
     return AppSheet(
@@ -125,33 +164,42 @@ class _ChoiceListSheetState<T> extends State<ChoiceListSheet<T>> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppSearchField(hintText: widget.searchHint, onChanged: _search),
-          const SizedBox(height: AppSpacing.ms),
-          SizedBox(
-            height: listHeight,
-            child: ClipRRect(
-              borderRadius: AppRadius.brLg,
-              child: ColoredBox(
-                color: AppPalette.stone50,
-                child: ListView.separated(
-                  controller: _scrollController,
-                  padding: EdgeInsets.zero,
-                  itemCount: visible.length,
-                  separatorBuilder: (context, index) => const AppDivider(),
-                  itemBuilder: (context, index) {
-                    final item = visible[index];
-                    return AppSelectionRow(
-                      title: widget.labelBuilder(item),
-                      subtitle: widget.captionBuilder?.call(item),
-                      control: AppRadio<T>(
-                        value: item,
-                        groupValue: widget.selected,
+          if (!noItems) ...[
+            AppSearchField(hintText: widget.searchHint, onChanged: _search),
+            const SizedBox(height: AppSpacing.ms),
+          ],
+          // Flexible so the list gives up a pixel or two when the sheet's own
+          // chrome leaves less room than [listHeight] on a short screen.
+          Flexible(
+            child: SizedBox(
+              height: visible.isEmpty ? math.min(listHeight, 240) : listHeight,
+              child: visible.isEmpty
+                  ? _empty(noItems)
+                  : ClipRRect(
+                      borderRadius: AppRadius.brLg,
+                      child: ColoredBox(
+                        color: AppPalette.stone50,
+                        child: ListView.separated(
+                          controller: _scrollController,
+                          padding: EdgeInsets.zero,
+                          itemCount: visible.length,
+                          separatorBuilder: (context, index) =>
+                              const AppDivider(),
+                          itemBuilder: (context, index) {
+                            final item = visible[index];
+                            return AppSelectionRow(
+                              title: widget.labelBuilder(item),
+                              subtitle: widget.captionBuilder?.call(item),
+                              control: AppRadio<T>(
+                                value: item,
+                                groupValue: widget.selected,
+                              ),
+                              onTap: () => Navigator.of(context).pop(item),
+                            );
+                          },
+                        ),
                       ),
-                      onTap: () => Navigator.of(context).pop(item),
-                    );
-                  },
-                ),
-              ),
+                    ),
             ),
           ),
         ],

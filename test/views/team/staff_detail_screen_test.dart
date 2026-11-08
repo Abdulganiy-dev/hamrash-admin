@@ -307,7 +307,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Invite to Hamrash'), findsNothing);
-    expect(find.byType(StaffInfoRow), findsNWidgets(12));
+    expect(find.byType(StaffInfoRow), findsNWidgets(14));
 
     expect(
       find.text('Remove from staff list', skipOffstage: false),
