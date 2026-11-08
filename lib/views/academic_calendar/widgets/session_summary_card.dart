@@ -68,6 +68,7 @@ class SessionSummaryCard extends StatelessWidget {
             label: 'Edit',
             icon: AppIcons.pencil,
             semanticLabel: 'Edit session',
+            addBackground: true,
             onPressed: onEdit,
           ),
       ],

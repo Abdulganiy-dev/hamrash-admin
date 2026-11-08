@@ -16,6 +16,7 @@ class AppSectionAction extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     this.semanticLabel,
+    this.addBackground = false,
   });
 
   final String label;
@@ -26,6 +27,7 @@ class AppSectionAction extends StatelessWidget {
 
   /// Defaults to [label].
   final String? semanticLabel;
+  final bool addBackground;
 
   bool get _enabled => onPressed != null;
 
@@ -55,11 +57,11 @@ class AppSectionAction extends StatelessWidget {
               child: Container(
                 height: 32,
                 padding: const EdgeInsets.only(left: 10, right: 12),
-                decoration: BoxDecoration(
+                decoration:addBackground ? BoxDecoration(
                   color: fill,
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: border),
-                ),
+                ) : null,
                 child: Center(
                   child: AppIconLabel(
                     icon: icon,
