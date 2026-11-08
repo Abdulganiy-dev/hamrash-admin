@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
@@ -219,14 +220,15 @@ class AppCompactList extends StatelessWidget {
         if (title != null) ...[
           AppSectionHeader(
             title: title!,
-            trailing: headerTrailing == null
-                ? null
-                : DefaultTextStyle.merge(
-                    style: AppTypography.body.copyWith(
-                      color: LightColors.textMuted,
+            trailing:
+                headerTrailing == null
+                    ? null
+                    : DefaultTextStyle.merge(
+                      style: AppTypography.body.copyWith(
+                        color: LightColors.textMuted,
+                      ),
+                      child: headerTrailing!,
                     ),
-                    child: headerTrailing!,
-                  ),
           ),
           const SizedBox(height: AppSpacing.stack),
         ],
@@ -236,14 +238,7 @@ class AppCompactList extends StatelessWidget {
             children: [
               for (var i = 0; i < shown.length; i++) ...[
                 if (i > 0)
-                  Container(
-                    height: 1,
-                    margin: EdgeInsets.only(
-                      left: shown[i].leading != null ? 68 : 16,
-                      right: 16,
-                    ),
-                    color: AppPalette.stone100,
-                  ),
+                  AppDivider(indent: shown[i].leading != null ? 68 : 16),
                 _CompactRow(item: shown[i]),
               ],
             ],
@@ -369,9 +364,8 @@ class AppLeadingPicture extends StatelessWidget {
     return SizedBox.square(
       dimension: size,
       child: CustomPaint(
-        foregroundPainter: leading.pending
-            ? _DashedRingPainter(radius: (size - 2) / 2)
-            : null,
+        foregroundPainter:
+            leading.pending ? _DashedRingPainter(radius: (size - 2) / 2) : null,
         child: Container(
           width: size,
           height: size,
@@ -471,18 +465,19 @@ class _DashedRingPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppPalette.aubergine400
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
-    final circle = Path()
-      ..addOval(
-        Rect.fromCircle(
-          center: Offset(size.width / 2, size.height / 2),
-          radius: radius,
-        ),
-      );
+    final paint =
+        Paint()
+          ..color = AppPalette.aubergine400
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..strokeCap = StrokeCap.round;
+    final circle =
+        Path()..addOval(
+          Rect.fromCircle(
+            center: Offset(size.width / 2, size.height / 2),
+            radius: radius,
+          ),
+        );
     for (final metric in circle.computeMetrics()) {
       for (var d = 0.0; d < metric.length; d += _dash + _gap) {
         canvas.drawPath(metric.extractPath(d, d + _dash), paint);

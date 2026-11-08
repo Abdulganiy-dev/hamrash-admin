@@ -373,10 +373,11 @@ class _ChangeDetailsSheetState extends State<ChangeDetailsSheet> {
           items: _titleLabels,
           labelBuilder: (label) => label,
           placeholder: 'Choose…',
-          onChanged: (label) => setState(() {
-            _titleLabel = label;
-            _error = null;
-          }),
+          onChanged:
+              (label) => setState(() {
+                _titleLabel = label;
+                _error = null;
+              }),
         ),
         const SizedBox(height: AppSpacing.md),
         const _FieldLabel('Staff type'),
@@ -387,10 +388,11 @@ class _ChangeDetailsSheetState extends State<ChangeDetailsSheet> {
             AppSegmentOption(value: 'non_teaching', label: 'Non-teaching'),
           ],
           selected: _staffType,
-          onChanged: (value) => setState(() {
-            _staffType = value;
-            _error = null;
-          }),
+          onChanged:
+              (value) => setState(() {
+                _staffType = value;
+                _error = null;
+              }),
         ),
         const SizedBox(height: AppSpacing.lg),
         StaffFormSection(

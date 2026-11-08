@@ -59,36 +59,37 @@ class SubjectsScreen extends StatelessWidget {
                   onPressed: () => actions.addSubject(context),
                 ),
             ],
-            body: model.error != null
-                ? LoadErrorView(onRetry: model.load)
-                : model.loading
-                ? const _Loading()
-                : model.needsArms
-                ? AppEmptyState(
-                    icon: AppIcons.layers,
-                    title: 'Add arms first',
-                    subtitle:
-                        'Subjects are given to each arm, like JSS 1A. Set up '
-                        'your classes and their arms, then come back.',
-                    actionLabel: model.canChange
-                        ? 'Go to classes and arms'
-                        : null,
-                    onAction: model.canChange
-                        ? () => actions.openClasses(context)
-                        : null,
-                  )
-                : starting
-                ? _Start(model: model)
-                : !model.hasSubjects
-                ? const AppEmptyState(
-                    icon: AppIcons.bookOpen,
-                    title: 'No subjects yet',
-                    subtitle: "The school's leaders will set up its subjects.",
-                  )
-                : _Overview(model: model, actions: actions),
-            bottomNavigationBar: starting
-                ? _StartBar(model: model, actions: actions)
-                : null,
+            body:
+                model.error != null
+                    ? LoadErrorView(onRetry: model.load)
+                    : model.loading
+                    ? const _Loading()
+                    : model.needsArms
+                    ? AppEmptyState(
+                      icon: AppIcons.layers,
+                      title: 'Add arms first',
+                      subtitle:
+                          'Subjects are given to each arm, like JSS 1A. Set up '
+                          'your classes and their arms, then come back.',
+                      actionLabel:
+                          model.canChange ? 'Go to classes and arms' : null,
+                      onAction:
+                          model.canChange
+                              ? () => actions.openClasses(context)
+                              : null,
+                    )
+                    : starting
+                    ? _Start(model: model)
+                    : !model.hasSubjects
+                    ? const AppEmptyState(
+                      icon: AppIcons.bookOpen,
+                      title: 'No subjects yet',
+                      subtitle:
+                          "The school's leaders will set up its subjects.",
+                    )
+                    : _Overview(model: model, actions: actions),
+            bottomNavigationBar:
+                starting ? _StartBar(model: model, actions: actions) : null,
           );
         },
       );
@@ -137,9 +138,10 @@ class _Overview extends StatelessWidget {
           AppSearchField(hintText: 'Search subjects', onChanged: model.search),
           const SizedBox(height: 16),
           AppSectionHeader(
-            title: subjects.length == 1
-                ? '1 subject'
-                : '${subjects.length} subjects',
+            title:
+                subjects.length == 1
+                    ? '1 subject'
+                    : '${subjects.length} subjects',
             caption: model.query.trim().isEmpty ? 'in report-card order' : null,
           ),
           const SizedBox(height: 10),
@@ -153,9 +155,10 @@ class _Overview extends StatelessWidget {
             SubjectListCard(
               subjects: subjects,
               detailsOf: model.usageOf,
-              onTap: model.canChange
-                  ? (subject) => actions.editSubject(context, subject)
-                  : null,
+              onTap:
+                  model.canChange
+                      ? (subject) => actions.editSubject(context, subject)
+                      : null,
             ),
         ],
         const SizedBox(height: 24),
@@ -212,10 +215,12 @@ class _SubjectsActions {
       SubjectSheet(
         subject: subject,
         subtitle: model.placeOf(subject),
-        nameProblem: (name) =>
-            model.curriculum.subjectNameProblem(name, except: subject),
-        codeProblem: (code) =>
-            model.curriculum.subjectCodeProblem(code, except: subject),
+        nameProblem:
+            (name) =>
+                model.curriculum.subjectNameProblem(name, except: subject),
+        codeProblem:
+            (code) =>
+                model.curriculum.subjectCodeProblem(code, except: subject),
         onSave: (name, code) async {
           final error = await model.saveSubject(subject, name, code);
           return (id: error == null ? subject.id : null, error: error);
@@ -235,10 +240,11 @@ class _SubjectsActions {
       icon: on ? AppIcons.eyeOff : AppIcons.eye,
       tone: on ? AppBadgeTone.warning : AppBadgeTone.info,
       title: on ? 'Switch off ${subject.name}?' : 'Switch on ${subject.name}?',
-      message: on
-          ? "It stays on past report cards, but it can't be given to classes "
-                'or chosen by students. You can switch it back on.'
-          : 'It can be given to classes again.',
+      message:
+          on
+              ? "It stays on past report cards, but it can't be given to classes "
+                  'or chosen by students. You can switch it back on.'
+              : 'It can be given to classes again.',
       confirmLabel: on ? 'Switch off' : 'Switch on',
       onConfirm: () => model.setSubjectActive(subject, !on),
     );
@@ -279,46 +285,47 @@ class _Start extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
     child: Builder(
-      builder: (context) => ScaffoldColumn(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
-          const AppOptionsIntro(
-            title: 'Start with the common subjects?',
-            body: 'You can add, remove or make any subject optional later.',
+      builder:
+          (context) => ScaffoldColumn(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
+              const AppOptionsIntro(
+                title: 'Start with the common subjects?',
+                body: 'You can add, remove or make any subject optional later.',
+              ),
+              const SizedBox(height: 20),
+              AppOptionCard(
+                title: 'Common subjects',
+                badge: 'Recommended',
+                subtitle:
+                    '41 Nigerian subjects. Every arm gets the usual list for its '
+                    'level.',
+                value: SubjectsStart.standard,
+                groupValue: model.start,
+                onChanged: model.pickStart,
+                details: const AppOptionSummary(
+                  rows: [
+                    ('Nursery', '9 subjects'),
+                    ('Primary · JSS', '17 subjects, 3 optional'),
+                    ('SS', '24 subjects, 21 optional'),
+                  ],
+                  note: "Arms added later can copy another arm's subjects",
+                  noteIcon: AppIcons.copy,
+                ),
+              ),
+              const SizedBox(height: 12),
+              AppOptionCard(
+                title: 'Start from scratch',
+                subtitle:
+                    'Add your own subjects, then choose what each class takes.',
+                value: SubjectsStart.scratch,
+                groupValue: model.start,
+                onChanged: model.pickStart,
+              ),
+              const SizedBox(height: 24),
+            ],
           ),
-          const SizedBox(height: 20),
-          AppOptionCard(
-            title: 'Common subjects',
-            badge: 'Recommended',
-            subtitle:
-                '41 Nigerian subjects. Every arm gets the usual list for its '
-                'level.',
-            value: SubjectsStart.standard,
-            groupValue: model.start,
-            onChanged: model.pickStart,
-            details: const AppOptionSummary(
-              rows: [
-                ('Nursery', '9 subjects'),
-                ('Primary · JSS', '17 subjects, 3 optional'),
-                ('SS', '24 subjects, 21 optional'),
-              ],
-              note: "Arms added later can copy another arm's subjects",
-              noteIcon: AppIcons.copy,
-            ),
-          ),
-          const SizedBox(height: 12),
-          AppOptionCard(
-            title: 'Start from scratch',
-            subtitle:
-                'Add your own subjects, then choose what each class takes.',
-            value: SubjectsStart.scratch,
-            groupValue: model.start,
-            onChanged: model.pickStart,
-          ),
-          const SizedBox(height: 24),
-        ],
-      ),
     ),
   );
 }
@@ -379,13 +386,14 @@ class _Loading extends StatelessWidget {
   Widget build(BuildContext context) => SingleChildScrollView(
     physics: const NeverScrollableScrollPhysics(),
     child: Builder(
-      builder: (context) => ScaffoldColumn(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
-          const ClassesSkeleton(),
-        ],
-      ),
+      builder:
+          (context) => ScaffoldColumn(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
+              const ClassesSkeleton(),
+            ],
+          ),
     ),
   );
 }

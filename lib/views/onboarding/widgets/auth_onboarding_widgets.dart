@@ -6,6 +6,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_field_style.dart';
 import 'package:hamrash_admin/core/widgets/app_keyboard_bar.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
@@ -518,7 +519,7 @@ class SchoolConfirmationCard extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.ml),
           child: SchoolIdentity(name: name, location: location),
         ),
-        const Divider(height: 1, thickness: 1, color: AppPalette.stone200),
+        const AppDivider(indent: 0, endIndent: 0),
         Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.ml,
@@ -529,11 +530,7 @@ class SchoolConfirmationCard extends StatelessWidget {
               if (role != null)
                 _ConfirmationRow(label: roleLabel, value: role!),
               if (role != null && (additionalRole != null || codeRole != null))
-                const Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: AppPalette.stone100,
-                ),
+                const AppDivider(indent: 0, endIndent: 0),
               if (additionalRole != null)
                 _ConfirmationRow(
                   label: additionalRoleLabel,

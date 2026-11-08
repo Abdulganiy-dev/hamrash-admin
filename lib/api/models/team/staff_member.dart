@@ -177,9 +177,10 @@ class StaffMember {
       status: StaffRecordStatus.fromJson(json['status'] as String),
       createdAt: DateTime.parse(json['created_at'] as String),
       memberId: json['member_id'] as String?,
-      login: member is Map
-          ? StaffLogin.fromJson(Map<String, dynamic>.from(member))
-          : null,
+      login:
+          member is Map
+              ? StaffLogin.fromJson(Map<String, dynamic>.from(member))
+              : null,
       privateDetails: switch (private) {
         final Map value => StaffPrivateDetails.fromJson(
           Map<String, dynamic>.from(value),

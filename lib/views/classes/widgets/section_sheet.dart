@@ -47,9 +47,10 @@ class _SectionSheetState extends State<SectionSheet> {
 
   String get _sectionName => _name.text.trim();
 
-  String? get _nameProblem => _sectionName.isEmpty
-      ? null
-      : widget.model.sectionNameProblem(_sectionName, except: _saved);
+  String? get _nameProblem =>
+      _sectionName.isEmpty
+          ? null
+          : widget.model.sectionNameProblem(_sectionName, except: _saved);
 
   Future<void> _save() async {
     setState(() {
@@ -57,9 +58,10 @@ class _SectionSheetState extends State<SectionSheet> {
       _error = null;
     });
     final saved = _saved;
-    final message = saved == null
-        ? await widget.model.addSection(_sectionName)
-        : await widget.model.renameSection(saved, _sectionName);
+    final message =
+        saved == null
+            ? await widget.model.addSection(_sectionName)
+            : await widget.model.renameSection(saved, _sectionName);
     if (!mounted) return;
     if (message == null) {
       Navigator.of(context).pop(true);
@@ -85,17 +87,17 @@ class _SectionSheetState extends State<SectionSheet> {
         _sectionName.isNotEmpty &&
         _nameProblem == null &&
         _sectionName != saved?.name;
-    final removeBlocked = saved == null
-        ? null
-        : widget.model.removeSectionBlockedReason(saved);
+    final removeBlocked =
+        saved == null ? null : widget.model.removeSectionBlockedReason(saved);
 
     return AppSheet(
       title: saved?.name ?? 'Add a section',
-      subtitle: saved == null
-          ? 'A part of the school with its own classes, e.g. Primary'
-          : classes == 1
-          ? '1 class'
-          : '$classes classes',
+      subtitle:
+          saved == null
+              ? 'A part of the school with its own classes, e.g. Primary'
+              : classes == 1
+              ? '1 class'
+              : '$classes classes',
       bodyPadding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       body: AppTextField(
         label: 'Name',
@@ -124,12 +126,14 @@ class _SectionSheetState extends State<SectionSheet> {
             const SizedBox(height: AppSpacing.md),
             AppSheetLinkAction(
               icon: saved.isActive ? AppIcons.eyeOff : AppIcons.eye,
-              label: saved.isActive
-                  ? 'Switch off this section'
-                  : 'Switch on this section',
-              onPressed: _saving || widget.onToggleActive == null
-                  ? null
-                  : () => _closeThen(widget.onToggleActive!),
+              label:
+                  saved.isActive
+                      ? 'Switch off this section'
+                      : 'Switch on this section',
+              onPressed:
+                  _saving || widget.onToggleActive == null
+                      ? null
+                      : () => _closeThen(widget.onToggleActive!),
             ),
             const SizedBox(height: AppSpacing.ms),
             AppSheetLinkAction(
@@ -139,8 +143,8 @@ class _SectionSheetState extends State<SectionSheet> {
               helper: removeBlocked,
               onPressed:
                   _saving || removeBlocked != null || widget.onRemove == null
-                  ? null
-                  : () => _closeThen(widget.onRemove!),
+                      ? null
+                      : () => _closeThen(widget.onRemove!),
             ),
           ],
         ],

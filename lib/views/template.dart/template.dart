@@ -23,19 +23,21 @@ class _TemplateState extends State<Template> {
         this.viewModel = viewModel;
         viewModel.init(context);
       },
-      builder: (context, model, _) => DefaultScaffold(
-        title: viewModel.title,
-        busy: viewModel.busy,
-        appBarType: DefaultScaffoldAppBarType.none,
-        body: Builder(
-          builder: (context) => ScaffoldColumn(
-            children: [
-              SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
-              // content
-            ],
+      builder:
+          (context, model, _) => DefaultScaffold(
+            title: viewModel.title,
+            busy: viewModel.busy,
+            appBarType: DefaultScaffoldAppBarType.none,
+            body: Builder(
+              builder:
+                  (context) => ScaffoldColumn(
+                    children: [
+                      SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
+                      // content
+                    ],
+                  ),
+            ),
           ),
-        ),
-      ),
     );
   }
 }

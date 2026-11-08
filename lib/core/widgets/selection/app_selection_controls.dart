@@ -60,23 +60,24 @@ class AppCheckbox extends StatelessWidget {
       ),
       child: AnimatedSwitcher(
         duration: _duration,
-        transitionBuilder: (child, animation) =>
-            ScaleTransition(scale: animation, child: child),
-        child: !on
-            ? const SizedBox.shrink(key: ValueKey('off'))
-            : AppIcon(
-                value == null ? AppIcons.minus : AppIcons.check,
-                key: ValueKey(value),
-                size: 18,
-                color: enabled ? AppPalette.white : AppPalette.stone400,
-              ),
+        transitionBuilder:
+            (child, animation) =>
+                ScaleTransition(scale: animation, child: child),
+        child:
+            !on
+                ? const SizedBox.shrink(key: ValueKey('off'))
+                : AppIcon(
+                  value == null ? AppIcons.minus : AppIcons.check,
+                  key: ValueKey(value),
+                  size: 18,
+                  color: enabled ? AppPalette.white : AppPalette.stone400,
+                ),
       ),
     );
 
     return _TapTarget(
-      onTap: enabled && onChanged != null
-          ? () => onChanged!(value != true)
-          : null,
+      onTap:
+          enabled && onChanged != null ? () => onChanged!(value != true) : null,
       child: box,
     );
   }
@@ -140,13 +141,17 @@ class AppRadio<T> extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: !enabled
-            ? AppPalette.stone100
-            : (on ? LightColors.primaryPrimaryDefault : AppPalette.white),
+        color:
+            !enabled
+                ? AppPalette.stone100
+                : (on ? LightColors.primaryPrimaryDefault : AppPalette.white),
         border: Border.all(
-          color: !enabled
-              ? AppPalette.stone200
-              : (on ? LightColors.primaryPrimaryDefault : AppPalette.stone300),
+          color:
+              !enabled
+                  ? AppPalette.stone200
+                  : (on
+                      ? LightColors.primaryPrimaryDefault
+                      : AppPalette.stone300),
           width: 1.5,
         ),
       ),

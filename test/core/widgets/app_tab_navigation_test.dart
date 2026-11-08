@@ -50,10 +50,7 @@ void main() {
               },
             ),
             AppTab(
-              item: const AppTabItem(
-                icon: AppIcons.layoutGrid,
-                label: 'More',
-              ),
+              item: const AppTabItem(icon: AppIcons.layoutGrid, label: 'More'),
               builder: (_) => const Scaffold(body: Text('More page')),
             ),
           ],

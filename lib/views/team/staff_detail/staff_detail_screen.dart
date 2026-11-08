@@ -48,13 +48,14 @@ class StaffDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       ViewModelBuilder<StaffDetailViewModel>.reactive(
-        viewModelBuilder: () =>
-            StaffDetailViewModel(school: school, staffId: staffId),
+        viewModelBuilder:
+            () => StaffDetailViewModel(school: school, staffId: staffId),
         onViewModelReady: (model) => model.load(),
         builder: (context, model, _) {
-          final content = model.error == null && !model.loading
-              ? _Content(model: model)
-              : null;
+          final content =
+              model.error == null && !model.loading
+                  ? _Content(model: model)
+                  : null;
           return DefaultScaffold(
             title: 'Staff',
             showBackButton: true,
@@ -65,15 +66,17 @@ class StaffDetailScreen extends StatelessWidget {
                 (model.error != null
                     ? LoadErrorView(onRetry: model.load)
                     : const _Loading()),
-            bottomNavigationBar: content != null && model.showDanger
-                ? _DangerBar(
-                    label: model.dangerLabel,
-                    caption: model.dangerCaption,
-                    onPressed: model.isPending
-                        ? () => content._cancelInvite(context)
-                        : () => content._remove(context),
-                  )
-                : null,
+            bottomNavigationBar:
+                content != null && model.showDanger
+                    ? _DangerBar(
+                      label: model.dangerLabel,
+                      caption: model.dangerCaption,
+                      onPressed:
+                          model.isPending
+                              ? () => content._cancelInvite(context)
+                              : () => content._remove(context),
+                    )
+                    : null,
             // The footer draws its own top hairline.
             bottomBarFade: false,
           );
@@ -226,9 +229,8 @@ class _Content extends StatelessWidget {
           title: 'Change role',
           lockAdmin: !model.school.canInviteAdmins,
           viewerName: _member.fullName,
-          viewerRole: model.school.roles.isEmpty
-              ? null
-              : model.school.roles.first,
+          viewerRole:
+              model.school.roles.isEmpty ? null : model.school.roles.first,
         ),
       );
 
@@ -243,9 +245,8 @@ class _Content extends StatelessWidget {
         noteFor: model.inviteNoteFor,
         onCreate: model.invite,
         viewerName: _member.fullName,
-        viewerRole: model.school.roles.isEmpty
-            ? null
-            : model.school.roles.first,
+        viewerRole:
+            model.school.roles.isEmpty ? null : model.school.roles.first,
       ),
     );
     if (code == null || !context.mounted) return;
@@ -310,12 +311,10 @@ class _Content extends StatelessWidget {
         canChangeRole: model.canChangeRoleInSheet,
         lockAdmin: !model.school.canInviteAdmins,
         viewerName: _member.fullName,
-        viewerRole: model.school.roles.isEmpty
-            ? null
-            : model.school.roles.first,
-        onChangeRole: model.isPending
-            ? model.changeInviteRole
-            : model.changeRole,
+        viewerRole:
+            model.school.roles.isEmpty ? null : model.school.roles.first,
+        onChangeRole:
+            model.isPending ? model.changeInviteRole : model.changeRole,
         onSave: model.saveDetails,
       ),
     );
@@ -338,13 +337,15 @@ class _Content extends StatelessWidget {
       context,
       icon: suspend ? AppIcons.circlePause : AppIcons.lockOpen,
       tone: suspend ? AppBadgeTone.warning : AppBadgeTone.success,
-      title: suspend
-          ? "Suspend $firstName's access?"
-          : "Restore $firstName's access?",
-      message: suspend
-          ? "They stay on the staff list but can't sign in until you restore "
-                'them.'
-          : 'They can sign in again to the app they already use.',
+      title:
+          suspend
+              ? "Suspend $firstName's access?"
+              : "Restore $firstName's access?",
+      message:
+          suspend
+              ? "They stay on the staff list but can't sign in until you restore "
+                  'them.'
+              : 'They can sign in again to the app they already use.',
       confirmLabel: suspend ? 'Suspend access' : 'Restore access',
       onConfirm: () => model.setSuspended(suspend),
     );
@@ -374,10 +375,11 @@ class _Content extends StatelessWidget {
       icon: AppIcons.trash2,
       isDestructive: true,
       title: 'Remove $name from the staff list?',
-      message: model.isOnApp
-          ? 'Their record is removed, and so is their login. They can no '
-                'longer sign in.'
-          : 'Their record is removed. Nothing else changes.',
+      message:
+          model.isOnApp
+              ? 'Their record is removed, and so is their login. They can no '
+                  'longer sign in.'
+              : 'Their record is removed. Nothing else changes.',
       confirmLabel: 'Remove from staff',
       onConfirm: model.remove,
     );
@@ -451,15 +453,16 @@ class _Loading extends StatelessWidget {
   Widget build(BuildContext context) => SingleChildScrollView(
     physics: const NeverScrollableScrollPhysics(),
     child: Builder(
-      builder: (context) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.screen,
-          ScaffoldInsets.bodyTopInsetOf(context),
-          AppSpacing.screen,
-          0,
-        ),
-        child: const StaffDetailSkeleton(),
-      ),
+      builder:
+          (context) => Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.screen,
+              ScaffoldInsets.bodyTopInsetOf(context),
+              AppSpacing.screen,
+              0,
+            ),
+            child: const StaffDetailSkeleton(),
+          ),
     ),
   );
 }

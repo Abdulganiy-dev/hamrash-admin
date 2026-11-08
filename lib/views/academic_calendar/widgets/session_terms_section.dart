@@ -28,22 +28,23 @@ class SessionTermsSection extends StatelessWidget {
     children: [
       AppSectionHeader(
         title: 'Terms',
-        trailing: onAddTerm == null
-            ? null
-            : AppButton(
-                type: AppButtonType.text,
-                text: 'Add a term',
-                isDisabled: model.draft.terms.length >= 6,
-                onPressed: onAddTerm,
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AppIcon(AppIcons.plus, size: 16),
-                    SizedBox(width: 4),
-                    AppText('Add a term', variant: AppTextVariant.subtitle),
-                  ],
+        trailing:
+            onAddTerm == null
+                ? null
+                : AppButton(
+                  type: AppButtonType.text,
+                  text: 'Add a term',
+                  isDisabled: model.draft.terms.length >= 6,
+                  onPressed: onAddTerm,
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppIcon(AppIcons.plus, size: 16),
+                      SizedBox(width: 4),
+                      AppText('Add a term', variant: AppTextVariant.subtitle),
+                    ],
+                  ),
                 ),
-              ),
       ),
       if (onAddTerm == null) const SizedBox(height: 12),
       AppCard(

@@ -67,11 +67,7 @@ class AppIconLabel extends StatelessWidget {
     if (hugContent) {
       return Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          _slot(),
-          SizedBox(width: gap),
-          _text(),
-        ],
+        children: [_slot(), SizedBox(width: gap), _text()],
       );
     }
 
@@ -80,11 +76,7 @@ class AppIconLabel extends StatelessWidget {
         final labelWidth = math.max(0.0, constraints.maxWidth - iconSize - gap);
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _slot(),
-            SizedBox(width: gap),
-            _text(labelWidth),
-          ],
+          children: [_slot(), SizedBox(width: gap), _text(labelWidth)],
         );
       },
     );

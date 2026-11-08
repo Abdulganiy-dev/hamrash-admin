@@ -19,8 +19,8 @@ enum OrganizationStatus {
   static OrganizationStatus fromJson(String value) =>
       OrganizationStatus.values.firstWhere(
         (status) => status.value == value,
-        orElse: () =>
-            throw FormatException('Unknown organization status: $value'),
+        orElse:
+            () => throw FormatException('Unknown organization status: $value'),
       );
 }
 

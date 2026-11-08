@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_details_card.dart';
 
 void main() {
   Widget host(Widget card) => MaterialApp(
-    home: Scaffold(
-      body: Center(child: SizedBox(width: 358, child: card)),
-    ),
+    home: Scaffold(body: Center(child: SizedBox(width: 358, child: card))),
   );
 
   testWidgets('the card is two bands of two cells', (tester) async {
@@ -44,6 +43,20 @@ void main() {
     expect(tester.getCenter(divider2).dx, closeTo(cardCenter, 0.5));
 
     expect(find.byKey(const ValueKey('details-hairline-1')), findsOneWidget);
+
+    // Faint stone-100 rules; the vertical one spans the whole band.
+    for (final divider in [divider1, divider2]) {
+      expect(tester.getSize(divider).height, 56);
+      final fill = tester.widget<ColoredBox>(
+        find.descendant(of: divider, matching: find.byType(ColoredBox)),
+      );
+      expect(fill.color, AppPalette.stone100);
+    }
+    final hairline = find.byKey(const ValueKey('details-hairline-1'));
+    final hairlineFill = tester.widget<ColoredBox>(
+      find.descendant(of: hairline, matching: find.byType(ColoredBox)),
+    );
+    expect(hairlineFill.color, AppPalette.stone100);
   });
 
   testWidgets('fallbacks read "Not set" and "Not added"', (tester) async {

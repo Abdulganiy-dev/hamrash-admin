@@ -225,9 +225,9 @@ class SessionDetailsViewModel extends SessionDraftModel {
   /// date checks); anything else gets [fallback].
   static String _messageFor(Object error, String fallback) =>
       error is PostgrestException &&
-          (error.code == 'P0001' || error.code == '23514')
-      ? error.message
-      : fallback;
+              (error.code == 'P0001' || error.code == '23514')
+          ? error.message
+          : fallback;
 
   static Future<T?> _optional<T>(Future<T?> request) async {
     try {

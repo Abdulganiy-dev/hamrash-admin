@@ -43,9 +43,10 @@ class OrganizationMemberService {
 
   Future<ClaimCodeCheck> checkClaimCode(String code) async {
     try {
-      final row = await _supabase
-          .rpc('check_claim_code', params: {'p_code': code})
-          .single();
+      final row =
+          await _supabase
+              .rpc('check_claim_code', params: {'p_code': code})
+              .single();
 
       final result = ClaimCodeCheck.fromJson(Map<String, dynamic>.from(row));
       final logResult = {

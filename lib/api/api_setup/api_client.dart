@@ -56,8 +56,8 @@ class APIClient implements BaseAPIClient {
     }
 
     // Set device type header
-    config.headers["X-App-Device-Type"] = Platform.operatingSystem
-        .toLowerCase();
+    config.headers["X-App-Device-Type"] =
+        Platform.operatingSystem.toLowerCase();
 
     final (version, buildNumber) = await _getAppVersion();
     config.headers["X-App-Ver"] = "$version:$buildNumber";

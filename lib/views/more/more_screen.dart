@@ -51,45 +51,47 @@ class MoreScreen extends StatelessWidget {
       ViewModelBuilder<MoreViewModel>.reactive(
         viewModelBuilder: () => MoreViewModel(school: school),
         onViewModelReady: (model) => model.load(),
-        builder: (context, model, _) => DefaultScaffold(
-          backgroundColor: AppPalette.linen,
-          title: 'More',
-          subtitle: '${school.name} · ${school.rolesLabel}',
-          actions: [
-            AppNavPicture(
-              picture: AppListLeading.network(
-                userImageUrl ?? '',
-                name: userName,
-              ),
-              onPressed: onAvatarTap,
-            ),
-          ],
-          body: AppRefreshScrollView.children(
-            onRefresh: model.refresh,
-            children: [
-              MoreSchoolCard(
-                school: school,
-                onTap: () => _open(context, model, SchoolArea.schoolDetails),
-                onSwitch: onSwitchSchool,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AppSectionHeader(title: model.areasTitle),
-              const SizedBox(height: AppSpacing.ms),
-              if (model.error != null)
-                LoadErrorView(onRetry: model.load)
-              else if (model.loading)
-                const SchoolAreaGridSkeleton()
-              else
-                SchoolAreaGrid(
-                  model: model,
-                  onOpen: (area) => _open(context, model, area),
+        builder:
+            (context, model, _) => DefaultScaffold(
+              backgroundColor: AppPalette.linen,
+              title: 'More',
+              subtitle: '${school.name} · ${school.rolesLabel}',
+              actions: [
+                AppNavPicture(
+                  picture: AppListLeading.network(
+                    userImageUrl ?? '',
+                    name: userName,
+                  ),
+                  onPressed: onAvatarTap,
                 ),
-              const SizedBox(height: AppSpacing.lg),
-              MoreAccountCard(onSignOut: onSignOut),
-              SizedBox(height: AppSpacing.xl),
-            ],
-          ),
-        ),
+              ],
+              body: AppRefreshScrollView.children(
+                onRefresh: model.refresh,
+                children: [
+                  MoreSchoolCard(
+                    school: school,
+                    onTap:
+                        () => _open(context, model, SchoolArea.schoolDetails),
+                    onSwitch: onSwitchSchool,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  AppSectionHeader(title: model.areasTitle),
+                  const SizedBox(height: AppSpacing.ms),
+                  if (model.error != null)
+                    LoadErrorView(onRetry: model.load)
+                  else if (model.loading)
+                    const SchoolAreaGridSkeleton()
+                  else
+                    SchoolAreaGrid(
+                      model: model,
+                      onOpen: (area) => _open(context, model, area),
+                    ),
+                  const SizedBox(height: AppSpacing.lg),
+                  MoreAccountCard(onSignOut: onSignOut),
+                  SizedBox(height: AppSpacing.xl),
+                ],
+              ),
+            ),
       );
 
   Future<void> _open(

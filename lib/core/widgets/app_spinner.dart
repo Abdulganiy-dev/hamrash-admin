@@ -81,14 +81,15 @@ class _AppSpinnerState extends State<AppSpinner>
         child: RepaintBoundary(
           child: AnimatedBuilder(
             animation: _turns,
-            builder: (context, _) => CustomPaint(
-              painter: _SpinnerPainter(
-                color: widget.color,
-                stroke: stroke,
-                value: widget.value,
-                turn: _turns.value,
-              ),
-            ),
+            builder:
+                (context, _) => CustomPaint(
+                  painter: _SpinnerPainter(
+                    color: widget.color,
+                    stroke: stroke,
+                    value: widget.value,
+                    turn: _turns.value,
+                  ),
+                ),
           ),
         ),
       ),
@@ -115,15 +116,17 @@ class _SpinnerPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = (Offset.zero & size).deflate(stroke / 2);
-    final track = Paint()
-      ..color = color.withValues(alpha: color.a * 0.25)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke;
-    final arc = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..strokeCap = StrokeCap.round;
+    final track =
+        Paint()
+          ..color = color.withValues(alpha: color.a * 0.25)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke;
+    final arc =
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke
+          ..strokeCap = StrokeCap.round;
 
     canvas.drawOval(rect, track);
     final v = value;

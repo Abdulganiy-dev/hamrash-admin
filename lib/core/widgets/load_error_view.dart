@@ -72,19 +72,20 @@ class LoadErrorView extends StatelessWidget {
               ? 'You seem to be offline. Check your connection and try again.'
               : 'Something went wrong on our side. Please try again.'),
       topPadding: topPadding,
-      action: onRetry == null
-          ? null
-          : AppSecondaryButton(
-              onPressed: onRetry,
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AppIcon(AppIcons.refreshCw, size: 18),
-                  SizedBox(width: 8),
-                  AppText('Try again'),
-                ],
+      action:
+          onRetry == null
+              ? null
+              : AppSecondaryButton(
+                onPressed: onRetry,
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppIcon(AppIcons.refreshCw, size: 18),
+                    SizedBox(width: 8),
+                    AppText('Try again'),
+                  ],
+                ),
               ),
-            ),
     );
   }
 }

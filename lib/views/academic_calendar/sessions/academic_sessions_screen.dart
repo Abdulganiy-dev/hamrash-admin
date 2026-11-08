@@ -37,12 +37,13 @@ class _AcademicSessionsScreenState extends State<AcademicSessionsScreen> {
   bool _changed = false;
 
   @override
-  Widget build(BuildContext context) =>
-      ViewModelBuilder<AcademicSessionsViewModel>.reactive(
-        viewModelBuilder: () =>
-            AcademicSessionsViewModel(school: widget.school),
-        onViewModelReady: (model) => model.load(),
-        builder: (context, model, _) => DefaultScaffold(
+  Widget build(
+    BuildContext context,
+  ) => ViewModelBuilder<AcademicSessionsViewModel>.reactive(
+    viewModelBuilder: () => AcademicSessionsViewModel(school: widget.school),
+    onViewModelReady: (model) => model.load(),
+    builder:
+        (context, model, _) => DefaultScaffold(
           title: 'Academic sessions',
           showBackButton: true,
           onBackPressed: () => NavigationService.popScreen(_changed),
@@ -55,23 +56,25 @@ class _AcademicSessionsScreenState extends State<AcademicSessionsScreen> {
                 onPressed: () => _create(model),
               ),
           ],
-          body: model.error != null
-              ? LoadErrorView(onRetry: model.load)
-              : model.loading
-              ? const _Loading(child: SessionsListSkeleton())
-              : model.isEmpty
-              ? AppEmptyState(
-                  icon: AppIcons.calendar,
-                  title: 'No academic sessions yet',
-                  subtitle: model.canCreate
-                      ? 'Create the first session to set its dates and terms.'
-                      : 'The school leaders will add the first session.',
-                  actionLabel: model.canCreate ? 'Create session' : null,
-                  onAction: model.canCreate ? () => _create(model) : null,
-                )
-              : _List(model: model, onOpen: (s) => _open(model, s)),
+          body:
+              model.error != null
+                  ? LoadErrorView(onRetry: model.load)
+                  : model.loading
+                  ? const _Loading(child: SessionsListSkeleton())
+                  : model.isEmpty
+                  ? AppEmptyState(
+                    icon: AppIcons.calendar,
+                    title: 'No academic sessions yet',
+                    subtitle:
+                        model.canCreate
+                            ? 'Create the first session to set its dates and terms.'
+                            : 'The school leaders will add the first session.',
+                    actionLabel: model.canCreate ? 'Create session' : null,
+                    onAction: model.canCreate ? () => _create(model) : null,
+                  )
+                  : _List(model: model, onOpen: (s) => _open(model, s)),
         ),
-      );
+  );
 
   Future<void> _create(AcademicSessionsViewModel model) async {
     final created = await NavigationService.animatedNavigation<bool>(
@@ -166,13 +169,14 @@ class _Loading extends StatelessWidget {
   Widget build(BuildContext context) => SingleChildScrollView(
     physics: const NeverScrollableScrollPhysics(),
     child: Builder(
-      builder: (context) => ScaffoldColumn(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
-          child,
-        ],
-      ),
+      builder:
+          (context) => ScaffoldColumn(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
+              child,
+            ],
+          ),
     ),
   );
 }

@@ -110,17 +110,18 @@ class _AppSearchFieldState extends State<AppSearchField> {
           ),
         ),
         prefixIconConstraints: const BoxConstraints(),
-        suffixIcon: _controller.text.isEmpty
-            ? null
-            : Padding(
-                padding: const EdgeInsets.only(left: 12, right: 10),
-                child: AppIconButton(
-                  leadingIcon: AppIcons.x,
-                  leadingIconSize: 18,
-                  foregroundColor: iconColor,
-                  onPressed: _clear,
+        suffixIcon:
+            _controller.text.isEmpty
+                ? null
+                : Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 10),
+                  child: AppIconButton(
+                    leadingIcon: AppIcons.x,
+                    leadingIconSize: 18,
+                    foregroundColor: iconColor,
+                    onPressed: _clear,
+                  ),
                 ),
-              ),
         suffixIconConstraints: const BoxConstraints(),
         contentPadding: AppFieldStyle.contentPadding,
         filled: true,

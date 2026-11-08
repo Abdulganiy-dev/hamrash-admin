@@ -51,9 +51,10 @@ class PaginatedListController<I> extends ChangeNotifier {
   bool _disposed = false;
   Timer? _debounce;
 
-  List<I> get visibleItems => query.trim().isEmpty
-      ? items
-      : items.where((item) => matchesSearch(item, query.trim())).toList();
+  List<I> get visibleItems =>
+      query.trim().isEmpty
+          ? items
+          : items.where((item) => matchesSearch(item, query.trim())).toList();
 
   void search(String value, {bool immediately = false}) {
     _debounce?.cancel();

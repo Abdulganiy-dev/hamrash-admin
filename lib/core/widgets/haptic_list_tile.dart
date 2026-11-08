@@ -49,12 +49,13 @@ class HapticListTile extends StatelessWidget {
       enabled: enabled,
       selected: selected,
       onLongPress: onLongPress,
-      onTap: onTap == null
-          ? null
-          : () {
-              HapticHelpers.vibrate(vibrationType);
-              onTap!();
-            },
+      onTap:
+          onTap == null
+              ? null
+              : () {
+                HapticHelpers.vibrate(vibrationType);
+                onTap!();
+              },
     );
   }
 }

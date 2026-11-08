@@ -36,8 +36,11 @@ class MyApp extends StatelessWidget {
       config: ClerkAuthConfig(publishableKey: env.clerkPublishableKey),
 
       child: ClerkErrorListener(
-        handler: (context, error) =>
-            ErrorLoggerService.logError(error, context: 'ClerkErrorListener'),
+        handler:
+            (context, error) => ErrorLoggerService.logError(
+              error,
+              context: 'ClerkErrorListener',
+            ),
         child: MaterialApp(
           navigatorKey: ViewUtil.navigatorKey,
           debugShowCheckedModeBanner: env.enableVerboseLogs,
@@ -93,30 +96,31 @@ class _OnboardingAuthGate extends StatelessWidget {
               email: email,
               onPick: model.selectSchool,
               onSignOut: signOut,
-              onJoinAnother: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (route) => JoinScreen(
-                    email: email,
-                    initialName: user.name,
-                    memberships: model.memberships,
-                    canLeave: true,
-                    onUseAnotherAccount: signOut,
-                    onSignOut: signOut,
-                    onBack: () => Navigator.of(route).pop(),
-                    onJoin: () {
-                      Navigator.of(route).pop();
-                      model.check();
-                    },
+              onJoinAnother:
+                  () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder:
+                          (route) => JoinScreen(
+                            email: email,
+                            initialName: user.name,
+                            memberships: model.memberships,
+                            canLeave: true,
+                            onUseAnotherAccount: signOut,
+                            onSignOut: signOut,
+                            onBack: () => Navigator.of(route).pop(),
+                            onJoin: () {
+                              Navigator.of(route).pop();
+                              model.check();
+                            },
+                          ),
+                    ),
                   ),
-                ),
-              ),
             );
           }
 
           if (school != null) {
-            final switchSchool = model.canSwitchSchool
-                ? model.switchSchool
-                : null;
+            final switchSchool =
+                model.canSwitchSchool ? model.switchSchool : null;
 
             if (school.isPaused) {
               return SchoolPausedScreen(
@@ -144,20 +148,22 @@ class _OnboardingAuthGate extends StatelessWidget {
               userImageUrl: user.imageUrl,
               onSwitchSchool: switchSchool,
               onSignOut: signOut,
-              onOpenSchoolDetails: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (route) => ConfirmSchoolScreen(
-                    organization: school.organization,
-                    firstName: user.firstName,
-                    memberIds: school.memberIds,
-                    onBack: () => Navigator.of(route).pop(),
-                    onConfirmed: (organization) {
-                      Navigator.of(route).pop();
-                      model.updateSchool(organization);
-                    },
+              onOpenSchoolDetails:
+                  () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder:
+                          (route) => ConfirmSchoolScreen(
+                            organization: school.organization,
+                            firstName: user.firstName,
+                            memberIds: school.memberIds,
+                            onBack: () => Navigator.of(route).pop(),
+                            onConfirmed: (organization) {
+                              Navigator.of(route).pop();
+                              model.updateSchool(organization);
+                            },
+                          ),
+                    ),
                   ),
-                ),
-              ),
             );
           }
 

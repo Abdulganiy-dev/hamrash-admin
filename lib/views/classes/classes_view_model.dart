@@ -79,9 +79,10 @@ class ClassesViewModel extends BaseViewModel {
   }
 
   /// "Primary · after Primary 6" for a class about to be added.
-  String placeOfNew(SchoolSection section) => section.classes.isEmpty
-      ? '${section.name} · its first class'
-      : '${section.name} · after ${section.classes.last.name}';
+  String placeOfNew(SchoolSection section) =>
+      section.classes.isEmpty
+          ? '${section.name} · its first class'
+          : '${section.name} · after ${section.classes.last.name}';
 
   /// Why [name] can't be used for a class, or null when it can.
   String? classNameProblem(String name, {SchoolClass? except}) {
@@ -111,9 +112,10 @@ class ClassesViewModel extends BaseViewModel {
     final arm = schoolClass.busyArm;
     if (arm == null) return null;
     final label = schoolClass.armLabel(arm.name);
-    final why = arm.students > 0
-        ? 'Students are placed in $label'
-        : '$label has a class teacher';
+    final why =
+        arm.students > 0
+            ? 'Students are placed in $label'
+            : '$label has a class teacher';
     return "$why, so ${schoolClass.name} can't be removed. Switch it off "
         'instead.';
   }
@@ -121,8 +123,8 @@ class ClassesViewModel extends BaseViewModel {
   /// Why [section] can't be removed, or null when it can.
   String? removeSectionBlockedReason(SchoolSection section) =>
       section.classes.isEmpty
-      ? null
-      : 'Remove its classes first, or switch the section off.';
+          ? null
+          : 'Remove its classes first, or switch the section off.';
 
   Future<void> load() async {
     _error = null;

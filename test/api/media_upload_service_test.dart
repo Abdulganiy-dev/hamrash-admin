@@ -9,7 +9,8 @@ import 'package:hamrash_admin/api/services/cloudflare_services/media_kind.dart';
 import 'package:hamrash_admin/api/services/cloudflare_services/media_upload_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Headers, MultipartFile;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    hide Headers, MultipartFile;
 
 /// Stands in for Cloudflare's one-time upload URL.
 class _FakeUploadServer implements HttpClientAdapter {
@@ -34,13 +35,18 @@ class _FakeUploadServer implements HttpClientAdapter {
       );
     }
     final chunks = <int>[];
-    await for (final chunk in requestStream ?? const Stream<Uint8List>.empty()) {
+    await for (final chunk
+        in requestStream ?? const Stream<Uint8List>.empty()) {
       chunks.addAll(chunk);
     }
     body = latin1.decode(chunks);
-    return ResponseBody.fromString('{"success":true}', status, headers: {
-      Headers.contentTypeHeader: ['application/json'],
-    });
+    return ResponseBody.fromString(
+      '{"success":true}',
+      status,
+      headers: {
+        Headers.contentTypeHeader: ['application/json'],
+      },
+    );
   }
 
   @override
@@ -111,20 +117,23 @@ void main() {
     expect(jsonDecode(functionCall.body)['type'], 'video');
   });
 
-  test('sends the file to the one-time URL and returns the id and URL', () async {
-    final upload = _FakeUploadServer();
-    final media = await uploadLogo(
-      service(function: (_) => ok(), upload: upload),
-    );
+  test(
+    'sends the file to the one-time URL and returns the id and URL',
+    () async {
+      final upload = _FakeUploadServer();
+      final media = await uploadLogo(
+        service(function: (_) => ok(), upload: upload),
+      );
 
-    expect(media.id, _reservation['id']);
-    expect(media.url, _reservation['url']);
-    expect(upload.request!.uri.toString(), 'https://upload.example/one-time');
-    expect(upload.request!.method, 'POST');
-    expect(upload.body, contains('name="file"'));
-    expect(upload.body, contains('filename="logo.png"'));
-    expect(upload.body, contains('PNGDATA'));
-  });
+      expect(media.id, _reservation['id']);
+      expect(media.url, _reservation['url']);
+      expect(upload.request!.uri.toString(), 'https://upload.example/one-time');
+      expect(upload.request!.method, 'POST');
+      expect(upload.body, contains('name="file"'));
+      expect(upload.body, contains('filename="logo.png"'));
+      expect(upload.body, contains('PNGDATA'));
+    },
+  );
 
   test('never sends the Clerk token to Cloudflare', () async {
     final upload = _FakeUploadServer();
@@ -159,14 +168,19 @@ void main() {
     });
 
     test('an answer that is not a reservation', () async {
-      for (final body in ['"nope"', '{"id":"x"}', '{"id":1,"uploadURL":2,"url":3}']) {
+      for (final body in [
+        '"nope"',
+        '{"id":"x"}',
+        '{"id":1,"uploadURL":2,"url":3}',
+      ]) {
         final e = await failure(
           service(
-            function: (_) => http.Response(
-              body,
-              200,
-              headers: {'content-type': 'application/json'},
-            ),
+            function:
+                (_) => http.Response(
+                  body,
+                  200,
+                  headers: {'content-type': 'application/json'},
+                ),
           ),
         );
         expect(e.type, CloudflareError.unableToParse, reason: body);
@@ -175,10 +189,7 @@ void main() {
 
     test('Cloudflare refuses the upload', () async {
       final e = await failure(
-        service(
-          function: (_) => ok(),
-          upload: _FakeUploadServer(status: 413),
-        ),
+        service(function: (_) => ok(), upload: _FakeUploadServer(status: 413)),
       );
       expect(e.type, CloudflareError.httpError);
       expect(e.statusCode, 413);
@@ -186,7 +197,10 @@ void main() {
 
     test('no connection to Cloudflare', () async {
       final e = await failure(
-        service(function: (_) => ok(), upload: _FakeUploadServer(offline: true)),
+        service(
+          function: (_) => ok(),
+          upload: _FakeUploadServer(offline: true),
+        ),
       );
       expect(e.type, CloudflareError.noHTTPResponse);
     });
@@ -232,10 +246,11 @@ void main() {
         // Same 404 status, but from the gateway: the image was not deleted.
         final missing = await failure(
           service(
-            function: (_) => json(404, {
-              'code': 'NOT_FOUND',
-              'message': 'Requested function was not found',
-            }),
+            function:
+                (_) => json(404, {
+                  'code': 'NOT_FOUND',
+                  'message': 'Requested function was not found',
+                }),
           ),
         );
         expect(missing.type, CloudflareError.httpError);

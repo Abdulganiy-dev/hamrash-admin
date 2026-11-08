@@ -79,16 +79,17 @@ class HomeShell extends StatelessWidget {
           activeIcon: AppIcons.house,
           label: 'Home',
         ),
-        builder: (context) => HomeScreen(
-          // A new school, or its details changed: load again.
-          key: ValueKey('${school.id}/${school.organization.updatedAt}'),
-          school: school,
-          userName: userName,
-          userImageUrl: userImageUrl,
-          onAvatarTap: (name, photoUrl) =>
-              _openAccount(context, name, photoUrl),
-          onOpenSchoolDetails: onOpenSchoolDetails,
-        ),
+        builder:
+            (context) => HomeScreen(
+              // A new school, or its details changed: load again.
+              key: ValueKey('${school.id}/${school.organization.updatedAt}'),
+              school: school,
+              userName: userName,
+              userImageUrl: userImageUrl,
+              onAvatarTap:
+                  (name, photoUrl) => _openAccount(context, name, photoUrl),
+              onOpenSchoolDetails: onOpenSchoolDetails,
+            ),
       ),
       for (final MapEntry(value: label) in _comingSoon.entries)
         AppTab(
@@ -100,16 +101,19 @@ class HomeShell extends StatelessWidget {
         ),
       AppTab(
         item: const AppTabItem(icon: AppIcons.layoutGrid, label: 'More'),
-        builder: (context) => MoreScreen(
-          key: ValueKey('more/${school.id}/${school.organization.updatedAt}'),
-          school: school,
-          userName: userName,
-          userImageUrl: userImageUrl,
-          onAvatarTap: () => _openAccount(context, userName, userImageUrl),
-          onSignOut: onSignOut,
-          onOpenSchoolDetails: onOpenSchoolDetails,
-          onSwitchSchool: onSwitchSchool,
-        ),
+        builder:
+            (context) => MoreScreen(
+              key: ValueKey(
+                'more/${school.id}/${school.organization.updatedAt}',
+              ),
+              school: school,
+              userName: userName,
+              userImageUrl: userImageUrl,
+              onAvatarTap: () => _openAccount(context, userName, userImageUrl),
+              onSignOut: onSignOut,
+              onOpenSchoolDetails: onOpenSchoolDetails,
+              onSwitchSchool: onSwitchSchool,
+            ),
       ),
     ],
   );

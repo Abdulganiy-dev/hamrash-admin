@@ -13,7 +13,11 @@ enum CloudflareError {
 /// Thrown by `MediaUploadService` (and so by `ImageService` and
 /// `VideoService`). [friendlyError] turns it into a sentence for the user.
 class CloudflareException implements Exception {
-  const CloudflareException({required this.type, this.message, this.statusCode});
+  const CloudflareException({
+    required this.type,
+    this.message,
+    this.statusCode,
+  });
 
   final CloudflareError type;
   final String? message;

@@ -26,9 +26,8 @@ class SubjectCodeChip extends StatelessWidget {
       style: AppTypography.label.copyWith(
         fontWeight: FontWeight.w700,
         letterSpacing: 0.5,
-        color: subject.isActive
-            ? LightColors.textBody
-            : LightColors.textDisabled,
+        color:
+            subject.isActive ? LightColors.textBody : LightColors.textDisabled,
       ),
     ),
   );

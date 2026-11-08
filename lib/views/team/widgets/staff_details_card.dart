@@ -4,6 +4,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/utils/phone_format.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 
 /// The staff record in four cells: staff number and type, then phone and
@@ -74,20 +75,16 @@ class StaffDetailsCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(child: left),
-        Container(
-          key: ValueKey('details-divider-$band'),
-          width: 1,
-          color: _border,
-        ),
+        AppDivider.vertical(key: ValueKey('details-divider-$band')),
         Expanded(child: right),
       ],
     ),
   );
 
-  Widget _hairline(int band) => Container(
+  Widget _hairline(int band) => AppDivider(
     key: ValueKey('details-hairline-$band'),
-    height: 1,
-    color: _border,
+    indent: 0,
+    endIndent: 0,
   );
 }
 

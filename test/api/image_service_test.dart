@@ -9,7 +9,8 @@ import 'package:hamrash_admin/api/services/cloudflare_services/media_upload_serv
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Headers, MultipartFile;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    hide Headers, MultipartFile;
 
 /// Records what is sent to the one-time upload URL.
 class _Recorder implements HttpClientAdapter {
@@ -22,13 +23,18 @@ class _Recorder implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     final chunks = <int>[];
-    await for (final chunk in requestStream ?? const Stream<Uint8List>.empty()) {
+    await for (final chunk
+        in requestStream ?? const Stream<Uint8List>.empty()) {
       chunks.addAll(chunk);
     }
     body = latin1.decode(chunks);
-    return ResponseBody.fromString('{}', 200, headers: {
-      Headers.contentTypeHeader: ['application/json'],
-    });
+    return ResponseBody.fromString(
+      '{}',
+      200,
+      headers: {
+        Headers.contentTypeHeader: ['application/json'],
+      },
+    );
   }
 
   @override
@@ -52,7 +58,11 @@ void main() {
         paths.add(request.url.path);
         reservations.add(jsonDecode(request.body) as Map<String, dynamic>);
         return http.Response(
-          jsonEncode({'id': 'id-1', 'uploadURL': 'https://u.example/1', 'url': 'https://cdn.example/1'}),
+          jsonEncode({
+            'id': 'id-1',
+            'uploadURL': 'https://u.example/1',
+            'url': 'https://cdn.example/1',
+          }),
           200,
           headers: {'content-type': 'application/json'},
         );
@@ -70,7 +80,11 @@ void main() {
   final bytes = Uint8List.fromList(utf8.encode('DATA'));
 
   test('images keep their extension', () async {
-    await ImageService().uploadImage(bytes, 'logo.jpg', kind: MediaKind.schoolLogo);
+    await ImageService().uploadImage(
+      bytes,
+      'logo.jpg',
+      kind: MediaKind.schoolLogo,
+    );
     expect(upload.body, contains('filename="logo.jpg"'));
     expect(reservations.single['type'], 'image');
   });

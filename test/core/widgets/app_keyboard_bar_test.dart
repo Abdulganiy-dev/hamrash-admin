@@ -29,10 +29,7 @@ void main() {
     var done = 0;
 
     await tester.pumpWidget(
-      _host(
-        nodes: [node],
-        bar: AppKeyboardBar(onDone: () => done++),
-      ),
+      _host(nodes: [node], bar: AppKeyboardBar(onDone: () => done++)),
     );
     node.requestFocus();
     await tester.pump();

@@ -18,9 +18,10 @@ class SchoolAreaGridSkeleton extends StatelessWidget {
             const Expanded(child: _Tile(titleFactor: 0.78)),
             const SizedBox(width: 10),
             Expanded(
-              child: i + 1 < tiles
-                  ? const _Tile(titleFactor: 0.62)
-                  : const SizedBox.shrink(),
+              child:
+                  i + 1 < tiles
+                      ? const _Tile(titleFactor: 0.62)
+                      : const SizedBox.shrink(),
             ),
           ],
         ),

@@ -141,9 +141,9 @@ class AppButton extends StatefulWidget {
        assert(
          type == AppButtonType.icon
              ? (icon != null ||
-                   leadingIcon != null ||
-                   customLabel != null ||
-                   child != null)
+                 leadingIcon != null ||
+                 customLabel != null ||
+                 child != null)
              : (text != null || customLabel != null || child != null),
          'Text, child, or customLabel is required for non-icon buttons; icon, leadingIcon, child, or customLabel for icon button',
        ),
@@ -556,9 +556,10 @@ class _AppButtonState extends State<AppButton> {
 
   /// Get default text style
   TextStyle getDefaultTextStyle(BuildContext context) {
-    final scaleStyle = widget.size == AppButtonSize.small
-        ? AppTypography.subtitle
-        : AppTypography.title;
+    final scaleStyle =
+        widget.size == AppButtonSize.small
+            ? AppTypography.subtitle
+            : AppTypography.title;
     final baseStyle = scaleStyle.copyWith(color: getForegroundColor(context));
 
     return widget.textStyle != null
@@ -624,24 +625,26 @@ class _AppButtonState extends State<AppButton> {
 
   @override
   Widget build(BuildContext context) {
-    final fgColor = getForegroundColor(context);
+    // The label and icon colour blend alongside the fill; without this the
+    // text would snap to its new colour while the background is still fading.
+    final target = getForegroundColor(context);
+    return TweenAnimationBuilder<Color?>(
+      tween: ColorTween(end: target),
+      duration: AppButtonSurface.duration,
+      curve: Curves.easeOut,
+      builder: (context, fg, _) => _buildButton(context, fg ?? target),
+    );
+  }
+
+  Widget _buildButton(BuildContext context, Color fgColor) {
     final borderColor = getBorderColor(context);
     final defaultPadding = getDefaultPadding();
-    final textStyle = getDefaultTextStyle(context);
+    final textStyle = getDefaultTextStyle(context).copyWith(color: fgColor);
 
     final resolvedHeight = widget.height ?? widget.size.height;
     final borderRadius = BorderRadius.circular(
       widget.radius ?? AppRadius.control,
     );
-    final shape = RoundedRectangleBorder(
-      borderRadius: borderRadius,
-      side: widget.type == AppButtonType.outline
-          ? BorderSide(color: borderColor, width: 1)
-          : widget.type == AppButtonType.secondary
-          ? BorderSide(color: borderColor, width: 1)
-          : BorderSide.none,
-    );
-
     Widget buttonContent;
 
     if (widget.child != null) {
@@ -689,15 +692,16 @@ class _AppButtonState extends State<AppButton> {
         ),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 160),
-          child: widget.isLoading
-              ? KeyedSubtree(
-                  key: const ValueKey('loading'),
-                  child: buildLoadingIndicator(context, fgColor, textStyle),
-                )
-              : KeyedSubtree(
-                  key: const ValueKey('label'),
-                  child: buttonContent,
-                ),
+          child:
+              widget.isLoading
+                  ? KeyedSubtree(
+                    key: const ValueKey('loading'),
+                    child: buildLoadingIndicator(context, fgColor, textStyle),
+                  )
+                  : KeyedSubtree(
+                    key: const ValueKey('label'),
+                    child: buttonContent,
+                  ),
         ),
       ],
     );
@@ -732,31 +736,30 @@ class _AppButtonState extends State<AppButton> {
         );
         break;
       case AppButtonType.outline:
-        button = OutlinedButton(
-          onPressed: looksEnabled
-              ? () {}
-              : null, // Empty callback to keep button enabled, actual logic in GestureDetector
-          style: OutlinedButton.styleFrom(
-            foregroundColor: fgColor,
-            side: BorderSide(color: borderColor, width: 1),
-            padding: defaultPadding,
-            shape: shape,
-            minimumSize: Size(widget.width ?? 0, resolvedHeight),
-            fixedSize: widget.width != null || widget.height != null
-                ? Size(widget.width ?? double.infinity, resolvedHeight)
-                : null,
-            // No ripple or press overlay; the button shrinks instead.
-            splashFactory: NoSplash.splashFactory,
-            overlayColor: Colors.transparent,
+        // Same surface as the filled types, so switching between outline and
+        // a filled look blends instead of swapping widgets.
+        button = AppButtonSurface(
+          fill: AppButtonFill(color: Colors.transparent, border: borderColor),
+          borderRadius: borderRadius,
+          width: widget.width,
+          height: resolvedHeight,
+          padding: defaultPadding,
+          child: IconTheme.merge(
+            data: IconThemeData(color: fgColor, size: 20),
+            child: DefaultTextStyle.merge(
+              style: textStyle.copyWith(shadows: const []),
+              textAlign: TextAlign.center,
+              child: buttonContent,
+            ),
           ),
-          child: buttonContent,
         );
         break;
       case AppButtonType.text:
         button = TextButton(
-          onPressed: looksEnabled
-              ? () {}
-              : null, // Empty callback to keep button enabled, actual logic in GestureDetector
+          onPressed:
+              looksEnabled
+                  ? () {}
+                  : null, // Empty callback to keep button enabled, actual logic in GestureDetector
           style: TextButton.styleFrom(
             splashFactory: NoSplash.splashFactory,
             overlayColor: Colors.transparent,

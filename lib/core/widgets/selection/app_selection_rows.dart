@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
@@ -34,12 +35,7 @@ class AppRowGroup extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var i = 0; i < children.length; i++) ...[
-          if (i > 0)
-            Container(
-              height: 1,
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              color: _inset ? AppPalette.stone200 : AppPalette.stone100,
-            ),
+          if (i > 0) const AppDivider(),
           children[i],
         ],
       ],
@@ -185,12 +181,13 @@ class AppSelectionRow extends StatelessWidget {
     return MergeSemantics(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: onTap == null
-            ? null
-            : () {
-                HapticHelpers.vibrate(VibrationType.selection);
-                onTap!();
-              },
+        onTap:
+            onTap == null
+                ? null
+                : () {
+                  HapticHelpers.vibrate(VibrationType.selection);
+                  onTap!();
+                },
         child: Container(
           constraints: const BoxConstraints(minHeight: 56),
           padding: EdgeInsets.symmetric(
@@ -241,9 +238,8 @@ class _RowText extends StatelessWidget {
           title,
           style: (large ? AppTypography.title : AppTypography.subtitle)
               .copyWith(
-                color: enabled
-                    ? LightColors.textStrong
-                    : LightColors.textDisabled,
+                color:
+                    enabled ? LightColors.textStrong : LightColors.textDisabled,
               ),
         ),
         if (subtitle != null)
@@ -251,9 +247,8 @@ class _RowText extends StatelessWidget {
             subtitle!,
             style: (large ? AppTypography.body : AppTypography.caption)
                 .copyWith(
-                  color: enabled
-                      ? LightColors.textBody
-                      : LightColors.textDisabled,
+                  color:
+                      enabled ? LightColors.textBody : LightColors.textDisabled,
                 ),
           ),
       ],
@@ -307,12 +302,13 @@ class AppChoiceCard<T> extends StatelessWidget {
           pressedScale: 0.98,
           enableHaptic: false,
           isDisabled: !enabled,
-          onPressed: onChanged == null || picked
-              ? null
-              : () {
-                  HapticHelpers.vibrate(VibrationType.selection);
-                  onChanged!(value);
-                },
+          onPressed:
+              onChanged == null || picked
+                  ? null
+                  : () {
+                    HapticHelpers.vibrate(VibrationType.selection);
+                    onChanged!(value);
+                  },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 140),
             // Keep the content still while the border thickens.
@@ -322,9 +318,10 @@ class AppChoiceCard<T> extends StatelessWidget {
               gradient: enabled ? AppShadows.cardFill : null,
               borderRadius: AppRadius.brCard,
               border: Border.all(
-                color: picked
-                    ? LightColors.primaryPrimaryDefault
-                    : LightColors.strokeColourStrokeCard,
+                color:
+                    picked
+                        ? LightColors.primaryPrimaryDefault
+                        : LightColors.strokeColourStrokeCard,
                 width: picked ? 1.5 : 1,
               ),
             ),

@@ -58,27 +58,28 @@ class JoinScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       ViewModelBuilder<JoinViewModel>.reactive(
-        viewModelBuilder: () => JoinViewModel(
-          phase: initialPhase,
-          email: email,
-          initialName: initialName,
-          schoolName: schoolName,
-          location: location,
-          role: role,
-          targetApp: targetApp,
-          currentRole: currentRole,
-          newRole: newRole,
-          coveredRole: coveredRole,
-          initialCode: initialCode,
-          memberships: memberships,
-          onUseAnotherAccount: onUseAnotherAccount,
-          onJoin: onJoin,
-          onDifferentCode: onDifferentCode,
-          onSignOut: onSignOut,
-          canLeave: canLeave,
-        ),
-        builder: (context, model, _) =>
-            _JoinContent(model: model, onBack: onBack),
+        viewModelBuilder:
+            () => JoinViewModel(
+              phase: initialPhase,
+              email: email,
+              initialName: initialName,
+              schoolName: schoolName,
+              location: location,
+              role: role,
+              targetApp: targetApp,
+              currentRole: currentRole,
+              newRole: newRole,
+              coveredRole: coveredRole,
+              initialCode: initialCode,
+              memberships: memberships,
+              onUseAnotherAccount: onUseAnotherAccount,
+              onJoin: onJoin,
+              onDifferentCode: onDifferentCode,
+              onSignOut: onSignOut,
+              canLeave: canLeave,
+            ),
+        builder:
+            (context, model, _) => _JoinContent(model: model, onBack: onBack),
       );
 }
 
@@ -128,9 +129,10 @@ class _JoinContent extends StatelessWidget {
       JoinCodeEntryField(
         controller: model.code,
         errorMessage: model.codeError,
-        helperMessage: model.codeError == null
-            ? 'Letters and numbers only. The dash is added for you.'
-            : null,
+        helperMessage:
+            model.codeError == null
+                ? 'Letters and numbers only. The dash is added for you.'
+                : null,
       ),
       if (model.phase == JoinPhase.schoolInactive) ...[
         const SizedBox(height: AppSpacing.md),

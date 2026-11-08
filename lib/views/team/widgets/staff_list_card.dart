@@ -5,6 +5,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_avatar.dart';
@@ -54,16 +55,12 @@ class StaffListCard extends StatelessWidget {
   }
 }
 
-/// The 1px hairline between two staff rows, inset with the row's text.
+/// The 1px hairline between two staff rows, inset to the row's text (16 + 44 avatar + 12).
 class StaffListDivider extends StatelessWidget {
   const StaffListDivider({super.key});
 
   @override
-  Widget build(BuildContext context) => Container(
-    height: 1,
-    margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-    color: AppPalette.stone200,
-  );
+  Widget build(BuildContext context) => const AppDivider(indent: 72);
 }
 
 class _StaffRow extends StatelessWidget {

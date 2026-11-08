@@ -24,9 +24,10 @@ class MoreViewModel extends BaseViewModel {
   bool get loading => _progress == null && _error == null;
 
   /// Areas this person can see, in tile order.
-  List<SchoolArea> get areas => SchoolArea.values
-      .where((area) => school.accessTo(area).isVisible)
-      .toList();
+  List<SchoolArea> get areas =>
+      SchoolArea.values
+          .where((area) => school.accessTo(area).isVisible)
+          .toList();
 
   AreaAccess accessTo(SchoolArea area) => school.accessTo(area);
 
@@ -65,7 +66,7 @@ class MoreViewModel extends BaseViewModel {
     return area == SchoolArea.schoolDetails
         ? "Only the owner can change the school's details"
         : 'Only the owner, admins, the principal and vice principals can '
-              'change this';
+            'change this';
   }
 
   static const _hasReadOnlyPage = {

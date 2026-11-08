@@ -36,16 +36,17 @@ abstract final class ListBottomSheet {
                 : AppSheetSize.full),
         snappingConfig: snappingConfig,
         child: Builder(
-          builder: (context) => AppSheet(
-            title: title,
-            subtitle: subtitle,
-            body: AppRowGroup.inset(
-              children: [
-                for (var i = 0; i < items.length; i++)
-                  itemBuilder(context, items[i], i),
-              ],
-            ),
-          ),
+          builder:
+              (context) => AppSheet(
+                title: title,
+                subtitle: subtitle,
+                body: AppRowGroup.inset(
+                  children: [
+                    for (var i = 0; i < items.length; i++)
+                      itemBuilder(context, items[i], i),
+                  ],
+                ),
+              ),
         ),
       ),
     );

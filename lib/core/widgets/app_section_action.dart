@@ -31,15 +31,12 @@ class AppSectionAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fill = _enabled
-        ? LightColors.primaryPrimaryMute
-        : AppPalette.stone100;
-    final border = _enabled
-        ? LightColors.primaryPrimaryThin
-        : AppPalette.stone200;
-    final foreground = _enabled
-        ? LightColors.primaryPrimaryText
-        : LightColors.textDisabled;
+    final fill =
+        _enabled ? LightColors.primaryPrimaryMute : AppPalette.stone100;
+    final border =
+        _enabled ? LightColors.primaryPrimaryThin : AppPalette.stone200;
+    final foreground =
+        _enabled ? LightColors.primaryPrimaryText : LightColors.textDisabled;
 
     return Semantics(
       button: true,

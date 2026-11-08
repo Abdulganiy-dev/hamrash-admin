@@ -34,6 +34,7 @@ class AppSheetRoute<T> extends StupidSimpleSheetRoute<T> {
     required Widget child,
     this.size = AppSheetSize.full,
     bool dismissible = true,
+    super.motion = sheetMotion,
     super.draggable,
     super.snappingConfig,
     super.originateAboveBottomViewInset = true,
@@ -44,6 +45,11 @@ class AppSheetRoute<T> extends StupidSimpleSheetRoute<T> {
          barrierDismissible: dismissible,
          child: _AppSheetFrame(size: size, child: child),
        );
+
+  /// Spring every sheet opens, closes and settles with: a snappy spring with
+  /// a slight overshoot on open. `snapToEnd` stops the tail of the spring
+  /// from lingering once it is visually at rest.
+  static const Motion sheetMotion = Motion.snappySpring(snapToEnd: true);
 
   /// Espresso at 36%.
   static const _scrim = Color(0x5C2A1712);
@@ -238,24 +244,26 @@ class AppSheet extends StatelessWidget {
     // their own card; full sheets clear the home indicator, or sit just
     // above the keyboard when it is open.
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
-    final bottomGap = floating
-        ? 20.0
-        : (keyboardOpen ? 12.0 : MediaQuery.paddingOf(context).bottom + 12);
+    final bottomGap =
+        floating
+            ? 20.0
+            : (keyboardOpen ? 12.0 : MediaQuery.paddingOf(context).bottom + 12);
 
     final padding =
         bodyPadding ??
         EdgeInsets.fromLTRB(16, 16, 16, footer == null ? bottomGap : 16);
 
-    final content = scrollableBody
-        // Rows fade out under the header once the body scrolls.
-        ? AppScrollFade(
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              padding: padding,
-              child: body,
-            ),
-          )
-        : Padding(padding: padding, child: body);
+    final content =
+        scrollableBody
+            // Rows fade out under the header once the body scrolls.
+            ? AppScrollFade(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                padding: padding,
+                child: body,
+              ),
+            )
+            : Padding(padding: padding, child: body);
 
     final hasHeader = title != null || leading != null || showCloseButton;
 
@@ -278,9 +286,12 @@ class AppSheet extends StatelessWidget {
         if (footer != null)
           DecoratedBox(
             decoration: BoxDecoration(
-              border: floating
-                  ? null
-                  : const Border(top: BorderSide(color: AppPalette.stone100)),
+              border:
+                  floating
+                      ? null
+                      : const Border(
+                        top: BorderSide(color: AppPalette.stone100),
+                      ),
             ),
             child: Padding(
               padding: EdgeInsets.fromLTRB(
@@ -336,9 +347,10 @@ class _Header extends StatelessWidget {
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 44),
       child: Row(
-        crossAxisAlignment: subtitle == null
-            ? CrossAxisAlignment.center
-            : CrossAxisAlignment.start,
+        crossAxisAlignment:
+            subtitle == null
+                ? CrossAxisAlignment.center
+                : CrossAxisAlignment.start,
         children: [
           if (leading != null) ...[leading!, const SizedBox(width: 12)],
           Expanded(

@@ -64,20 +64,21 @@ class TeamService {
 
   /// One staff record, for the detail page after a change.
   Future<StaffMember> getStaff(String staffId) => _run('getStaff', () async {
-    final row = await _supabase
-        .from('staff')
-        .select(StaffMember.columns)
-        .eq('id', staffId)
-        .single();
-    final details = await _supabase
-        .from('staff_private_details')
-        .select(StaffPrivateDetails.columns)
-        .eq('staff_id', staffId)
-        .maybeSingle();
+    final row =
+        await _supabase
+            .from('staff')
+            .select(StaffMember.columns)
+            .eq('id', staffId)
+            .single();
+    final details =
+        await _supabase
+            .from('staff_private_details')
+            .select(StaffPrivateDetails.columns)
+            .eq('staff_id', staffId)
+            .maybeSingle();
     return StaffMember.fromJson(row).copyWith(
-      privateDetails: details == null
-          ? null
-          : StaffPrivateDetails.fromJson(details),
+      privateDetails:
+          details == null ? null : StaffPrivateDetails.fromJson(details),
     );
   }, log: (staff) => {'id': staff.id});
 
@@ -88,20 +89,22 @@ class TeamService {
   getStaffForEditing(String staffId) => _run(
     'getStaffForEditing',
     () async {
-      final row = await _supabase
-          .from('staff')
-          .select(
-            'id,first_name,middle_name,last_name,gender,job_title,phone,email,'
-            'photo_id,photo_url,staff_number,staff_type,status,created_at,'
-            'member_id',
-          )
-          .eq('id', staffId)
-          .single();
-      final details = await _supabase
-          .from('staff_private_details')
-          .select(StaffPrivateDetails.columns)
-          .eq('staff_id', staffId)
-          .maybeSingle();
+      final row =
+          await _supabase
+              .from('staff')
+              .select(
+                'id,first_name,middle_name,last_name,gender,job_title,phone,email,'
+                'photo_id,photo_url,staff_number,staff_type,status,created_at,'
+                'member_id',
+              )
+              .eq('id', staffId)
+              .single();
+      final details =
+          await _supabase
+              .from('staff_private_details')
+              .select(StaffPrivateDetails.columns)
+              .eq('staff_id', staffId)
+              .maybeSingle();
       return (
         staff: StaffMember.fromJson(row),
         privateDetails: StaffPrivateDetails.fromJson(details ?? const {}),
@@ -256,9 +259,10 @@ class TeamService {
   }) => _run(
     'setSuspended',
     () => _updateMember(memberId, {
-      'status': suspended
-          ? OrganizationMemberStatus.suspended.value
-          : OrganizationMemberStatus.active.value,
+      'status':
+          suspended
+              ? OrganizationMemberStatus.suspended.value
+              : OrganizationMemberStatus.active.value,
     }),
     log: (_) => {'member_id': memberId, 'suspended': suspended},
     forbidden: ownersOnly,

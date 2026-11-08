@@ -29,9 +29,8 @@ class SubjectClassCard extends StatelessWidget {
       children: [
         AppSectionHeader(
           title: section.name,
-          caption: classes.length == 1
-              ? '1 class'
-              : '${classes.length} classes',
+          caption:
+              classes.length == 1 ? '1 class' : '${classes.length} classes',
         ),
         const SizedBox(height: 10),
         AppCard(
@@ -74,9 +73,10 @@ class _Row extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 56),
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        border: showDivider
-            ? const Border(bottom: BorderSide(color: AppPalette.stone100))
-            : null,
+        border:
+            showDivider
+                ? const Border(bottom: BorderSide(color: AppPalette.stone100))
+                : null,
       ),
       child: Row(
         children: [
@@ -116,9 +116,10 @@ class _Row extends StatelessWidget {
             style: AppTypography.label.copyWith(
               fontSize: 13,
               height: 18 / 13,
-              color: summary.needsAttention
-                  ? LightColors.warningWarningText
-                  : LightColors.textMuted,
+              color:
+                  summary.needsAttention
+                      ? LightColors.warningWarningText
+                      : LightColors.textMuted,
             ),
           ),
           const SizedBox(width: 8),

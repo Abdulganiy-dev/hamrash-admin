@@ -124,9 +124,8 @@ class StaffDetailViewModel extends BaseViewModel {
   /// The contact sheet's line: "{Job title} · {Staff app|Admin app}".
   String get contactSubtitle {
     final jobTitle = member.jobTitle?.trim();
-    final label = jobTitle == null || jobTitle.isEmpty
-        ? role.teamLabel
-        : jobTitle;
+    final label =
+        jobTitle == null || jobTitle.isEmpty ? role.teamLabel : jobTitle;
     return '$label · ${role.appLabel}';
   }
 

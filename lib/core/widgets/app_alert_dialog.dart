@@ -108,18 +108,19 @@ class AppAlertDialog extends StatefulWidget {
       context: context,
       barrierDismissible: barrierDismissible,
       barrierColor: _scrim,
-      builder: (_) => AppAlertDialog(
-        title: title,
-        message: message,
-        icon: icon,
-        tone: tone,
-        confirmLabel: confirmLabel,
-        cancelLabel: cancelLabel,
-        isDestructive: isDestructive,
-        showCancel: showCancel,
-        revealCancelAfterAttempts: revealCancelAfterAttempts,
-        onConfirm: onConfirm,
-      ),
+      builder:
+          (_) => AppAlertDialog(
+            title: title,
+            message: message,
+            icon: icon,
+            tone: tone,
+            confirmLabel: confirmLabel,
+            cancelLabel: cancelLabel,
+            isDestructive: isDestructive,
+            showCancel: showCancel,
+            revealCancelAfterAttempts: revealCancelAfterAttempts,
+            onConfirm: onConfirm,
+          ),
     );
   }
 
@@ -166,9 +167,10 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
       setState(() {
         _failedAttempts++;
         _isSubmitting = false;
-        _error = e is AppAlertError
-            ? e.message
-            : 'Something went wrong. Please try again.';
+        _error =
+            e is AppAlertError
+                ? e.message
+                : 'Something went wrong. Please try again.';
       });
     }
   }
@@ -176,21 +178,22 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
   @override
   Widget build(BuildContext context) {
     final confirmLabel = AppText(widget.confirmLabel);
-    final confirm = widget.isDestructive
-        ? AppDestructiveButton(
-            useGradient: true,
-            width: double.infinity,
-            isLoading: _isSubmitting,
-            onPressed: _isSubmitting ? null : _confirm,
-            child: confirmLabel,
-          )
-        : AppPrimaryButton(
-            useGradient: true,
-            width: double.infinity,
-            isLoading: _isSubmitting,
-            onPressed: _isSubmitting ? null : _confirm,
-            child: confirmLabel,
-          );
+    final confirm =
+        widget.isDestructive
+            ? AppDestructiveButton(
+              useGradient: true,
+              width: double.infinity,
+              isLoading: _isSubmitting,
+              onPressed: _isSubmitting ? null : _confirm,
+              child: confirmLabel,
+            )
+            : AppPrimaryButton(
+              useGradient: true,
+              width: double.infinity,
+              isLoading: _isSubmitting,
+              onPressed: _isSubmitting ? null : _confirm,
+              child: confirmLabel,
+            );
 
     return PopScope(
       // With no cancel button the dialog is a required action, so the
@@ -216,9 +219,7 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (widget.icon != null) ...[
-                    Center(
-                      child: _DialogIcon(icon: widget.icon!, tone: _tone),
-                    ),
+                    Center(child: _DialogIcon(icon: widget.icon!, tone: _tone)),
                     const SizedBox(height: 16),
                   ],
                   AppText(
@@ -252,9 +253,10 @@ class _AppAlertDialogState extends State<AppAlertDialog> {
                           child: AppSecondaryButton(
                             useGradient: true,
                             width: double.infinity,
-                            onPressed: _isSubmitting
-                                ? null
-                                : () => Navigator.of(context).pop(false),
+                            onPressed:
+                                _isSubmitting
+                                    ? null
+                                    : () => Navigator.of(context).pop(false),
                             child: AppText(widget.cancelLabel),
                           ),
                         ),

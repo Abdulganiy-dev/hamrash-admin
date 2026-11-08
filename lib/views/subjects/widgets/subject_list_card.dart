@@ -69,9 +69,10 @@ class _Row extends StatelessWidget {
       constraints: BoxConstraints(minHeight: details == null ? 52 : 60),
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        border: showDivider
-            ? const Border(bottom: BorderSide(color: AppPalette.stone100))
-            : null,
+        border:
+            showDivider
+                ? const Border(bottom: BorderSide(color: AppPalette.stone100))
+                : null,
       ),
       child: Row(
         children: [
@@ -88,12 +89,12 @@ class _Row extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.subtitle.copyWith(
                     fontSize: 15,
-                    fontWeight: details == null
-                        ? FontWeight.w600
-                        : FontWeight.w700,
-                    color: subject.isActive
-                        ? LightColors.textStrong
-                        : LightColors.textMuted,
+                    fontWeight:
+                        details == null ? FontWeight.w600 : FontWeight.w700,
+                    color:
+                        subject.isActive
+                            ? LightColors.textStrong
+                            : LightColors.textMuted,
                   ),
                 ),
                 if (details case final text?) ...[

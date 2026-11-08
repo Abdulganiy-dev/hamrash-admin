@@ -107,9 +107,10 @@ class MediaUploadService {
 
   /// Newer Supabase versions report a request that never got an answer as a
   /// [FunctionException] with status 0; that isn't an HTTP error.
-  static CloudflareException _failure(FunctionException e) => e.status == 0
-      ? CloudflareException.noHTTPResponse()
-      : CloudflareException.httpError(e.status);
+  static CloudflareException _failure(FunctionException e) =>
+      e.status == 0
+          ? CloudflareException.noHTTPResponse()
+          : CloudflareException.httpError(e.status);
 
   /// `media-delete` answers 404 `{"error": "not_found"}` for an image that no
   /// longer exists. A 404 with any other body is Supabase saying the function

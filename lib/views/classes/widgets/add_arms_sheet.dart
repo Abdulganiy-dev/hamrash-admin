@@ -72,13 +72,15 @@ class _AddArmsSheetState extends State<AddArmsSheet> {
           ArmsEditor(
             label: 'Each class gets',
             arms: _arms,
-            preview: example == null || _arms.isEmpty
-                ? null
-                : 'e.g. ${_arms.take(2).map((arm) => fullArmName(example, arm)).join(', ')}',
-            onChanged: (arms) => setState(() {
-              _arms = arms;
-              _error = null;
-            }),
+            preview:
+                example == null || _arms.isEmpty
+                    ? null
+                    : 'e.g. ${_arms.take(2).map((arm) => fullArmName(example, arm)).join(', ')}',
+            onChanged:
+                (arms) => setState(() {
+                  _arms = arms;
+                  _error = null;
+                }),
           ),
           const SizedBox(height: 20),
           AppText(
@@ -93,16 +95,18 @@ class _AddArmsSheetState extends State<AddArmsSheet> {
               for (final (section, classes) in _sections)
                 AppCheckboxRow(
                   title: section.name,
-                  subtitle: classes.length == 1
-                      ? '1 class'
-                      : '${classes.length} classes',
+                  subtitle:
+                      classes.length == 1
+                          ? '1 class'
+                          : '${classes.length} classes',
                   value: _picked.contains(section.id),
-                  onChanged: (value) => setState(() {
-                    value
-                        ? _picked.add(section.id)
-                        : _picked.remove(section.id);
-                    _error = null;
-                  }),
+                  onChanged:
+                      (value) => setState(() {
+                        value
+                            ? _picked.add(section.id)
+                            : _picked.remove(section.id);
+                        _error = null;
+                      }),
                 ),
             ],
           ),

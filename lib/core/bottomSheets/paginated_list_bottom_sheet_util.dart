@@ -5,6 +5,7 @@ import 'package:hamrash_admin/core/bottomSheets/paginated_list_cache.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_scroll_fade.dart';
 import 'package:hamrash_admin/core/widgets/app_search_field.dart';
@@ -159,14 +160,15 @@ class _PaginatedSelectionBodyState<I>
     title: widget.title,
     scrollableBody: false,
     bodyPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-    footer: _multi
-        ? AppPrimaryButton(
-            useGradient: true,
-            width: double.infinity,
-            onPressed: () => Navigator.of(context).pop(),
-            child: AppText(widget.doneLabel),
-          )
-        : null,
+    footer:
+        _multi
+            ? AppPrimaryButton(
+              useGradient: true,
+              width: double.infinity,
+              onPressed: () => Navigator.of(context).pop(),
+              child: AppText(widget.doneLabel),
+            )
+            : null,
     body: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -209,9 +211,10 @@ class _PaginatedSelectionBodyState<I>
     final showStatusRow =
         items.isNotEmpty &&
         (_model.loading || _model.hasMore || _model.error != null);
-    final bottomGap = _multi
-        ? AppSpacing.md
-        : MediaQuery.paddingOf(context).bottom + AppSpacing.md;
+    final bottomGap =
+        _multi
+            ? AppSpacing.md
+            : MediaQuery.paddingOf(context).bottom + AppSpacing.md;
 
     if (items.isEmpty) {
       return ListView(
@@ -227,13 +230,11 @@ class _PaginatedSelectionBodyState<I>
       physics: const ClampingScrollPhysics(),
       padding: EdgeInsets.only(bottom: bottomGap),
       itemCount: items.length + (showStatusRow ? 1 : 0),
-      separatorBuilder: (_, index) => index >= items.length - 1
-          ? const SizedBox.shrink()
-          : Container(
-              height: 1,
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              color: AppPalette.stone100,
-            ),
+      separatorBuilder:
+          (_, index) =>
+              index >= items.length - 1
+                  ? const SizedBox.shrink()
+                  : const AppDivider(),
       itemBuilder: (context, index) {
         if (index == items.length) return _moreStatus();
         return _row(items[index]);
@@ -251,9 +252,10 @@ class _PaginatedSelectionBodyState<I>
     return AppSelectionRow(
       title: widget.labelBuilder(item),
       subtitle: widget.subtitleBuilder?.call(item),
-      control: _multi
-          ? AppCheckbox(value: selected)
-          : AppRadio<bool>(value: true, groupValue: selected),
+      control:
+          _multi
+              ? AppCheckbox(value: selected)
+              : AppRadio<bool>(value: true, groupValue: selected),
       onTap: () {
         if (selected && widget.onDeselected != null) {
           widget.onDeselected!(item);

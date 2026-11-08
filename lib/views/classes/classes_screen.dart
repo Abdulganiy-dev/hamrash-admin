@@ -55,21 +55,22 @@ class ClassesScreen extends StatelessWidget {
                   onPressed: () => _ClassesActions(model).add(context),
                 ),
             ],
-            body: model.error != null
-                ? LoadErrorView(onRetry: model.load)
-                : model.loading
-                ? const _Loading()
-                : starting
-                ? _Start(model: model)
-                : model.isEmpty
-                ? const AppEmptyState(
-                    icon: AppIcons.layers,
-                    title: 'No classes yet',
-                    subtitle:
-                        "The school's leaders will set up its classes and "
-                        'arms.',
-                  )
-                : _Overview(model: model),
+            body:
+                model.error != null
+                    ? LoadErrorView(onRetry: model.load)
+                    : model.loading
+                    ? const _Loading()
+                    : starting
+                    ? _Start(model: model)
+                    : model.isEmpty
+                    ? const AppEmptyState(
+                      icon: AppIcons.layers,
+                      title: 'No classes yet',
+                      subtitle:
+                          "The school's leaders will set up its classes and "
+                          'arms.',
+                    )
+                    : _Overview(model: model),
             bottomNavigationBar: starting ? _StartBar(model: model) : null,
           );
         },
@@ -100,15 +101,18 @@ class _Overview extends StatelessWidget {
           if (i > 0) const SizedBox(height: 16),
           SectionCard(
             section: section,
-            onEdit: model.canChange
-                ? () => actions.editSection(context, section)
-                : null,
-            onOpenClass: model.canChange
-                ? (schoolClass) => actions.editClass(context, schoolClass)
-                : null,
-            onAddClass: model.canChange
-                ? () => actions.addClass(context, section)
-                : null,
+            onEdit:
+                model.canChange
+                    ? () => actions.editSection(context, section)
+                    : null,
+            onOpenClass:
+                model.canChange
+                    ? (schoolClass) => actions.editClass(context, schoolClass)
+                    : null,
+            onAddClass:
+                model.canChange
+                    ? () => actions.addClass(context, section)
+                    : null,
           ),
         ],
         const SizedBox(height: 24),
@@ -127,23 +131,24 @@ class _ClassesActions {
   Future<void> add(BuildContext context) => AppActionSheet.show(
     context,
     title: 'Add',
-    groups: [
-      [
-        for (final section in model.activeSections)
-          AppSheetAction(
-            label: 'A class in ${section.name}',
-            icon: AppIcons.bookOpen,
-            onTap: () => addClass(context, section),
-          ),
-      ],
-      [
-        AppSheetAction(
-          label: 'A section',
-          icon: AppIcons.layers,
-          onTap: () => addSection(context),
-        ),
-      ],
-    ].where((group) => group.isNotEmpty).toList(),
+    groups:
+        [
+          [
+            for (final section in model.activeSections)
+              AppSheetAction(
+                label: 'A class in ${section.name}',
+                icon: AppIcons.bookOpen,
+                onTap: () => addClass(context, section),
+              ),
+          ],
+          [
+            AppSheetAction(
+              label: 'A section',
+              icon: AppIcons.layers,
+              onTap: () => addSection(context),
+            ),
+          ],
+        ].where((group) => group.isNotEmpty).toList(),
   );
 
   Future<void> addSection(BuildContext context) async {
@@ -201,8 +206,8 @@ class _ClassesActions {
             'It stays in past records, but no new students can join it. '
             'You can switch it back on.',
         onMessage: 'Students can be placed in its arms again.',
-        onConfirm: () =>
-            model.setClassActive(schoolClass, !schoolClass.isActive),
+        onConfirm:
+            () => model.setClassActive(schoolClass, !schoolClass.isActive),
       );
 
   Future<void> _toggleSection(BuildContext context, SchoolSection section) =>
@@ -249,10 +254,11 @@ class _ClassesActions {
       icon: AppIcons.trash2,
       isDestructive: true,
       title: 'Remove $name?',
-      message: schoolClass.hasArms
-          ? 'The class and its arms will be removed for good, with the '
-                'subjects they take.'
-          : 'The class will be removed for good.',
+      message:
+          schoolClass.hasArms
+              ? 'The class and its arms will be removed for good, with the '
+                  'subjects they take.'
+              : 'The class will be removed for good.',
       confirmLabel: 'Remove class',
       onConfirm: () => model.deleteClass(schoolClass),
     );
@@ -290,14 +296,18 @@ class _Start extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
     child: Builder(
-      builder: (context) => ScaffoldColumn(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
-          StructureStartPicker(value: model.start, onChanged: model.pickStart),
-          const SizedBox(height: 24),
-        ],
-      ),
+      builder:
+          (context) => ScaffoldColumn(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
+              StructureStartPicker(
+                value: model.start,
+                onChanged: model.pickStart,
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
     ),
   );
 }
@@ -357,13 +367,14 @@ class _Loading extends StatelessWidget {
   Widget build(BuildContext context) => SingleChildScrollView(
     physics: const NeverScrollableScrollPhysics(),
     child: Builder(
-      builder: (context) => ScaffoldColumn(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
-          const ClassesSkeleton(),
-        ],
-      ),
+      builder:
+          (context) => ScaffoldColumn(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
+              const ClassesSkeleton(),
+            ],
+          ),
     ),
   );
 }

@@ -62,10 +62,11 @@ class _InviteCodeDisplayState extends State<InviteCodeDisplay> {
   Timer? _copiedTimer;
 
   String get _raw {
-    final clean = widget.code.toUpperCase().split('').where((character) {
-      final unit = character.codeUnitAt(0);
-      return (unit >= 48 && unit <= 57) || (unit >= 65 && unit <= 90);
-    }).join();
+    final clean =
+        widget.code.toUpperCase().split('').where((character) {
+          final unit = character.codeUnitAt(0);
+          return (unit >= 48 && unit <= 57) || (unit >= 65 && unit <= 90);
+        }).join();
     return clean.length > 8 ? clean.substring(0, 8) : clean;
   }
 

@@ -52,9 +52,10 @@ class SectionCard extends StatelessWidget {
                 _ClassRow(
                   schoolClass: classes[i],
                   showDivider: i < classes.length - 1,
-                  onTap: onOpenClass == null
-                      ? null
-                      : () => onOpenClass!(classes[i]),
+                  onTap:
+                      onOpenClass == null
+                          ? null
+                          : () => onOpenClass!(classes[i]),
                 ),
               if (showAdd)
                 _AddClassRow(onTap: onAddClass!)
@@ -100,9 +101,10 @@ class _ClassRow extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 56),
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        border: showDivider
-            ? const Border(bottom: BorderSide(color: AppPalette.stone100))
-            : null,
+        border:
+            showDivider
+                ? const Border(bottom: BorderSide(color: AppPalette.stone100))
+                : null,
       ),
       child: Row(
         children: [
@@ -117,9 +119,8 @@ class _ClassRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.subtitle.copyWith(
                     fontSize: 15,
-                    color: active
-                        ? LightColors.textStrong
-                        : LightColors.textMuted,
+                    color:
+                        active ? LightColors.textStrong : LightColors.textMuted,
                   ),
                 ),
                 if (details != null) ...[
@@ -151,9 +152,10 @@ class _ClassRow extends StatelessWidget {
               style: AppTypography.label.copyWith(
                 fontSize: 13,
                 height: 18 / 13,
-                color: arms == 0
-                    ? LightColors.warningWarningText
-                    : LightColors.textMuted,
+                color:
+                    arms == 0
+                        ? LightColors.warningWarningText
+                        : LightColors.textMuted,
               ),
             ),
           if (onTap != null) ...[

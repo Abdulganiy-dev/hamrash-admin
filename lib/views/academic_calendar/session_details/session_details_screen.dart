@@ -39,25 +39,29 @@ class SessionDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       ViewModelBuilder<SessionDetailsViewModel>.reactive(
-        viewModelBuilder: () =>
-            SessionDetailsViewModel(school: school, sessionId: sessionId),
+        viewModelBuilder:
+            () => SessionDetailsViewModel(school: school, sessionId: sessionId),
         onViewModelReady: (model) => model.load(),
-        builder: (context, model, _) => DefaultScaffold(
-          title: model.session == null
-              ? 'Session'
-              : '${model.draft.name} session',
-          showBackButton: true,
-          onBackPressed: () => NavigationService.popScreen(model.changed),
-          backgroundColor: AppPalette.linen,
-          body: model.error != null
-              ? LoadErrorView(onRetry: model.load)
-              : model.loading
-              ? const _Loading()
-              : _Body(model: model),
-          bottomNavigationBar: model.hasChanges && !model.readOnly
-              ? _SaveBar(model: model)
-              : null,
-        ),
+        builder:
+            (context, model, _) => DefaultScaffold(
+              title:
+                  model.session == null
+                      ? 'Session'
+                      : '${model.draft.name} session',
+              showBackButton: true,
+              onBackPressed: () => NavigationService.popScreen(model.changed),
+              backgroundColor: AppPalette.linen,
+              body:
+                  model.error != null
+                      ? LoadErrorView(onRetry: model.load)
+                      : model.loading
+                      ? const _Loading()
+                      : _Body(model: model),
+              bottomNavigationBar:
+                  model.hasChanges && !model.readOnly
+                      ? _SaveBar(model: model)
+                      : null,
+            ),
       );
 }
 
@@ -72,46 +76,48 @@ class _Body extends StatelessWidget {
     final toClose = model.sessionToClose;
     return SingleChildScrollView(
       child: Builder(
-        builder: (context) => ScaffoldColumn(
-          children: [
-            SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
-            SessionSummaryCard(
-              label: model.label,
-              model: model,
-              caption: model.caption,
-              readOnly: session.isClosed,
-              onEdit: model.readOnly ? null : () => _editSession(context),
+        builder:
+            (context) => ScaffoldColumn(
+              children: [
+                SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
+                SessionSummaryCard(
+                  label: model.label,
+                  model: model,
+                  caption: model.caption,
+                  readOnly: session.isClosed,
+                  onEdit: model.readOnly ? null : () => _editSession(context),
+                ),
+                const SizedBox(height: 8),
+                SessionTermsSection(
+                  model: model,
+                  onAddTerm:
+                      model.readOnly ? null : () => _editTerm(context, null),
+                  onOpenTerm:
+                      model.readOnly
+                          ? null
+                          : (index) => _editTerm(context, index),
+                ),
+                if (model.hasChanges && model.problem != null)
+                  _Message(model.problem!),
+                if (model.saveError case final message?) _Message(message),
+                if (toClose != null) ...[
+                  const SizedBox(height: 24),
+                  LastSessionCard(
+                    session: toClose,
+                    onClose: () => _confirmClose(context),
+                  ),
+                ],
+                if (session.isClosed) ...[
+                  const SizedBox(height: 24),
+                  ClosedSessionNote(
+                    sessionName: session.name,
+                    onReopen:
+                        model.canReopen ? () => _confirmReopen(context) : null,
+                  ),
+                ],
+                const SizedBox(height: 24),
+              ],
             ),
-            const SizedBox(height: 8),
-            SessionTermsSection(
-              model: model,
-              onAddTerm: model.readOnly ? null : () => _editTerm(context, null),
-              onOpenTerm: model.readOnly
-                  ? null
-                  : (index) => _editTerm(context, index),
-            ),
-            if (model.hasChanges && model.problem != null)
-              _Message(model.problem!),
-            if (model.saveError case final message?) _Message(message),
-            if (toClose != null) ...[
-              const SizedBox(height: 24),
-              LastSessionCard(
-                session: toClose,
-                onClose: () => _confirmClose(context),
-              ),
-            ],
-            if (session.isClosed) ...[
-              const SizedBox(height: 24),
-              ClosedSessionNote(
-                sessionName: session.name,
-                onReopen: model.canReopen
-                    ? () => _confirmReopen(context)
-                    : null,
-              ),
-            ],
-            const SizedBox(height: 24),
-          ],
-        ),
       ),
     );
   }
@@ -251,13 +257,14 @@ class _Loading extends StatelessWidget {
   Widget build(BuildContext context) => SingleChildScrollView(
     physics: const NeverScrollableScrollPhysics(),
     child: Builder(
-      builder: (context) => ScaffoldColumn(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
-          const SessionDetailsSkeleton(),
-        ],
-      ),
+      builder:
+          (context) => ScaffoldColumn(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
+              const SessionDetailsSkeleton(),
+            ],
+          ),
     ),
   );
 }

@@ -89,12 +89,13 @@ extension GestureDetectorExtension on GestureDetector {
   GestureDetector hapticFeedback([VibrationType type = VibrationType.light]) {
     final originalOnTap = onTap;
     return GestureDetector(
-      onTap: originalOnTap != null
-          ? () {
-              HapticHelpers.vibrate(type);
-              originalOnTap();
-            }
-          : () => HapticHelpers.vibrate(type),
+      onTap:
+          originalOnTap != null
+              ? () {
+                HapticHelpers.vibrate(type);
+                originalOnTap();
+              }
+              : () => HapticHelpers.vibrate(type),
       behavior: behavior,
       excludeFromSemantics: excludeFromSemantics,
       dragStartBehavior: dragStartBehavior,

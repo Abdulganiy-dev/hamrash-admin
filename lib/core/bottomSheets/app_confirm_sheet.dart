@@ -124,9 +124,10 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
-        _error = e is AppAlertError
-            ? e.message
-            : 'Something went wrong. Please try again.';
+        _error =
+            e is AppAlertError
+                ? e.message
+                : 'Something went wrong. Please try again.';
       });
     }
   }
@@ -135,21 +136,22 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
   Widget build(BuildContext context) {
     final tone = _tone;
     final label = AppText(widget.confirmLabel);
-    final confirm = widget.isDestructive
-        ? AppDestructiveButton(
-            useGradient: true,
-            width: double.infinity,
-            isLoading: _isSubmitting,
-            onPressed: _isSubmitting ? null : _confirm,
-            child: label,
-          )
-        : AppPrimaryButton(
-            useGradient: true,
-            width: double.infinity,
-            isLoading: _isSubmitting,
-            onPressed: _isSubmitting ? null : _confirm,
-            child: label,
-          );
+    final confirm =
+        widget.isDestructive
+            ? AppDestructiveButton(
+              useGradient: true,
+              width: double.infinity,
+              isLoading: _isSubmitting,
+              onPressed: _isSubmitting ? null : _confirm,
+              child: label,
+            )
+            : AppPrimaryButton(
+              useGradient: true,
+              width: double.infinity,
+              isLoading: _isSubmitting,
+              onPressed: _isSubmitting ? null : _confirm,
+              child: label,
+            );
 
     return PopScope(
       // No closing half way through the action.
@@ -218,9 +220,8 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
             AppSecondaryButton(
               useGradient: true,
               width: double.infinity,
-              onPressed: _isSubmitting
-                  ? null
-                  : () => Navigator.of(context).pop(false),
+              onPressed:
+                  _isSubmitting ? null : () => Navigator.of(context).pop(false),
               child: AppText(widget.cancelLabel),
             ),
           ],

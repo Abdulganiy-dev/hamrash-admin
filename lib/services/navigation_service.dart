@@ -53,12 +53,13 @@ class NavigationService {
       return Future.value(null);
     }
 
-    final Route<T> route = transition == PageTransition.slide
-        ? CupertinoPageRoute<T>(builder: (_) => screen)
-        : NavigationService.generalPageRouteBuilder(
-            screen: screen,
-            transition: transition,
-          );
+    final Route<T> route =
+        transition == PageTransition.slide
+            ? CupertinoPageRoute<T>(builder: (_) => screen)
+            : NavigationService.generalPageRouteBuilder(
+              screen: screen,
+              transition: transition,
+            );
 
     return Navigator.push<T>(ctx, route);
   }

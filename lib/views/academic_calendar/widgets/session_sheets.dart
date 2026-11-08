@@ -73,11 +73,12 @@ class _EditSessionSheetState extends State<EditSessionSheet> {
     final outside = outsideIndex == null ? null : terms[outsideIndex];
     final outsideDates = outside?.dates;
     final startsBefore = outsideDates?.start.isBefore(_dates.start) ?? false;
-    final warning = outside == null
-        ? null
-        : startsBefore
-        ? '${outside.name} starts ${DateFormat('d MMM').format(outsideDates!.start)}, before this date'
-        : '${outside.name} ends ${DateFormat('d MMM').format(outsideDates!.end)}, after this date';
+    final warning =
+        outside == null
+            ? null
+            : startsBefore
+            ? '${outside.name} starts ${DateFormat('d MMM').format(outsideDates!.start)}, before this date'
+            : '${outside.name} ends ${DateFormat('d MMM').format(outsideDates!.end)}, after this date';
     final canSave =
         _name.text.trim().isNotEmpty &&
         _dates.end.isAfter(_dates.start) &&
@@ -86,9 +87,9 @@ class _EditSessionSheetState extends State<EditSessionSheet> {
     final lastTerm = terms.last;
     final sessionNote =
         _dates.start.isAtSameMomentAs(firstTerm.dates.start) &&
-            _dates.end.isAtSameMomentAs(lastTerm.dates.end)
-        ? '${AppDateFormat.length(_dates)} · first day of ${firstTerm.name} to last day of ${lastTerm.name}'
-        : AppDateFormat.length(_dates);
+                _dates.end.isAtSameMomentAs(lastTerm.dates.end)
+            ? '${AppDateFormat.length(_dates)} · first day of ${firstTerm.name} to last day of ${lastTerm.name}'
+            : AppDateFormat.length(_dates);
 
     return AppSheet(
       title: 'Edit session',
@@ -166,11 +167,11 @@ class _EditSessionSheetState extends State<EditSessionSheet> {
               helper: widget.removeBlockedReason,
               onPressed:
                   widget.removeBlockedReason != null || widget.onRemove == null
-                  ? null
-                  : () {
-                      Navigator.of(context).pop();
-                      widget.onRemove!();
-                    },
+                      ? null
+                      : () {
+                        Navigator.of(context).pop();
+                        widget.onRemove!();
+                      },
             ),
           ],
         ],
@@ -195,9 +196,8 @@ class _EditTermSheetState extends State<EditTermSheet> {
   late final TextEditingController _name = TextEditingController(
     text: _adding ? '' : widget.model.draft.terms[widget.index!].name,
   );
-  late DateTimeRange? _dates = _adding
-      ? null
-      : widget.model.draft.terms[widget.index!].dates;
+  late DateTimeRange? _dates =
+      _adding ? null : widget.model.draft.terms[widget.index!].dates;
   late bool _isCurrent = widget.index == widget.model.draft.currentTermIndex;
 
   @override
@@ -239,11 +239,12 @@ class _EditTermSheetState extends State<EditTermSheet> {
         _name.text.trim().isNotEmpty &&
         dates != null &&
         dates.end.isAfter(dates.start);
-    final note = dates == null
-        ? null
-        : dates.start.isAtSameMomentAs(session.dates.start)
-        ? '${AppDateFormat.length(dates)} · starts with the session'
-        : AppDateFormat.length(dates);
+    final note =
+        dates == null
+            ? null
+            : dates.start.isAtSameMomentAs(session.dates.start)
+            ? '${AppDateFormat.length(dates)} · starts with the session'
+            : AppDateFormat.length(dates);
 
     return AppSheet(
       title: _adding ? 'Add a term' : session.terms[index!].name,
@@ -278,9 +279,10 @@ class _EditTermSheetState extends State<EditTermSheet> {
                 subtitle:
                     'Attendance, fees and results use this term. Only one at a time.',
                 value: _isCurrent,
-                onChanged: _isCurrent
-                    ? null
-                    : (value) => setState(() => _isCurrent = value),
+                onChanged:
+                    _isCurrent
+                        ? null
+                        : (value) => setState(() => _isCurrent = value),
               ),
             ],
           ),
@@ -303,15 +305,17 @@ class _EditTermSheetState extends State<EditTermSheet> {
               icon: AppIcons.trash2,
               isDestructive: true,
               label: 'Remove term',
-              helper: _isCurrent
-                  ? 'Make another term current before removing this one.'
-                  : null,
-              onPressed: _isCurrent
-                  ? null
-                  : () {
-                      widget.model.removeTerm(index!);
-                      Navigator.of(context).pop();
-                    },
+              helper:
+                  _isCurrent
+                      ? 'Make another term current before removing this one.'
+                      : null,
+              onPressed:
+                  _isCurrent
+                      ? null
+                      : () {
+                        widget.model.removeTerm(index!);
+                        Navigator.of(context).pop();
+                      },
             ),
           ],
         ],

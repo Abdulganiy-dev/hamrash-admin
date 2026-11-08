@@ -5,6 +5,7 @@ import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_search_field.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_rows.dart';
@@ -130,13 +131,7 @@ class _ChoiceListSheetState<T> extends State<ChoiceListSheet<T>> {
                   controller: _scrollController,
                   padding: EdgeInsets.zero,
                   itemCount: visible.length,
-                  separatorBuilder: (context, index) => Container(
-                    height: 1,
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                    ),
-                    color: AppPalette.stone200,
-                  ),
+                  separatorBuilder: (context, index) => const AppDivider(),
                   itemBuilder: (context, index) {
                     final item = visible[index];
                     return AppSelectionRow(

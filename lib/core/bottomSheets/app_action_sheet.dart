@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
@@ -194,12 +195,14 @@ class _Group extends StatelessWidget {
           children: [
             for (var i = 0; i < actions.length; i++) ...[
               if (i > 0)
-                Container(
-                  height: 1,
-                  // Line up with the label, past the icon.
-                  margin: const EdgeInsets.only(left: 50, right: 16),
-                  color: danger ? AppBadgeTone.error.thin : AppPalette.stone200,
-                ),
+                // Line up with the label, past the icon.
+                danger
+                    ? Container(
+                      height: 1,
+                      margin: const EdgeInsets.only(left: 50, right: 16),
+                      color: AppBadgeTone.error.thin,
+                    )
+                    : const AppDivider(indent: 50),
               _ActionRow(
                 action: actions[i],
                 onTap: () => onTap(actions[i].onTap),
@@ -221,14 +224,14 @@ class _ActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reason = action.disabledReason;
-    final color = reason != null
-        ? AppPalette.stone400
-        : action.isDestructive
-        ? AppBadgeTone.error.strong
-        : LightColors.textStrong;
-    final iconColor = reason != null || action.isDestructive
-        ? color
-        : AppPalette.stone600;
+    final color =
+        reason != null
+            ? AppPalette.stone400
+            : action.isDestructive
+            ? AppBadgeTone.error.strong
+            : LightColors.textStrong;
+    final iconColor =
+        reason != null || action.isDestructive ? color : AppPalette.stone600;
 
     return Semantics(
       button: true,
@@ -248,9 +251,10 @@ class _ActionRow extends StatelessWidget {
           ),
           color: Colors.transparent,
           child: Row(
-            crossAxisAlignment: reason == null
-                ? CrossAxisAlignment.center
-                : CrossAxisAlignment.start,
+            crossAxisAlignment:
+                reason == null
+                    ? CrossAxisAlignment.center
+                    : CrossAxisAlignment.start,
             children: [
               AppIcon(action.icon, size: 20, color: iconColor),
               const SizedBox(width: 14),
@@ -265,9 +269,10 @@ class _ActionRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.body.copyWith(
                         fontSize: 15,
-                        fontWeight: action.isDestructive
-                            ? FontWeight.w700
-                            : FontWeight.w600,
+                        fontWeight:
+                            action.isDestructive
+                                ? FontWeight.w700
+                                : FontWeight.w600,
                         color: color,
                       ),
                     ),

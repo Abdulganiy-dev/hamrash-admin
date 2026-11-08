@@ -49,9 +49,10 @@ class SessionTermRow extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: current ? AppPalette.aubergine500 : Colors.transparent,
                   shape: BoxShape.circle,
-                  border: current
-                      ? null
-                      : Border.all(color: AppPalette.stone300, width: 1.5),
+                  border:
+                      current
+                          ? null
+                          : Border.all(color: AppPalette.stone300, width: 1.5),
                 ),
                 child: Text(
                   '${index + 1}',
@@ -77,9 +78,10 @@ class SessionTermRow extends StatelessWidget {
                       dateLine,
                       variant: AppTextVariant.body,
                       fontWeight: FontWeight.normal,
-                      colorType: current
-                          ? AppTextColor.textBody
-                          : AppTextColor.textMuted,
+                      colorType:
+                          current
+                              ? AppTextColor.textBody
+                              : AppTextColor.textMuted,
                     ),
                   ],
                 ),
@@ -100,9 +102,10 @@ class SessionTermRow extends StatelessWidget {
                         : AppDateFormat.length(dates),
                     variant: AppTextVariant.body,
                     fontWeight: FontWeight.normal,
-                    colorType: current
-                        ? AppTextColor.textBody
-                        : AppTextColor.textMuted,
+                    colorType:
+                        current
+                            ? AppTextColor.textBody
+                            : AppTextColor.textMuted,
                   ),
                 ],
               ),

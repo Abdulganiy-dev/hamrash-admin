@@ -165,9 +165,10 @@ class _SubjectSheetState extends State<SubjectSheet> {
               const SizedBox(height: AppSpacing.md),
               AppSheetLinkAction(
                 icon: saved.isActive ? AppIcons.eyeOff : AppIcons.eye,
-                label: saved.isActive
-                    ? 'Switch off this subject'
-                    : 'Switch on this subject',
+                label:
+                    saved.isActive
+                        ? 'Switch off this subject'
+                        : 'Switch on this subject',
                 onPressed: _saving ? null : () => _closeThen(toggle),
               ),
             ],
@@ -175,18 +176,20 @@ class _SubjectSheetState extends State<SubjectSheet> {
               // 12 after another link: its 4px under-label padding completes
               // the 16. 16 when it follows the main button.
               SizedBox(
-                height: widget.onToggleActive == null
-                    ? AppSpacing.md
-                    : AppSpacing.ms,
+                height:
+                    widget.onToggleActive == null
+                        ? AppSpacing.md
+                        : AppSpacing.ms,
               ),
               AppSheetLinkAction(
                 icon: AppIcons.trash2,
                 label: 'Remove subject',
                 isDestructive: true,
                 helper: widget.removeBlockedReason,
-                onPressed: _saving || widget.removeBlockedReason != null
-                    ? null
-                    : () => _closeThen(remove),
+                onPressed:
+                    _saving || widget.removeBlockedReason != null
+                        ? null
+                        : () => _closeThen(remove),
               ),
             ],
           ],

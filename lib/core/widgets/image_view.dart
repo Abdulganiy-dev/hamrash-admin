@@ -141,25 +141,27 @@ class CachedNetworkImageWidget extends StatelessWidget {
       height: height,
       color: backgroundColor ?? CupertinoColors.systemGrey5,
       alignment: alignment,
-      child: showProgressIndicator
-          ? SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  progressIndicatorColor ??
-                      Theme.of(context).colorScheme.primary,
+      child:
+          showProgressIndicator
+              ? SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    progressIndicatorColor ??
+                        Theme.of(context).colorScheme.primary,
+                  ),
                 ),
+              )
+              : AppIcon(
+                AppIcons.image,
+                size:
+                    (width != null && height != null)
+                        ? (width! < height! ? width! * 0.4 : height! * 0.4)
+                        : 24,
+                color: CupertinoColors.systemGrey,
               ),
-            )
-          : AppIcon(
-              AppIcons.image,
-              size: (width != null && height != null)
-                  ? (width! < height! ? width! * 0.4 : height! * 0.4)
-                  : 24,
-              color: CupertinoColors.systemGrey,
-            ),
     );
   }
 
@@ -172,9 +174,10 @@ class CachedNetworkImageWidget extends StatelessWidget {
       alignment: alignment,
       child: AppIcon(
         AppIcons.triangleAlert,
-        size: (width != null && height != null)
-            ? (width! < height! ? width! * 0.4 : height! * 0.4)
-            : 24,
+        size:
+            (width != null && height != null)
+                ? (width! < height! ? width! * 0.4 : height! * 0.4)
+                : 24,
         color: CupertinoColors.systemRed,
       ),
     );
@@ -184,9 +187,10 @@ class CachedNetworkImageWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (imageUrl.isEmpty) {
       return ClipRRect(
-        borderRadius: borderRadius != null
-            ? BorderRadius.circular(borderRadius!)
-            : BorderRadius.zero,
+        borderRadius:
+            borderRadius != null
+                ? BorderRadius.circular(borderRadius!)
+                : BorderRadius.zero,
         child: placeholder ?? _defaultPlaceholder(context),
       );
     }
@@ -199,8 +203,8 @@ class CachedNetworkImageWidget extends StatelessWidget {
       alignment: alignment,
       httpHeaders: httpHeaders ?? const {'Accept': 'image/*'},
       cacheManager: useCustomCache ? AppImageCacheManager.instance : null,
-      placeholder: (context, url) =>
-          placeholder ?? _defaultPlaceholder(context),
+      placeholder:
+          (context, url) => placeholder ?? _defaultPlaceholder(context),
       errorWidget: (context, url, error) {
         debugPrint('Error loading image: $error');
         debugPrint('Image URL: $url');

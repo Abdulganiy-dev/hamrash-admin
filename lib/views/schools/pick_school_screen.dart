@@ -65,9 +65,10 @@ class PickSchoolScreen extends StatelessWidget {
                 tone: _tones[index % _tones.length],
               ),
             },
-            badge: school.isPaused
-                ? const AppBadge('Paused', tone: AppBadgeTone.warning)
-                : null,
+            badge:
+                school.isPaused
+                    ? const AppBadge('Paused', tone: AppBadgeTone.warning)
+                    : null,
             onTap: () => onPick(school),
           ),
           const SizedBox(height: AppSpacing.ms),
@@ -155,12 +156,14 @@ class _DashedBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = (Offset.zero & size).deflate(_width / 2);
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(radius)));
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = _width;
+    final path =
+        Path()
+          ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(radius)));
+    final paint =
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = _width;
     for (final metric in path.computeMetrics()) {
       for (var d = 0.0; d < metric.length; d += _dash + _gap) {
         canvas.drawPath(metric.extractPath(d, d + _dash), paint);

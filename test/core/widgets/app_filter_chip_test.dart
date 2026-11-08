@@ -6,9 +6,8 @@ import 'package:hamrash_admin/core/widgets/app_chip_row.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Widget _host(Widget child) => MaterialApp(
-  home: Scaffold(body: Center(child: child)),
-);
+Widget _host(Widget child) =>
+    MaterialApp(home: Scaffold(body: Center(child: child)));
 
 /// The 40 tall visual inside the 48 tall tap area: the only decorated
 /// container in the chip.
@@ -45,14 +44,15 @@ Color? _labelColor(WidgetTester tester) => _spans(tester).first.style?.color;
 
 Color? _countColor(WidgetTester tester) => _spans(tester).last.style?.color;
 
-List<AppIcon> _iconWidgets(WidgetTester tester) => tester
-    .widgetList<AppIcon>(
-      find.descendant(
-        of: find.byType(AppFilterChip),
-        matching: find.byType(AppIcon),
-      ),
-    )
-    .toList();
+List<AppIcon> _iconWidgets(WidgetTester tester) =>
+    tester
+        .widgetList<AppIcon>(
+          find.descendant(
+            of: find.byType(AppFilterChip),
+            matching: find.byType(AppIcon),
+          ),
+        )
+        .toList();
 
 List<IconData?> _icons(WidgetTester tester) =>
     _iconWidgets(tester).map((icon) => icon.icon).toList();

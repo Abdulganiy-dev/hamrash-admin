@@ -88,13 +88,13 @@ class ErrorLoggerService {
     try {
       final sanitizedParams = _sanitizeParams(customParams);
 
-      final errorMessage = context != null
-          ? '[$context] $error'
-          : error.toString();
+      final errorMessage =
+          context != null ? '[$context] $error' : error.toString();
 
-      final logMessage = sanitizedParams.isNotEmpty
-          ? '$errorMessage\nCustom params: $sanitizedParams'
-          : errorMessage;
+      final logMessage =
+          sanitizedParams.isNotEmpty
+              ? '$errorMessage\nCustom params: $sanitizedParams'
+              : errorMessage;
 
       developer.log(
         logMessage,
@@ -122,9 +122,10 @@ class ErrorLoggerService {
 
       final warningMessage = context != null ? '[$context] $message' : message;
 
-      final logMessage = sanitizedParams.isNotEmpty
-          ? '$warningMessage\nCustom params: $sanitizedParams'
-          : warningMessage;
+      final logMessage =
+          sanitizedParams.isNotEmpty
+              ? '$warningMessage\nCustom params: $sanitizedParams'
+              : warningMessage;
 
       developer.log(logMessage, name: 'ErrorLogger', level: 900);
     } catch (loggingError) {

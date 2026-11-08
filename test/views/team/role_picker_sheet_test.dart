@@ -21,11 +21,12 @@ Widget _host({
 Finder _row(OrganizationMemberRole role) =>
     find.byKey(ValueKey('role-row-${role.value}'));
 
-List<Container> _containers(WidgetTester tester, Finder row) => tester
-    .widgetList<Container>(
-      find.descendant(of: row, matching: find.byType(Container)),
-    )
-    .toList();
+List<Container> _containers(WidgetTester tester, Finder row) =>
+    tester
+        .widgetList<Container>(
+          find.descendant(of: row, matching: find.byType(Container)),
+        )
+        .toList();
 
 /// The radio: the only round container in a row.
 List<Container> _circles(WidgetTester tester, Finder row) =>
@@ -47,20 +48,22 @@ bool _paintsBackground(Widget widget) {
 }
 
 /// The white check inside the radio, scaled in only when picked.
-double _checkScale(WidgetTester tester, Finder row) => tester
-    .widget<AnimatedScale>(
-      find.descendant(of: row, matching: find.byType(AnimatedScale)),
-    )
-    .scale;
+double _checkScale(WidgetTester tester, Finder row) =>
+    tester
+        .widget<AnimatedScale>(
+          find.descendant(of: row, matching: find.byType(AnimatedScale)),
+        )
+        .scale;
 
 BoxDecoration _decoration(Container container) =>
     container.decoration! as BoxDecoration;
 
-AppText _title(WidgetTester tester, OrganizationMemberRole role) => tester
-    .widgetList<AppText>(
-      find.descendant(of: _row(role), matching: find.byType(AppText)),
-    )
-    .first;
+AppText _title(WidgetTester tester, OrganizationMemberRole role) =>
+    tester
+        .widgetList<AppText>(
+          find.descendant(of: _row(role), matching: find.byType(AppText)),
+        )
+        .first;
 
 Finder _icon(IconData icon, Finder row) => find.descendant(
   of: row,

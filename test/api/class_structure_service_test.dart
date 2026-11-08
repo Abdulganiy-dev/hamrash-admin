@@ -155,9 +155,10 @@ void main() {
 
     test('an arm with students placed in it stays', () async {
       final (service, _) = _service(
-        (request) => request.method == 'DELETE'
-            ? _refused('23503', request)
-            : _json([], request),
+        (request) =>
+            request.method == 'DELETE'
+                ? _refused('23503', request)
+                : _json([], request),
       );
 
       await expectLater(

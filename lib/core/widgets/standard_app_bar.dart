@@ -53,21 +53,22 @@ class StandardAppBar extends StatelessWidget {
         child: NavigationToolbar(
           // NavigationToolbar stretches leading to full height; keep it its
           // own size.
-          leading: leading == null
-              ? null
-              : Center(widthFactor: 1, child: leading),
+          leading:
+              leading == null ? null : Center(widthFactor: 1, child: leading),
           middle: title == null ? null : _title(),
-          trailing: hasActions
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (var i = 0; i < actions!.length; i++) ...[
-                      if (i > 0) const SizedBox(width: AppNavMetrics.buttonGap),
-                      actions![i],
+          trailing:
+              hasActions
+                  ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (var i = 0; i < actions!.length; i++) ...[
+                        if (i > 0)
+                          const SizedBox(width: AppNavMetrics.buttonGap),
+                        actions![i],
+                      ],
                     ],
-                  ],
-                )
-              : null,
+                  )
+                  : null,
           centerMiddle: centerTitle,
           middleSpacing: leading == null && !centerTitle ? 0 : 10,
         ),
@@ -77,15 +78,15 @@ class StandardAppBar extends StatelessWidget {
 
   Widget _title() {
     final align = centerTitle ? TextAlign.center : TextAlign.start;
-    final titleStyle = centerTitle
-        ? AppTypography.title.copyWith(fontWeight: FontWeight.w800)
-        : AppTypography.h4.copyWith(height: 22 / 18, letterSpacing: -0.18);
+    final titleStyle =
+        centerTitle
+            ? AppTypography.title.copyWith(fontWeight: FontWeight.w800)
+            : AppTypography.h4.copyWith(height: 22 / 18, letterSpacing: -0.18);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: centerTitle
-          ? CrossAxisAlignment.center
-          : CrossAxisAlignment.start,
+      crossAxisAlignment:
+          centerTitle ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
         AppText(
           title!,

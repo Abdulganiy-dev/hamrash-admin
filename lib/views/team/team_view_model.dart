@@ -40,13 +40,14 @@ class TeamViewModel extends BaseViewModel {
 
   int get allCount => staff.length;
 
-  int get onAppCount => staff
-      .where(
-        (person) =>
-            person.access == StaffAccess.onApp ||
-            person.access == StaffAccess.owner,
-      )
-      .length;
+  int get onAppCount =>
+      staff
+          .where(
+            (person) =>
+                person.access == StaffAccess.onApp ||
+                person.access == StaffAccess.owner,
+          )
+          .length;
 
   int get notOnAppCount => allCount - onAppCount;
 

@@ -13,20 +13,21 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: Builder(
-            builder: (context) => TextButton(
-              onPressed: () async {
-                result = await ChoiceListSheet.show<String>(
-                  context: context,
-                  title: 'Choose a state',
-                  subtitle: 'For Chinedu Obi',
-                  searchHint: 'Search states',
-                  items: items,
-                  labelBuilder: (value) => value,
-                  selected: selected,
-                );
-              },
-              child: const Text('Open'),
-            ),
+            builder:
+                (context) => TextButton(
+                  onPressed: () async {
+                    result = await ChoiceListSheet.show<String>(
+                      context: context,
+                      title: 'Choose a state',
+                      subtitle: 'For Chinedu Obi',
+                      searchHint: 'Search states',
+                      items: items,
+                      labelBuilder: (value) => value,
+                      selected: selected,
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
           ),
         ),
       ),
@@ -42,20 +43,21 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: Builder(
-            builder: (context) => TextButton(
-              onPressed: () async {
-                result = await ChoiceListSheet.show<String>(
-                  context: context,
-                  title: 'Choose a state',
-                  subtitle: 'For Chinedu Obi',
-                  searchHint: 'Search states',
-                  items: const ['Kano', 'Lagos', 'Oyo'],
-                  labelBuilder: (value) => value,
-                  selected: 'Lagos',
-                );
-              },
-              child: const Text('Open'),
-            ),
+            builder:
+                (context) => TextButton(
+                  onPressed: () async {
+                    result = await ChoiceListSheet.show<String>(
+                      context: context,
+                      title: 'Choose a state',
+                      subtitle: 'For Chinedu Obi',
+                      searchHint: 'Search states',
+                      items: const ['Kano', 'Lagos', 'Oyo'],
+                      labelBuilder: (value) => value,
+                      selected: 'Lagos',
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
           ),
         ),
       ),

@@ -144,9 +144,10 @@ class AppDateRangeField extends StatelessWidget {
     return AppPickerField(
       label: label,
       icon: AppIcons.calendar,
-      valueText: range == null
-          ? null
-          : (valueFormatter?.call(range) ?? AppDateFormat.range(range)),
+      valueText:
+          range == null
+              ? null
+              : (valueFormatter?.call(range) ?? AppDateFormat.range(range)),
       placeholder: placeholder,
       isOptional: isOptional,
       helperText:
@@ -216,14 +217,15 @@ class AppTimeField extends StatelessWidget {
     return AppPickerField(
       label: label,
       icon: AppIcons.clock,
-      valueText: time == null
-          ? null
-          : MaterialLocalizations.of(context).formatTimeOfDay(
-              time,
-              alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(
-                context,
+      valueText:
+          time == null
+              ? null
+              : MaterialLocalizations.of(context).formatTimeOfDay(
+                time,
+                alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(
+                  context,
+                ),
               ),
-            ),
       placeholder: placeholder,
       isOptional: isOptional,
       helperText: helperText,

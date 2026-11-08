@@ -29,75 +29,82 @@ class CreateSessionScreen extends StatelessWidget {
   Widget build(
     BuildContext context,
   ) => ViewModelBuilder<CreateSessionViewModel>.reactive(
-    viewModelBuilder: () => CreateSessionViewModel(
-      organizationId: organizationId,
-      startYear: startYear,
-    ),
-    builder: (context, model, _) => DefaultScaffold(
-      title: '${model.draft.name} session',
-      subtitle: "We've prefilled this for you",
-      showBackButton: true,
-
-      backgroundColor: AppPalette.linen,
-      body: SingleChildScrollView(
-        child: Builder(
-          builder: (context) {
-            return ScaffoldColumn(
-              children: [
-                SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
-
-                SessionSummaryCard(
-                  label: startYear == null ? 'Current session' : 'New session',
-                  model: model,
-                  onEdit: () => _editSession(context, model),
-                ),
-                const SizedBox(height: 8),
-                SessionTermsSection(
-                  model: model,
-                  onAddTerm: () => _editTerm(context, model, null),
-                  onOpenTerm: (index) => _editTerm(context, model, index),
-                ),
-                if (model.problem case final message?) ...[
-                  const SizedBox(height: 12),
-                  AppText(
-                    message,
-                    variant: AppTextVariant.body,
-                    colorType: AppTextColor.textBody,
-                    style: const TextStyle(color: LightColors.errorErrorText),
-                  ),
-                ],
-                if (model.saveError case final message?) ...[
-                  const SizedBox(height: 8),
-                  AppText(
-                    message,
-                    variant: AppTextVariant.body,
-                    style: const TextStyle(color: LightColors.errorErrorText),
-                  ),
-                ],
-              ],
-            );
-          },
+    viewModelBuilder:
+        () => CreateSessionViewModel(
+          organizationId: organizationId,
+          startYear: startYear,
         ),
-      ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: AppPrimaryButton(
-            size: AppButtonSize.large,
-            isLoading: model.saving,
-            loadingText: 'Saving calendar…',
-            isDisabled: model.problem != null,
-            onPressed: () async {
-              if (await model.save() && context.mounted) {
-                NavigationService.popScreen(true);
-              }
-            },
-            child: const Text('Save calendar'),
+    builder:
+        (context, model, _) => DefaultScaffold(
+          title: '${model.draft.name} session',
+          subtitle: "We've prefilled this for you",
+          showBackButton: true,
+
+          backgroundColor: AppPalette.linen,
+          body: SingleChildScrollView(
+            child: Builder(
+              builder: (context) {
+                return ScaffoldColumn(
+                  children: [
+                    SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
+
+                    SessionSummaryCard(
+                      label:
+                          startYear == null ? 'Current session' : 'New session',
+                      model: model,
+                      onEdit: () => _editSession(context, model),
+                    ),
+                    const SizedBox(height: 8),
+                    SessionTermsSection(
+                      model: model,
+                      onAddTerm: () => _editTerm(context, model, null),
+                      onOpenTerm: (index) => _editTerm(context, model, index),
+                    ),
+                    if (model.problem case final message?) ...[
+                      const SizedBox(height: 12),
+                      AppText(
+                        message,
+                        variant: AppTextVariant.body,
+                        colorType: AppTextColor.textBody,
+                        style: const TextStyle(
+                          color: LightColors.errorErrorText,
+                        ),
+                      ),
+                    ],
+                    if (model.saveError case final message?) ...[
+                      const SizedBox(height: 8),
+                      AppText(
+                        message,
+                        variant: AppTextVariant.body,
+                        style: const TextStyle(
+                          color: LightColors.errorErrorText,
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ),
+          bottomNavigationBar: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: AppPrimaryButton(
+                size: AppButtonSize.large,
+                isLoading: model.saving,
+                loadingText: 'Saving calendar…',
+                isDisabled: model.problem != null,
+                onPressed: () async {
+                  if (await model.save() && context.mounted) {
+                    NavigationService.popScreen(true);
+                  }
+                },
+                child: const Text('Save calendar'),
+              ),
+            ),
           ),
         ),
-      ),
-    ),
   );
 
   void _editSession(BuildContext context, CreateSessionViewModel model) {

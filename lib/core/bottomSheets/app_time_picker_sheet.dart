@@ -96,9 +96,10 @@ class _TimeSheetState extends State<_TimeSheet> {
                   initial: use24 ? _hour : (_hour % 12 + 11) % 12,
                   looping: true,
                   label: (i) => use24 ? '$i' : '${i + 1}',
-                  onChanged: (i) => setState(() {
-                    _hour = use24 ? i : (i + 1) % 12 + (isPm ? 12 : 0);
-                  }),
+                  onChanged:
+                      (i) => setState(() {
+                        _hour = use24 ? i : (i + 1) % 12 + (isPm ? 12 : 0);
+                      }),
                 ),
                 AppText(':', style: _Wheel.style(0)),
                 _Wheel(
@@ -112,12 +113,15 @@ class _TimeSheetState extends State<_TimeSheet> {
                   _Wheel(
                     count: 2,
                     initial: isPm ? 1 : 0,
-                    label: (i) => i == 0
-                        ? localizations.anteMeridiemAbbreviation
-                        : localizations.postMeridiemAbbreviation,
-                    onChanged: (i) => setState(() {
-                      _hour = _hour % 12 + (i == 1 ? 12 : 0);
-                    }),
+                    label:
+                        (i) =>
+                            i == 0
+                                ? localizations.anteMeridiemAbbreviation
+                                : localizations.postMeridiemAbbreviation,
+                    onChanged:
+                        (i) => setState(() {
+                          _hour = _hour % 12 + (i == 1 ? 12 : 0);
+                        }),
                   ),
               ],
             ),
@@ -214,12 +218,13 @@ class _WheelState extends State<_Wheel> {
           HapticHelpers.vibrate(VibrationType.selection);
           widget.onChanged(raw % widget.count);
         },
-        childDelegate: widget.looping
-            ? ListWheelChildBuilderDelegate(builder: (_, raw) => _item(raw))
-            : ListWheelChildBuilderDelegate(
-                childCount: widget.count,
-                builder: (_, raw) => _item(raw),
-              ),
+        childDelegate:
+            widget.looping
+                ? ListWheelChildBuilderDelegate(builder: (_, raw) => _item(raw))
+                : ListWheelChildBuilderDelegate(
+                  childCount: widget.count,
+                  builder: (_, raw) => _item(raw),
+                ),
       ),
     );
   }

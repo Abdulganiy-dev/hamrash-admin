@@ -119,8 +119,8 @@ class _MultiSelectBodyState<I> extends State<_MultiSelectBody<I>> {
       footer: AppPrimaryButton(
         useGradient: true,
         width: double.infinity,
-        onPressed: () =>
-            Navigator.of(context).pop(_selected.toList(growable: false)),
+        onPressed:
+            () => Navigator.of(context).pop(_selected.toList(growable: false)),
         child: AppText(
           count == 0
               ? widget.doneLabel

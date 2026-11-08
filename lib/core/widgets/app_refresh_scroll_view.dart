@@ -88,8 +88,8 @@ class AppRefreshScrollView extends StatelessWidget {
             onRefresh: _refresh,
             refreshTriggerPullDistance: triggerDistance,
             refreshIndicatorExtent: indicatorExtent,
-            builder: (context, mode, pulled, trigger, extent) =>
-                _RefreshIndicator(
+            builder:
+                (context, mode, pulled, trigger, extent) => _RefreshIndicator(
                   mode: mode,
                   pulled: pulled,
                   trigger: trigger,

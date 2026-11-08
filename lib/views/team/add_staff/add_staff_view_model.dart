@@ -26,7 +26,7 @@ class AddStaffViewModel extends BaseViewModel {
   final email = TextEditingController();
 
   StaffJobTitleOption? jobTitle;
-  StaffGender? gender;
+  StaffGender gender = StaffGender.male;
   String? residenceState;
   String? residenceLga;
   bool _saving = false;
@@ -45,13 +45,15 @@ class AddStaffViewModel extends BaseViewModel {
 
   /// Null while the field is empty; Save stays off until both names are
   /// filled, so neither field turns red before anyone has typed.
-  String? get firstNameProblem => hasFirstName
-      ? ValidationUtil.validateFirstName(firstName.text.trim())
-      : null;
+  String? get firstNameProblem =>
+      hasFirstName
+          ? ValidationUtil.validateFirstName(firstName.text.trim())
+          : null;
 
-  String? get lastNameProblem => hasLastName
-      ? ValidationUtil.validateLastName(lastName.text.trim())
-      : null;
+  String? get lastNameProblem =>
+      hasLastName
+          ? ValidationUtil.validateLastName(lastName.text.trim())
+          : null;
 
   /// The field shows the number after the +234 prefix. Accepts a typed
   /// leading 0 or 234 too, and stores the full international number.
@@ -177,7 +179,7 @@ class AddStaffViewModel extends BaseViewModel {
     address.clear();
     phone.clear();
     email.clear();
-    gender = null;
+    gender = StaffGender.male;
     residenceState = null;
     residenceLga = null;
     _error = null;

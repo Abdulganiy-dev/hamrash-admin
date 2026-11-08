@@ -84,9 +84,10 @@ class JoinViewModel extends BaseViewModel {
         _ => false,
       };
 
-  String? get codeError => phase == JoinPhase.wrongCode
-      ? "We couldn't find that code. Check it with whoever sent it to you."
-      : null;
+  String? get codeError =>
+      phase == JoinPhase.wrongCode
+          ? "We couldn't find that code. Check it with whoever sent it to you."
+          : null;
 
   bool get canContinue =>
       !busy && JoinCodeInputFormatter.format(code.text).length == 9;
@@ -139,9 +140,10 @@ class JoinViewModel extends BaseViewModel {
   void _applyCheck(ClaimCodeCheck result) {
     _checkedCode = result;
     if (result.schoolName != null) schoolName = result.schoolName!;
-    location = result.schoolAddress?.trim().isNotEmpty == true
-        ? result.schoolAddress!
-        : result.schoolState ?? '';
+    location =
+        result.schoolAddress?.trim().isNotEmpty == true
+            ? result.schoolAddress!
+            : result.schoolState ?? '';
     if (result.role != null) role = result.role!.displayName;
 
     switch (result.status) {
@@ -259,13 +261,14 @@ class JoinViewModel extends BaseViewModel {
         firstName: firstName,
         lastName: lastName,
         email: email.isEmpty ? null : email,
-        phone: phone.isEmpty
-            ? null
-            : phone.startsWith('+234')
-            ? phone
-            : phone.startsWith('234')
-            ? '+$phone'
-            : '+234${phone.substring(1)}',
+        phone:
+            phone.isEmpty
+                ? null
+                : phone.startsWith('+234')
+                ? phone
+                : phone.startsWith('234')
+                ? '+$phone'
+                : '+234${phone.substring(1)}',
       );
       if (isDisposed) return;
       if (member == null) {

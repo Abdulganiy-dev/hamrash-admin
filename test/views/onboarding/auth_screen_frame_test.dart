@@ -23,9 +23,8 @@ void main() {
 
     await tester.tap(find.byType(TextField));
     await tester.pump();
-    final fieldFocus = tester
-        .widget<EditableText>(find.byType(EditableText))
-        .focusNode;
+    final fieldFocus =
+        tester.widget<EditableText>(find.byType(EditableText)).focusNode;
     expect(fieldFocus.hasFocus, isTrue);
 
     tester.view.viewInsets = const FakeViewPadding(bottom: 300);

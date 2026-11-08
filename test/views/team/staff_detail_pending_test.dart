@@ -65,9 +65,7 @@ void main() {
 
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: StaffDetailScreen(school: _school, staffId: 's1'),
-      ),
+      MaterialApp(home: StaffDetailScreen(school: _school, staffId: 's1')),
     );
     await tester.pumpAndSettle();
   }

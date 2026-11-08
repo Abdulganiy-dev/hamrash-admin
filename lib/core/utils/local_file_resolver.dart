@@ -50,9 +50,8 @@ Future<String?> fileToDataUrl(String? path) async {
   if (resolved == null) return null;
   try {
     final bytes = await File(resolved).readAsBytes();
-    final mime = resolved.toLowerCase().endsWith('.png')
-        ? 'image/png'
-        : 'image/jpeg';
+    final mime =
+        resolved.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
     return 'data:$mime;base64,${base64Encode(bytes)}';
   } catch (_) {
     return null;

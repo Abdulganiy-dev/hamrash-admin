@@ -31,7 +31,8 @@ class UserPreference {
   /// The school opened last, so it opens again next time.
   String? get lastSchoolId => preferences.getString(_lastSchoolId);
 
-  Future<void> setLastSchoolId(String? id) => id == null
-      ? preferences.remove(_lastSchoolId)
-      : preferences.setString(_lastSchoolId, id);
+  Future<void> setLastSchoolId(String? id) =>
+      id == null
+          ? preferences.remove(_lastSchoolId)
+          : preferences.setString(_lastSchoolId, id);
 }

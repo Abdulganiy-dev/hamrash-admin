@@ -55,8 +55,8 @@ class RolePickerSheet extends StatefulWidget {
 class _RolePickerSheetState extends State<RolePickerSheet> {
   late OrganizationMemberRole _selected =
       widget.lockAdmin && widget.selected == OrganizationMemberRole.admin
-      ? OrganizationMemberRole.principal
-      : widget.selected;
+          ? OrganizationMemberRole.principal
+          : widget.selected;
 
   bool get _canUse =>
       !(widget.lockAdmin && _selected == OrganizationMemberRole.admin);
@@ -76,13 +76,14 @@ class _RolePickerSheetState extends State<RolePickerSheet> {
             role: role,
             selected: _selected == role,
             locked: widget.lockAdmin && role == OrganizationMemberRole.admin,
-            lockedLine: widget.lockAdmin && role == OrganizationMemberRole.admin
-                ? 'Only the owner or an admin can invite admins'
-                : null,
+            lockedLine:
+                widget.lockAdmin && role == OrganizationMemberRole.admin
+                    ? 'Only the owner or an admin can invite admins'
+                    : null,
             lockedCaption:
                 widget.lockAdmin && role == OrganizationMemberRole.admin
-                ? _viewerLine
-                : null,
+                    ? _viewerLine
+                    : null,
             onTap: () => setState(() => _selected = role),
           ),
         ],
@@ -144,20 +145,22 @@ class _RoleRow extends StatelessWidget {
                     role.teamLabel,
                     style: AppTypography.subtitle.copyWith(
                       fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
-                      color: enabled
-                          ? LightColors.textStrong
-                          : LightColors.textDisabled,
+                      color:
+                          enabled
+                              ? LightColors.textStrong
+                              : LightColors.textDisabled,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xxs),
                   AppText(
                     locked ? _lockedText : role.teamDescription,
                     style: AppTypography.caption.copyWith(
-                      color: enabled
-                          ? (selected
-                                ? LightColors.textBody
-                                : LightColors.textMuted)
-                          : LightColors.textMuted,
+                      color:
+                          enabled
+                              ? (selected
+                                  ? LightColors.textBody
+                                  : LightColors.textMuted)
+                              : LightColors.textMuted,
                     ),
                   ),
                   if (locked && lockedCaption != null) ...[
@@ -178,11 +181,7 @@ class _RoleRow extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
             ],
             if (locked)
-              const AppIcon(
-                AppIcons.lock,
-                size: 20,
-                color: AppPalette.stone400,
-              )
+              const AppIcon(AppIcons.lock, size: 20, color: AppPalette.stone400)
             else
               _RoleRadio(selected: selected),
           ],
@@ -228,9 +227,8 @@ class _RoleRadio extends StatelessWidget {
       shape: BoxShape.circle,
       color: selected ? LightColors.primaryPrimaryDefault : AppPalette.white,
       border: Border.all(
-        color: selected
-            ? LightColors.primaryPrimaryDefault
-            : AppPalette.stone300,
+        color:
+            selected ? LightColors.primaryPrimaryDefault : AppPalette.stone300,
         width: 1.5,
       ),
     ),
@@ -238,11 +236,7 @@ class _RoleRadio extends StatelessWidget {
       duration: _duration,
       curve: Curves.easeOutBack,
       scale: selected ? 1 : 0,
-      child: const AppIcon(
-        AppIcons.check,
-        size: 14,
-        color: AppPalette.white,
-      ),
+      child: const AppIcon(AppIcons.check, size: 14, color: AppPalette.white),
     ),
   );
 }

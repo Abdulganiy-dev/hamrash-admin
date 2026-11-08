@@ -123,18 +123,21 @@ class AppKeyboardBar extends StatelessWidget {
         _StepArrow(
           icon: AppIcons.chevronUp,
           label: 'Previous field',
-          onPressed: index > 0
-              ? onPrevious ??
-                    () => FocusManager.instance.primaryFocus?.previousFocus()
-              : null,
+          onPressed:
+              index > 0
+                  ? onPrevious ??
+                      () => FocusManager.instance.primaryFocus?.previousFocus()
+                  : null,
         ),
         const SizedBox(width: AppSpacing.xs),
         _StepArrow(
           icon: AppIcons.chevronDown,
           label: 'Next field',
-          onPressed: index < count - 1
-              ? onNext ?? () => FocusManager.instance.primaryFocus?.nextFocus()
-              : null,
+          onPressed:
+              index < count - 1
+                  ? onNext ??
+                      () => FocusManager.instance.primaryFocus?.nextFocus()
+                  : null,
         ),
         const SizedBox(width: 10),
         AppText(

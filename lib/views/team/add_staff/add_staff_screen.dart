@@ -57,13 +57,14 @@ class AddStaffScreen extends StatelessWidget {
               backgroundColor: AppPalette.linen,
               extendBody: keyboardOpen,
               body: _Form(model: model),
-              bottomNavigationBar: keyboardOpen
-                  ? const AppKeyboardBar()
-                  : _SaveBar(
-                      model: model,
-                      onSave: () => _save(model),
-                      onSaveAnother: () => _saveAnother(model),
-                    ),
+              bottomNavigationBar:
+                  keyboardOpen
+                      ? const AppKeyboardBar()
+                      : _SaveBar(
+                        model: model,
+                        onSave: () => _save(model),
+                        onSaveAnother: () => _saveAnother(model),
+                      ),
             ),
           );
         },
@@ -103,185 +104,188 @@ class _Form extends StatelessWidget {
     return SingleChildScrollView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: Builder(
-        builder: (context) => Padding(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            ScaffoldInsets.bodyTopInsetOf(context),
-            AppSpacing.md,
-            AppSpacing.lg + keyboard,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AppText(
-                'Who are you adding?',
-                style: AppTypography.heading(
-                  32,
-                  lineHeight: 40,
-                ).copyWith(letterSpacing: -0.64, color: LightColors.textStrong),
+        builder:
+            (context) => Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                ScaffoldInsets.bodyTopInsetOf(context),
+                AppSpacing.md,
+                AppSpacing.lg + keyboard,
               ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  AppLeadingPicture(
-                    leading: AppListLeading.initials(model.previewName),
-                    size: 52,
+                  AppText(
+                    'Who are you adding?',
+                    style: AppTypography.heading(32, lineHeight: 40).copyWith(
+                      letterSpacing: -0.64,
+                      color: LightColors.textStrong,
+                    ),
                   ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AppText(
-                          model.previewName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.heading(18, lineHeight: 24)
-                              .copyWith(
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      AppLeadingPicture(
+                        leading: AppListLeading.initials(model.previewName),
+                        size: 52,
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AppText(
+                              model.previewName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.heading(
+                                18,
+                                lineHeight: 24,
+                              ).copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: LightColors.textStrong,
                               ),
+                            ),
+                            const SizedBox(height: AppSpacing.xxs),
+                            AppText(
+                              model.previewSubtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.body.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: LightColors.textBody,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: AppSpacing.xxs),
-                        AppText(
-                          model.previewSubtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.body.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: LightColors.textBody,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              StaffFormSection(
-                title: 'Name',
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: AppSpacing.lg),
+                  StaffFormSection(
+                    title: 'Name',
                     children: [
-                      Expanded(
-                        child: AppTextField(
-                          label: 'First name',
-                          hintText: 'Chinedu',
-                          controller: model.firstName,
-                          errorText: model.firstNameProblem,
-                          textCapitalization: TextCapitalization.words,
-                          textInputAction: TextInputAction.next,
-                          onChanged: (_) => model.changed(),
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: AppTextField(
+                              label: 'First name',
+                              hintText: 'Chinedu',
+                              controller: model.firstName,
+                              errorText: model.firstNameProblem,
+                              textCapitalization: TextCapitalization.words,
+                              textInputAction: TextInputAction.next,
+                              onChanged: (_) => model.changed(),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.ms),
+                          Expanded(
+                            child: AppTextField(
+                              label: 'Last name',
+                              hintText: 'Obi',
+                              controller: model.lastName,
+                              errorText: model.lastNameProblem,
+                              textCapitalization: TextCapitalization.words,
+                              textInputAction: TextInputAction.next,
+                              onChanged: (_) => model.changed(),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: AppSpacing.ms),
-                      Expanded(
-                        child: AppTextField(
-                          label: 'Last name',
-                          hintText: 'Obi',
-                          controller: model.lastName,
-                          errorText: model.lastNameProblem,
-                          textCapitalization: TextCapitalization.words,
-                          textInputAction: TextInputAction.next,
-                          onChanged: (_) => model.changed(),
+                      AppTextField(
+                        label: 'Middle name',
+                        isOptional: true,
+                        optionalStyle: AppTypography.label.copyWith(
+                          fontSize: 12,
+                          height: 16 / 12,
+                          letterSpacing: 0,
+                          color: LightColors.textMuted,
                         ),
+                        hintText: 'Emeka',
+                        controller: model.middleName,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        onChanged: (_) => model.changed(),
                       ),
                     ],
                   ),
-                  AppTextField(
-                    label: 'Middle name',
-                    isOptional: true,
-                    optionalStyle: AppTypography.label.copyWith(
-                      fontSize: 12,
-                      height: 16 / 12,
-                      letterSpacing: 0,
-                      color: LightColors.textMuted,
-                    ),
-                    hintText: 'Emeka',
-                    controller: model.middleName,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.next,
-                    onChanged: (_) => model.changed(),
+                  const SizedBox(height: AppSpacing.lg),
+                  AppSelectField<StaffJobTitleOption>(
+                    label: 'Job title',
+                    value: model.jobTitle,
+                    items: StaffJobTitleOption.values,
+                    labelBuilder: (option) => option.label,
+                    onChanged: model.pickJobTitle,
                   ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AppSelectField<StaffJobTitleOption>(
-                label: 'Job title',
-                value: model.jobTitle,
-                items: StaffJobTitleOption.values,
-                labelBuilder: (option) => option.label,
-                onChanged: model.pickJobTitle,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              StaffFormSection(
-                title: 'About them',
-                optional: true,
-                children: [
-                  StaffGenderField(
-                    value: model.gender,
-                    onChanged: model.pickGender,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              StaffFormSection(
-                title: 'Where they live',
-                optional: true,
-                children: [
-                  StaffLocationFields(
-                    state: model.residenceState,
-                    lga: model.residenceLga,
-                    onStateChanged: model.pickState,
-                    onLgaChanged: model.pickLga,
-                  ),
-                  AppTextField(
-                    label: 'Home address',
-                    hintText: 'Street, area',
-                    controller: model.address,
-                    minLines: 2,
-                    maxLines: 2,
-                    textCapitalization: TextCapitalization.sentences,
-                    onChanged: (_) => model.changed(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              StaffFormSection(
-                title: 'Reach them',
-                optional: true,
-                children: [
-                  AppTextField(
-                    label: 'Phone',
-                    prefixText: '+234',
-                    hintText: '8030000000',
-                    controller: model.phone,
-                    errorText: model.phoneProblem,
-                    keyboardType: TextInputType.phone,
-                    textInputAction: TextInputAction.next,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(13),
+                  const SizedBox(height: AppSpacing.lg),
+                  StaffFormSection(
+                    title: 'About them',
+                    optional: false,
+                    children: [
+                      StaffGenderField(
+                        value: model.gender,
+                        onChanged: model.pickGender,
+                      ),
                     ],
-                    onChanged: (_) => model.changed(),
                   ),
-                  AppTextField(
-                    label: 'Email',
-                    isOptional: true,
-                    hintText: 'name@example.com',
-                    controller: model.email,
-                    errorText: model.emailProblem,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.done,
-                    onChanged: (_) => model.changed(),
+                  const SizedBox(height: AppSpacing.lg),
+                  StaffFormSection(
+                    title: 'Where they live',
+                    optional: true,
+                    children: [
+                      StaffLocationFields(
+                        state: model.residenceState,
+                        lga: model.residenceLga,
+                        onStateChanged: model.pickState,
+                        onLgaChanged: model.pickLga,
+                      ),
+                      AppTextField(
+                        label: 'Home address',
+                        hintText: 'Street, area',
+                        controller: model.address,
+                        minLines: 2,
+                        maxLines: 2,
+                        textCapitalization: TextCapitalization.sentences,
+                        onChanged: (_) => model.changed(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  StaffFormSection(
+                    title: 'Reach them',
+                    optional: true,
+                    children: [
+                      AppTextField(
+                        label: 'Phone',
+                        prefixText: '+234',
+                        hintText: '8030000000',
+                        controller: model.phone,
+                        errorText: model.phoneProblem,
+                        keyboardType: TextInputType.phone,
+                        textInputAction: TextInputAction.next,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(13),
+                        ],
+                        onChanged: (_) => model.changed(),
+                      ),
+                      AppTextField(
+                        label: 'Email',
+                        isOptional: true,
+                        hintText: 'name@example.com',
+                        controller: model.email,
+                        errorText: model.emailProblem,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.done,
+                        onChanged: (_) => model.changed(),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
+            ),
       ),
     );
   }
@@ -333,9 +337,10 @@ class _SaveBar extends StatelessWidget {
                 'Save and add another',
                 textAlign: TextAlign.center,
                 style: AppTypography.button.copyWith(
-                  color: model.canSave
-                      ? LightColors.primaryPrimaryText
-                      : LightColors.textDisabled,
+                  color:
+                      model.canSave
+                          ? LightColors.primaryPrimaryText
+                          : LightColors.textDisabled,
                 ),
               ),
             ),

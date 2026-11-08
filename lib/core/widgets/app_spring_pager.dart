@@ -88,12 +88,13 @@ class _AppSpringPagerState extends State<AppSpringPager>
           final width = constraints.maxWidth;
           return AnimatedBuilder(
             animation: _position,
-            builder: (context, _) => Stack(
-              children: [
-                for (var i = 0; i < widget.children.length; i++)
-                  _page(i, _position.value, width),
-              ],
-            ),
+            builder:
+                (context, _) => Stack(
+                  children: [
+                    for (var i = 0; i < widget.children.length; i++)
+                      _page(i, _position.value, width),
+                  ],
+                ),
           );
         },
       ),

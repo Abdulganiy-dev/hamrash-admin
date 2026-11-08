@@ -16,9 +16,8 @@ class ViewUtil {
     AppToast.show(
       message,
       type: type,
-      duration: durationSeconds == null
-          ? null
-          : Duration(seconds: durationSeconds),
+      duration:
+          durationSeconds == null ? null : Duration(seconds: durationSeconds),
     );
   }
 

@@ -51,9 +51,10 @@ class ClassSubjectsViewModel extends BaseViewModel {
       schoolClass == null || curriculum.sameInAllArms(schoolClass!);
 
   /// Arm tabs: none for one arm; "All arms" (null) first while they match.
-  List<String?> get tabs => arms.length < 2
-      ? const []
-      : [if (sameInAllArms) null, for (final arm in arms) arm.id];
+  List<String?> get tabs =>
+      arms.length < 2
+          ? const []
+          : [if (sameInAllArms) null, for (final arm in arms) arm.id];
 
   String tabLabel(String? id) =>
       id == null ? 'All arms' : arms.firstWhere((arm) => arm.id == id).name;
@@ -116,7 +117,7 @@ class ClassSubjectsViewModel extends BaseViewModel {
     return sameInAllArms
         ? 'Changes here apply to $targetLabel only.'
         : "${c.name}'s arms take different subjects. Changes here apply to "
-              '$targetLabel only.';
+            '$targetLabel only.';
   }
 
   /// Why [subject] can't come off the arms being edited, or null when it
@@ -139,9 +140,8 @@ class ClassSubjectsViewModel extends BaseViewModel {
     }
     for (final usage in inUse) {
       if (usage.choices > 0) {
-        final students = usage.choices == 1
-            ? '1 student'
-            : '${usage.choices} students';
+        final students =
+            usage.choices == 1 ? '1 student' : '${usage.choices} students';
         return '$students in ${labels[usage.armId]} chose ${subject.name}. '
             'Remove their choice first.';
       }
@@ -238,12 +238,13 @@ class ClassSubjectsViewModel extends BaseViewModel {
   ) async {
     String? id;
     final message = await _save(
-      () async => id = await _subjects.addSubject(
-        organizationId: school.id,
-        name: name.trim(),
-        code: _code(code),
-        sortOrder: curriculum.nextSortOrder,
-      ),
+      () async =>
+          id = await _subjects.addSubject(
+            organizationId: school.id,
+            name: name.trim(),
+            code: _code(code),
+            sortOrder: curriculum.nextSortOrder,
+          ),
       "Couldn't add the subject. Try again.",
     );
     return (id: id, error: message);

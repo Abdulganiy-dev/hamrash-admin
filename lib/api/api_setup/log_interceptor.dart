@@ -82,9 +82,8 @@ class APILogInterceptor extends InterceptorsWrapper {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (kDebugMode &&
         FlavorConfig.instance?.envConfig().enableVerboseLogs == true) {
-      final sanitizedResponse = err.response != null
-          ? _sanitizeData(err.response?.data)
-          : null;
+      final sanitizedResponse =
+          err.response != null ? _sanitizeData(err.response?.data) : null;
 
       ErrorLoggerService.logNetworkError(
         err,

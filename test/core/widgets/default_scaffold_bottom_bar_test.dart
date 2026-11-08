@@ -12,8 +12,8 @@ void main() {
       backgroundColor: AppPalette.linen,
       body: ListView.builder(
         itemCount: 100,
-        itemBuilder: (context, index) =>
-            SizedBox(height: 80, child: Text('Row $index')),
+        itemBuilder:
+            (context, index) => SizedBox(height: 80, child: Text('Row $index')),
       ),
       bottomNavigationBar: const SizedBox(
         height: 56,
@@ -57,11 +57,12 @@ void main() {
     expect(tester.widget<IgnorePointer>(fade).ignoring, isTrue);
     expect(tester.getSize(fade).height, 16);
 
-    final gradient = tester
-        .widget<DecoratedBox>(
-          find.descendant(of: fade, matching: find.byType(DecoratedBox)),
-        )
-        .decoration;
+    final gradient =
+        tester
+            .widget<DecoratedBox>(
+              find.descendant(of: fade, matching: find.byType(DecoratedBox)),
+            )
+            .decoration;
     final linear = (gradient as BoxDecoration).gradient! as LinearGradient;
     expect(linear.begin, Alignment.topCenter);
     expect(linear.end, Alignment.bottomCenter);

@@ -159,9 +159,10 @@ class AppBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: solid ? tone.strong : tone.mute,
         borderRadius: AppRadius.brBadge,
-        border: showBorder
-            ? Border.all(color: solid ? tone.strong : tone.thin)
-            : null,
+        border:
+            showBorder
+                ? Border.all(color: solid ? tone.strong : tone.thin)
+                : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -283,9 +284,10 @@ class _AppFilterChipState extends State<AppFilterChip> {
     // Selected chips never get a leading icon, so they keep the 16 side
     // padding. Only a suggestion leads with a +.
     final leading = widget.suggestion ? AppIcons.plus : null;
-    final trailing = widget.locked
-        ? AppIcons.lock
-        : (widget.onRemove != null ? AppIcons.x : null);
+    final trailing =
+        widget.locked
+            ? AppIcons.lock
+            : (widget.onRemove != null ? AppIcons.x : null);
 
     final textStyle = AppTypography.body.copyWith(
       fontSize: 14,
@@ -313,11 +315,12 @@ class _AppFilterChipState extends State<AppFilterChip> {
       overflow: TextOverflow.ellipsis,
     );
 
-    final Color? leadingColor = leading == null
-        ? null
-        : (leading == AppIcons.plus && !widget.selected
-              ? LightColors.textBody
-              : labelColor);
+    final Color? leadingColor =
+        leading == null
+            ? null
+            : (leading == AppIcons.plus && !widget.selected
+                ? LightColors.textBody
+                : labelColor);
 
     final chip = Container(
       height: 40,
@@ -362,9 +365,10 @@ class _AppFilterChipState extends State<AppFilterChip> {
       button: _interactive,
       selected: widget.selected,
       enabled: widget.enabled,
-      label: widget.count == null
-          ? widget.label
-          : '${widget.label}, ${widget.count}',
+      label:
+          widget.count == null
+              ? widget.label
+              : '${widget.label}, ${widget.count}',
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

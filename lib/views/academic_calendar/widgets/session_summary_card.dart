@@ -64,10 +64,7 @@ class SessionSummaryCard extends StatelessWidget {
         if (readOnly)
           const _Pill(icon: AppIcons.lock, label: 'Read-only')
         else if (onEdit != null)
-          BouncyButton(
-            onPressed: onEdit,
-            child: const _Pill(label: 'Edit'),
-          ),
+          BouncyButton(onPressed: onEdit, child: const _Pill(label: 'Edit')),
       ],
     ),
   );

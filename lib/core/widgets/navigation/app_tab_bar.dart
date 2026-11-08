@@ -52,9 +52,10 @@ class AppTabBar extends StatefulWidget {
 
 class _AppTabBarState extends State<AppTabBar>
     with SingleTickerProviderStateMixin {
-  double _initialPosition() => widget.items.isEmpty
-      ? 0
-      : widget.currentIndex.clamp(0, widget.items.length - 1).toDouble();
+  double _initialPosition() =>
+      widget.items.isEmpty
+          ? 0
+          : widget.currentIndex.clamp(0, widget.items.length - 1).toDouble();
 
   late final SingleMotionController _position = SingleMotionController(
     motion: const Motion.smoothSpring(),
@@ -67,12 +68,15 @@ class _AppTabBarState extends State<AppTabBar>
     super.didUpdateWidget(oldWidget);
     final target = _initialPosition();
     if (oldWidget.items.length != widget.items.length) {
-      _position.value = _position.value
-          .clamp(
-            0,
-            widget.items.isEmpty ? 0.0 : (widget.items.length - 1).toDouble(),
-          )
-          .toDouble();
+      _position.value =
+          _position.value
+              .clamp(
+                0,
+                widget.items.isEmpty
+                    ? 0.0
+                    : (widget.items.length - 1).toDouble(),
+              )
+              .toDouble();
     }
     if (oldWidget.currentIndex != widget.currentIndex ||
         oldWidget.items.length != widget.items.length) {
@@ -89,9 +93,8 @@ class _AppTabBarState extends State<AppTabBar>
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final active = dark
-        ? DarkColors.primaryPrimaryText
-        : LightColors.primaryPrimaryText;
+    final active =
+        dark ? DarkColors.primaryPrimaryText : LightColors.primaryPrimaryText;
     // Reserve a dot row so the icon stays still while the dot slides.
     const iconSize = 22.0;
     const gap = 5.0;
@@ -103,11 +106,12 @@ class _AppTabBarState extends State<AppTabBar>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final tabWidth = widget.items.isEmpty
-            ? AppNavMetrics.tabWidth
-            : (constraints.maxWidth / widget.items.length)
-                  .clamp(0.0, AppNavMetrics.tabWidth)
-                  .toDouble();
+        final tabWidth =
+            widget.items.isEmpty
+                ? AppNavMetrics.tabWidth
+                : (constraints.maxWidth / widget.items.length)
+                    .clamp(0.0, AppNavMetrics.tabWidth)
+                    .toDouble();
         return SizedBox(
           height: AppNavMetrics.tabBarHeight,
           child: Center(
@@ -132,26 +136,27 @@ class _AppTabBarState extends State<AppTabBar>
                   if (widget.items.isNotEmpty)
                     AnimatedBuilder(
                       animation: _position,
-                      builder: (context, _) => PositionedDirectional(
-                        start:
-                            _position.value * tabWidth +
-                            tabWidth / 2 -
-                            dotSize / 2,
-                        top: dotTop,
-                        child: IgnorePointer(
-                          child: ExcludeSemantics(
-                            child: SizedBox.square(
-                              dimension: dotSize,
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(
-                                  color: active,
-                                  shape: BoxShape.circle,
+                      builder:
+                          (context, _) => PositionedDirectional(
+                            start:
+                                _position.value * tabWidth +
+                                tabWidth / 2 -
+                                dotSize / 2,
+                            top: dotTop,
+                            child: IgnorePointer(
+                              child: ExcludeSemantics(
+                                child: SizedBox.square(
+                                  dimension: dotSize,
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      color: active,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
                     ),
                 ],
               ),
@@ -212,9 +217,8 @@ class _TabState extends State<_Tab> with SingleTickerProviderStateMixin {
     final selected = widget.selected;
     final dark = Theme.of(context).brightness == Brightness.dark;
     // The icon and shared dot use the same active tint.
-    final active = dark
-        ? DarkColors.primaryPrimaryText
-        : LightColors.primaryPrimaryText;
+    final active =
+        dark ? DarkColors.primaryPrimaryText : LightColors.primaryPrimaryText;
     final idle = dark ? DarkColors.textMuted : LightColors.textMuted;
     final color = selected ? active : idle;
     final showCount = item.count != null && item.count! > 0;
@@ -245,13 +249,14 @@ class _TabState extends State<_Tab> with SingleTickerProviderStateMixin {
                         TweenAnimationBuilder<Color?>(
                           tween: ColorTween(end: color),
                           duration: _colorDuration,
-                          builder: (context, value, _) => AppIcon(
-                            selected
-                                ? (item.activeIcon ?? item.icon)
-                                : item.icon,
-                            size: 22,
-                            color: value,
-                          ),
+                          builder:
+                              (context, value, _) => AppIcon(
+                                selected
+                                    ? (item.activeIcon ?? item.icon)
+                                    : item.icon,
+                                size: 22,
+                                color: value,
+                              ),
                         ),
                         if (showCount)
                           Positioned(

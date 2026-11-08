@@ -30,9 +30,10 @@ class SchoolAreaGrid extends StatelessWidget {
                 Expanded(child: _tile(areas[i])),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: i + 1 < areas.length
-                      ? _tile(areas[i + 1])
-                      : const SizedBox.shrink(),
+                  child:
+                      i + 1 < areas.length
+                          ? _tile(areas[i + 1])
+                          : const SizedBox.shrink(),
                 ),
               ],
             ),
@@ -63,39 +64,38 @@ class _AreaTile extends StatelessWidget {
   final bool viewOnly;
   final VoidCallback onTap;
 
-  static (IconData, Color, Color) _look(SchoolArea area) =>
-      switch (area) {
-        SchoolArea.academicCalendar => (
-          AppIcons.calendar,
-          LightColors.primaryPrimaryMute,
-          AppPalette.aubergine500,
-        ),
-        SchoolArea.classes => (
-          AppIcons.layers,
-          AppPalette.tangerineMute,
-          AppPalette.tangerineText,
-        ),
-        SchoolArea.subjects => (
-          AppIcons.bookOpen,
-          AppPalette.honeyMute,
-          AppPalette.honeyText,
-        ),
-        SchoolArea.grading => (
-          AppIcons.award,
-          AppPalette.chartreuseMute,
-          AppPalette.chartreuseText,
-        ),
-        SchoolArea.team => (
-          AppIcons.userPlus,
-          AppPalette.tealMute,
-          AppPalette.tealText,
-        ),
-        SchoolArea.schoolDetails => (
-          AppIcons.school,
-          AppPalette.stone100,
-          AppPalette.stone700,
-        ),
-      };
+  static (IconData, Color, Color) _look(SchoolArea area) => switch (area) {
+    SchoolArea.academicCalendar => (
+      AppIcons.calendar,
+      LightColors.primaryPrimaryMute,
+      AppPalette.aubergine500,
+    ),
+    SchoolArea.classes => (
+      AppIcons.layers,
+      AppPalette.tangerineMute,
+      AppPalette.tangerineText,
+    ),
+    SchoolArea.subjects => (
+      AppIcons.bookOpen,
+      AppPalette.honeyMute,
+      AppPalette.honeyText,
+    ),
+    SchoolArea.grading => (
+      AppIcons.award,
+      AppPalette.chartreuseMute,
+      AppPalette.chartreuseText,
+    ),
+    SchoolArea.team => (
+      AppIcons.userPlus,
+      AppPalette.tealMute,
+      AppPalette.tealText,
+    ),
+    SchoolArea.schoolDetails => (
+      AppIcons.school,
+      AppPalette.stone100,
+      AppPalette.stone700,
+    ),
+  };
 
   @override
   Widget build(BuildContext context) {

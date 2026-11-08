@@ -38,18 +38,18 @@ class AppFieldStyle {
 
   static Color restBorder(BuildContext context) =>
       Theme.of(context).brightness == Brightness.light
-      ? AppPalette.stone200
-      : AppPalette.stone700;
+          ? AppPalette.stone200
+          : AppPalette.stone700;
 
   static Color focusBorder(BuildContext context) =>
       Theme.of(context).brightness == Brightness.light
-      ? LightColors.primaryPrimaryDefault
-      : DarkColors.strokeColourStrokePrimary;
+          ? LightColors.primaryPrimaryDefault
+          : DarkColors.strokeColourStrokePrimary;
 
   static Color errorBorder(BuildContext context) =>
       Theme.of(context).brightness == Brightness.light
-      ? LightColors.errorErrorDefault
-      : DarkColors.errorErrorDefault;
+          ? LightColors.errorErrorDefault
+          : DarkColors.errorErrorDefault;
 
   static Color text(BuildContext context, {required bool enabled}) {
     final isLight = Theme.of(context).brightness == Brightness.light;
@@ -61,13 +61,13 @@ class AppFieldStyle {
 
   static Color placeholder(BuildContext context) =>
       Theme.of(context).brightness == Brightness.light
-      ? AppPalette.stone400
-      : AppPalette.stone500;
+          ? AppPalette.stone400
+          : AppPalette.stone500;
 
   static Color icon(BuildContext context) =>
       Theme.of(context).brightness == Brightness.light
-      ? AppPalette.stone500
-      : AppPalette.stone400;
+          ? AppPalette.stone500
+          : AppPalette.stone400;
 
   static OutlineInputBorder border(Color color, {double width = 1}) {
     return OutlineInputBorder(

@@ -86,10 +86,11 @@ class SchoolService {
         if (results[5] > 0) SetupStep.students,
       });
     },
-    log: (progress) => {
-      'organization_id': organization.id,
-      'done': progress.done.map((step) => step.name).toList(),
-    },
+    log:
+        (progress) => {
+          'organization_id': organization.id,
+          'done': progress.done.map((step) => step.name).toList(),
+        },
   );
 
   /// The caller's own staff record at this school, found through any of
@@ -171,11 +172,12 @@ class SchoolService {
         invited: rows.where((row) => row['status'] == 'invited').length,
       );
     },
-    log: (team) => {
-      'organization_id': organizationId,
-      'active': team.active,
-      'invited': team.invited,
-    },
+    log:
+        (team) => {
+          'organization_id': organizationId,
+          'active': team.active,
+          'invited': team.invited,
+        },
   );
 
   Future<T> _run<T>(

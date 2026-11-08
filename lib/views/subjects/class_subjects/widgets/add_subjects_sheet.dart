@@ -76,9 +76,8 @@ class _AddSubjectsSheetState extends State<AddSubjectsSheet> {
             (subject.code?.toLowerCase().contains(wanted) ?? false))
           subject,
     ];
-    final where = model.arm == null
-        ? model.schoolClass!.name
-        : model.targetLabel;
+    final where =
+        model.arm == null ? model.schoolClass!.name : model.targetLabel;
     final count = _picked.length;
 
     return AppSheet(
@@ -153,12 +152,13 @@ class _AddSubjectsSheetState extends State<AddSubjectsSheet> {
                     title: subject.name,
                     subtitle: subject.code,
                     value: _picked.contains(subject.id),
-                    onChanged: (value) => setState(() {
-                      value
-                          ? _picked.add(subject.id)
-                          : _picked.remove(subject.id);
-                      _error = null;
-                    }),
+                    onChanged:
+                        (value) => setState(() {
+                          value
+                              ? _picked.add(subject.id)
+                              : _picked.remove(subject.id);
+                          _error = null;
+                        }),
                   ),
               ],
             ),
@@ -166,9 +166,10 @@ class _AddSubjectsSheetState extends State<AddSubjectsSheet> {
           Align(
             alignment: Alignment.centerLeft,
             child: BouncyButton(
-              onPressed: () => Navigator.of(
-                context,
-              ).pop<AddSubjectsResult>((added: 0, create: true)),
+              onPressed:
+                  () => Navigator.of(
+                    context,
+                  ).pop<AddSubjectsResult>((added: 0, create: true)),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(

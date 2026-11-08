@@ -36,10 +36,7 @@ class AppChipRow extends StatelessWidget {
     physics: const BouncingScrollPhysics(
       parent: AlwaysScrollableScrollPhysics(),
     ),
-    padding: EdgeInsets.symmetric(
-      horizontal: inset,
-      vertical: AppSpacing.xs,
-    ),
+    padding: EdgeInsets.symmetric(horizontal: inset, vertical: AppSpacing.xs),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [

@@ -3,6 +3,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -24,7 +25,7 @@ class MoreAccountCard extends StatelessWidget {
           label: 'Help and support',
           onTap: () => AppToast.show('Help and support is coming soon'),
         ),
-        const Divider(height: 1, thickness: 1, color: AppPalette.stone100),
+        const AppDivider(indent: 0, endIndent: 0),
         _AccountRow(
           icon: AppIcons.logOut,
           label: 'Sign out',
@@ -51,9 +52,8 @@ class _AccountRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive
-        ? LightColors.errorErrorText
-        : AppPalette.stone600;
+    final color =
+        destructive ? LightColors.errorErrorText : AppPalette.stone600;
     return BouncyButton(
       onPressed: onTap,
       pressedScale: 0.98,

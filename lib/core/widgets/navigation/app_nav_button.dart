@@ -118,14 +118,18 @@ class AppNavPicture extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = picture != null
-        ? AppLeadingPicture(leading: picture!, size: AppNavMetrics.buttonSize)
-        : ClipOval(
-            child: SizedBox.square(
-              dimension: AppNavMetrics.buttonSize,
-              child: child,
-            ),
-          );
+    final content =
+        picture != null
+            ? AppLeadingPicture(
+              leading: picture!,
+              size: AppNavMetrics.buttonSize,
+            )
+            : ClipOval(
+              child: SizedBox.square(
+                dimension: AppNavMetrics.buttonSize,
+                child: child,
+              ),
+            );
 
     return BouncyButton(
       onPressed: onPressed,

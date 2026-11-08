@@ -96,18 +96,19 @@ class AppEmptyState extends StatelessWidget {
     final iconColor =
         this.iconColor ??
         (compact ? AppPalette.stone400 : LightColors.primaryPrimaryDefault);
-    final iconWidget = tiled
-        ? Container(
-            width: 72,
-            height: 72,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: iconTileColor,
-              borderRadius: BorderRadius.circular(AppRadius.dialog),
-            ),
-            child: AppIcon(icon, size: 32, color: iconColor),
-          )
-        : AppIcon(icon, size: compact ? 36 : 56, color: iconColor);
+    final iconWidget =
+        tiled
+            ? Container(
+              width: 72,
+              height: 72,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: iconTileColor,
+                borderRadius: BorderRadius.circular(AppRadius.dialog),
+              ),
+              child: AppIcon(icon, size: 32, color: iconColor),
+            )
+            : AppIcon(icon, size: compact ? 36 : 56, color: iconColor);
 
     return Padding(
       padding: EdgeInsets.only(top: topPadding),
@@ -123,11 +124,14 @@ class AppEmptyState extends StatelessWidget {
                 title,
                 textAlign: TextAlign.center,
                 colorType: AppTextColor.textStrong,
-                style: tiled
-                    ? AppTypography.h2
-                    : compact
-                    ? AppTypography.title.copyWith(fontWeight: FontWeight.w800)
-                    : AppTypography.h3,
+                style:
+                    tiled
+                        ? AppTypography.h2
+                        : compact
+                        ? AppTypography.title.copyWith(
+                          fontWeight: FontWeight.w800,
+                        )
+                        : AppTypography.h3,
               ),
               if (subtitle != null) ...[
                 SizedBox(height: tiled ? AppSpacing.ms : (compact ? 2 : 6)),
@@ -135,14 +139,15 @@ class AppEmptyState extends StatelessWidget {
                   subtitle!,
                   textAlign: TextAlign.center,
                   colorType: AppTextColor.textBody,
-                  style: tiled
-                      ? AppTypography.body
-                      : compact
-                      ? AppTypography.body
-                      : AppTypography.body.copyWith(
-                          fontSize: 15,
-                          height: 22 / 15,
-                        ),
+                  style:
+                      tiled
+                          ? AppTypography.body
+                          : compact
+                          ? AppTypography.body
+                          : AppTypography.body.copyWith(
+                            fontSize: 15,
+                            height: 22 / 15,
+                          ),
                 ),
               ],
               if (action != null) ...[
@@ -153,11 +158,11 @@ class AppEmptyState extends StatelessWidget {
                 compact
                     ? _TextLink(label: actionLabel!, onTap: onAction!)
                     : _Hug(
-                        child: AppPrimaryButton(
-                          onPressed: onAction,
-                          child: AppText(actionLabel!),
-                        ),
+                      child: AppPrimaryButton(
+                        onPressed: onAction,
+                        child: AppText(actionLabel!),
                       ),
+                    ),
               ],
               if (hasSecondary) ...[
                 const SizedBox(height: AppSpacing.xs),
@@ -293,11 +298,7 @@ class _TextLink extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              AppIcon(
-                icon,
-                size: 16,
-                color: LightColors.primaryPrimaryDefault,
-              ),
+              AppIcon(icon, size: 16, color: LightColors.primaryPrimaryDefault),
               const SizedBox(width: 6),
             ],
             AppText(

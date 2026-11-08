@@ -90,27 +90,28 @@ abstract final class AppToast {
     final hostKey = GlobalKey<_ToastHostState>();
     late final OverlayEntry entry;
     entry = OverlayEntry(
-      builder: (_) => _ToastHost(
-        key: hostKey,
-        message: message,
-        type: type,
-        icon: icon ?? type.icon,
-        actionLabel: actionLabel,
-        onAction: onAction,
-        duration:
-            duration ??
-            (actionLabel == null
-                ? const Duration(seconds: 4)
-                : const Duration(seconds: 6)),
-        onGone: () {
-          if (_entry == entry) {
-            _entry = null;
-            _hostKey = null;
-            _signature = null;
-          }
-          if (entry.mounted) entry.remove();
-        },
-      ),
+      builder:
+          (_) => _ToastHost(
+            key: hostKey,
+            message: message,
+            type: type,
+            icon: icon ?? type.icon,
+            actionLabel: actionLabel,
+            onAction: onAction,
+            duration:
+                duration ??
+                (actionLabel == null
+                    ? const Duration(seconds: 4)
+                    : const Duration(seconds: 6)),
+            onGone: () {
+              if (_entry == entry) {
+                _entry = null;
+                _hostKey = null;
+                _signature = null;
+              }
+              if (entry.mounted) entry.remove();
+            },
+          ),
     );
     _entry = entry;
     _hostKey = hostKey;
@@ -264,12 +265,13 @@ class _ToastHostState extends State<_ToastHost>
               icon: widget.icon,
               iconColor: widget.type.color,
               actionLabel: widget.actionLabel,
-              onAction: widget.onAction == null
-                  ? null
-                  : () {
-                      _dismiss();
-                      widget.onAction!();
-                    },
+              onAction:
+                  widget.onAction == null
+                      ? null
+                      : () {
+                        _dismiss();
+                        widget.onAction!();
+                      },
             ),
           ),
         ),

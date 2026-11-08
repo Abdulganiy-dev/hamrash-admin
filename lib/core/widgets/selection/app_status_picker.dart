@@ -68,12 +68,13 @@ class AppStatusPicker<T extends BadgeStatus> extends StatelessWidget {
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: onChanged == null || picked
-            ? null
-            : () {
-                HapticHelpers.vibrate(VibrationType.selection);
-                onChanged!(status);
-              },
+        onTap:
+            onChanged == null || picked
+                ? null
+                : () {
+                  HapticHelpers.vibrate(VibrationType.selection);
+                  onChanged!(status);
+                },
         child: AnimatedContainer(
           duration: _duration,
           width: 44,
@@ -87,11 +88,14 @@ class AppStatusPicker<T extends BadgeStatus> extends StatelessWidget {
             duration: _duration,
             style: AppTypography.body.copyWith(
               fontWeight: picked ? FontWeight.w800 : FontWeight.w700,
-              color: picked
-                  ? tone.strong
-                  // Brighter letters while nothing is picked, so the row
-                  // reads as "to do".
-                  : (value == null ? AppPalette.stone500 : AppPalette.stone400),
+              color:
+                  picked
+                      ? tone.strong
+                      // Brighter letters while nothing is picked, so the row
+                      // reads as "to do".
+                      : (value == null
+                          ? AppPalette.stone500
+                          : AppPalette.stone400),
             ),
             child: AppText(text),
           ),

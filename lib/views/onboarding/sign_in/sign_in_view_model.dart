@@ -44,11 +44,12 @@ class SignInViewModel extends BaseViewModel {
         redirect: Uri.parse('$scheme://callback'),
       );
 
-      final redirectUrl = _auth
-          .client
-          .signIn
-          ?.firstFactorVerification
-          ?.externalVerificationRedirectUrl;
+      final redirectUrl =
+          _auth
+              .client
+              .signIn
+              ?.firstFactorVerification
+              ?.externalVerificationRedirectUrl;
       if (redirectUrl == null) {
         if (clerkErrors.isNotEmpty) throw clerkErrors.first;
         throw StateError('Clerk returned no ${provider.label} sign-in URL');

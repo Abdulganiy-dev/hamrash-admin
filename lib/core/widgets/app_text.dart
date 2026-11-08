@@ -330,9 +330,8 @@ class AppText extends StatelessWidget {
       softWrap: softWrap,
       overflow: overflow,
       maxLines: maxLines,
-      textScaler: textScaleFactor == null
-          ? null
-          : TextScaler.linear(textScaleFactor!),
+      textScaler:
+          textScaleFactor == null ? null : TextScaler.linear(textScaleFactor!),
       textDirection: textDirection,
       locale: locale,
       textWidthBasis: textWidthBasis,

@@ -3,6 +3,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -77,7 +78,7 @@ class StaffAccessCard extends StatelessWidget {
               ),
             ),
           ),
-          Container(height: 1, color: _border),
+          const AppDivider(),
           BouncyButton(
             onPressed: onToggleAccess,
             pressedScale: 0.98,
@@ -96,9 +97,10 @@ class StaffAccessCard extends StatelessWidget {
                       fontSize: 16,
                       height: 22 / 16,
                       fontWeight: FontWeight.w700,
-                      color: isSuspended
-                          ? LightColors.successSuccessText
-                          : LightColors.warningWarningText,
+                      color:
+                          isSuspended
+                              ? LightColors.successSuccessText
+                              : LightColors.warningWarningText,
                     ),
                   ),
                   AppText(

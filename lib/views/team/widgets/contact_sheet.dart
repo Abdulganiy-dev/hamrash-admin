@@ -5,6 +5,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/utils/phone_format.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
@@ -28,8 +29,6 @@ class ContactSheet extends StatelessWidget {
   final String subtitle;
   final String? phone;
   final String? email;
-
-  static const _border = AppPalette.stone200;
 
   String? get _phone {
     final value = phone?.trim();
@@ -89,43 +88,46 @@ class ContactSheet extends StatelessWidget {
                 value: _phoneDisplay,
                 enabled: phone != null,
                 semanticLabel: _semanticLabel('Call', _phoneDisplay),
-                onTap: phone == null
-                    ? null
-                    : () => _launch(
-                        context,
-                        Uri(scheme: 'tel', path: _e164),
-                        "Couldn't open the phone app.",
-                      ),
+                onTap:
+                    phone == null
+                        ? null
+                        : () => _launch(
+                          context,
+                          Uri(scheme: 'tel', path: _e164),
+                          "Couldn't open the phone app.",
+                        ),
               ),
-              const _RowDivider(color: _border),
+              const AppDivider(indent: 70),
               _ContactRow(
                 icon: AppIcons.messageCircle,
                 title: 'Message',
                 value: _phoneDisplay,
                 enabled: phone != null,
                 semanticLabel: _semanticLabel('Message', _phoneDisplay),
-                onTap: phone == null
-                    ? null
-                    : () => _launch(
-                        context,
-                        Uri(scheme: 'sms', path: _e164),
-                        "Couldn't open Messages.",
-                      ),
+                onTap:
+                    phone == null
+                        ? null
+                        : () => _launch(
+                          context,
+                          Uri(scheme: 'sms', path: _e164),
+                          "Couldn't open Messages.",
+                        ),
               ),
-              const _RowDivider(color: _border),
+              const AppDivider(indent: 70),
               _ContactRow(
                 icon: AppIcons.mail,
                 title: 'Email',
                 value: _emailDisplay,
                 enabled: email != null,
                 semanticLabel: _semanticLabel('Email', _emailDisplay),
-                onTap: email == null
-                    ? null
-                    : () => _launch(
-                        context,
-                        Uri(scheme: 'mailto', path: email),
-                        "Couldn't open your email app.",
-                      ),
+                onTap:
+                    email == null
+                        ? null
+                        : () => _launch(
+                          context,
+                          Uri(scheme: 'mailto', path: email),
+                          "Couldn't open your email app.",
+                        ),
               ),
             ],
           ),
@@ -174,15 +176,12 @@ class _ContactRowState extends State<_ContactRow> {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = _enabled
-        ? LightColors.textStrong
-        : LightColors.textDisabled;
-    final valueColor = _enabled
-        ? LightColors.textBody
-        : LightColors.textDisabled;
-    final iconColor = _enabled
-        ? LightColors.primaryPrimaryDefault
-        : LightColors.textDisabled;
+    final foreground =
+        _enabled ? LightColors.textStrong : LightColors.textDisabled;
+    final valueColor =
+        _enabled ? LightColors.textBody : LightColors.textDisabled;
+    final iconColor =
+        _enabled ? LightColors.primaryPrimaryDefault : LightColors.textDisabled;
 
     return Semantics(
       button: true,
@@ -198,9 +197,8 @@ class _ContactRowState extends State<_ContactRow> {
         child: SizedBox(
           height: 64,
           child: ColoredBox(
-            color: _pressed && _enabled
-                ? AppPalette.stone100
-                : Colors.transparent,
+            color:
+                _pressed && _enabled ? AppPalette.stone100 : Colors.transparent,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: Row(
@@ -209,17 +207,14 @@ class _ContactRowState extends State<_ContactRow> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: _enabled
-                          ? LightColors.primaryPrimaryMute
-                          : AppPalette.stone100,
+                      color:
+                          _enabled
+                              ? LightColors.primaryPrimaryMute
+                              : AppPalette.stone100,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
-                      child: AppIcon(
-                        widget.icon,
-                        size: 20,
-                        color: iconColor,
-                      ),
+                      child: AppIcon(widget.icon, size: 20, color: iconColor),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -267,18 +262,4 @@ class _ContactRowState extends State<_ContactRow> {
       ),
     );
   }
-}
-
-/// The 1px divider between contact rows, inset past the tile so it reads as
-/// one grouped card.
-class _RowDivider extends StatelessWidget {
-  const _RowDivider({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 70),
-    child: Container(height: 1, color: color),
-  );
 }

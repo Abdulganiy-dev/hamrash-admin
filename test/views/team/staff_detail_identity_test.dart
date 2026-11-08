@@ -73,14 +73,15 @@ void main() {
     final decoration = avatarDecoration(tester);
     expect(decoration.color, LightColors.primaryPrimaryMute);
     expect(decoration.border, isNull);
-    final painter = tester
-        .widget<CustomPaint>(
-          find.descendant(
-            of: find.byKey(const ValueKey('identity-avatar')),
-            matching: find.byType(CustomPaint),
-          ),
-        )
-        .foregroundPainter;
+    final painter =
+        tester
+            .widget<CustomPaint>(
+              find.descendant(
+                of: find.byKey(const ValueKey('identity-avatar')),
+                matching: find.byType(CustomPaint),
+              ),
+            )
+            .foregroundPainter;
     expect(painter, isNotNull);
     expect(find.text('Invite pending'), findsOneWidget);
     expect(find.text('Teacher'), findsOneWidget);

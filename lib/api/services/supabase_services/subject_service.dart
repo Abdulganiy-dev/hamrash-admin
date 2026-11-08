@@ -28,10 +28,11 @@ class SubjectService {
           .order('name');
       return rows.map(Subject.fromJson).toList();
     },
-    log: (subjects) => {
-      'organization_id': organizationId,
-      'count': subjects.length,
-    },
+    log:
+        (subjects) => {
+          'organization_id': organizationId,
+          'count': subjects.length,
+        },
   );
 
   /// Which subject every arm at the school takes.
@@ -76,10 +77,8 @@ class SubjectService {
               params: {'p_organization_id': organizationId},
             )
             as int,
-    log: (subjects) => {
-      'organization_id': organizationId,
-      'subjects': subjects,
-    },
+    log:
+        (subjects) => {'organization_id': organizationId, 'subjects': subjects},
   );
 
   /// Adds a subject at the end of the report card. Returns its id.
@@ -91,16 +90,17 @@ class SubjectService {
   }) => _run(
     'addSubject',
     () async {
-      final row = await _supabase
-          .from('subjects')
-          .insert({
-            'organization_id': organizationId,
-            'name': name,
-            'code': code,
-            'sort_order': sortOrder,
-          })
-          .select('id')
-          .single();
+      final row =
+          await _supabase
+              .from('subjects')
+              .insert({
+                'organization_id': organizationId,
+                'name': name,
+                'code': code,
+                'sort_order': sortOrder,
+              })
+              .select('id')
+              .single();
       return row['id'] as String;
     },
     log: (id) => {'id': id},
@@ -226,9 +226,10 @@ class SubjectService {
     refuseIfNothingChanged(changed, leadersOnly);
   }
 
-  static String _taken(String name, String? code) => code == null
-      ? "There's already a subject called $name."
-      : "There's already a subject called $name, or with the code $code.";
+  static String _taken(String name, String? code) =>
+      code == null
+          ? "There's already a subject called $name."
+          : "There's already a subject called $name, or with the code $code.";
 
   Future<T> _run<T>(
     String name,

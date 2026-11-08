@@ -5,6 +5,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_text_field.dart';
@@ -42,50 +43,51 @@ class ConfirmSchoolScreen extends StatelessWidget {
   Widget build(
     BuildContext context,
   ) => ViewModelBuilder<ConfirmSchoolViewModel>.reactive(
-    viewModelBuilder: () => ConfirmSchoolViewModel(
-      organization: organization,
-      firstName: firstName,
-      onConfirmed: onConfirmed,
-    ),
-    builder: (context, model, _) => AuthScreenFrame(
-      showBackButton: onBack != null,
-      shouldShowKeyBoardDone: false,
-      onBack: onBack,
-      scrollContent: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AppText(
-            model.greeting.toUpperCase(),
-            style: AppTypography.overline.copyWith(
-              color: AppPalette.aubergine500,
-            ),
+    viewModelBuilder:
+        () => ConfirmSchoolViewModel(
+          organization: organization,
+          firstName: firstName,
+          onConfirmed: onConfirmed,
+        ),
+    builder:
+        (context, model, _) => AuthScreenFrame(
+          showBackButton: onBack != null,
+          shouldShowKeyBoardDone: false,
+          onBack: onBack,
+          scrollContent: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppText(
+                model.greeting.toUpperCase(),
+                style: AppTypography.overline.copyWith(
+                  color: AppPalette.aubergine500,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.ms),
+              const AppText('Check your school', variant: AppTextVariant.h1),
+              const SizedBox(height: AppSpacing.ms),
+              const AppText(
+                "Hamrash filled these in for you. Fix anything that's off; you can change it later.",
+                variant: AppTextVariant.bodyLarge,
+                colorType: AppTextColor.textBody,
+              ),
+              const SizedBox(height: 28),
+              _DetailsCard(model: model),
+            ],
           ),
-          const SizedBox(height: AppSpacing.ms),
-          const AppText('Check your school', variant: AppTextVariant.h1),
-          const SizedBox(height: AppSpacing.ms),
-          const AppText(
-            "Hamrash filled these in for you. Fix anything that's off; you can change it later.",
-            variant: AppTextVariant.bodyLarge,
-            colorType: AppTextColor.textBody,
+          footer: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppPrimaryButton(
+                size: AppButtonSize.large,
+                isLoading: model.busy,
+                isDisabled: model.uploadingLogo,
+                onPressed: model.confirm,
+                child: const AppText('Looks good'),
+              ),
+            ],
           ),
-          const SizedBox(height: 28),
-          _DetailsCard(model: model),
-        ],
-      ),
-      footer: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          
-          AppPrimaryButton(
-            size: AppButtonSize.large,
-            isLoading: model.busy,
-            isDisabled: model.uploadingLogo,
-            onPressed: model.confirm,
-            child: const AppText('Looks good'),
-          ),
-        ],
-      ),
-    ),
+        ),
   );
 }
 
@@ -156,25 +158,21 @@ class _DetailsCard extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1, thickness: 1, color: AppPalette.stone200),
+          const AppDivider(indent: 0, endIndent: 0),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.ml),
             child: Column(
               children: [
                 for (final (index, field) in rows.indexed) ...[
-                  if (index > 0)
-                    const Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: AppPalette.stone100,
-                    ),
+                  if (index > 0) const AppDivider(indent: 0, endIndent: 0),
                   _DetailRow(
                     label: field.label,
                     value: field.valueOf(org),
-                    helper: field == SchoolField.numberPrefix
-                        ? 'Admission numbers look like '
-                              '${org.numberPrefix}/${DateTime.now().year}/0001'
-                        : null,
+                    helper:
+                        field == SchoolField.numberPrefix
+                            ? 'Admission numbers look like '
+                                '${org.numberPrefix}/${DateTime.now().year}/0001'
+                            : null,
                     onEdit: () => _edit(context, field),
                   ),
                 ],
@@ -285,9 +283,10 @@ class _DetailRow extends StatelessWidget {
               AppText(
                 value.isEmpty ? 'Not added' : value,
                 variant: AppTextVariant.bodyLarge,
-                colorType: value.isEmpty
-                    ? AppTextColor.textMuted
-                    : AppTextColor.textStrong,
+                colorType:
+                    value.isEmpty
+                        ? AppTextColor.textMuted
+                        : AppTextColor.textStrong,
               ),
               if (helper != null) ...[
                 const SizedBox(height: 2),

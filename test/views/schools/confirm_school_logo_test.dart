@@ -36,9 +36,10 @@ class _Picker extends ImagePicker {
     int? imageQuality,
     CameraDevice preferredCameraDevice = CameraDevice.rear,
     bool requestFullMetadata = true,
-  }) async => picks
-      ? XFile.fromData(Uint8List.fromList([1, 2, 3]), name: 'pick.png')
-      : null;
+  }) async =>
+      picks
+          ? XFile.fromData(Uint8List.fromList([1, 2, 3]), name: 'pick.png')
+          : null;
 }
 
 class _Images implements ImageService {

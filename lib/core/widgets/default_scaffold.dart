@@ -292,9 +292,10 @@ class DefaultScaffold extends StatelessWidget {
         appBarContent = _buildStandardAppBar(context);
         break;
       case DefaultScaffoldAppBarType.custom:
-        appBarContent = customAppBar != null
-            ? SizedBox(height: appBarHeight, child: customAppBar)
-            : null;
+        appBarContent =
+            customAppBar != null
+                ? SizedBox(height: appBarHeight, child: customAppBar)
+                : null;
         break;
       case DefaultScaffoldAppBarType.none:
         appBarContent = null;
@@ -308,12 +309,12 @@ class DefaultScaffold extends StatelessWidget {
     // content never shows through it.
     final bottomBar =
         bottomNavigationBar == null || bottomNavigationBar is AppKeyboardBar
-        ? bottomNavigationBar
-        : _BottomBarSurface(
-            surface: surface,
-            showFade: bottomBarFade,
-            child: bottomNavigationBar!,
-          );
+            ? bottomNavigationBar
+            : _BottomBarSurface(
+              surface: surface,
+              showFade: bottomBarFade,
+              child: bottomNavigationBar!,
+            );
 
     return Scaffold(
       backgroundColor: surface,
