@@ -38,7 +38,7 @@ class StaffAccessCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            height: 48,
+            height: 56,
             child: BouncyButton(
               onPressed: onChangeRole,
               pressedScale: 0.98,
@@ -84,7 +84,7 @@ class StaffAccessCard extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.md,
-                vertical: 10,
+                vertical: AppSpacing.ms,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

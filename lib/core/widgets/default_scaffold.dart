@@ -2,6 +2,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/utils/extensions.dart';
+import 'package:hamrash_admin/core/widgets/app_keyboard_bar.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_button.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_metrics.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_tab_shell.dart';
@@ -129,6 +130,10 @@ class DefaultScaffold extends StatelessWidget {
   final bool busy;
   final String? subtitle;
 
+  /// Whether the built-in 16px fade sits above [bottomNavigationBar]. Turn
+  /// it off when the bar paints its own top hairline.
+  final bool bottomBarFade;
+
   /// Centre the title. Defaults to true when a back button shows (detail
   /// screens) and false otherwise (tab screens).
   final bool? centerTitle;
@@ -176,6 +181,7 @@ class DefaultScaffold extends StatelessWidget {
     this.bodyPadding,
     this.busy = false,
     this.centerTitle,
+    this.bottomBarFade = true,
   });
 
   /// Default function to pop the current route
@@ -297,6 +303,18 @@ class DefaultScaffold extends StatelessWidget {
 
     final hasAppBarLayer = appBarContent != null;
 
+    // The keyboard bar already floats over the page and manages its own
+    // space above the keyboard; every other bar gets an opaque surface so
+    // content never shows through it.
+    final bottomBar =
+        bottomNavigationBar == null || bottomNavigationBar is AppKeyboardBar
+        ? bottomNavigationBar
+        : _BottomBarSurface(
+            surface: surface,
+            showFade: bottomBarFade,
+            child: bottomNavigationBar!,
+          );
+
     return Scaffold(
       backgroundColor: surface,
       resizeToAvoidBottomInset: resizeToAvoidBottomInset,
@@ -331,11 +349,60 @@ class DefaultScaffold extends StatelessWidget {
         ),
       ),
       floatingActionButton: floatingActionButton,
-      bottomNavigationBar: bottomNavigationBar,
+      bottomNavigationBar: bottomBar,
       drawer: drawer,
       endDrawer: endDrawer,
     );
   }
+}
+
+/// Opaque surface behind a scaffold's bottom bar, with a short gradient above
+/// it so scrolling content dissolves into the bar instead of showing through
+/// or ending on a hard edge.
+class _BottomBarSurface extends StatelessWidget {
+  const _BottomBarSurface({
+    required this.surface,
+    required this.child,
+    this.showFade = true,
+  });
+
+  final Color surface;
+  final Widget child;
+  final bool showFade;
+
+  static const _fadeKey = ValueKey('bottom-bar-fade');
+  static const _surfaceKey = ValueKey('bottom-bar-surface');
+
+  @override
+  // passthrough: a plain Stack loosens the width it gives its children, so the
+  // bar shrank to its content and sat left-aligned. Passing the Scaffold's
+  // tight full-width constraints through keeps the bar edge to edge.
+  Widget build(BuildContext context) => Stack(
+    fit: StackFit.passthrough,
+    clipBehavior: Clip.none,
+    children: [
+      if (showFade)
+        Positioned(
+          left: 0,
+          right: 0,
+          top: -AppNavMetrics.bottomBarFadeExtent,
+          height: AppNavMetrics.bottomBarFadeExtent,
+          child: IgnorePointer(
+            key: _fadeKey,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [surface.withValues(alpha: 0), surface],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ColoredBox(key: _surfaceKey, color: surface, child: child),
+    ],
+  );
 }
 
 class ScaffoldColumn extends StatelessWidget {

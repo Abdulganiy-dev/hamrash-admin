@@ -38,13 +38,17 @@ class StaffDangerAction extends StatelessWidget {
                 AppSvgIcon(icon, size: 16, color: LightColors.errorErrorText),
                 const SizedBox(width: AppSpacing.sm),
               ],
-              AppText(
-                label,
-                style: AppTypography.body.copyWith(
-                  fontSize: 16,
-                  height: 24 / 16,
-                  fontWeight: FontWeight.w700,
-                  color: LightColors.errorErrorText,
+              Flexible(
+                child: AppText(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.body.copyWith(
+                    fontSize: 16,
+                    height: 24 / 16,
+                    fontWeight: FontWeight.w700,
+                    color: LightColors.errorErrorText,
+                  ),
                 ),
               ),
             ],

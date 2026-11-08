@@ -282,10 +282,12 @@ begin
   select s.phone || ' / ' || s.email into v_names from public.staff s where s.id = v_teacher_staff;
   v_log := v_log || E'\n' || case when v_names = '0807777777 / ada@school.test' then 'PASS' else 'FAIL' end || ' 12d2 parent sees teacher''s phone and email [' || coalesce(v_names, '') || ']';
   select count(*) into v_n from public.staff_private_details;
-  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 12e parent sees no staff private details [' || v_n || ']';
+  select count(*) into v_n from public.staff_private_details
+    where residence_state is not null or residence_lga is not null;
+  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 12e parent sees no staff private details or residence [' || v_n || ']';
   begin
     perform public.update_staff(v_teacher_staff, 'Ada', 'Changed', null, null, null, null, null, null, null, null,
-                                'teaching', 'active', null, null, null, null);
+                                'teaching', 'active', null, null, null, null, null, null);
     v_log := v_log || E'\nFAIL 12f parent edited a staff record';
   exception when others then
     v_log := v_log || E'\n' || case when sqlstate = '42501' then 'PASS' else 'FAIL' end || ' 12f parent cannot use update_staff [' || sqlerrm || ']';
@@ -317,27 +319,37 @@ begin
 
   -- 13e every staff member got a private details row automatically, and the owner can edit it
   select count(*) into v_n from public.staff_private_details where organization_id = v_org;
-  update public.staff_private_details set address = '1 School Road', date_of_birth = '1990-05-01' where staff_id = v_teacher_staff;
+  update public.staff_private_details
+    set address = '1 School Road', date_of_birth = '1990-05-01',
+        residence_state = 'Lagos', residence_lga = 'Ikeja'
+    where staff_id = v_teacher_staff;
   get diagnostics v_rows = row_count;
-  v_log := v_log || E'\n' || case when v_n = 3 and v_rows = 1 then 'PASS' else 'FAIL' end || ' 13e details row created with each staff member; owner can edit it [' || v_n || ']';
+  select d.residence_state || ' / ' || d.residence_lga into v_names
+    from public.staff_private_details d where d.staff_id = v_teacher_staff;
+  v_log := v_log || E'\n' || case when v_n = 3 and v_rows = 1 and v_names = 'Lagos / Ikeja'
+        then 'PASS' else 'FAIL' end || ' 13e details row created with each staff member; owner can edit residence [' || v_n || ' / ' || coalesce(v_names, '') || ']';
 
   -- 13f create_staff saves profile + private details in one call
   v_new_staff := public.create_staff(
     p_organization_id => v_org, p_first_name => 'Femi', p_last_name => 'Coach',
     p_job_title => 'PE Teacher', p_phone => '0806666666',
-    p_date_of_birth => '1988-02-14', p_address => '5 Stadium Road', p_employment_date => '2024-09-01');
+    p_date_of_birth => '1988-02-14', p_address => '5 Stadium Road', p_employment_date => '2024-09-01',
+    p_residence_state => 'Ogun', p_residence_lga => 'Abeokuta North');
   select count(*) into v_n from public.staff_private_details d
-    where d.staff_id = v_new_staff.id and d.date_of_birth = '1988-02-14' and d.address = '5 Stadium Road' and d.employment_date = '2024-09-01';
+    where d.staff_id = v_new_staff.id and d.date_of_birth = '1988-02-14' and d.address = '5 Stadium Road'
+      and d.employment_date = '2024-09-01' and d.residence_state = 'Ogun' and d.residence_lga = 'Abeokuta North';
   v_log := v_log || E'\n' || case when v_n = 1 and v_new_staff.phone = '0806666666' and v_new_staff.staff_number like 'SC_/STF/%'
         then 'PASS' else 'FAIL' end || ' 13f create_staff saves profile and private details together [' || v_new_staff.staff_number || ']';
 
   -- 13g update_staff changes both tables in one call; blank staff number keeps the old one
   perform public.update_staff(v_new_staff.id, 'Femi', 'Coach', null, '', null, '0801231234', 'femi@school.test', null, null,
-                              'Head of Sports', 'teaching', 'active', '1988-02-14', '9 New Road', 'Lagos', '2024-09-01');
+                              'Head of Sports', 'teaching', 'active', '1988-02-14', '9 New Road', 'Lagos', '2024-09-01',
+                              'Oyo', 'Ibadan North');
   select count(*) into v_n
     from public.staff s join public.staff_private_details d on d.staff_id = s.id
     where s.id = v_new_staff.id and s.phone = '0801231234' and s.job_title = 'Head of Sports'
-      and s.staff_number = v_new_staff.staff_number and d.address = '9 New Road' and d.state_of_origin = 'Lagos';
+      and s.staff_number = v_new_staff.staff_number and d.address = '9 New Road' and d.state_of_origin = 'Lagos'
+      and d.residence_state = 'Oyo' and d.residence_lga = 'Ibadan North';
   v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 13g update_staff saves both tables, keeps staff number';
 
   -- 13i update_student changes both tables in one call; blank admission number keeps the old one

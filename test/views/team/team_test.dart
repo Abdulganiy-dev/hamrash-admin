@@ -134,6 +134,11 @@ class _Team extends TeamService {
   String? createdPhone;
   String? createdJobTitle;
   String? createdStaffType;
+  String? createdMiddleName;
+  StaffGender? createdGender;
+  String? createdAddress;
+  String? createdResidenceState;
+  String? createdResidenceLga;
 
   @override
   Future<List<StaffMember>> listStaff(String organizationId) async => people;
@@ -151,11 +156,21 @@ class _Team extends TeamService {
     required String? email,
     required String jobTitle,
     required String staffType,
+    String? middleName,
+    StaffGender? gender,
+    String? address,
+    String? residenceState,
+    String? residenceLga,
   }) async {
     if (failWith case final error?) throw error;
     createdPhone = phone;
     createdJobTitle = jobTitle;
     createdStaffType = staffType;
+    createdMiddleName = middleName;
+    createdGender = gender;
+    createdAddress = address;
+    createdResidenceState = residenceState;
+    createdResidenceLga = residenceLga;
     final staff = _staff(
       id: 'new',
       firstName: firstName,
@@ -300,7 +315,6 @@ void main() {
         school: _school(role: role, memberIds: memberIds),
         staffId: staff.id,
         team: service,
-        now: () => _now,
       );
       await model.load();
       return (model, service);
@@ -313,7 +327,7 @@ void main() {
       );
 
       expect(model.access, StaffAccess.notOnApp);
-      expect(model.identitySubtitle, 'Teacher · Staff app');
+      expect(model.identityMeta, 'Teacher');
       expect(model.canInvite, isTrue);
       expect(model.canManageAccess, isFalse);
       expect(model.canRemove, isFalse);
@@ -329,9 +343,8 @@ void main() {
         );
 
         expect(model.access, StaffAccess.invitePending);
-        expect(model.identitySubtitle, 'Bursar · Admin app');
+        expect(model.identityMeta, 'Bursar');
         expect(model.displayCode, 'K7M2-QX9P');
-        expect(model.invitedLine, 'Invited 5 Nov');
         expect(model.canCancelInvite, isTrue);
         expect(
           model.currentShareMessage,
@@ -345,7 +358,8 @@ void main() {
       final (model, _) = await loaded(_admin, memberIds: ['m-owner']);
 
       expect(model.access, StaffAccess.onApp);
-      expect(model.identitySubtitle, 'Admin · joined 3 Sep');
+      expect(model.identityMeta, 'Admin');
+      expect(model.joinedCaption, 'Joined 3 Sep');
       expect(model.canManageAccess, isTrue);
       expect(model.canRemove, isTrue);
       expect(model.canInvite, isFalse);
@@ -355,7 +369,7 @@ void main() {
       final (model, _) = await loaded(_owner, memberIds: ['m-owner']);
 
       expect(model.access, StaffAccess.owner);
-      expect(model.identitySubtitle, 'Owner · you');
+      expect(model.identityMeta, 'Owner');
       expect(model.canManageAccess, isFalse);
       expect(model.canRemove, isFalse);
       expect(model.isOwnerRow, isTrue);
@@ -488,6 +502,37 @@ void main() {
       expect(service.createdStaffType, 'non_teaching');
     });
 
+    test('the new optional fields go into the payload', () async {
+      final (model, service) = await form();
+      model.firstName.text = 'Chinedu';
+      model.lastName.text = 'Obi';
+      model.middleName.text = 'Emeka';
+      model.pickJobTitle(StaffJobTitleOption.teacher);
+      model.pickGender(StaffGender.male);
+      model.pickState('Lagos');
+      model.pickLga('Ikeja');
+      model.address.text = '12 Allen Avenue';
+
+      await model.save();
+
+      expect(service.createdMiddleName, 'Emeka');
+      expect(service.createdGender, StaffGender.male);
+      expect(service.createdAddress, '12 Allen Avenue');
+      expect(service.createdResidenceState, 'Lagos');
+      expect(service.createdResidenceLga, 'Ikeja');
+    });
+
+    test('a new state clears the LGA', () async {
+      final (model, _) = await form();
+      model.pickState('Lagos');
+      model.pickLga('Ikeja');
+      expect(model.residenceLga, 'Ikeja');
+
+      model.pickState('Oyo');
+      expect(model.residenceState, 'Oyo');
+      expect(model.residenceLga, isNull);
+    });
+
     test('a teacher is stored as teaching staff', () async {
       final (model, service) = await form();
       model.firstName.text = 'Chinedu';
@@ -512,6 +557,11 @@ void main() {
       expect(model.jobTitle, StaffJobTitleOption.bursar);
       expect(model.firstName.text, isEmpty);
       expect(model.lastName.text, isEmpty);
+      expect(model.middleName.text, isEmpty);
+      expect(model.address.text, isEmpty);
+      expect(model.gender, isNull);
+      expect(model.residenceState, isNull);
+      expect(model.residenceLga, isNull);
       expect(model.addedAny, isTrue);
       expect(model.canSave, isFalse);
     });

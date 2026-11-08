@@ -186,7 +186,7 @@ void main() {
     final row = find
         .ancestor(
           of: find.text('Amina Bello'),
-          matching: find.byType(AnimatedContainer),
+          matching: find.byType(Container),
         )
         .first;
     // 12 above and below the 44 avatar, before the 1px divider.

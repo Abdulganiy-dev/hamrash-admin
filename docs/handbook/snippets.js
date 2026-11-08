@@ -276,13 +276,13 @@ window.SNIPPETS = {
   },
   "create_staff": {
    "calls": [],
-   "doc": "Add staff. Leave p_staff_number blank to have it generated.",
-   "file": "supabase/migrations/20261011130000_05_split_staff_private_details.sql",
+   "doc": "",
+   "file": "supabase/migrations/20261108120000_29_staff_residence_state_lga.sql",
    "lines": [
-    118,
-    161
+    49,
+    96
    ],
-   "migration": 5,
+   "migration": 29,
    "params": [
     {
      "default": null,
@@ -368,11 +368,21 @@ window.SNIPPETS = {
      "default": "null",
      "name": "p_employment_date",
      "type": "date"
+    },
+    {
+     "default": "null",
+     "name": "p_residence_state",
+     "type": "text"
+    },
+    {
+     "default": "null",
+     "name": "p_residence_lga",
+     "type": "text"
     }
    ],
    "returns": "public.staff",
    "security": "invoker",
-   "sql": "create function public.create_staff(\n  p_organization_id uuid,\n  p_first_name      text,\n  p_last_name       text,\n  p_middle_name     text                default null,\n  p_staff_number    text                default null,\n  p_gender          public.gender       default null,\n  p_phone           text                default null,\n  p_email           text                default null,\n  p_photo_id        text                default null,\n  p_photo_url       text                default null,\n  p_job_title       text                default null,\n  p_staff_type      public.staff_type   default 'teaching',\n  p_status          public.staff_status default 'active',\n  p_date_of_birth   date                default null,\n  p_address         text                default null,\n  p_state_of_origin text                default null,\n  p_employment_date date                default null\n)\nreturns public.staff\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_staff public.staff;\nbegin\n  insert into public.staff (organization_id, staff_number, first_name, middle_name, last_name, gender,\n                            phone, email, photo_id, photo_url, job_title, staff_type, status)\n  values (p_organization_id, p_staff_number, p_first_name, p_middle_name, p_last_name, p_gender,\n          p_phone, p_email, p_photo_id, p_photo_url, p_job_title, p_staff_type, p_status)\n  returning * into v_staff;\n\n  -- the details row was just created by the staff_create_private_details trigger\n  update public.staff_private_details d\n  set date_of_birth   = p_date_of_birth,\n      address         = p_address,\n      state_of_origin = p_state_of_origin,\n      employment_date = p_employment_date\n  where d.staff_id = v_staff.id;\n\n  return v_staff;\nend;\n$$;"
+   "sql": "create function public.create_staff(\n  p_organization_id uuid,\n  p_first_name      text,\n  p_last_name       text,\n  p_middle_name     text                default null,\n  p_staff_number    text                default null,\n  p_gender          public.gender       default null,\n  p_phone           text                default null,\n  p_email           text                default null,\n  p_photo_id        text                default null,\n  p_photo_url       text                default null,\n  p_job_title       text                default null,\n  p_staff_type      public.staff_type   default 'teaching',\n  p_status          public.staff_status default 'active',\n  p_date_of_birth   date                default null,\n  p_address         text                default null,\n  p_state_of_origin text                default null,\n  p_employment_date date                default null,\n  p_residence_state text                default null,\n  p_residence_lga   text                default null\n)\nreturns public.staff\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_staff public.staff;\nbegin\n  insert into public.staff (organization_id, staff_number, first_name, middle_name, last_name, gender,\n                            phone, email, photo_id, photo_url, job_title, staff_type, status)\n  values (p_organization_id, p_staff_number, p_first_name, p_middle_name, p_last_name, p_gender,\n          p_phone, p_email, p_photo_id, p_photo_url, p_job_title, p_staff_type, p_status)\n  returning * into v_staff;\n\n  -- the details row was just created by the staff_create_private_details trigger\n  update public.staff_private_details d\n  set date_of_birth   = p_date_of_birth,\n      address         = p_address,\n      state_of_origin = p_state_of_origin,\n      employment_date = p_employment_date,\n      residence_state = p_residence_state,\n      residence_lga   = p_residence_lga\n  where d.staff_id = v_staff.id;\n\n  return v_staff;\nend;\n$$;"
   },
   "create_standard_grading": {
    "calls": [
@@ -1055,13 +1065,13 @@ window.SNIPPETS = {
   },
   "update_staff": {
    "calls": [],
-   "doc": "Edit staff. Every argument is required: the form sends the whole record, and null clears a field. A blank staff number keeps the current one.",
-   "file": "supabase/migrations/20261011130000_05_split_staff_private_details.sql",
+   "doc": "",
+   "file": "supabase/migrations/20261108120000_29_staff_residence_state_lga.sql",
    "lines": [
-    165,
-    221
+    105,
+    165
    ],
-   "migration": 5,
+   "migration": 29,
    "params": [
     {
      "default": null,
@@ -1147,11 +1157,21 @@ window.SNIPPETS = {
      "default": null,
      "name": "p_employment_date",
      "type": "date"
+    },
+    {
+     "default": null,
+     "name": "p_residence_state",
+     "type": "text"
+    },
+    {
+     "default": null,
+     "name": "p_residence_lga",
+     "type": "text"
     }
    ],
    "returns": "public.staff",
    "security": "invoker",
-   "sql": "create function public.update_staff(\n  p_staff_id        uuid,\n  p_first_name      text,\n  p_last_name       text,\n  p_middle_name     text,\n  p_staff_number    text,\n  p_gender          public.gender,\n  p_phone           text,\n  p_email           text,\n  p_photo_id        text,\n  p_photo_url       text,\n  p_job_title       text,\n  p_staff_type      public.staff_type,\n  p_status          public.staff_status,\n  p_date_of_birth   date,\n  p_address         text,\n  p_state_of_origin text,\n  p_employment_date date\n)\nreturns public.staff\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_staff public.staff;\nbegin\n  update public.staff s\n  set staff_number = coalesce(nullif(trim(p_staff_number), ''), s.staff_number),\n      first_name   = p_first_name,\n      middle_name  = p_middle_name,\n      last_name    = p_last_name,\n      gender       = p_gender,\n      phone        = p_phone,\n      email        = p_email,\n      photo_id     = p_photo_id,\n      photo_url    = p_photo_url,\n      job_title    = p_job_title,\n      staff_type   = p_staff_type,\n      status       = p_status\n  where s.id = p_staff_id\n  returning s.* into v_staff;\n\n  if not found then\n    raise exception 'Staff record not found, or you can''t edit it' using errcode = '42501';\n  end if;\n\n  update public.staff_private_details d\n  set date_of_birth   = p_date_of_birth,\n      address         = p_address,\n      state_of_origin = p_state_of_origin,\n      employment_date = p_employment_date\n  where d.staff_id = p_staff_id;\n\n  return v_staff;\nend;\n$$;"
+   "sql": "create function public.update_staff(\n  p_staff_id        uuid,\n  p_first_name      text,\n  p_last_name       text,\n  p_middle_name     text,\n  p_staff_number    text,\n  p_gender          public.gender,\n  p_phone           text,\n  p_email           text,\n  p_photo_id        text,\n  p_photo_url       text,\n  p_job_title       text,\n  p_staff_type      public.staff_type,\n  p_status          public.staff_status,\n  p_date_of_birth   date,\n  p_address         text,\n  p_state_of_origin text,\n  p_employment_date date,\n  p_residence_state text,\n  p_residence_lga   text\n)\nreturns public.staff\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_staff public.staff;\nbegin\n  update public.staff s\n  set staff_number = coalesce(nullif(trim(p_staff_number), ''), s.staff_number),\n      first_name   = p_first_name,\n      middle_name  = p_middle_name,\n      last_name    = p_last_name,\n      gender       = p_gender,\n      phone        = p_phone,\n      email        = p_email,\n      photo_id     = p_photo_id,\n      photo_url    = p_photo_url,\n      job_title    = p_job_title,\n      staff_type   = p_staff_type,\n      status       = p_status\n  where s.id = p_staff_id\n  returning s.* into v_staff;\n\n  if not found then\n    raise exception 'Staff record not found, or you can''t edit it' using errcode = '42501';\n  end if;\n\n  update public.staff_private_details d\n  set date_of_birth   = p_date_of_birth,\n      address         = p_address,\n      state_of_origin = p_state_of_origin,\n      employment_date = p_employment_date,\n      residence_state = p_residence_state,\n      residence_lga   = p_residence_lga\n  where d.staff_id = p_staff_id;\n\n  return v_staff;\nend;\n$$;"
   },
   "update_student": {
    "calls": [],
@@ -5354,6 +5374,16 @@ window.SNIPPETS = {
     {
      "name": "updated_at",
      "type": "timestamptz not null default now()"
+    },
+    {
+     "added": 29,
+     "name": "residence_state",
+     "type": "text"
+    },
+    {
+     "added": 29,
+     "name": "residence_lga",
+     "type": "text"
     }
    ],
    "constraints": [

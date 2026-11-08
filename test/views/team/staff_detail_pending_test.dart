@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
-import 'package:hamrash_admin/core/widgets/app_invite_code.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
-import 'package:hamrash_admin/views/team/widgets/quick_action_pill.dart';
+import 'package:hamrash_admin/views/team/widgets/invite_ready_sheet.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_detail_identity.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_details_card.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_invite_card.dart';
 
-/// Only `getStaff` is used by the page; everything else would be a real
-/// database call, which these tests never make.
 class _FakeTeam implements TeamService {
   _FakeTeam(this.member);
 
@@ -65,70 +63,56 @@ void main() {
     addTearDown(locator.reset);
   });
 
-  testWidgets('the pending invite sits straight on the page', (tester) async {
+  Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: StaffDetailScreen(school: _school, staffId: 's1'),
       ),
     );
     await tester.pumpAndSettle();
+  }
 
-    // Header row: the tracked label and when it was invited.
-    expect(find.text('INVITE CODE · TEACHER'), findsOneWidget);
-    expect(find.text('Invited today'), findsOneWidget);
+  testWidgets('the pending invite is one card, not a big code block', (
+    tester,
+  ) async {
+    await pump(tester);
 
-    // The identity row names the state and where the login has got to.
     expect(find.text('Invite pending'), findsOneWidget);
-    expect(find.text('Teacher · Staff app'), findsOneWidget);
-
-    // The code and its helper.
-    expect(find.text('K7M2'), findsOneWidget);
-    expect(find.text('-'), findsOneWidget);
-    expect(find.text('QX9P'), findsOneWidget);
-    expect(find.text('Tap or long-press to copy'), findsOneWidget);
-
-    // The status line and the share button.
     expect(
-      find.text(
-        'Waiting for Tunde to sign in and enter it. Nothing is emailed, and '
-        "the code doesn't expire.",
+      find.descendant(
+        of: find.byType(StaffDetailIdentity),
+        matching: find.text('Teacher'),
       ),
       findsOneWidget,
     );
-    expect(find.text('Share code'), findsOneWidget);
 
-    // Details drops Record for the invite's Role, which can be changed.
-    expect(find.text('Details'), findsOneWidget);
+    expect(find.byType(StaffInviteCard), findsOneWidget);
+    expect(find.text('INVITE CODE'), findsOneWidget);
+    expect(find.text('K7M2-QX9P'), findsOneWidget);
+    expect(find.text('EXPIRES'), findsOneWidget);
+    expect(find.text('Never'), findsOneWidget);
+    expect(find.text('Invited today'), findsNothing);
+    expect(find.text('Share code'), findsNothing);
+    expect(find.text('View invite code'), findsNothing);
+    expect(find.text('Tap or long-press to copy'), findsNothing);
+
+    // Details holds only staff number/type and phone/email.
     expect(find.text('Staff no.'), findsOneWidget);
-    expect(find.text('Not set'), findsOneWidget);
-    expect(find.text('Role'), findsOneWidget);
-    expect(find.text('Change'), findsOneWidget);
+    expect(find.text('Staff type'), findsOneWidget);
+    expect(find.text('Phone'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Job title'), findsNothing);
+    expect(find.text('Role'), findsNothing);
     expect(find.text('Record'), findsNothing);
-
-    // The phone is there, so Call and Message work; no email yet.
     expect(
-      tester
-          .widget<QuickActionPill>(find.widgetWithText(QuickActionPill, 'Call'))
-          .onTap,
-      isNotNull,
-    );
-    expect(
-      tester
-          .widget<QuickActionPill>(
-            find.widgetWithText(QuickActionPill, 'Message'),
-          )
-          .onTap,
-      isNotNull,
-    );
-    expect(
-      tester
-          .widget<QuickActionPill>(find.widgetWithText(QuickActionPill, 'Email'))
-          .onTap,
-      isNull,
+      find.descendant(
+        of: find.byType(StaffDetailsCard),
+        matching: find.text('Change'),
+      ),
+      findsNothing,
     );
 
-    // The quiet action at the bottom is the cancel.
-    expect(find.text('Cancel invite', skipOffstage: false), findsWidgets);
+    expect(find.text('Cancel invite', skipOffstage: false), findsOneWidget);
     expect(
       find.text(
         'The code stops working. Tunde stays on the staff list.',
@@ -136,59 +120,19 @@ void main() {
       ),
       findsOneWidget,
     );
-
-    // No card, border or well around the code.
-    expect(
-      find.ancestor(
-        of: find.byType(InviteCodeDisplay),
-        matching: find.byType(AppCard),
-      ),
-      findsNothing,
-    );
-    expect(
-      find.descendant(
-        of: find.byType(InviteCodeDisplay),
-        matching: find.byWidgetPredicate(
-          (widget) => switch (widget) {
-            Container(:final color, :final decoration) =>
-              color != null || decoration != null,
-            DecoratedBox(:final decoration) => decoration is BoxDecoration,
-            ColoredBox() => true,
-            _ => false,
-          },
-        ),
-      ),
-      findsNothing,
-    );
   });
 
-  testWidgets('a tap on the pending code copies it', (tester) async {
-    String? copied;
-    final messenger =
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-    messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
-      if (call.method == 'Clipboard.setData') {
-        copied = (call.arguments as Map)['text'] as String?;
-      }
-      return null;
-    });
-    addTearDown(
-      () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
-    );
+  testWidgets('tapping the invite card opens the invite-ready sheet', (
+    tester,
+  ) async {
+    await pump(tester);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: StaffDetailScreen(school: _school, staffId: 's1'),
-      ),
-    );
+    await tester.tap(find.byType(StaffInviteCard));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(InviteCodeDisplay));
-    await tester.pump();
-
-    expect(copied, 'K7M2QX9P');
-    expect(find.text('Copied to clipboard'), findsOneWidget);
-
-    await tester.pump(const Duration(milliseconds: 1700));
+    expect(find.byType(InviteReadySheet), findsOneWidget);
+    expect(find.text("Tunde's invite is ready"), findsOneWidget);
+    expect(find.text('K7M2'), findsOneWidget);
+    expect(find.text('QX9P'), findsOneWidget);
   });
 }

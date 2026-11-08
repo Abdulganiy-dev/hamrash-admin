@@ -30,6 +30,9 @@ class AppNavMetrics {
   /// How far below the app bar content fades out.
   static const double appBarFadeExtent = 16;
 
+  /// How far above a bottom bar content fades out.
+  static const double bottomBarFadeExtent = 16;
+
   /// How far above the tab bar content fades out.
   static const double tabBarFadeExtent = 32;
 

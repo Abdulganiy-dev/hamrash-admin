@@ -8,8 +8,8 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_invite_code.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
+import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/widgets/app_svg_icon.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
@@ -19,16 +19,16 @@ import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_view_model.dart';
+import 'package:hamrash_admin/views/team/widgets/change_details_sheet.dart';
+import 'package:hamrash_admin/views/team/widgets/contact_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/invite_ready_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/invite_sheet.dart';
-import 'package:hamrash_admin/views/team/widgets/icon_label.dart';
 import 'package:hamrash_admin/views/team/widgets/role_picker_sheet.dart';
-import 'package:hamrash_admin/views/team/widgets/share_invite.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_access_card.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_danger_action.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_detail_identity.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_details_card.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_quick_actions.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_invite_card.dart';
 import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
 import 'package:stacked/stacked.dart';
 
@@ -60,7 +60,8 @@ class StaffDetailScreen extends StatelessWidget {
             showBackButton: true,
             onBackPressed: () => NavigationService.popScreen(model.changed),
             backgroundColor: AppPalette.linen,
-            body: content ??
+            body:
+                content ??
                 (model.error != null
                     ? LoadErrorView(onRetry: model.load)
                     : const _Loading()),
@@ -73,6 +74,8 @@ class StaffDetailScreen extends StatelessWidget {
                         : () => content._remove(context),
                   )
                 : null,
+            // The footer draws its own top hairline.
+            bottomBarFade: false,
           );
         },
       );
@@ -91,12 +94,8 @@ class _Content extends StatelessWidget {
       StaffDetailIdentity(
         member: _member,
         access: model.access,
-        meta: model.identitySubtitle,
-      ),
-      StaffQuickActions(
-        firstName: _member.firstNameOnly,
-        phone: _member.phone,
-        email: _member.email,
+        meta: model.identityMeta,
+        onContact: () => _contact(context),
       ),
       if (model.isNotOnApp) _noLogin(context),
       if (model.isPending) _pending(context),
@@ -108,7 +107,7 @@ class _Content extends StatelessWidget {
       onRefresh: model.refresh,
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.md,
-        AppSpacing.sm,
+        AppSpacing.ms,
         AppSpacing.md,
         AppSpacing.ms,
       ),
@@ -128,115 +127,56 @@ class _Content extends StatelessWidget {
   Widget _noLogin(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      AppText(
-        "${_member.firstNameOnly} doesn't have a login yet",
-        style: AppTypography.h3.copyWith(
-          height: 26 / 20,
-          fontWeight: FontWeight.w800,
-          color: LightColors.textStrong,
-        ),
-      ),
-      const SizedBox(height: AppSpacing.sm),
-      AppText(
-        'Send them an invite code. They sign in with Apple or Google, then '
-        'enter the code to join the school.',
-        style: AppTypography.body.copyWith(
-          fontSize: 15,
-          height: 22 / 15,
-          fontWeight: FontWeight.w500,
-          color: LightColors.textBody,
-        ),
-      ),
       if (model.canInvite) ...[
-        const SizedBox(height: AppSpacing.ms),
         AppPrimaryButton(
           size: AppButtonSize.large,
           onPressed: () => _invite(context),
           child: const Text('Invite to Hamrash'),
         ),
+        const SizedBox(height: AppSpacing.sm),
       ],
+      AppText(
+        'They get a code to join. It never expires.',
+        style: AppTypography.body.copyWith(
+          fontSize: 13,
+          height: 18 / 13,
+          fontWeight: FontWeight.w600,
+          color: LightColors.textBody,
+        ),
+      ),
     ],
   );
 
   /// 8.9 · The code is made; nobody has used it.
-  Widget _pending(BuildContext context) {
-    final firstName = _member.firstNameOnly;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: AppText(
-                'Invite code · ${model.role.teamLabel}'.toUpperCase(),
-                style: AppTypography.label.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.96,
-                  color: LightColors.textBody,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            AppText(
-              model.invitedLine,
-              style: AppTypography.label.copyWith(
-                fontSize: 13,
-                height: 18 / 13,
-                fontWeight: FontWeight.w600,
-                color: LightColors.textMuted,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        InviteCodeDisplay(code: model.rawCode),
-        const SizedBox(height: AppSpacing.sm),
-        AppText(
-          'Waiting for $firstName to sign in and enter it. Nothing is '
-          "emailed, and the code doesn't expire.",
-          style: AppTypography.body.copyWith(
-            height: 20 / 14,
-            fontWeight: FontWeight.w500,
-            color: LightColors.textBody,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        AppPrimaryButton(
-          size: AppButtonSize.large,
-          onPressed: () => _share(context, model.currentShareMessage),
-          child: IconLabel(
-            icon: AppSvgIcons.share,
-            label: 'Share code',
-            iconColor: AppPalette.white,
-            gap: AppSpacing.sm,
-            style: AppTypography.body.copyWith(
-              fontSize: 17,
-              height: 20 / 17,
-              fontWeight: FontWeight.w700,
-              color: AppPalette.white,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  Widget _pending(BuildContext context) => StaffInviteCard(
+    code: model.displayCode,
+    onTap: () => _openInvite(context),
+  );
 
   Widget _details(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const _SectionTitle('Details'),
-      const SizedBox(height: AppSpacing.ms),
+      SizedBox(
+        key: const ValueKey('details-header'),
+        height: 44,
+        child: Row(
+          children: [
+            const Expanded(child: _SectionTitle('Details')),
+            if (model.canEditDetails)
+              AppSectionAction(
+                label: 'Change',
+                icon: AppSvgIcons.pencil,
+                semanticLabel: 'Change details',
+                onPressed: () => _changeDetails(context),
+              ),
+          ],
+        ),
+      ),
       StaffDetailsCard(
-        jobTitle: _member.jobTitle,
-        staffType: model.staffTypeLabel,
         staffNumber: _member.staffNumber,
-        status: _member.status,
+        staffType: model.staffTypeLabel,
         phone: _member.phone,
         email: _member.email,
-        roleLabel: model.isPending ? model.role.teamLabel : null,
-        onChangeRole: model.isPending && model.canCancelInvite
-            ? () => _changeInviteRole(context)
-            : null,
       ),
     ],
   );
@@ -245,7 +185,22 @@ class _Content extends StatelessWidget {
   Widget _access(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const _SectionTitle('Access'),
+      SizedBox(
+        height: 44,
+        child: Row(
+          children: [
+            const Expanded(child: _SectionTitle('Access')),
+            if (model.joinedCaption case final caption?)
+              AppText(
+                caption,
+                style: AppTypography.caption.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: LightColors.textMuted,
+                ),
+              ),
+          ],
+        ),
+      ),
       const SizedBox(height: AppSpacing.ms),
       StaffAccessCard(
         roleLabel: model.role.teamLabel,
@@ -308,26 +263,63 @@ class _Content extends StatelessWidget {
     await model.reload();
   }
 
-  Future<void> _share(BuildContext context, String message) async {
-    try {
-      await shareInvite(message, origin: shareOriginOf(context));
-    } catch (_) {
-      if (context.mounted) {
-        AppToast.show(
-          "Couldn't open the share sheet. Try again.",
-          type: AppToastType.error,
-        );
-      }
-    }
+  /// 8.8 · The unused invite's full sheet, from the invite card.
+  Future<void> _openInvite(BuildContext context) async {
+    if (model.rawCode.isEmpty) return;
+    await _sheet<void>(
+      context,
+      InviteReadySheet(
+        firstName: _member.firstNameOnly,
+        role: model.role,
+        code: model.rawCode,
+        message: model.currentShareMessage,
+      ),
+    );
   }
 
-  Future<void> _changeInviteRole(BuildContext context) async {
-    final role = await _pickRole(context);
-    if (role == null || role == model.role) return;
-    final error = await model.changeInviteRole(role);
-    if (error != null) {
-      AppToast.show(error, type: AppToastType.error);
+  /// 8.12 · Contact options for this person.
+  Future<void> _contact(BuildContext context) => _sheet<void>(
+    context,
+    ContactSheet(
+      firstName: _member.firstNameOnly,
+      subtitle: model.contactSubtitle,
+      phone: _member.phone,
+      email: _member.email,
+    ),
+  );
+
+  /// 8.11 · Read the whole record, then let a leader change the editable
+  /// fields. The role in the sheet applies immediately.
+  Future<void> _changeDetails(BuildContext context) async {
+    final record = await model.loadEditDetails();
+    if (!context.mounted) return;
+    if (record == null) {
+      AppToast.show(
+        "Couldn't load their details. Try again.",
+        type: AppToastType.error,
+      );
+      return;
     }
+
+    final saved = await _sheet<bool>(
+      context,
+      ChangeDetailsSheet(
+        member: record.staff,
+        privateDetails: record.privateDetails,
+        role: model.role,
+        canChangeRole: model.canChangeRoleInSheet,
+        lockAdmin: !model.school.canInviteAdmins,
+        viewerName: _member.fullName,
+        viewerRole: model.school.roles.isEmpty
+            ? null
+            : model.school.roles.first,
+        onChangeRole: model.isPending
+            ? model.changeInviteRole
+            : model.changeRole,
+        onSave: model.saveDetails,
+      ),
+    );
+    if (saved == true) AppToast.show('Details saved');
   }
 
   Future<void> _changeRole(BuildContext context) async {
@@ -428,9 +420,9 @@ class _DangerBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
-    decoration: const BoxDecoration(
-      color: AppPalette.linen,
-      border: Border(top: BorderSide(color: AppPalette.stone200)),
+    decoration: BoxDecoration(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      border: const Border(top: BorderSide(color: AppPalette.stone200)),
     ),
     child: SafeArea(
       top: false,
@@ -439,7 +431,7 @@ class _DangerBar extends StatelessWidget {
           AppSpacing.md,
           AppSpacing.ms,
           AppSpacing.md,
-          AppSpacing.sm,
+          AppSpacing.ms + AppSpacing.xxs,
         ),
         child: StaffDangerAction(
           label: label,

@@ -4,9 +4,9 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
-import 'package:hamrash_admin/core/haptic_helper.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
+import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_avatar.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_status_pill.dart';
 
@@ -34,7 +34,6 @@ class StaffListCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       padding: const EdgeInsets.symmetric(vertical: _verticalPadding),
-      // Clip the pressed fill to the card's corners.
       child: ClipRRect(
         borderRadius: AppRadius.brCard,
         child: Column(
@@ -67,7 +66,7 @@ class StaffListDivider extends StatelessWidget {
   );
 }
 
-class _StaffRow extends StatefulWidget {
+class _StaffRow extends StatelessWidget {
   const _StaffRow({
     required this.person,
     required this.subtitle,
@@ -79,46 +78,22 @@ class _StaffRow extends StatefulWidget {
   final VoidCallback onTap;
 
   @override
-  State<_StaffRow> createState() => _StaffRowState();
-}
-
-class _StaffRowState extends State<_StaffRow> {
-  bool _pressed = false;
-
-  static const _pressDuration = Duration(milliseconds: 140);
-
-  void _setPressed(bool value) {
-    if (_pressed == value) return;
-    setState(() => _pressed = value);
-  }
-
-  void _tap() {
-    HapticHelpers.vibrate(VibrationType.light);
-    widget.onTap();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final person = widget.person;
-
     return Semantics(
       button: true,
-      label: '${person.fullName}. ${widget.subtitle}. ${person.access.label}.',
+      label: '${person.fullName}. $subtitle. ${person.access.label}.',
       excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => _setPressed(true),
-        onTapUp: (_) => _setPressed(false),
-        onTapCancel: () => _setPressed(false),
-        // onTap (not only onTapUp) so taps work inside the scroll view.
-        onTap: _tap,
-        child: AnimatedContainer(
-          duration: _pressDuration,
+      // The app's bouncy press (with its light haptic); a wide row only dips
+      // a little, like other large surfaces.
+      child: BouncyButton(
+        onPressed: onTap,
+        pressedScale: 0.98,
+        child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
             vertical: AppSpacing.ms,
           ),
-          color: _pressed ? AppPalette.stone50 : Colors.transparent,
+          color: Colors.transparent,
           child: Row(
             children: [
               StaffAvatar(person: person),
@@ -137,7 +112,7 @@ class _StaffRowState extends State<_StaffRow> {
                     ),
                     const SizedBox(height: AppSpacing.xxs),
                     AppText(
-                      widget.subtitle,
+                      subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.caption.copyWith(

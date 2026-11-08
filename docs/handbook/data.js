@@ -8,8 +8,8 @@
 
 window.HANDBOOK = {
   meta: {
-    updated: '2026-11-07',
-    migrationsInRepo: 28, // highest migration number in supabase/migrations/
+    updated: '2026-11-08',
+    migrationsInRepo: 29, // highest migration number in supabase/migrations/
     migrationsLive: 28, // highest one applied to the live project (ccvyhbyrtobdsecqvhcr)
   },
 
@@ -580,7 +580,7 @@ window.HANDBOOK = {
         'Owners and admins issue any role except owner. Principals and vice principals issue principal, VP, bursar, teacher and staff only.',
         'Teacher and staff codes open **Hamrash Staff**; every other role opens **Hamrash Admin**. Codes never expire.',
         'The owner’s own row has no actions: the school must keep an active owner, and removing their record is refused.',
-        'The staff page reads the record’s name, `staff_number`, `staff_type` and `status` (`active`, `on_leave`, `exited`) with its login: the status pill, Call / Message / Email, the invite or access state, the details grid and one pinned bottom action.',
+        'The staff page reads the record’s name, `staff_number`, `staff_type` and `status` (`active`, `on_leave`, `exited`) with its login: the status pill, one Contact sheet (call, message, email), the invite card or access state, the details columns and one pinned bottom action.',
       ],
       ops: [
         {
@@ -590,6 +590,14 @@ window.HANDBOOK = {
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'], note: 'Only leaders reach the screen; the bursar has no staff area.' },
           steps: ['Reads every staff record with its login embedded, ordered by name.', 'Sorts the owner first, then names.', 'Counts the filters: on the app means a claimed login (the owner included); a code ready, no login and a suspended login are not on the app yet.'],
           sources: ['team_service.dart:31', 'team_view_model.dart:103'],
+        },
+        {
+          id: 'team-r2', kind: 'read', title: 'Read a person’s full record for editing', target: 'staff · staff_private_details',
+          trigger: 'A staff page → **Change** → Change details.',
+          touches: ['select staff (name, middle name, gender, photo, number, type, status)', 'select staff_private_details (date of birth, address, residence state and LGA, state of origin, employment date)'],
+          who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
+          steps: ['Leaders read the staff row and its private details before the sheet opens.', 'The sheet sends all of it back through `update_staff`; only the fields it edits change.'],
+          sources: ['staff_detail_view_model.dart:loadEditDetails', 'team_service.dart:getStaffForEditing', 'migration 05'],
         },
         {
           id: 'team-c1', kind: 'create', title: 'Add a staff member', target: 'rpc create_staff',
@@ -637,6 +645,15 @@ window.HANDBOOK = {
             { when: 'Changing an owner', code: 'P0001', text: '“A school must keep at least one active owner”. The owner row has no actions in the app.' },
           ],
           sources: ['staff_detail_view_model.dart:203 · 210', 'team_service.dart:127 · 139', 'migration 01 · 17'],
+        },
+        {
+          id: 'team-u5', kind: 'update', title: 'Edit staff details', target: 'rpc update_staff',
+          trigger: 'A staff page → **Change** → edit → Save changes.',
+          touches: ['rpc update_staff', '~update staff', '~update staff_private_details'],
+          who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
+          steps: ['Changes first name, middle name, last name, gender, job title, staff type, phone, email, address, residence state and residence LGA.', 'Sends every other argument exactly as read: staff number, photo id/url, status, date of birth, state of origin and employment date.', '`update_staff` saves the public profile and its private details in one transaction. The staff number can’t be changed from this sheet.'],
+          refusals: [{ when: 'Not a leader', code: '42501', text: '“Only the owner, admins, the principal and vice principals can change staff details.”' }],
+          sources: ['staff_detail_view_model.dart:saveDetails', 'team_service.dart:updateStaffDetails', 'migration 05'],
         },
         {
           id: 'team-d1', kind: 'delete', title: 'Cancel an unused invite', target: 'delete organization_members',
@@ -829,6 +846,7 @@ window.HANDBOOK = {
     { n: 26, title: 'Shared team code', text: 'Replaces per-person platform invites with one team code; `platform_admins.joined_at`.', drops: true },
     { n: 27, title: 'No school code', text: 'Drops `organizations.code` (`HMR-XXXXXX`).', drops: true },
     { n: 28, title: 'Deleting a person revokes their login', text: 'Deleting a staff, student or parent record deletes their invite or suspends their login; principals and VPs issue staff logins for their tier.' },
+    { n: 29, title: 'Staff residence state and LGA', text: 'Adds `staff_private_details.residence_state` and `residence_lga`; `create_staff` and `update_staff` accept and save them. **Not applied yet.**', drops: true },
   ],
 
   // ────────────────────────────────────────────────────────────────────
@@ -837,7 +855,7 @@ window.HANDBOOK = {
     { name: 'organization_members', purpose: 'Who can sign in to which school, and as what. One row per school, person and role.', read: 'Your own rows anywhere; leaders see their school’s; Hamrash sees all.', write: 'Leaders insert invites (owner/admin any role except owner; principal/VP up to their level; Hamrash any). Owner/admin change role or status.', del: 'Only unclaimed invites. Deleting unlinks the person record.', rules: 'One role per person per school. Active rows need a Clerk id, invites need a claim code. A school must keep one active owner; only owners change owner rows.', migrations: '01 · 17' },
     { name: 'platform_admins', purpose: 'The Hamrash team.', read: 'Your own row; Hamrash reads all.', write: 'Only through `redeem_platform_join_code` or the SQL editor. Turning someone off is SQL only.', del: 'SQL only.', migrations: '01 · 26 (adds `joined_at`)' },
     { name: 'private.platform_join_code', purpose: 'The single shared team code (hash and last 4 characters).', read: 'Nobody directly; `platform_join_code_status` for Hamrash.', write: 'Only the team-code RPCs, or the SQL editor for the first code.', del: 'Not used.', migrations: '26' },
-    { name: 'staff · staff_private_details', purpose: 'Every employee; personal details in the private table.', read: 'Profiles: every member. Private: leaders, bursar, the person themselves, Hamrash.', write: 'Leaders (`create_staff`, `update_staff`). Staff number generated as `PREFIX/STF/0001`.', del: 'Owner and admin. Cascades to private details, class teachers and teaching assignments; refused if any of those are in a closed session. Their unclaimed invite is deleted or their login suspended; an active owner’s record can’t be deleted.', migrations: '03 · 05 · 09 · 28' },
+    { name: 'staff · staff_private_details', purpose: 'Every employee; personal details in the private table.', read: 'Profiles: every member. Private: leaders, bursar, the person themselves, Hamrash.', write: 'Leaders (`create_staff`, `update_staff`). Staff number generated as `PREFIX/STF/0001`.', del: 'Owner and admin. Cascades to private details, class teachers and teaching assignments; refused if any of those are in a closed session. Their unclaimed invite is deleted or their login suspended; an active owner’s record can’t be deleted.', migrations: '03 · 05 · 09 · 28 · 29' },
     { name: 'students · student_private_details', purpose: 'Student records; personal and medical data in the private table.', read: 'Profiles: leaders, bursar, teachers who ever taught them, their parents, themselves. Private: leaders, current teachers, parents, themselves.', write: 'Leaders (`create_student`, `update_student`). Admission number generated as `PREFIX/YEAR/0001`.', del: 'Owner and admin. Cascades to placements, links and choices; refused if any are in a closed session. Their invite is deleted or login suspended.', rules: 'Blood group and genotype are checked values.', migrations: '03 · 06 · 07 · 28' },
     { name: 'parents · parent_private_details · student_parents', purpose: 'Parents, their private contact details, and who is whose parent.', read: 'Leaders and bursar; teachers see parents of students they teach now; parents see themselves and co-parents (not co-parents’ private details).', write: 'Leaders. One primary contact per student (setting a new one demotes the old).', del: 'Owner and admin (parents, whose invite is deleted or login suspended); leaders (links).', migrations: '03 · 06 · 07 · 10 · 28' },
     { name: 'sections · classes · class_arms', purpose: 'School structure. Everything points at an arm.', read: 'Every member and Hamrash.', write: 'Leaders.', del: 'Leaders. Section blocked while it has classes; class while it has arms; arm while it has placements or a class teacher. Arm delete cascades its subjects.', rules: 'Names unique (section and class per school, arm per class). Arms can’t move class.', migrations: '04 · 21 · 23' },
@@ -871,7 +889,7 @@ window.HANDBOOK = {
     { group: 'Structure and subjects', name: 'apply_standard_curriculum · copy_assignments_forward · session_readiness', security: 'invoker', who: 'Leaders.', does: 'Curriculum for one arm; copy class and subject teachers into a new session; readiness counts for a session.', from: 'Not used by an app yet.' },
     { group: 'Grading', name: 'create_standard_grading · grading_problems · grade_for', security: 'invoker', who: 'Leaders (create); any member (read).', does: 'CA 1 / CA 2 / Exam with A–F (and WAEC A1–F9 for Secondary); report what’s missing; look up a grade.', from: 'Not used by an app yet.' },
     { group: 'Grading', name: 'score_columns_for_arm · grade_boundaries_for_arm', security: 'invoker', who: 'Any member (RLS applies).', does: 'The score columns or grade boundaries that apply to an arm: its section’s own set if it has one, otherwise the school’s.', from: 'Not used by an app yet.' },
-    { group: 'People', name: 'create_staff · update_staff', security: 'invoker', who: 'Leaders (RLS decides).', does: 'Writes the staff profile and its private details in one call. A blank staff number is generated; on update it keeps the current one.', errors: [['42501', 'Staff record not found, or you can’t edit it'], ['23505', 'duplicate staff number'], ['23514', 'blank name']], from: 'Hamrash Admin → Add Staff Members (create_staff); update_staff has no screen yet.' },
+    { group: 'People', name: 'create_staff · update_staff', security: 'invoker', who: 'Leaders (RLS decides).', does: 'Writes the staff profile and its private details in one call, including middle name, gender, address and residence state/LGA. A blank staff number is generated; on update it keeps the current one.', errors: [['42501', 'Staff record not found, or you can’t edit it'], ['23505', 'duplicate staff number'], ['23514', 'blank name']], from: 'Hamrash Admin → Add Staff Members (create_staff); a Staff page → Details → Change (update_staff).' },
     { group: 'People', name: 'create_student · update_student', security: 'invoker', who: 'Leaders (RLS decides).', does: 'Writes the student record and its private and medical details. A blank admission number is generated from the admission year.', errors: [['42501', 'Student record not found, or you can’t edit it'], ['23514', 'invalid blood group or genotype']], from: 'Not used by an app yet.' },
     { group: 'People', name: 'create_parent · update_parent', security: 'invoker', who: 'Leaders (RLS decides).', does: 'Writes the parent profile (phone required) and their private email, occupation and address.', errors: [['42501', 'Parent record not found, or you can’t edit it'], ['23514', 'blank phone']], from: 'Not used by an app yet.' },
   ],

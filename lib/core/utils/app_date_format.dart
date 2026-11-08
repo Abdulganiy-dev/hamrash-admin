@@ -85,6 +85,9 @@ abstract final class AppDateFormat {
     };
   }
 
+  /// "3 Sep" without the weekday, for compact headers.
+  static String dayMonth(DateTime date) => DateFormat('d MMM').format(date);
+
   /// "October 2026".
   static String month(DateTime date) => DateFormat('MMMM y').format(date);
 }

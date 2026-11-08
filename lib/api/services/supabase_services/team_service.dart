@@ -1,5 +1,7 @@
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_details_changes.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -27,7 +29,12 @@ class TeamService {
       "You can't issue that login. Only the owner or an admin can invite "
       'admins.';
 
-  /// Every staff record at the school, with its login when it has one.
+  static const detailsRefused =
+      'Only the owner, admins, the principal and vice principals can change '
+      'staff details.';
+
+  /// Every staff record at the school, with its login and private details
+  /// when the caller may read them.
   Future<List<StaffMember>> listStaff(String organizationId) => _run(
     'listStaff',
     () async {
@@ -37,23 +44,120 @@ class TeamService {
           .eq('organization_id', organizationId)
           .order('first_name')
           .order('last_name');
-      return rows.map(StaffMember.fromJson).toList();
+      final privateRows = await _supabase
+          .from('staff_private_details')
+          .select('staff_id,${StaffPrivateDetails.columns}')
+          .eq('organization_id', organizationId);
+      final byStaff = {
+        for (final row in privateRows)
+          row['staff_id'] as String: StaffPrivateDetails.fromJson(row),
+      };
+      return [
+        for (final row in rows)
+          StaffMember.fromJson(
+            row,
+          ).copyWith(privateDetails: byStaff[row['id'] as String]),
+      ];
     },
     log: (staff) => {'organization_id': organizationId, 'count': staff.length},
   );
 
   /// One staff record, for the detail page after a change.
-  Future<StaffMember> getStaff(String staffId) => _run(
-    'getStaff',
-    () async => StaffMember.fromJson(
-      await _supabase
+  Future<StaffMember> getStaff(String staffId) => _run('getStaff', () async {
+    final row = await _supabase
+        .from('staff')
+        .select(StaffMember.columns)
+        .eq('id', staffId)
+        .single();
+    final details = await _supabase
+        .from('staff_private_details')
+        .select(StaffPrivateDetails.columns)
+        .eq('staff_id', staffId)
+        .maybeSingle();
+    return StaffMember.fromJson(row).copyWith(
+      privateDetails: details == null
+          ? null
+          : StaffPrivateDetails.fromJson(details),
+    );
+  }, log: (staff) => {'id': staff.id});
+
+  /// The complete staff row and private details, for the Change details
+  /// sheet. `update_staff` needs every argument, so the sheet sends all of
+  /// these back with only the editable fields changed.
+  Future<({StaffMember staff, StaffPrivateDetails privateDetails})>
+  getStaffForEditing(String staffId) => _run(
+    'getStaffForEditing',
+    () async {
+      final row = await _supabase
           .from('staff')
-          .select(StaffMember.columns)
+          .select(
+            'id,first_name,middle_name,last_name,gender,job_title,phone,email,'
+            'photo_id,photo_url,staff_number,staff_type,status,created_at,'
+            'member_id',
+          )
           .eq('id', staffId)
-          .single(),
+          .single();
+      final details = await _supabase
+          .from('staff_private_details')
+          .select(StaffPrivateDetails.columns)
+          .eq('staff_id', staffId)
+          .maybeSingle();
+      return (
+        staff: StaffMember.fromJson(row),
+        privateDetails: StaffPrivateDetails.fromJson(details ?? const {}),
+      );
+    },
+    log: (record) => {'id': record.staff.id},
+    forbidden: detailsRefused,
+  );
+
+  /// Saves the editable staff fields through `update_staff`, sending every
+  /// other field from [staff] and [privateDetails] back unchanged.
+  Future<StaffMember> updateStaffDetails({
+    required StaffMember staff,
+    required StaffPrivateDetails privateDetails,
+    required StaffDetailsChanges changes,
+  }) => _run(
+    'updateStaffDetails',
+    () async => StaffMember.fromJson(
+      await _supabase.rpc(
+            'update_staff',
+            params: {
+              'p_staff_id': staff.id,
+              'p_first_name': changes.firstName,
+              'p_last_name': changes.lastName,
+              'p_middle_name': changes.middleName,
+              'p_staff_number': staff.staffNumber,
+              'p_gender': changes.gender?.value,
+              'p_phone': changes.phone,
+              'p_email': changes.email,
+              'p_photo_id': staff.photoId,
+              'p_photo_url': staff.photoUrl,
+              'p_job_title': changes.jobTitle,
+              'p_staff_type': changes.staffType,
+              'p_status': staff.status.value,
+              'p_date_of_birth': _dateOnly(privateDetails.dateOfBirth),
+              'p_address': changes.address,
+              'p_state_of_origin': privateDetails.stateOfOrigin,
+              'p_employment_date': _dateOnly(privateDetails.employmentDate),
+              'p_residence_state': changes.residenceState,
+              'p_residence_lga': changes.residenceLga,
+            },
+          )
+          as Map<String, dynamic>,
     ),
     log: (staff) => {'id': staff.id},
+    forbidden: detailsRefused,
   );
+
+  /// `update_staff` takes dates as `yyyy-MM-dd`.
+  static String? _dateOnly(DateTime? value) {
+    if (value == null) return null;
+    final year = value.year.toString().padLeft(4, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
 
   /// Adds a staff record (`create_staff`), leaving the number to the
   /// database. The person has no login until [inviteStaff] is called.
@@ -65,6 +169,11 @@ class TeamService {
     required String? email,
     required String jobTitle,
     required String staffType,
+    String? middleName,
+    StaffGender? gender,
+    String? address,
+    String? residenceState,
+    String? residenceLga,
   }) => _run(
     'createStaff',
     () async => StaffMember.fromJson(
@@ -74,10 +183,15 @@ class TeamService {
               'p_organization_id': organizationId,
               'p_first_name': firstName,
               'p_last_name': lastName,
+              'p_middle_name': middleName,
+              'p_gender': gender?.value,
               'p_phone': phone,
               'p_email': email,
               'p_job_title': jobTitle,
               'p_staff_type': staffType,
+              'p_address': address,
+              'p_residence_state': residenceState,
+              'p_residence_lga': residenceLga,
             },
           )
           as Map<String, dynamic>,

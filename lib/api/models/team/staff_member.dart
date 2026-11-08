@@ -1,4 +1,5 @@
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
 
 /// How a staff member's record reads at a glance. The owner's row, a claimed
 /// login, an invite nobody has used yet, no login at all, and a suspended
@@ -18,6 +19,22 @@ enum StaffAccess {
   /// The pill on the staff detail page, where "invite pending" says more
   /// than "code ready".
   final String detailLabel;
+}
+
+/// `public.gender` as the app stores it.
+enum StaffGender {
+  male('male', 'Male'),
+  female('female', 'Female');
+
+  const StaffGender(this.value, this.label);
+
+  final String value;
+  final String label;
+
+  static StaffGender fromJson(String value) => StaffGender.values.firstWhere(
+    (gender) => gender.value == value,
+    orElse: () => throw FormatException('Unknown staff gender: $value'),
+  );
 }
 
 /// The staff record's own status, separate from the login.
@@ -87,6 +104,9 @@ class StaffMember {
     this.jobTitle,
     this.phone,
     this.email,
+    this.middleName,
+    this.gender,
+    this.photoId,
     this.photoUrl,
     this.staffNumber,
     required this.staffType,
@@ -94,6 +114,7 @@ class StaffMember {
     required this.createdAt,
     this.memberId,
     this.login,
+    this.privateDetails,
   });
 
   final String id;
@@ -102,6 +123,11 @@ class StaffMember {
   final String? jobTitle;
   final String? phone;
   final String? email;
+
+  /// Read only for the edit form, which must send the whole record back.
+  final String? middleName;
+  final StaffGender? gender;
+  final String? photoId;
   final String? photoUrl;
 
   /// The school's own number, e.g. `KCL/STF/0001`. Null when it wasn't read
@@ -119,14 +145,19 @@ class StaffMember {
   /// The embedded `organization_members` row, or null when there's no login.
   final StaffLogin? login;
 
+  /// The private details row, read separately for leaders. Null outside the
+  /// edit sheet or when the caller can't read it.
+  final StaffPrivateDetails? privateDetails;
+
   /// The staff row plus its login, embedded through the member FK.
   static const columns =
-      'id,first_name,last_name,job_title,phone,email,photo_url,'
-      'staff_number,staff_type,status,created_at,member_id,'
+      'id,first_name,middle_name,last_name,job_title,gender,phone,email,'
+      'photo_url,staff_number,staff_type,status,created_at,member_id,'
       'member:organization_members!staff_member_fkey(${StaffLogin.columns})';
 
   factory StaffMember.fromJson(Map<String, dynamic> json) {
     final member = json['member'];
+    final private = json['private_details'];
     return StaffMember(
       id: json['id'] as String,
       firstName: json['first_name'] as String,
@@ -134,6 +165,12 @@ class StaffMember {
       jobTitle: json['job_title'] as String?,
       phone: json['phone'] as String?,
       email: json['email'] as String?,
+      middleName: json['middle_name'] as String?,
+      gender: switch (json['gender']) {
+        final String value => StaffGender.fromJson(value),
+        _ => null,
+      },
+      photoId: json['photo_id'] as String?,
       photoUrl: json['photo_url'] as String?,
       staffNumber: json['staff_number'] as String?,
       staffType: json['staff_type'] as String,
@@ -143,8 +180,38 @@ class StaffMember {
       login: member is Map
           ? StaffLogin.fromJson(Map<String, dynamic>.from(member))
           : null,
+      privateDetails: switch (private) {
+        final Map value => StaffPrivateDetails.fromJson(
+          Map<String, dynamic>.from(value),
+        ),
+        final List value when value.isNotEmpty && value.first is Map =>
+          StaffPrivateDetails.fromJson(
+            Map<String, dynamic>.from(value.first as Map),
+          ),
+        _ => null,
+      },
     );
   }
+
+  StaffMember copyWith({StaffPrivateDetails? privateDetails}) => StaffMember(
+    id: id,
+    firstName: firstName,
+    lastName: lastName,
+    jobTitle: jobTitle,
+    phone: phone,
+    email: email,
+    middleName: middleName,
+    gender: gender,
+    photoId: photoId,
+    photoUrl: photoUrl,
+    staffNumber: staffNumber,
+    staffType: staffType,
+    status: status,
+    createdAt: createdAt,
+    memberId: memberId,
+    login: login,
+    privateDetails: privateDetails ?? this.privateDetails,
+  );
 
   String get fullName => '$firstName $lastName'.trim();
 

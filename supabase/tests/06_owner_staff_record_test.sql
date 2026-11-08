@@ -65,7 +65,7 @@ begin
 
   -- 04 the owner edits their own record like any other
   perform public.update_staff(v_staff.id, 'Olu', 'Owner', null, '', null, '0801234567', 'olu@school.test', null, null,
-                              'Proprietor', 'teaching', 'active', null, null, null, null);
+                              'Proprietor', 'teaching', 'active', null, null, null, null, null, null);
   select count(*) into v_n from public.staff s
     where s.id = v_staff.id and s.job_title = 'Proprietor' and s.staff_type = 'teaching' and s.staff_number = 'TST/STF/0001';
   v_log := v_log || E'\n' || case when v_n = 1 then 'PASS' else 'FAIL' end || ' 04 owner can edit own staff record';

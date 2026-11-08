@@ -38,6 +38,9 @@ class AppTextField extends StatefulWidget {
   /// Adds a muted "(optional)" after the label
   final bool isOptional;
 
+  /// Style for the optional marker; defaults to body/muted.
+  final TextStyle? optionalStyle;
+
   /// Fixed text before the input, split off by a divider (e.g. "+234", "₦")
   final String? prefixText;
 
@@ -137,6 +140,7 @@ class AppTextField extends StatefulWidget {
     this.controller,
     required this.label,
     this.isOptional = false,
+    this.optionalStyle,
     this.prefixText,
     this.hintText,
     this.helperText,
@@ -343,7 +347,7 @@ class _AppTextFieldState extends State<AppTextField> {
         children: [
           TextSpan(
             text: '  (optional)',
-            style: AppTypography.body.copyWith(
+            style: (widget.optionalStyle ?? AppTypography.body).copyWith(
               color: Theme.of(context).brightness == Brightness.light
                   ? LightColors.textMuted
                   : DarkColors.textMuted,

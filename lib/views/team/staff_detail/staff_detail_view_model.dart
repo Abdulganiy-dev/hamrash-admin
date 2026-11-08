@@ -1,7 +1,9 @@
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/models/team/invite_code.dart';
+import 'package:hamrash_admin/api/models/team/staff_details_changes.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
 import 'package:hamrash_admin/core/utils/app_date_format.dart';
@@ -21,18 +23,16 @@ class StaffDetailViewModel extends BaseViewModel {
     required this.school,
     required this.staffId,
     TeamService? team,
-    DateTime Function()? now,
-  }) : _team = team ?? locator<TeamService>(),
-       _now = now ?? DateTime.now;
+  }) : _team = team ?? locator<TeamService>();
 
   final MemberSchool school;
   final String staffId;
   final TeamService _team;
-  final DateTime Function() _now;
 
   StaffMember? _staff;
   Object? _error;
   bool _changed = false;
+  ({StaffMember staff, StaffPrivateDetails privateDetails})? _editRecord;
 
   StaffMember get member => _staff!;
   Object? get error => _error;
@@ -55,8 +55,6 @@ class StaffDetailViewModel extends BaseViewModel {
   /// and the app never offers to change an owner's role.
   bool get isOwnerRow => login?.role == OrganizationMemberRole.owner;
 
-  bool get isMe => login != null && school.memberIds.contains(login!.id);
-
   /// Leaders can invite the roles their tier allows.
   bool get canInvite =>
       school.canIssueLogins &&
@@ -74,6 +72,16 @@ class StaffDetailViewModel extends BaseViewModel {
   /// Only the owner and admins remove a record; the owner's own is never
   /// offered.
   bool get canRemove => school.canManageAccess && !isOwnerRow;
+
+  /// Leaders edit a staff member's own details; the database allows owner,
+  /// admin, principal and vice principal.
+  bool get canEditDetails => school.canRunSetup;
+
+  /// The Change details sheet's Role row follows the existing role rules:
+  /// an unused invite uses the invite tiers; a live login needs an owner or
+  /// admin and never the owner's own row.
+  bool get canChangeRoleInSheet =>
+      isPending ? canCancelInvite : canManageAccess && (isOnApp || isSuspended);
 
   /// The same tiers as inviting: a principal can't cancel an admin's invite.
   bool get canCancelInvite => isPending && school.canInviteRole(role);
@@ -99,23 +107,27 @@ class StaffDetailViewModel extends BaseViewModel {
   String get staffTypeLabel =>
       member.staffType == 'teaching' ? 'Teaching' : 'Non-teaching';
 
-  /// "Admin · joined 3 Sep", "Maths Teacher · Staff app",
-  /// "Teacher · access suspended", "Owner · you".
-  String get identitySubtitle {
-    final roleLabel = role.teamLabel;
-    if (isOwnerRow) return isMe ? 'Owner · you' : 'Owner';
-    if (login == null || isPending) {
-      final jobTitle = member.jobTitle?.trim();
-      final label = jobTitle == null || jobTitle.isEmpty
-          ? roleLabel
-          : jobTitle;
-      return '$label · ${role.appLabel}';
-    }
-    if (isSuspended) return '$roleLabel · access suspended';
-    final joined = login!.joinedAt;
-    return joined == null
-        ? roleLabel
-        : '$roleLabel · joined ${AppDateFormat.relative(joined, now: _now())}';
+  /// "Maths Teacher" for no login or an invite, the login's role once they
+  /// are on the app. No app name here.
+  String get identityMeta {
+    if (isOnApp || isSuspended) return role.teamLabel;
+    final jobTitle = member.jobTitle?.trim();
+    return jobTitle == null || jobTitle.isEmpty ? role.teamLabel : jobTitle;
+  }
+
+  /// "Joined 3 Sep", or null when the login has no joined date.
+  String? get joinedCaption {
+    final joined = login?.joinedAt;
+    return joined == null ? null : 'Joined ${AppDateFormat.dayMonth(joined)}';
+  }
+
+  /// The contact sheet's line: "{Job title} · {Staff app|Admin app}".
+  String get contactSubtitle {
+    final jobTitle = member.jobTitle?.trim();
+    final label = jobTitle == null || jobTitle.isEmpty
+        ? role.teamLabel
+        : jobTitle;
+    return '$label · ${role.appLabel}';
   }
 
   /// The role the invite sheet starts on, kept inside what the viewer may
@@ -140,11 +152,6 @@ class StaffDetailViewModel extends BaseViewModel {
 
   /// "K7M2-QX9P", for showing.
   String get displayCode => InviteCode.format(rawCode);
-
-  /// "Invited today", "Invited 5 Nov".
-  String get invitedLine => login == null
-      ? ''
-      : 'Invited ${AppDateFormat.relative(login!.createdAt, now: _now())}';
 
   /// The message the school shares. The database stores no sign-in provider,
   /// so the text names both, as the join screen does.
@@ -237,6 +244,41 @@ class StaffDetailViewModel extends BaseViewModel {
     "Couldn't change the role. Try again.",
     'StaffDetail.changeRole',
   );
+
+  /// The complete record the Change details sheet needs. Null when it
+  /// couldn't be read; the page then shows a toast.
+  Future<({StaffMember staff, StaffPrivateDetails privateDetails})?>
+  loadEditDetails() async {
+    try {
+      final record = await _team.getStaffForEditing(staffId);
+      _editRecord = record;
+      return record;
+    } catch (error, stackTrace) {
+      await handleError(
+        error,
+        stackTrace: stackTrace,
+        context: 'StaffDetail.loadEditDetails',
+        showErrorModal: false,
+      );
+      return null;
+    }
+  }
+
+  /// Saves the fields the Change details sheet may change. Returns the
+  /// reason it failed, or null when the page has been refreshed.
+  Future<String?> saveDetails(StaffDetailsChanges changes) {
+    final record = _editRecord;
+    if (record == null) return Future.value("Couldn't load their details.");
+    return _save(
+      () => _team.updateStaffDetails(
+        staff: record.staff,
+        privateDetails: record.privateDetails,
+        changes: changes,
+      ),
+      "Couldn't save the details. Try again.",
+      'StaffDetail.saveDetails',
+    );
+  }
 
   /// Suspends the login, or restores it.
   Future<void> setSuspended(bool suspended) => _act(

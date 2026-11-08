@@ -4,6 +4,7 @@ import 'package:hamrash_admin/api/models/team/staff_job_title.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
+import 'package:hamrash_admin/core/utils/phone_format.dart';
 import 'package:hamrash_admin/core/utils/validation_util.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
@@ -19,10 +20,15 @@ class AddStaffViewModel extends BaseViewModel {
 
   final firstName = TextEditingController();
   final lastName = TextEditingController();
+  final middleName = TextEditingController();
+  final address = TextEditingController();
   final phone = TextEditingController();
   final email = TextEditingController();
 
   StaffJobTitleOption? jobTitle;
+  StaffGender? gender;
+  String? residenceState;
+  String? residenceLga;
   bool _saving = false;
   bool _addedAny = false;
   String? _error;
@@ -49,12 +55,7 @@ class AddStaffViewModel extends BaseViewModel {
 
   /// The field shows the number after the +234 prefix. Accepts a typed
   /// leading 0 or 234 too, and stores the full international number.
-  String? get phoneProblem {
-    final digits = _phoneDigits;
-    if (digits.isEmpty) return null;
-    if (digits.length != 10) return 'Enter a 10-digit number after +234';
-    return ValidationUtil.validatePhoneNumber('+234$digits');
-  }
+  String? get phoneProblem => PhoneFormat.problem(phone.text);
 
   String? get emailProblem {
     final value = email.text.trim();
@@ -62,20 +63,16 @@ class AddStaffViewModel extends BaseViewModel {
     return ValidationUtil.validateEmail(value);
   }
 
-  String get _phoneDigits {
-    var digits = phone.text.replaceAll(RegExp('[^0-9]'), '');
-    if (digits.startsWith('234')) digits = digits.substring(3);
-    if (digits.startsWith('0')) digits = digits.substring(1);
-    return digits;
-  }
+  String? get _storedPhone => PhoneFormat.stored(phone.text);
 
-  String? get _storedPhone {
-    final digits = _phoneDigits;
-    return digits.isEmpty ? null : '+234$digits';
-  }
+  String? get _storedEmail => _storedText(email);
 
-  String? get _storedEmail {
-    final value = email.text.trim();
+  String? get _storedMiddleName => _storedText(middleName);
+
+  String? get _storedAddress => _storedText(address);
+
+  static String? _storedText(TextEditingController controller) {
+    final value = controller.text.trim();
     return value.isEmpty ? null : value;
   }
 
@@ -103,6 +100,26 @@ class AddStaffViewModel extends BaseViewModel {
     notifyListeners();
   }
 
+  void pickGender(StaffGender value) {
+    gender = value;
+    _error = null;
+    notifyListeners();
+  }
+
+  /// A new state starts the LGA again.
+  void pickState(String value) {
+    residenceState = value;
+    residenceLga = null;
+    _error = null;
+    notifyListeners();
+  }
+
+  void pickLga(String value) {
+    residenceLga = value;
+    _error = null;
+    notifyListeners();
+  }
+
   void changed() {
     _error = null;
     notifyListeners();
@@ -125,10 +142,15 @@ class AddStaffViewModel extends BaseViewModel {
         organizationId: school.id,
         firstName: firstName.text.trim(),
         lastName: lastName.text.trim(),
+        middleName: _storedMiddleName,
+        gender: gender,
         phone: _storedPhone,
         email: _storedEmail,
         jobTitle: job.jobTitle,
         staffType: job.staffType,
+        address: _storedAddress,
+        residenceState: residenceState,
+        residenceLga: residenceLga,
       );
       _addedAny = true;
       return (staff: staff, error: null);
@@ -151,8 +173,13 @@ class AddStaffViewModel extends BaseViewModel {
   void clearForAnother() {
     firstName.clear();
     lastName.clear();
+    middleName.clear();
+    address.clear();
     phone.clear();
     email.clear();
+    gender = null;
+    residenceState = null;
+    residenceLga = null;
     _error = null;
     notifyListeners();
   }
@@ -164,6 +191,8 @@ class AddStaffViewModel extends BaseViewModel {
   void dispose() {
     firstName.dispose();
     lastName.dispose();
+    middleName.dispose();
+    address.dispose();
     phone.dispose();
     email.dispose();
     super.dispose();
