@@ -1,6 +1,6 @@
 # People Schema: staff, students, parents
 
-> **Status:** applied to the live project through migration 29. Migration `20261108120000` (2026-11-08) added staff residence state and LGA. Migration `20261007210000` (2026-10-07) created the tables, and migration `20261011130000` (2026-10-11) split staff into a public profile and private details. SQL: [`…03_create_people.sql`](../supabase/migrations/20261007210000_03_create_people.sql), [`…05_split_staff_private_details.sql`](../supabase/migrations/20261011130000_05_split_staff_private_details.sql). Test: [`supabase/tests/02_people_access_test.sql`](../supabase/tests/02_people_access_test.sql). Builds on [organization-schema.md](organization-schema.md).
+> **Status:** applied to the live project through migration 29. Migration `20261108130000` (30, `list_staff`) is in the repo but **not yet applied**. Migration `20261108120000` (2026-11-08) added staff residence state and LGA. Migration `20261007210000` (2026-10-07) created the tables, and migration `20261011130000` (2026-10-11) split staff into a public profile and private details. SQL: [`…03_create_people.sql`](../supabase/migrations/20261007210000_03_create_people.sql), [`…05_split_staff_private_details.sql`](../supabase/migrations/20261011130000_05_split_staff_private_details.sql). Test: [`supabase/tests/02_people_access_test.sql`](../supabase/tests/02_people_access_test.sql). Builds on [organization-schema.md](organization-schema.md).
 
 ---
 
@@ -69,6 +69,42 @@ final staff = await supabase.rpc('create_staff', params: {
 ```
 
 They run with the caller's own permissions, so the usual rules apply: only leaders can add or edit staff.
+
+### Listing staff *(migration 30, not yet applied)*
+The Staffs list (8.1) and its filter sheet (8.17) read one page at a time through `list_staff`. Search, filters, sorting, chip counts and paging all happen in the database. It returns the staff profile and its login only, never private details.
+
+```dart
+final result = await supabase.rpc('list_staff', params: {
+  'p_organization_id': orgId,
+  'p_search': '0803 555 0142',
+  'p_login': null,                       // all
+  'p_roles': <String>[],                 // every role
+  'p_staff_type': null,                  // both
+  'p_statuses': ['active'],
+  'p_sort': 'name',
+  'p_limit': 30,
+  'p_cursor': null,                      // first page
+}) as Map<String, dynamic>;
+// { rows: [...], next_cursor: '…' | null, total: 12,
+//   counts: { all, on_app, code_ready, not_on_app, suspended } }
+```
+
+| Param | Default | Meaning |
+|---|---|---|
+| `p_organization_id` | required | The school. Null is refused (`22023`). |
+| `p_search` | null | Case-insensitive, partial. Every word must match the first, middle or last name, staff number, email or phone. Phones are compared by their digits without spaces, a leading `0` or `+234`, so `0803 555 0142`, `8035550142` and `+2348035550142` find the same number however it was saved. A phone match needs at least 3 digits. |
+| `p_login` | null (= `all`) | `on_app` (active login, owner included), `code_ready` (unclaimed invite), `not_on_app` (no login), `suspended`. |
+| `p_roles` | null | The login's role (`owner`, `admin`, `principal`, `vice_principal`, `bursar`, `teacher`, `staff`). **People without a login have no role**, so a role filter only matches people with a login, whatever its status. Null or `[]` = every role. |
+| `p_staff_type` | null | `teaching` or `non_teaching`; null = both. |
+| `p_statuses` | null | Record status (`active`, `on_leave`, `exited`). Null or `[]` = all. The app sends `['active']` by default. |
+| `p_sort` | `name` | `name`: the active owner first, then first name, last name, id. `newest`: `created_at` newest first, then id. |
+| `p_limit` | 30 | Page size, clamped to 1–100. |
+| `p_cursor` | null | `next_cursor` from the previous page. Start again with null whenever a filter, the search or the sort changes. |
+
+- **Rows** have the same keys as `StaffMember.columns`, with the login embedded as `member` (null when there is none), so `StaffMember.fromJson` reads them unchanged.
+- **`counts`** apply the search, staff type, statuses and roles but **ignore `p_login`**, so each login chip shows how many it would list. **`total`** is the number of rows matching every filter.
+- **Paging is keyset**, not offset. The opaque cursor holds the last row's sort key and id, so adding or removing someone while the user scrolls never repeats or skips a row. `next_cursor` is null on the last page. A cursor from the other sort, or a damaged one, is refused (`22023`), as are an unknown `p_login` or `p_sort`.
+- **Security.** It runs as the caller, so RLS decides: every active member of the school sees the profiles, and only leaders see other people's logins. For a teacher, bursar, parent or student, `member` is null except on their own row, so the login filter and counts treat everyone else as not on the app. Someone outside the school gets no rows and zero counts.
 
 ### `students`: profile
 | Column | Notes |

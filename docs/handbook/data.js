@@ -9,7 +9,7 @@
 window.HANDBOOK = {
   meta: {
     updated: '2026-11-08',
-    migrationsInRepo: 29, // highest migration number in supabase/migrations/
+    migrationsInRepo: 30, // highest migration number in supabase/migrations/
     migrationsLive: 29, // highest one applied to the live project (ccvyhbyrtobdsecqvhcr)
   },
 
@@ -847,6 +847,7 @@ window.HANDBOOK = {
     { n: 27, title: 'No school code', text: 'Drops `organizations.code` (`HMR-XXXXXX`).', drops: true },
     { n: 28, title: 'Deleting a person revokes their login', text: 'Deleting a staff, student or parent record deletes their invite or suspends their login; principals and VPs issue staff logins for their tier.' },
     { n: 29, title: 'Staff residence state and LGA', text: 'Adds `staff_private_details.residence_state` and `residence_lga`; `create_staff` and `update_staff` accept and save them.', drops: true },
+    { n: 30, title: 'Staff list search', text: '`list_staff`: one page of the staff list with search (name, number, email, phone in any format), login, role, type and status filters, two sorts, keyset paging and chip counts. Not applied to the live project yet.' },
   ],
 
   // ────────────────────────────────────────────────────────────────────
@@ -890,6 +891,7 @@ window.HANDBOOK = {
     { group: 'Grading', name: 'create_standard_grading · grading_problems · grade_for', security: 'invoker', who: 'Leaders (create); any member (read).', does: 'CA 1 / CA 2 / Exam with A–F (and WAEC A1–F9 for Secondary); report what’s missing; look up a grade.', from: 'Not used by an app yet.' },
     { group: 'Grading', name: 'score_columns_for_arm · grade_boundaries_for_arm', security: 'invoker', who: 'Any member (RLS applies).', does: 'The score columns or grade boundaries that apply to an arm: its section’s own set if it has one, otherwise the school’s.', from: 'Not used by an app yet.' },
     { group: 'People', name: 'create_staff · update_staff', security: 'invoker', who: 'Leaders (RLS decides).', does: 'Writes the staff profile and its private details in one call, including middle name, gender, address and residence state/LGA. A blank staff number is generated; on update it keeps the current one.', errors: [['42501', 'Staff record not found, or you can’t edit it'], ['23505', 'duplicate staff number'], ['23514', 'blank name']], from: 'Hamrash Admin → Add Staff Members (create_staff); a Staff page → Details → Change (update_staff).' },
+    { group: 'People', name: 'list_staff', security: 'invoker', who: 'Any active member of the school (RLS decides). Only leaders see other people’s logins; everyone else gets `member` null except on their own row.', does: 'One page of the staff list as one jsonb: `rows` (staff profile plus embedded `member`, no private details), `next_cursor`, `total` and login chip `counts` (which ignore the login filter). Search covers names, staff number, email and phone (digits only, without 0 or +234). Filters: login, roles (people with a login only), staff type, statuses. Sort `name` (owner first) or `newest`; keyset cursor; page size 1–100 (default 30). Someone outside the school gets nothing.', errors: [['22023', 'Choose a school to list its staff'], ['22023', 'Unknown login filter … / Unknown sort …'], ['22023', 'This page cursor is not valid for this list. Load the list again from the start']], from: 'Not used by an app yet (planned for Staffs 8.1 and the filter sheet 8.17). Migration 30, not applied to the live project yet.' },
     { group: 'People', name: 'create_student · update_student', security: 'invoker', who: 'Leaders (RLS decides).', does: 'Writes the student record and its private and medical details. A blank admission number is generated from the admission year.', errors: [['42501', 'Student record not found, or you can’t edit it'], ['23514', 'invalid blood group or genotype']], from: 'Not used by an app yet.' },
     { group: 'People', name: 'create_parent · update_parent', security: 'invoker', who: 'Leaders (RLS decides).', does: 'Writes the parent profile (phone required) and their private email, occupation and address.', errors: [['42501', 'Parent record not found, or you can’t edit it'], ['23514', 'blank phone']], from: 'Not used by an app yet.' },
   ],
