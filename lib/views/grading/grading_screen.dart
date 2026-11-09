@@ -123,10 +123,7 @@ class _Sections extends StatelessWidget {
           ],
         ),
       ),
-      const SizedBox(height: 24),
-      const _SaveNote(
-        'Each change saves as you make it. Every section stays separate.',
-      ),
+      
       const SizedBox(height: 24),
     ],
   );
@@ -190,37 +187,20 @@ class _NoSections extends StatelessWidget {
 }
 
 /// The quiet "everything is already saved" line at the foot of a page.
-class _SaveNote extends StatelessWidget {
-  const _SaveNote(this.message);
+class SaveNote extends StatelessWidget {
+  const SaveNote(this.message);
 
   final String message;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 4),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 1),
-          child: AppIcon(
-            AppIcons.check,
-            size: 16,
-            color: LightColors.textMuted,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: AppText(
-            message,
-            style: AppTypography.body.copyWith(
-              fontSize: 13,
-              height: 18 / 13,
-              color: LightColors.textMuted,
-            ),
-          ),
-        ),
-      ],
+  Widget build(BuildContext context) => Expanded(
+    child: AppText(
+      message,
+      style: AppTypography.body.copyWith(
+        fontSize: 13,
+        height: 18 / 13,
+        color: LightColors.textMuted,
+      ),
     ),
   );
 }

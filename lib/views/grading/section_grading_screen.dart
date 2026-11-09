@@ -17,6 +17,7 @@ import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/grading/grades_screen.dart';
 import 'package:hamrash_admin/views/grading/grading_review_screen.dart';
+import 'package:hamrash_admin/views/grading/grading_screen.dart';
 import 'package:hamrash_admin/views/grading/score_columns_screen.dart';
 import 'package:hamrash_admin/views/grading/section_grading_view_model.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_banner.dart';
@@ -84,15 +85,8 @@ class SectionGradingScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     _CopyRow(actions: actions),
                   ],
-                  const SizedBox(height: 24),
-                  _SaveNote(
-                    model.canChange
-                        ? 'Each change saves as you make it. Teachers '
-                              'can enter ${section.name} scores once both '
-                              'parts are set up.'
-                        : 'Only school leaders can change how '
-                              '${section.name} is graded.',
-                  ),
+        
+                 
                   const SizedBox(height: 24),
                 ],
               ),
@@ -494,40 +488,6 @@ class _CopyRow extends StatelessWidget {
   );
 }
 
-class _SaveNote extends StatelessWidget {
-  const _SaveNote(this.message);
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 4),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 1),
-          child: AppIcon(
-            AppIcons.check,
-            size: 16,
-            color: LightColors.textMuted,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: AppText(
-            message,
-            style: AppTypography.body.copyWith(
-              fontSize: 13,
-              height: 18 / 13,
-              color: LightColors.textMuted,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
 
 class _ReviewBar extends StatelessWidget {
   const _ReviewBar({required this.model, required this.actions});

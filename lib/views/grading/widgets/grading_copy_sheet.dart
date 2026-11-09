@@ -120,30 +120,38 @@ class _GradingCopySheetState extends State<GradingCopySheet> {
               color: LightColors.textStrong,
             ),
           ),
-          const SizedBox(height: 4),
-          if (widget.sources.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: AppText(
-                'There’s no other section to copy from yet.',
-                style: AppTypography.body.copyWith(
-                  fontSize: 14,
-                  color: LightColors.textMuted,
-                ),
-              ),
-            )
-          else
-            for (final (i, source) in widget.sources.indexed) ...[
-              if (i > 0) const AppDivider(),
-              _SourceRow(
-                grading: widget.gradingOf(source),
-                selected: source.id == _source?.id,
-                onTap: () => setState(() {
-                  _source = source;
-                  _error = null;
-                }),
-              ),
-            ],
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppPalette.stone50,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: widget.sources.isEmpty
+                ? AppText(
+                    'There’s no other section to copy from yet.',
+                    style: AppTypography.body.copyWith(
+                      fontSize: 14,
+                      color: LightColors.textMuted,
+                    ),
+                  )
+                : Column(
+                    children: [
+                      for (final (i, source) in widget.sources.indexed) ...[
+                        if (i > 0) const AppDivider(),
+                        _SourceRow(
+                          grading: widget.gradingOf(source),
+                          selected: source.id == _source?.id,
+                          onTap: () => setState(() {
+                            _source = source;
+                            _error = null;
+                          }),
+                        ),
+                      ],
+                    ],
+                  ),
+          ),
+
           const SizedBox(height: 20),
           AppText(
             'What to copy',
