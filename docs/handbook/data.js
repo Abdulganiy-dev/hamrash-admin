@@ -9,8 +9,8 @@
 window.HANDBOOK = {
   meta: {
     updated: '2026-11-09',
-    migrationsInRepo: 31, // highest migration number in supabase/migrations/
-    migrationsLive: 30, // highest one applied to the live project (ccvyhbyrtobdsecqvhcr)
+    migrationsInRepo: 32, // highest migration number in supabase/migrations/
+    migrationsLive: 31, // highest one applied to the live project (ccvyhbyrtobdsecqvhcr)
   },
 
   // Screens exported from Paper (file “Hamrash”, page “Hmarash Admin”) into screens/.
@@ -80,7 +80,7 @@ window.HANDBOOK = {
       { title: 'The owner signs in to Hamrash Admin', text: 'Apple or Google through Clerk. With no membership yet, the app opens Join your school.' },
       { title: 'Check, then redeem', text: '`check_claim_code` shows the school and role without using the code. Join calls `redeem_claim_code`, which activates the membership and creates the owner’s staff record (`STF/0001`).' },
       { title: 'Confirm the school', text: 'First time only, the owner checks the school’s name, contact details, logo and number prefix and taps Looks good.' },
-      { title: 'Set up from the Home checklist', text: 'Academic calendar → classes and arms → subjects → grading → Staff → Add students. Grading and Add students are “coming soon” in the app today; Staff opens the staff page.' },
+      { title: 'Set up from the Home checklist', text: 'Academic calendar → classes and arms → subjects → grading → Staff → Add students. Grading is “coming soon” in the app today; Staff opens the staff page; Add students opens the Add student wizard.' },
     ],
   },
 
@@ -723,6 +723,43 @@ window.HANDBOOK = {
       ],
     },
     {
+      id: 'students',
+      app: 'admin',
+      title: 'Add students',
+      summary: 'The **Add student** wizard (Home → Add students): the student, their parents, the class and arm, optional subjects, then a review. Nothing is written until **Register student**, which calls `register_student` once, so a student is saved completely or not at all.',
+      strip: [['parents', 'found by phone'], ['rpc register_student', 'one transaction'], ['students', 'KCL/2026/0042'], ['student_parents', 'one main contact', true]],
+      notes: [
+        'Five steps in one screen: Student, Parents, Class, Subjects, Review. Subjects is skipped (four steps) when the chosen arm has no optional subjects.',
+        'The Class step reuses the teaching sheets’ catalog: the current session and the classes and arms are read once while the wizard is open. Choosing an arm reads `arm_subjects` once (`listArmOfferings`); the same read gives the optional subjects and the compulsory count.',
+        'Photos are optional. A photo uploads through the `media-upload` edge function as soon as it is picked (`student-photos`, `parent-photos`); Register waits for an upload still running. A replaced or removed photo, or one left behind by closing the wizard, is deleted best effort through `media-delete`.',
+        '`register_student` comes from migration 31 (applied). Migration 32 adds one more refusal, a class in a switched-off section, and is in the repo but not yet applied; until it is, that case is only hidden by the app.',
+      ],
+      ops: [
+        {
+          id: 'stu-r1', kind: 'read', title: 'Find a parent by phone', target: 'select parents + student_parents → students',
+          trigger: 'Add student → Parents → **Add a parent** → phone number → Find parent. Also on **Add parent** when the new parent’s number was changed after the search.',
+          touches: ['parents', 'student_parents (embedded)', 'students (embedded, first name)'],
+          who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'], note: 'RLS: leaders and the bursar read parents; only leaders open the wizard.' },
+          steps: ['One request: the school’s parents whose phone holds the same digits in the same order (`phone ilike %8%0%3…`), with the first names of their children embedded so the row can say “Parent of Tobenna”.', 'The digits are then compared exactly in the app (`PhoneFormat.digitsAfterPrefix`), so 0803…, 803… and +234 803… all match, the same rule as `private.phone_digits` (migration 30).', 'Found: the match row and a relationship picker; **Use Mrs Okafor** adds them by id. Not found: the New parent form with the number filled in.', 'A parent already added to this student (same id or same number) is not added twice.'],
+          sources: ['add_student_view_model.dart:findParent · addNewParent', 'student_service.dart:findParentsByPhone', 'migration 03 · 30'],
+        },
+        {
+          id: 'stu-c1', kind: 'create', title: 'Register a student', target: 'rpc register_student',
+          trigger: 'Add student → Review → **Register student**.',
+          touches: ['rpc register_student', '~create_student (students + student_private_details)', '~create_parent (new parents)', '~insert student_parents', '~insert student_placements', '~insert student_subjects'],
+          who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
+          steps: ['Waits for any photo still uploading; a failed upload must be tried again or removed first.', 'Sends the student (a blank admission number is generated), `p_parents` with existing parents as `{parent_id, relationship, is_primary_contact}` and new ones with name, title, phone (`+234…`) and photo, the arm, the session the wizard showed, and the chosen optional subjects.', 'Exactly one parent is the main contact: the first added, until **Make main** moves it.', 'Success shows “{name} is registered” with the admission number; **Add another student** starts again, **Done** returns to Home, which refreshes setup progress.'],
+          refusals: [
+            { when: 'A new parent’s phone is already a parent in the school', code: '23505', text: '“{name} is already a parent in this school with phone …. Choose them as an existing parent instead of adding them again”. Shown on Review; Parents → Edit fixes it.' },
+            { when: 'Admission number taken', code: '23505', text: '“Admission number … is already used in this school. Leave it blank to generate one”.' },
+            { when: 'Session closed or none current', code: 'P0001', text: 'The function’s own message. The Class step already blocks this and offers **Open academic sessions**.' },
+            { when: 'Not a leader', code: '42501', text: '“Only the school’s leaders can register students.”' },
+          ],
+          sources: ['add_student_view_model.dart:register', 'student_service.dart:registerStudent', 'migration 31'],
+        },
+      ],
+    },
+    {
       id: 'home',
       app: 'admin',
       gallery: ['home-checklist', 'home-bursar', 'more-owner'],
@@ -730,7 +767,7 @@ window.HANDBOOK = {
       summary: 'Read-only screens: the setup checklist on Home, and the More tab’s tiles. They count rows to decide what’s done.',
       notes: [
         'Leaders see all 7 steps and can open them; the bursar sees progress only (“The owner is getting your school ready”).',
-        'Grading and Add students open “coming soon” toasts today; Staff opens the staff page.',
+        'Grading opens a “coming soon” toast today; Staff opens the staff page; Add students opens the Add student wizard.',
       ],
       ops: [
         {
@@ -892,6 +929,7 @@ window.HANDBOOK = {
     { n: 29, title: 'Staff residence state and LGA', text: 'Adds `staff_private_details.residence_state` and `residence_lga`; `create_staff` and `update_staff` accept and save them.', drops: true },
     { n: 30, title: 'Staff list search', text: '`list_staff`: one page of the staff list with search (name, number, email, phone in any format), login, role, type and status filters, two sorts, keyset paging and chip counts.' },
     { n: 31, title: 'Register a student', text: '`register_student`: the Add Student wizard in one transaction: the student and private details, new or reused parents, links, the placement for the session and optional subjects, with readable refusals checked before any write.' },
+    { n: 32, title: 'Register student: switched-off section', text: '`register_student` also refuses a class whose section is switched off (the same function, one extra check before any write).' },
   ],
 
   // ────────────────────────────────────────────────────────────────────
@@ -937,7 +975,7 @@ window.HANDBOOK = {
     { group: 'People', name: 'create_staff · update_staff', security: 'invoker', who: 'Leaders (RLS decides).', does: 'Writes the staff profile and its private details in one call, including middle name, gender, address and residence state/LGA. A blank staff number is generated; on update it keeps the current one.', errors: [['42501', 'Staff record not found, or you can’t edit it'], ['23505', 'duplicate staff number'], ['23514', 'blank name']], from: 'Hamrash Admin → Add Staff Members (create_staff); a Staff page → Details → Change (update_staff).' },
     { group: 'People', name: 'list_staff', security: 'invoker', who: 'Any active member of the school (RLS decides). Only leaders see other people’s logins; everyone else gets `member` null except on their own row.', does: 'One page of the staff list as one jsonb: `rows` (staff profile plus embedded `member`, no private details), `next_cursor`, `total` and login chip `counts` (which ignore the login filter). Search covers names, staff number, email and phone (digits only, without 0 or +234). Filters: login, roles (people with a login only), staff type, statuses. Sort `name` (owner first) or `newest`; keyset cursor; page size 1–100 (default 30). Someone outside the school gets nothing.', errors: [['22023', 'Choose a school to list its staff'], ['22023', 'Unknown login filter … / Unknown sort …'], ['22023', 'This page cursor is not valid for this list. Load the list again from the start']], from: 'Hamrash Admin → Staffs (list, filter sheet, pages). Migration 30.' },
     { group: 'People', name: 'create_student · update_student', security: 'invoker', who: 'Leaders (RLS decides).', does: 'Writes the student record and its private and medical details. A blank admission number is generated from the admission year.', errors: [['42501', 'Student record not found, or you can’t edit it'], ['23514', 'invalid blood group or genotype']], from: 'Not used by an app yet.' },
-    { group: 'People', name: 'register_student', security: 'invoker', who: 'Leaders of the school (checked first, then RLS on every write).', does: 'The Add Student wizard in one transaction: `create_student` (blank admission number generated, status active), each new parent via `create_parent` or an existing one reused by id, the `student_parents` links (exactly one primary contact), the `student_placements` row for the session (null = current) and `student_subjects` for the optional subjects. Returns jsonb `{student, parent_ids, placement: {session_id, arm_id}, subject_ids}`. A new parent whose phone (compared by digits) matches a parent in the school is refused, not merged. Every rule is checked before the first write; a refusal keeps nothing.', errors: [['42501', 'Only the school’s leaders can register students'], ['22023', 'Add at least one parent or guardian'], ['22023', 'Choose one parent as the primary contact / Only one parent can be the primary contact'], ['22023', 'Choose how each parent is related to the student: father, mother, guardian or other'], ['22023', 'The same parent is listed twice. Add each parent once'], ['22023', 'Enter each new parent’s first name, last name and phone number'], ['P0002', 'That parent isn’t in this school. Search for them again, or add them as a new parent'], ['23505', '{name} is already a parent in this school with phone …. Choose them as an existing parent instead of adding them again'], ['23505', 'Admission number … is already used in this school. Leave it blank to generate one'], ['P0002', 'Choose a class and arm in this school'], ['P0001', '{arm} is switched off. Choose another arm, or switch it back on first'], ['P0001', 'This school has no current session. Set one up in the calendar first'], ['P0002', 'Session not found in this school'], ['P0001', 'That session is closed. Nothing new can be added to it; use the current session.'], ['23514', '{subject} isn’t offered to {arm}. Choose from the arm’s optional subjects'], ['23514', '{subject} is compulsory for {arm}, so every student already takes it']], from: 'Hamrash Admin → Add Student wizard (not wired yet). Migration 31, not yet applied.' },
+    { group: 'People', name: 'register_student', security: 'invoker', who: 'Leaders of the school (checked first, then RLS on every write).', does: 'The Add Student wizard in one transaction: `create_student` (blank admission number generated, status active), each new parent via `create_parent` or an existing one reused by id, the `student_parents` links (exactly one primary contact), the `student_placements` row for the session (null = current) and `student_subjects` for the optional subjects. Returns jsonb `{student, parent_ids, placement: {session_id, arm_id}, subject_ids}`. A new parent whose phone (compared by digits) matches a parent in the school is refused, not merged. Every rule is checked before the first write; a refusal keeps nothing.', errors: [['42501', 'Only the school’s leaders can register students'], ['22023', 'Add at least one parent or guardian'], ['22023', 'Choose one parent as the primary contact / Only one parent can be the primary contact'], ['22023', 'Choose how each parent is related to the student: father, mother, guardian or other'], ['22023', 'The same parent is listed twice. Add each parent once'], ['22023', 'Enter each new parent’s first name, last name and phone number'], ['P0002', 'That parent isn’t in this school. Search for them again, or add them as a new parent'], ['23505', '{name} is already a parent in this school with phone …. Choose them as an existing parent instead of adding them again'], ['23505', 'Admission number … is already used in this school. Leave it blank to generate one'], ['P0002', 'Choose a class and arm in this school'], ['P0001', 'The {section} section is switched off. Choose a class in another section, or switch it back on first (migration 32)'], ['P0001', '{arm} is switched off. Choose another arm, or switch it back on first'], ['P0001', 'This school has no current session. Set one up in the calendar first'], ['P0002', 'Session not found in this school'], ['P0001', 'That session is closed. Nothing new can be added to it; use the current session.'], ['23514', '{subject} isn’t offered to {arm}. Choose from the arm’s optional subjects'], ['23514', '{subject} is compulsory for {arm}, so every student already takes it']], from: 'Hamrash Admin → Add student wizard → Register student (`student_service.dart:registerStudent`). Migration 31 (the section check: migration 32, not yet applied).' },
     { group: 'People', name: 'create_parent · update_parent', security: 'invoker', who: 'Leaders (RLS decides).', does: 'Writes the parent profile (phone required) and their private email, occupation and address.', errors: [['42501', 'Parent record not found, or you can’t edit it'], ['23514', 'blank phone']], from: 'Not used by an app yet.' },
   ],
 

@@ -23,6 +23,7 @@ Update this file when an artboard is added or a screen ships.
 | 5 | More | 5.1 More (owner) | ✅ only the owner variant is designed |
 | 6 | Classes and arms | 6.1 Start · 6.2 Overview · 6.3 Edit a class · 6.3a Class in use · 6.4 Arms for every class | ✅ |
 | 7 | Subjects | 7.1 Start · 7.2 By class · 7.3 A class · 7.4 A subject's actions · 7.4a Subject in use · 7.5 Add subjects to a class · 7.6 All subjects · 7.7 Edit a subject · 7.8 Arms differ | ✅ |
+| 11 | Add student | 11.3 Student (photo optional) · 11.4 Photo options · 11.5 Parents, none yet · 11.6 Parents added · 11.7 Find a parent by phone · 11.8 New parent · 11.9 Class and arm · 11.10 Optional subjects · 11.11 Review · 11.12 No current session · 11.13 Registered · 11.14 Photo field states | ✅ built (`lib/views/students/add_student/`); Register calls `register_student` (migration 31), which isn't applied to the live project yet. 11.13's "Open profile" is left out until there is a student profile screen |
 
 Gaps inside finished sections:
 - [ ] ❓ Check 3.3, 3.4 and 4.3 in the simulator (see above).
@@ -63,10 +64,10 @@ Plan: [results-design.md → Gradebook](results-design.md). Admin side is oversi
 - [ ] 10.5 Withhold one student's result
 
 ### 11 · People ⬜
-Schema exists (`staff`, `students`, `parents`, `student_parents`). See [people-schema.md](people-schema.md). Nothing is designed yet.
+Schema exists (`staff`, `students`, `parents`, `student_parents`). See [people-schema.md](people-schema.md). The Add student wizard is designed and built (Paper 11.3–11.14, in the table above); the rest is not designed yet. The numbers below are this list's own, not the Paper artboards'.
 - [ ] 11.1 Students: list, search, filter by class and arm
 - [ ] 11.2 Student profile: details, class history, parents, claim code
-- [ ] 11.3 Register a student: details, class and arm, subjects, parents, primary contact
+- [x] 11.3 Register a student: details, class and arm, subjects, parents, primary contact (the Add student wizard, Paper 11.3–11.14)
 - [ ] 11.4 Move a student to another arm
 - [ ] 11.5 Parents: list, a parent's profile, link and unlink
 - [ ] 11.6 Staff: list, profile, class and subject assignments, status (active, on leave, exited)

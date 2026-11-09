@@ -145,6 +145,7 @@ class SubjectOffering {
     required this.name,
     required this.isCompulsory,
     required this.sortOrder,
+    this.code,
   });
 
   final String subjectId;
@@ -154,9 +155,12 @@ class SubjectOffering {
   /// Report-card order.
   final int sortOrder;
 
+  /// Short code, e.g. MTH, when the school set one.
+  final String? code;
+
   static const columns =
       'subject_id,is_compulsory,'
-      'subjects!arm_subjects_subject_fkey(name,sort_order)';
+      'subjects!arm_subjects_subject_fkey(name,code,sort_order)';
 
   factory SubjectOffering.fromJson(Map<String, dynamic> json) {
     final subject = _one(json['subjects']);
@@ -165,6 +169,7 @@ class SubjectOffering {
       name: subject?['name'] as String? ?? '',
       isCompulsory: json['is_compulsory'] as bool,
       sortOrder: subject?['sort_order'] as int? ?? 0,
+      code: subject?['code'] as String?,
     );
   }
 }

@@ -3,8 +3,8 @@ import 'package:hamrash_admin/api/models/class_structure/class_structure.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
@@ -35,42 +35,30 @@ class SectionCard extends StatelessWidget {
     final count = classes.length == 1 ? '1 class' : '${classes.length} classes';
     // Classes are added from the app bar's +; an empty section offers it here.
     final showAdd = onAddClass != null && section.isActive && classes.isEmpty;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return AppSectionCard(
+      title: section.name,
+      caption: section.isActive ? count : 'Switched off · $count',
+      // Each class row draws its own line.
+      divided: false,
+      action: onEdit == null
+          ? null
+          : AppSectionAction(
+              label: 'Edit',
+              icon: AppIcons.pencil,
+              semanticLabel: 'Edit ${section.name}',
+              onPressed: onEdit,
+            ),
       children: [
-        AppSectionHeader(
-          title: section.name,
-          caption: section.isActive ? count : 'Switched off · $count',
-          action: onEdit == null
-              ? null
-              : AppSectionAction(
-                  label: 'Edit',
-                  icon: AppIcons.pencil,
-                  semanticLabel: 'Edit ${section.name}',
-                  onPressed: onEdit,
-                ),
-        ),
-        const SizedBox(height: 10),
-        AppCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: Column(
-            children: [
-              for (var i = 0; i < classes.length; i++)
-                _ClassRow(
-                  schoolClass: classes[i],
-                  showDivider: i < classes.length - 1,
-                  onTap:
-                      onOpenClass == null
-                          ? null
-                          : () => onOpenClass!(classes[i]),
-                ),
-              if (showAdd)
-                _AddClassRow(onTap: onAddClass!)
-              else if (classes.isEmpty)
-                const _NoClassesRow(),
-            ],
+        for (var i = 0; i < classes.length; i++)
+          _ClassRow(
+            schoolClass: classes[i],
+            showDivider: i < classes.length - 1,
+            onTap: onOpenClass == null ? null : () => onOpenClass!(classes[i]),
           ),
-        ),
+        if (showAdd)
+          _AddClassRow(onTap: onAddClass!)
+        else if (classes.isEmpty)
+          const _NoClassesRow(),
       ],
     );
   }

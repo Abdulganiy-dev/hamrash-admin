@@ -5,6 +5,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
+import 'package:hamrash_admin/core/widgets/app_dashed_border.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/onboarding/widgets/auth_onboarding_widgets.dart';
@@ -94,11 +95,8 @@ class _JoinAnotherSchool extends StatelessWidget {
   Widget build(BuildContext context) => BouncyButton(
     onPressed: onTap,
     pressedScale: 0.98,
-    child: CustomPaint(
-      painter: const _DashedBorderPainter(
-        color: AppPalette.stone300,
-        radius: 20,
-      ),
+    child: AppDashedBorder(
+      radius: 20,
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(
@@ -141,37 +139,4 @@ class _JoinAnotherSchool extends StatelessWidget {
       ),
     ),
   );
-}
-
-class _DashedBorderPainter extends CustomPainter {
-  const _DashedBorderPainter({required this.color, required this.radius});
-
-  final Color color;
-  final double radius;
-
-  static const _dash = 6.0;
-  static const _gap = 4.0;
-  static const _width = 1.5;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = (Offset.zero & size).deflate(_width / 2);
-    final path =
-        Path()
-          ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(radius)));
-    final paint =
-        Paint()
-          ..color = color
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = _width;
-    for (final metric in path.computeMetrics()) {
-      for (var d = 0.0; d < metric.length; d += _dash + _gap) {
-        canvas.drawPath(metric.extractPath(d, d + _dash), paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedBorderPainter old) =>
-      old.color != color || old.radius != radius;
 }

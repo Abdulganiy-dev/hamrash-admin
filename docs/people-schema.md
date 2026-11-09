@@ -1,6 +1,6 @@
 # People Schema: staff, students, parents
 
-> **Status:** applied to the live project through migration 30 (`list_staff`). Migration `20261109120000` (31, `register_student`) is in the repo but **not yet applied**. Migration `20261108120000` (2026-11-08) added staff residence state and LGA. Migration `20261007210000` (2026-10-07) created the tables, and migration `20261011130000` (2026-10-11) split staff into a public profile and private details. SQL: [`…03_create_people.sql`](../supabase/migrations/20261007210000_03_create_people.sql), [`…05_split_staff_private_details.sql`](../supabase/migrations/20261011130000_05_split_staff_private_details.sql). Test: [`supabase/tests/02_people_access_test.sql`](../supabase/tests/02_people_access_test.sql). Builds on [organization-schema.md](organization-schema.md).
+> **Status:** applied to the live project through migration 31 (`register_student`). Migration `20261109150000` (32, the switched-off section check in `register_student`) is in the repo but **not yet applied**. Migration `20261108120000` (2026-11-08) added staff residence state and LGA. Migration `20261007210000` (2026-10-07) created the tables, and migration `20261011130000` (2026-10-11) split staff into a public profile and private details. SQL: [`…03_create_people.sql`](../supabase/migrations/20261007210000_03_create_people.sql), [`…05_split_staff_private_details.sql`](../supabase/migrations/20261011130000_05_split_staff_private_details.sql). Test: [`supabase/tests/02_people_access_test.sql`](../supabase/tests/02_people_access_test.sql). Builds on [organization-schema.md](organization-schema.md).
 
 ---
 
@@ -165,7 +165,7 @@ Exactly one row per parent, **created automatically** with the parent and remove
 
 Deleting a student or parent removes their links. Nothing else cascades.
 
-### Registering a student: one call *(migration 31, not yet applied)*
+### Registering a student: one call *(migration 31; section check in migration 32, not yet applied)*
 The Add Student wizard (student → parents → class and arm → optional subjects → review) saves everything with `register_student`, in **one transaction**: the student and their private details, any new parents, the links, the placement for the session and the optional subjects. A refusal keeps nothing. SQL: [`…31_register_student_rpc.sql`](../supabase/migrations/20261109120000_31_register_student_rpc.sql). Test: [`supabase/tests/19_register_student_access_test.sql`](../supabase/tests/19_register_student_access_test.sql).
 
 ```dart
@@ -214,6 +214,7 @@ Every rule is checked before anything is written, so the wizard gets one readabl
 | New parent's phone matches a parent in the school | `23505` | {name} is already a parent in this school with phone …. Choose them as an existing parent instead of adding them again |
 | No primary contact / more than one | `22023` | Choose one parent as the primary contact / Only one parent can be the primary contact |
 | Arm not in the school | `P0002` | Choose a class and arm in this school |
+| Section switched off *(migration 32)* | `P0001` | The {Junior} section is switched off. Choose a class in another section, or switch it back on first |
 | Arm or its class switched off | `P0001` | {JSS 1 A} is switched off. Choose another arm, or switch it back on first |
 | No current session (when `p_session_id` is null) | `P0001` | This school has no current session. Set one up in the calendar first |
 | Session not in the school | `P0002` | Session not found in this school |

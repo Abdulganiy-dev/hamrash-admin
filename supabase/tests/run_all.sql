@@ -3890,6 +3890,19 @@ begin
   end;
   v_log := v_log || E'\n' || case when v_ok then 'PASS' else 'FAIL' end || ' 17 switched-off or unknown arm refused';
 
+  -- 17b a class in a switched-off section is refused (migration 32); switching it back on allows it
+  update public.sections set is_active = false where id = (select section_id from public.classes where id = v_jss1);
+  v_ok := false;
+  begin
+    perform public.register_student(v_org, 'Off', 'Section', v_one_parent, v_jss1a);
+  exception when others then
+    v_ok := sqlstate = 'P0001' and sqlerrm like '%section is switched off%';
+  end;
+  update public.sections set is_active = true where id = (select section_id from public.classes where id = v_jss1);
+  v_ok := v_ok
+    and (select count(*) from public.students where organization_id = v_org) = v_students_before;
+  v_log := v_log || E'\n' || case when v_ok then 'PASS' else 'FAIL' end || ' 17b switched-off section refused, nothing kept';
+
   -- 18 a failure after the first write (bad blood group fails in create_student,
   --    after the student row is inserted) keeps nothing: no student, parent or link
   begin
