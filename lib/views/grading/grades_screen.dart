@@ -10,14 +10,12 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
-import 'package:hamrash_admin/core/widgets/app_icon_label.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
-import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/grading/grades_view_model.dart';
@@ -28,6 +26,7 @@ import 'package:hamrash_admin/views/grading/widgets/grading_bars.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_copy_sheet.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_list_card.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_body.dart';
+import 'package:hamrash_admin/views/grading/widgets/grading_secondary_button.dart';
 import 'package:stacked/stacked.dart';
 
 /// 9.32–9.34, 9.40 · One section's grades: choose a system, then edit the
@@ -97,6 +96,7 @@ class _GradesScreenState extends State<GradesScreen> {
             bottomNavigationBar: choosing && model.canChange
                 ? _UseSystemBar(
                     system: _selected,
+                    saving: model.saving,
                     onPressed: () => actions.applySystem(context, _selected),
                   )
                 : !model.loading &&
@@ -269,7 +269,7 @@ class _Ranges extends StatelessWidget {
                 )
               : null,
         ),
-        const SizedBox(height: 12),
+
         GradingListCard(
           rows: [
             for (final grade in grading.grades)
@@ -288,7 +288,7 @@ class _Ranges extends StatelessWidget {
         ),
         if (gap == null) ...[
           const SizedBox(height: 16),
-          _TextLinks(model: model, actions: actions),
+          _OtherActions(model: model, actions: actions),
         ],
         const SizedBox(height: 24),
       ],
@@ -332,11 +332,13 @@ class _InheritedGrades extends StatelessWidget {
       const SizedBox(height: 24),
       if (model.canChange) ...[
         AppPrimaryButton(
+          isLoading: model.saving,
+          loadingText: 'Giving ${model.section.name} its own grades…',
           onPressed: () => actions.giveOwnGrades(context),
           child: Text('Give ${model.section.name} its own grades'),
         ),
         const SizedBox(height: 16),
-        _TextLink(
+        GradingSecondaryButton(
           icon: AppIcons.copy,
           label: 'Copy grades from another section',
           onPressed: () => actions.copy(context),
@@ -347,8 +349,8 @@ class _InheritedGrades extends StatelessWidget {
   );
 }
 
-class _TextLinks extends StatelessWidget {
-  const _TextLinks({required this.model, required this.actions});
+class _OtherActions extends StatelessWidget {
+  const _OtherActions({required this.model, required this.actions});
 
   final GradesViewModel model;
   final _GradeActions actions;
@@ -363,14 +365,14 @@ class _TextLinks extends StatelessWidget {
       children: [
         for (final (i, target) in targets.indexed) ...[
           if (i > 0) const SizedBox(height: 16),
-          _TextLink(
+          GradingSecondaryButton(
             icon: AppIcons.refreshCw,
             label: 'Change to ${target.label} grades',
             onPressed: () => actions.changeSystem(context, target),
           ),
         ],
         const SizedBox(height: 16),
-        _TextLink(
+        GradingSecondaryButton(
           icon: AppIcons.copy,
           label: 'Copy grades from another section',
           onPressed: () => actions.copy(context),
@@ -380,46 +382,15 @@ class _TextLinks extends StatelessWidget {
   }
 }
 
-class _TextLink extends StatelessWidget {
-  const _TextLink({
-    required this.icon,
-    required this.label,
+class _UseSystemBar extends StatelessWidget {
+  const _UseSystemBar({
+    required this.system,
+    required this.saving,
     required this.onPressed,
   });
 
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) => BouncyButton(
-    onPressed: onPressed,
-    child: SizedBox(
-      height: 44,
-      child: Center(
-        child: AppIconLabel(
-          icon: icon,
-          label: label,
-          iconColor: LightColors.primaryPrimaryText,
-          iconSize: 16,
-          gap: 8,
-          hugContent: true,
-          style: AppTypography.body.copyWith(
-            fontSize: 15,
-            height: 20 / 15,
-            fontWeight: FontWeight.w700,
-            color: LightColors.primaryPrimaryText,
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-class _UseSystemBar extends StatelessWidget {
-  const _UseSystemBar({required this.system, required this.onPressed});
-
   final GradeSystem system;
+  final bool saving;
   final VoidCallback onPressed;
 
   @override
@@ -429,6 +400,8 @@ class _UseSystemBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: AppPrimaryButton(
         height: 52,
+        isLoading: saving,
+        loadingText: 'Applying ${system.label} grades…',
         onPressed: onPressed,
         child: Text('Use ${system.label} grades'),
       ),

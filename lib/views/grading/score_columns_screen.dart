@@ -9,7 +9,6 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_divider.dart';
-import 'package:hamrash_admin/core/widgets/app_icon_label.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
@@ -26,6 +25,7 @@ import 'package:hamrash_admin/views/grading/widgets/grading_copy_sheet.dart';
 import 'package:hamrash_admin/views/grading/widgets/score_column_sheet.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_body.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_empty_state.dart';
+import 'package:hamrash_admin/views/grading/widgets/grading_secondary_button.dart';
 import 'package:stacked/stacked.dart';
 
 /// 9.26–9.30 · What a subject's score is made of in one section.
@@ -179,10 +179,12 @@ class _Columns extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 16),
-      _CopyLink(
-        label: 'Copy columns from another section',
-        onTap: model.canChange ? () => actions.copy(context) : null,
-      ),
+      if (model.canChange)
+        GradingSecondaryButton(
+          icon: AppIcons.copy,
+          label: 'Copy columns from another section',
+          onPressed: () => actions.copy(context),
+        ),
       const SizedBox(height: 24),
     ],
   );
@@ -370,51 +372,21 @@ class _Inherited extends StatelessWidget {
       const SizedBox(height: 24),
       if (model.canChange)
         AppPrimaryButton(
+          isLoading: model.saving,
+          loadingText: 'Giving ${model.section.name} its own setup…',
           onPressed: () => actions.giveOwnSetup(context),
           child: Text('Give ${model.section.name} its own setup'),
         ),
       const SizedBox(height: 16),
-      _CopyLink(
-        label: 'Copy columns from another section',
-        onTap: model.canChange ? () => actions.copy(context) : null,
-      ),
+      if (model.canChange)
+        GradingSecondaryButton(
+          icon: AppIcons.copy,
+          label: 'Copy columns from another section',
+          onPressed: () => actions.copy(context),
+        ),
       const SizedBox(height: 24),
     ],
   );
-}
-
-class _CopyLink extends StatelessWidget {
-  const _CopyLink({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    if (onTap == null) return const SizedBox.shrink();
-    return BouncyButton(
-      onPressed: onTap,
-      child: SizedBox(
-        height: 44,
-        child: Center(
-          child: AppIconLabel(
-            icon: AppIcons.copy,
-            label: label,
-            iconColor: LightColors.primaryPrimaryText,
-            iconSize: 16,
-            gap: 8,
-            hugContent: true,
-            style: AppTypography.body.copyWith(
-              fontSize: 15,
-              height: 20 / 15,
-              fontWeight: FontWeight.w700,
-              color: LightColors.primaryPrimaryText,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _ColumnActions {

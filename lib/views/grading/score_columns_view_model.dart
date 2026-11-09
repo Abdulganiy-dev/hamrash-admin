@@ -31,11 +31,15 @@ class ScoreColumnsViewModel extends BaseViewModel {
   final List<SchoolSection> sections;
   Object? _error;
   bool _changed = false;
+  bool _saving = false;
 
   Object? get error => _error;
   bool get loading => _setup == null && _error == null;
   bool get canChange => school.canRunSetup;
   bool get changed => _changed;
+
+  /// A save is running; buttons that started it show a spinner.
+  bool get saving => _saving;
 
   SectionGrading get grading => _setup!.forSection(section);
 
@@ -255,6 +259,9 @@ class ScoreColumnsViewModel extends BaseViewModel {
     String fallback,
     String context,
   ) async {
+    if (_saving) return null;
+    _saving = true;
+    notifyListeners();
     try {
       await action();
       _changed = true;
@@ -270,6 +277,7 @@ class ScoreColumnsViewModel extends BaseViewModel {
       await _fetch().catchError((_) {});
       return messageFor(error, fallback);
     } finally {
+      _saving = false;
       notifyListeners();
     }
   }

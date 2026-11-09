@@ -24,6 +24,7 @@ import 'package:hamrash_admin/views/grading/widgets/grading_bars.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_copy_sheet.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_status_badge.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_body.dart';
+import 'package:hamrash_admin/views/grading/widgets/grading_secondary_button.dart';
 import 'package:stacked/stacked.dart';
 
 /// 9.23–9.25 · One section's setup: its two tasks, copying another
@@ -534,22 +535,11 @@ class _OwnSetupBar extends StatelessWidget {
             child: Text('Give ${model.section.name} its own setup'),
           ),
           const SizedBox(height: 16),
-          BouncyButton(
+          GradingSecondaryButton(
+            height: 52,
+            icon: AppIcons.copy,
+            label: 'Copy from another section instead',
             onPressed: () => actions.copy(context),
-            child: SizedBox(
-              height: 44,
-              child: Center(
-                child: AppText(
-                  'Copy from another section instead',
-                  style: AppTypography.body.copyWith(
-                    fontSize: 15,
-                    height: 20 / 15,
-                    fontWeight: FontWeight.w700,
-                    color: LightColors.primaryPrimaryText,
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),
