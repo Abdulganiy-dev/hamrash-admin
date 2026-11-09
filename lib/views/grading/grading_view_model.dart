@@ -58,6 +58,10 @@ class GradingViewModel extends BaseViewModel {
   /// The school has sections, but every one is switched off.
   bool get hasAnySections => _sections.isNotEmpty;
 
+  /// Every section as loaded here (the one place they are fetched), handed to
+  /// each section's pages so they don't fetch them again.
+  List<SchoolSection> get allSections => _sections;
+
   Future<void> load() async {
     _error = null;
     notifyListeners();

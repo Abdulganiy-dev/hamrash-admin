@@ -123,7 +123,7 @@ class _Sections extends StatelessWidget {
           ],
         ),
       ),
-      
+
       const SizedBox(height: 24),
     ],
   );
@@ -151,7 +151,11 @@ class _SectionRow extends StatelessWidget {
 
   Future<void> _open(BuildContext context, SchoolSection section) async {
     final changed = await NavigationService.animatedNavigation<bool>(
-      screen: SectionGradingScreen(school: model.school, section: section),
+      screen: SectionGradingScreen(
+        school: model.school,
+        section: section,
+        sections: model.allSections,
+      ),
     );
     if (changed == true) await model.markChanged();
   }
@@ -188,7 +192,7 @@ class _NoSections extends StatelessWidget {
 
 /// The quiet "everything is already saved" line at the foot of a page.
 class SaveNote extends StatelessWidget {
-  const SaveNote(this.message);
+  const SaveNote(this.message, {super.key});
 
   final String message;
 

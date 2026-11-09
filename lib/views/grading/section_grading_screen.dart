@@ -17,7 +17,6 @@ import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/grading/grades_screen.dart';
 import 'package:hamrash_admin/views/grading/grading_review_screen.dart';
-import 'package:hamrash_admin/views/grading/grading_screen.dart';
 import 'package:hamrash_admin/views/grading/score_columns_screen.dart';
 import 'package:hamrash_admin/views/grading/section_grading_view_model.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_banner.dart';
@@ -34,16 +33,21 @@ class SectionGradingScreen extends StatelessWidget {
     super.key,
     required this.school,
     required this.section,
+    required this.sections,
   });
 
   final MemberSchool school;
   final SchoolSection section;
+  final List<SchoolSection> sections;
 
   @override
   Widget build(BuildContext context) =>
       ViewModelBuilder<SectionGradingViewModel>.reactive(
-        viewModelBuilder: () =>
-            SectionGradingViewModel(school: school, section: section),
+        viewModelBuilder: () => SectionGradingViewModel(
+          school: school,
+          section: section,
+          sections: sections,
+        ),
         onViewModelReady: (model) => model.load(),
         builder: (context, model, _) {
           final actions = _SectionActions(model);
@@ -85,8 +89,7 @@ class SectionGradingScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     _CopyRow(actions: actions),
                   ],
-        
-                 
+
                   const SizedBox(height: 24),
                 ],
               ),
@@ -488,7 +491,6 @@ class _CopyRow extends StatelessWidget {
   );
 }
 
-
 class _ReviewBar extends StatelessWidget {
   const _ReviewBar({required this.model, required this.actions});
 
@@ -562,21 +564,33 @@ class _SectionActions {
 
   Future<void> openColumns(BuildContext context) async {
     final changed = await NavigationService.animatedNavigation<bool>(
-      screen: ScoreColumnsScreen(school: model.school, section: model.section),
+      screen: ScoreColumnsScreen(
+        school: model.school,
+        section: model.section,
+        sections: model.sections,
+      ),
     );
     if (changed == true) await model.markChanged();
   }
 
   Future<void> openGrades(BuildContext context) async {
     final changed = await NavigationService.animatedNavigation<bool>(
-      screen: GradesScreen(school: model.school, section: model.section),
+      screen: GradesScreen(
+        school: model.school,
+        section: model.section,
+        sections: model.sections,
+      ),
     );
     if (changed == true) await model.markChanged();
   }
 
   Future<void> review(BuildContext context) async {
     final done = await NavigationService.animatedNavigation<bool>(
-      screen: GradingReviewScreen(school: model.school, section: model.section),
+      screen: GradingReviewScreen(
+        school: model.school,
+        section: model.section,
+        sections: model.sections,
+      ),
     );
     await model.markChanged();
     if (done == true) NavigationService.popScreen(true);

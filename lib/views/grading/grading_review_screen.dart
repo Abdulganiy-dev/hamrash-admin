@@ -32,16 +32,21 @@ class GradingReviewScreen extends StatelessWidget {
     super.key,
     required this.school,
     required this.section,
+    required this.sections,
   });
 
   final MemberSchool school;
   final SchoolSection section;
+  final List<SchoolSection> sections;
 
   @override
   Widget build(BuildContext context) =>
       ViewModelBuilder<GradingReviewViewModel>.reactive(
-        viewModelBuilder: () =>
-            GradingReviewViewModel(school: school, section: section),
+        viewModelBuilder: () => GradingReviewViewModel(
+          school: school,
+          section: section,
+          sections: sections,
+        ),
         onViewModelReady: (model) => model.load(),
         builder: (context, model, _) {
           final actions = _ReviewActions(model);
@@ -560,14 +565,22 @@ class _ReviewActions {
 
   Future<void> openColumns(BuildContext context) async {
     final changed = await NavigationService.animatedNavigation<bool>(
-      screen: ScoreColumnsScreen(school: model.school, section: model.section),
+      screen: ScoreColumnsScreen(
+        school: model.school,
+        section: model.section,
+        sections: model.sections,
+      ),
     );
     if (changed == true) await model.markChanged();
   }
 
   Future<void> openGrades(BuildContext context) async {
     final changed = await NavigationService.animatedNavigation<bool>(
-      screen: GradesScreen(school: model.school, section: model.section),
+      screen: GradesScreen(
+        school: model.school,
+        section: model.section,
+        sections: model.sections,
+      ),
     );
     if (changed == true) await model.markChanged();
   }

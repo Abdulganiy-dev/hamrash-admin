@@ -5,7 +5,6 @@ import 'package:hamrash_admin/api/models/grading/grade_systems.dart';
 import 'package:hamrash_admin/api/models/grading/grading_setup.dart';
 import 'package:hamrash_admin/api/models/grading/section_grading.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
-import 'package:hamrash_admin/api/services/supabase_services/class_structure_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/grading_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
@@ -19,18 +18,19 @@ class GradesViewModel extends BaseViewModel {
   GradesViewModel({
     required this.school,
     required this.section,
+    required this.sections,
     GradingService? service,
-    ClassStructureService? structure,
-  }) : _service = service ?? locator<GradingService>(),
-       _structure = structure ?? locator<ClassStructureService>();
+  }) : _service = service ?? locator<GradingService>();
 
   final MemberSchool school;
   final SchoolSection section;
   final GradingService _service;
-  final ClassStructureService _structure;
 
   GradingSetup? _setup;
-  List<SchoolSection> _sections = const [];
+
+  /// Every section, as the list loaded them; copy sources are picked from it
+  /// and it is handed on to the pages opened from here.
+  final List<SchoolSection> sections;
   Object? _error;
   bool _changed = false;
 
@@ -53,7 +53,7 @@ class GradesViewModel extends BaseViewModel {
 
   /// Active sections to copy grades from.
   List<SchoolSection> get copySources => [
-    for (final other in _sections)
+    for (final other in sections)
       if (other.isActive && other.id != section.id) other,
   ];
 
@@ -260,12 +260,7 @@ class GradesViewModel extends BaseViewModel {
   }
 
   Future<void> _fetch() async {
-    final (setup, sections) = await (
-      _service.getSetup(school.id),
-      _structure.getStructure(school.id),
-    ).wait;
-    _setup = setup;
-    _sections = sections;
+    _setup = await _service.getSetup(school.id);
   }
 
   static String messageFor(Object error, String fallback) =>

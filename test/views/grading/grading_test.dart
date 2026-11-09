@@ -865,7 +865,7 @@ void main() {
         school: _school(role),
         section: section ?? _sections().first,
         service: fake,
-        structure: _Structure(),
+        sections: _sections(),
       );
       await model.load();
       return (model, fake);
@@ -949,7 +949,7 @@ void main() {
         school: _school(OrganizationMemberRole.owner),
         section: section ?? _sections()[2],
         service: fake,
-        structure: _Structure(),
+        sections: _sections(),
       );
       await model.load();
       return (model, fake);
@@ -1029,7 +1029,7 @@ void main() {
         school: _school(OrganizationMemberRole.owner),
         section: section ?? _sections()[2],
         service: fake,
-        structure: _Structure(),
+        sections: _sections(),
       );
       await model.load();
       return (model, fake);
@@ -1133,7 +1133,7 @@ void main() {
           columns: _standardColumns(sectionId: 'junior'),
           grades: _standard(sectionId: 'junior'),
         ),
-        structure: _Structure(),
+        sections: _sections(),
       );
       await model.load();
       expect(model.canChange, isFalse);
@@ -1253,7 +1253,11 @@ void main() {
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
         MaterialApp(
-          home: SectionGradingScreen(school: _school(role), section: section),
+          home: SectionGradingScreen(
+            school: _school(role),
+            section: section,
+            sections: _sections(),
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -1334,7 +1338,11 @@ void main() {
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
         MaterialApp(
-          home: ScoreColumnsScreen(school: _school(role), section: section),
+          home: ScoreColumnsScreen(
+            school: _school(role),
+            section: section,
+            sections: _sections(),
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -1409,7 +1417,11 @@ void main() {
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
         MaterialApp(
-          home: GradesScreen(school: _school(role), section: section),
+          home: GradesScreen(
+            school: _school(role),
+            section: section,
+            sections: _sections(),
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -1633,6 +1645,7 @@ void main() {
           home: GradingReviewScreen(
             school: _school(OrganizationMemberRole.owner),
             section: _sections()[2],
+            sections: _sections(),
           ),
         ),
       );

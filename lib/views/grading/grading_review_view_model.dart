@@ -12,11 +12,15 @@ class GradingReviewViewModel extends BaseViewModel {
   GradingReviewViewModel({
     required this.school,
     required this.section,
+    required this.sections,
     GradingService? service,
   }) : _service = service ?? locator<GradingService>();
 
   final MemberSchool school;
   final SchoolSection section;
+
+  /// Every section, as the list loaded them; handed on to the pages Change opens.
+  final List<SchoolSection> sections;
   final GradingService _service;
 
   GradingSetup? _setup;

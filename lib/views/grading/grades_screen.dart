@@ -33,10 +33,16 @@ import 'package:stacked/stacked.dart';
 /// 9.32–9.34, 9.40 · One section's grades: choose a system, then edit the
 /// ranges. Every save sends the whole new scale.
 class GradesScreen extends StatefulWidget {
-  const GradesScreen({super.key, required this.school, required this.section});
+  const GradesScreen({
+    super.key,
+    required this.school,
+    required this.section,
+    required this.sections,
+  });
 
   final MemberSchool school;
   final SchoolSection section;
+  final List<SchoolSection> sections;
 
   @override
   State<GradesScreen> createState() => _GradesScreenState();
@@ -48,8 +54,11 @@ class _GradesScreenState extends State<GradesScreen> {
   @override
   Widget build(BuildContext context) =>
       ViewModelBuilder<GradesViewModel>.reactive(
-        viewModelBuilder: () =>
-            GradesViewModel(school: widget.school, section: widget.section),
+        viewModelBuilder: () => GradesViewModel(
+          school: widget.school,
+          section: widget.section,
+          sections: widget.sections,
+        ),
         onViewModelReady: (model) => model.load(),
         builder: (context, model, _) {
           final actions = _GradeActions(model);

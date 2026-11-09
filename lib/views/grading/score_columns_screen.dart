@@ -34,16 +34,21 @@ class ScoreColumnsScreen extends StatelessWidget {
     super.key,
     required this.school,
     required this.section,
+    required this.sections,
   });
 
   final MemberSchool school;
   final SchoolSection section;
+  final List<SchoolSection> sections;
 
   @override
   Widget build(BuildContext context) =>
       ViewModelBuilder<ScoreColumnsViewModel>.reactive(
-        viewModelBuilder: () =>
-            ScoreColumnsViewModel(school: school, section: section),
+        viewModelBuilder: () => ScoreColumnsViewModel(
+          school: school,
+          section: section,
+          sections: sections,
+        ),
         onViewModelReady: (model) => model.load(),
         builder: (context, model, _) {
           final actions = _ColumnActions(model);
@@ -129,17 +134,17 @@ class _Columns extends StatelessWidget {
                 color: LightColors.textBody,
               ),
             ),
-            if (!model.grading.totalIsHundred) ...[
-              const SizedBox(height: 4),
-              AppText(
-                '100 is easiest to read, but any total works.',
-                style: AppTypography.body.copyWith(
-                  fontSize: 13,
-                  height: 18 / 13,
-                  color: LightColors.textMuted,
-                ),
-              ),
-            ],
+            // if (!model.grading.totalIsHundred) ...[
+            //   const SizedBox(height: 4),
+            //   AppText(
+            //     '100 is easiest to read, but any total works.',
+            //     style: AppTypography.body.copyWith(
+            //       fontSize: 13,
+            //       height: 18 / 13,
+            //       color: LightColors.textMuted,
+            //     ),
+            //   ),
+            // ],
           ],
         ),
       ),
@@ -154,7 +159,7 @@ class _Columns extends StatelessWidget {
               )
             : null,
       ),
-      const SizedBox(height: 12),
+      // const SizedBox(height: 12),
       AppCard(
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
         child: Column(

@@ -56,7 +56,7 @@ class AppSectionAction extends StatelessWidget {
               widthFactor: 1,
               child: Container(
                 height: 32,
-                padding: const EdgeInsets.only(left: 10, right: 12),
+                padding:addBackground ? const EdgeInsets.only(left: 10, right: 12) : null,
                 decoration:addBackground ? BoxDecoration(
                   color: fill,
                   borderRadius: BorderRadius.circular(999),
