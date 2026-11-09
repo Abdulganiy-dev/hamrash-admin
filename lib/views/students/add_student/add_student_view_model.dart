@@ -1053,6 +1053,39 @@ class AddStudentViewModel extends BaseViewModel {
       if (chosenSubjectIds.contains(offering.subjectId)) offering,
   ];
 
+  /// What everyone in the arm takes, in report-card order (from the arm's
+  /// offerings already read; no extra call).
+  List<String> get compulsorySubjectNames => [
+    for (final offering in _armOfferings)
+      if (offering.isCompulsory) offering.name,
+  ];
+
+  /// "JSS 1 Gold has 4 to choose from. Tap the ones they will study."
+  String get subjectsLead =>
+      '$armLabel has ${optionalSubjects.length} to choose from. Tap the ones '
+      'they will study.';
+
+  /// "2 of 4 chosen".
+  String get chosenCountLabel =>
+      '${chosenSubjects.length} of ${optionalSubjects.length} chosen';
+
+  /// "9 subjects".
+  String get compulsoryCountLabel => _count(compulsoryCount, 'subject');
+
+  /// "11 subjects in total", above Continue on the subjects step.
+  String get subjectTotalLabel =>
+      '${_count(compulsoryCount + chosenSubjects.length, 'subject')} in total';
+
+  /// "· 9 compulsory + 2 optional", or "· compulsory only" with none chosen.
+  String get subjectTotalDetail {
+    final chosen = chosenSubjects.length;
+    if (chosen == 0) {
+      return compulsoryCount == 0 ? '· none chosen yet' : '· compulsory only';
+    }
+    if (compulsoryCount == 0) return '· optional only';
+    return '· $compulsoryCount compulsory + $chosen optional';
+  }
+
   // ── Step 6 · Review and register ────────────────────────────────────────
 
   bool _registering = false;

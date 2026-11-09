@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/core/widgets/app_step_segments.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
+import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
 import 'package:hamrash_admin/views/students/add_student/add_student_screen.dart';
 import 'package:hamrash_admin/views/students/add_student/add_student_view_model.dart';
 
@@ -210,7 +211,7 @@ void main() {
     expect(find.text('Pick optional subjects'), findsOneWidget);
     await tester.tap(find.text('French'));
     await tester.pumpAndSettle();
-    expect(find.text('1 chosen'), findsOneWidget);
+    expect(find.text('1 of 2 chosen'), findsOneWidget);
 
     model.next();
     await tester.pumpAndSettle();
@@ -246,6 +247,81 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Who is the student?'), findsOneWidget);
     expect(model.firstName.text, isEmpty);
+  });
+
+  testWidgets('the subjects step shows both sections and the running total', (
+    tester,
+  ) async {
+    await pump(tester);
+    fillStudent(model);
+    model.next();
+    fillPersonal(model);
+    model.next();
+    fakes.students.matches = const [ngozi];
+    model
+      ..startParentSheet()
+      ..searchPhone.text = '08035550142';
+    await model.findParent();
+    model
+      ..useFoundParent()
+      ..next();
+    await model.loadPlacement();
+    model
+      ..pickClass(model.classes.single)
+      ..pickArm(model.armsOf(model.classes.single).first);
+    await model.loadOfferings();
+    model.next();
+    await tester.pumpAndSettle();
+    expect(model.step, AddStudentStep.subjects);
+
+    expect(
+      find.text(
+        'JSS 1 Gold has 2 to choose from. Tap the ones they will study.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Optional subjects'), findsOneWidget);
+    expect(find.text('0 of 2 chosen'), findsOneWidget);
+    expect(
+      find.text('Choosing none is fine. You can set them later.'),
+      findsOneWidget,
+    );
+    expect(find.text('Included for everyone'), findsOneWidget);
+    expect(find.text('1 subject'), findsOneWidget);
+    expect(find.text('Maths'), findsOneWidget);
+    expect(find.text('1 subject in total'), findsOneWidget);
+    expect(find.text('· compulsory only'), findsOneWidget);
+
+    List<bool?> boxes() => [
+      for (final box in tester.widgetList<AppCheckbox>(
+        find.byType(AppCheckbox),
+      ))
+        box.value,
+    ];
+    expect(boxes(), [false, false]);
+
+    await tester.tap(find.text('French'));
+    await tester.pumpAndSettle();
+    expect(boxes(), [true, false]);
+    expect(find.text('1 of 2 chosen'), findsOneWidget);
+    expect(find.text('2 subjects in total'), findsOneWidget);
+    expect(find.text('· 1 compulsory + 1 optional'), findsOneWidget);
+
+    await tester.tap(find.text('Music'));
+    await tester.pumpAndSettle();
+    expect(boxes(), [true, true]);
+    expect(find.text('3 subjects in total'), findsOneWidget);
+
+    await tester.tap(find.text('French'));
+    await tester.pumpAndSettle();
+    expect(boxes(), [false, true]);
+    expect(model.chosenSubjectIds, {'music'});
+
+    // Continue stays on with any choice, and the total is only on this step.
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Continue'));
+    await tester.pumpAndSettle();
+    expect(model.step, AddStudentStep.review);
+    expect(find.textContaining('in total'), findsNothing);
   });
 
   testWidgets('no current session shows the blocked state', (tester) async {

@@ -276,6 +276,40 @@ void main() {
       expect(model.eyebrow, 'Step 5 of 5 · Review');
     });
 
+    test('the subjects step copy comes from the loaded offerings', () async {
+      await model.loadPlacement();
+      final jss1 = model.classes.single;
+      model.pickClass(jss1);
+      model.pickArm(model.armsOf(jss1).first);
+      await model.loadOfferings();
+      final reads = fakes.subjects.reads;
+
+      expect(model.compulsorySubjectNames, ['Maths']);
+      expect(model.compulsoryCountLabel, '1 subject');
+      expect(
+        model.subjectsLead,
+        'JSS 1 Gold has 2 to choose from. Tap the ones they will study.',
+      );
+      expect(model.chosenCountLabel, '0 of 2 chosen');
+      expect(model.subjectTotalLabel, '1 subject in total');
+      expect(model.subjectTotalDetail, '· compulsory only');
+
+      model.toggleSubject('french');
+      expect(model.chosenCountLabel, '1 of 2 chosen');
+      expect(model.subjectTotalLabel, '2 subjects in total');
+      expect(model.subjectTotalDetail, '· 1 compulsory + 1 optional');
+
+      model.toggleSubject('music');
+      expect(model.subjectTotalLabel, '3 subjects in total');
+      expect(model.subjectTotalDetail, '· 1 compulsory + 2 optional');
+
+      model.toggleSubject('french');
+      expect(model.subjectTotalLabel, '2 subjects in total');
+      expect(model.subjectTotalDetail, '· 1 compulsory + 1 optional');
+      // Names come from the offerings already read.
+      expect(fakes.subjects.reads, reads);
+    });
+
     test('each arm is read once', () async {
       await model.loadPlacement();
       final jss1 = model.classes.single;

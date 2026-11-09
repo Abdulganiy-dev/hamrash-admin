@@ -148,7 +148,8 @@ class _Body extends StatelessWidget {
   }
 }
 
-/// The pinned button for the step on screen, full width.
+/// The pinned button for the step on screen, full width. On the subjects
+/// step the running subject total sits above Continue.
 class _BottomBar extends StatelessWidget {
   const _BottomBar({
     required this.model,
@@ -218,6 +219,10 @@ class _BottomBar extends StatelessWidget {
       ];
     }
     return [
+      if (step == AddStudentStep.subjects) ...[
+        SubjectsTotal(model: model),
+        const SizedBox(height: AppSpacing.ms),
+      ],
       AppPrimaryButton(
         size: AppButtonSize.large,
         isDisabled: !model.canContinue,

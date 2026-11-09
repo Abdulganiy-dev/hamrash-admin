@@ -5,14 +5,15 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_divider.dart';
-import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
+import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
 import 'package:hamrash_admin/views/students/add_student/add_student_view_model.dart';
 import 'package:hamrash_admin/views/students/add_student/widgets/step_lead.dart';
 
-/// 11.10 · Step 4, only when the arm offers optional subjects: a flat list
-/// to tick (Design System "flat list"). Continue works with none chosen.
+/// 11.10 · Step 5, only when the arm offers optional subjects: a flat list
+/// to tick (Design System "flat list"), then the compulsory subjects
+/// everyone takes. Continue works with none chosen.
 class SubjectsStep extends StatelessWidget {
   const SubjectsStep({super.key, required this.model});
 
@@ -21,83 +22,31 @@ class SubjectsStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subjects = model.optionalSubjects;
-    final compulsory = model.compulsoryCount;
+    final compulsory = model.compulsorySubjectNames;
     return StepScroll(
-      gap: AppSpacing.ml,
       children: [
         StepLead(
           eyebrow: model.stepEyebrow(AddStudentStep.subjects),
           title: 'Pick optional subjects',
-          body:
-              '${model.armLabel} offers these as choices. Tap the ones they '
-              'will study.',
+          body: model.subjectsLead,
         ),
-        if (compulsory > 0)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 1),
-                child: AppIcon(
-                  AppIcons.circleCheck,
-                  size: 18,
-                  color: AppPalette.stone500,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    style: AppTypography.body.copyWith(
-                      color: LightColors.textBody,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: compulsory == 1
-                            ? '1 compulsory subject is included.'
-                            : '$compulsory compulsory subjects are included.',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: LightColors.textStrong,
-                        ),
-                      ),
-                      const TextSpan(text: ' Everyone in the arm takes them.'),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(
-              height: 32,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: AppText(
-                      'Optional subjects',
-                      style: AppTypography.title.copyWith(
-                        fontWeight: FontWeight.w800,
-                        height: 20 / 16,
-                        color: LightColors.textStrong,
-                      ),
-                    ),
-                  ),
-                  AppText(
-                    '${model.chosenSubjectIds.length} chosen',
-                    style: AppTypography.label.copyWith(
-                      fontSize: 13,
-                      height: 18 / 13,
-                      fontWeight: FontWeight.w700,
-                      color: LightColors.primaryPrimaryText,
-                    ),
-                  ),
-                ],
-              ),
+            _SectionHeader(
+              title: 'Optional subjects',
+              count: model.chosenCountLabel,
             ),
             const SizedBox(height: AppSpacing.xs),
+            AppText(
+              'Choosing none is fine. You can set them later.',
+              style: AppTypography.body.copyWith(
+                fontSize: 13,
+                height: 18 / 13,
+                color: LightColors.textMuted,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
             for (var i = 0; i < subjects.length; i++) ...[
               if (i > 0)
                 const AppDivider(indent: 52, endIndent: 0, onPage: true),
@@ -107,23 +56,68 @@ class SubjectsStep extends StatelessWidget {
                 onTap: () => model.toggleSubject(subjects[i].subjectId),
               ),
             ],
-            const SizedBox(height: AppSpacing.sm),
-            AppText(
-              'Not sure yet? Continue without picking. You can set them later.',
-              style: AppTypography.body.copyWith(
-                fontSize: 13,
-                height: 18 / 13,
-                color: LightColors.textMuted,
-              ),
-            ),
           ],
         ),
+        if (compulsory.isNotEmpty)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _SectionHeader(
+                title: 'Included for everyone',
+                count: model.compulsoryCountLabel,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              AppText(
+                compulsory.join(', '),
+                style: AppTypography.body.copyWith(
+                  height: 22 / 14,
+                  color: LightColors.textBody,
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }
 }
 
-/// One row of the flat list: code tile, name, check circle. 64 tall.
+/// Section title with a count on the right. 28 tall.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, required this.count});
+
+  final String title;
+  final String count;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 28,
+    child: Row(
+      children: [
+        Expanded(
+          child: AppText(
+            title,
+            style: AppTypography.title.copyWith(
+              fontWeight: FontWeight.w800,
+              height: 20 / 16,
+              color: LightColors.textStrong,
+            ),
+          ),
+        ),
+        AppText(
+          count,
+          style: AppTypography.label.copyWith(
+            fontSize: 13,
+            height: 18 / 13,
+            fontWeight: FontWeight.w700,
+            color: LightColors.primaryPrimaryText,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// One row of the flat list: code tile, name, checkbox. 64 tall.
 class _SubjectRow extends StatelessWidget {
   const _SubjectRow({
     required this.subject,
@@ -194,28 +188,44 @@ class _SubjectRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.ms),
-            Container(
-              width: 24,
-              height: 24,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: chosen ? LightColors.primaryPrimaryDefault : null,
-                border: chosen
-                    ? null
-                    : Border.all(color: AppPalette.stone300, width: 1.5),
-              ),
-              child: chosen
-                  ? const AppIcon(
-                      AppIcons.check,
-                      size: 14,
-                      color: AppPalette.white,
-                    )
-                  : null,
-            ),
+            AppCheckbox(value: chosen),
           ],
         ),
       ),
     ),
   );
+}
+
+/// The running total above Continue on this step:
+/// "**11 subjects in total** · 9 compulsory + 2 optional".
+class SubjectsTotal extends StatelessWidget {
+  const SubjectsTotal({super.key, required this.model});
+
+  final AddStudentViewModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = AppTypography.body.copyWith(color: LightColors.textBody);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        AppText(
+          model.subjectTotalLabel,
+          style: style.copyWith(
+            fontWeight: FontWeight.w800,
+            color: LightColors.textStrong,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Flexible(
+          child: AppText(
+            model.subjectTotalDetail,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: style,
+          ),
+        ),
+      ],
+    );
+  }
 }
