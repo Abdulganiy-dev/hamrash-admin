@@ -19,6 +19,7 @@ Open work for results is tracked in [TODO.md](../TODO.md#with-results).
 |---|---|---|
 | 07 | **Student profile split** | `students` keeps the profile (name, admission number, photo, gender, status). `student_private_details` takes date of birth, address, state of origin, LGA, blood group, genotype and medical notes. Adds one-call `create_student` / `update_student`, like staff. Past teachers can then see names next to old scores. Drops columns, so it goes through the SQL editor. |
 | 08 | **Grading setup** | Score columns and grade boundaries for the school, with optional per-section overrides. One-tap standard setup. |
+| 33 | **Reorder score columns** | `reorder_score_columns`: a set's new column order in one atomic call. |
 | — | **Gradebook and workflow** | Scores, result sheets (draft → submitted), arm reviews, remarks, behaviour ratings. Row-level security follows role and workflow state. |
 | — | **Publishing and report cards** | On publish, compute and **freeze** totals, grades, positions, class stats and the annual result. Parents and students see published results only. |
 | — | **Homework** | Teachers post assignments to an arm and subject. Students submit, teachers mark. Marks can be pulled into a CA component. |
@@ -40,6 +41,7 @@ grade_boundaries         A1 from 75% "Excellent" · B2 from 70% … F9 0%     ea
 - **Percentages:** a subject's total is the sum of the student's score columns. The grade comes from the **percentage**, total ÷ (sum of max scores) × 100, so the columns don't have to add up to exactly 100.
 - **Grade boundaries say where each grade starts.** A percentage gets the highest grade it reaches: `grade_for(arm, percent)`. Decimals like 74.5 can never fall into a gap.
   - `grading_problems(school, section)` lists anything missing, such as "No score columns yet" or "No grade boundary at 0%", taking the fall-back into account.
+- **Order:** each column has a `sort_order` (report-card order; no unique index). `reorder_score_columns(school, column ids)` takes one set's complete new order (the school's, or one section's) and writes `sort_order` 1..n in one statement, after locking the set. Ids from two sets, a missing or repeated id, or a column left out are refused and nothing changes (migration 33).
 - **Changes after scores exist are restricted.** Once scores exist for a score column, its max score can't change and it can't be deleted. This is enforced in the gradebook migration.
 - **One-tap standard setup,** `create_standard_grading`:
   - The school's setup: CA 1 (20) + CA 2 (20) + Exam (60), graded A–F. Nursery and Primary use it.

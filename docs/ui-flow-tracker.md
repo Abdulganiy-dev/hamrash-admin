@@ -35,7 +35,7 @@ Gaps inside finished sections:
 ## To design, in build order
 
 ### 8 · Grading setup 📝
-Schema is done (`score_columns`, `grade_boundaries`, `create_standard_grading`, `grading_problems`). Needed before the gradebook. Design: [results-design.md → 08](results-design.md).
+Schema is done (`score_columns`, `grade_boundaries`, `create_standard_grading`, `grading_problems`; `reorder_score_columns` in migration 33, not applied yet). Needed before the gradebook. Design: [results-design.md → 08](results-design.md).
 - [ ] 8.1 Start: one-tap standard setup (CA 1/CA 2/Exam, A–F; Secondary gets WAEC boundaries)
 - [ ] 8.2 Overview: the school's setup, and which sections use their own
 - [ ] 8.3 Score columns: add, edit, reorder; max score

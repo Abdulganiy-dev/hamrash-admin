@@ -988,6 +988,33 @@ window.SNIPPETS = {
    "security": "definer",
    "sql": "create function public.reopen_session(p_session_id uuid)\nreturns public.academic_sessions\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_session public.academic_sessions;\nbegin\n  select s.* into v_session\n  from public.academic_sessions s\n  where s.id = p_session_id\n    and s.organization_id in (select private.my_org_ids(array['owner']::public.member_role[]))\n  for update;\n  if not found then\n    raise exception 'Session not found, or only the owner can reopen it' using errcode = '42501';\n  end if;\n  if v_session.closed_at is null then\n    return v_session;\n  end if;\n\n  perform set_config('hamrash.reopening_session', 'on', true);\n  update public.academic_sessions s\n  set closed_at = null,\n      closed_by = null\n  where s.id = p_session_id\n  returning s.* into v_session;\n  perform set_config('hamrash.reopening_session', 'off', true);\n  return v_session;\nend;\n$$;"
   },
+  "reorder_score_columns": {
+   "calls": [
+    "can_manage_academics"
+   ],
+   "doc": "reorder_score_columns",
+   "file": "supabase/migrations/20261109160000_33_reorder_score_columns.sql",
+   "lines": [
+    47,
+    125
+   ],
+   "migration": 33,
+   "params": [
+    {
+     "default": null,
+     "name": "p_organization_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_column_ids",
+     "type": "uuid[]"
+    }
+   ],
+   "returns": "void",
+   "security": "invoker",
+   "sql": "create function public.reorder_score_columns(p_organization_id uuid, p_column_ids uuid[])\nreturns void\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_n        int;\n  v_sets     int;\n  v_found    int;\n  v_section  uuid;\n  v_in_set   int;\n  v_matched  int;\nbegin\n  -- \u2500\u2500 who \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if p_organization_id is null or not private.can_manage_academics(p_organization_id) then\n    raise exception 'Only the school''s leaders can reorder score columns' using errcode = '42501';\n  end if;\n\n  -- \u2500\u2500 the list \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  v_n := coalesce(cardinality(p_column_ids), 0);\n  if v_n = 0 then\n    raise exception 'There are no score columns to put in order' using errcode = 'P0001';\n  end if;\n\n  if array_position(p_column_ids, null) is not null then\n    raise exception 'One of these score columns no longer exists; refresh and try again' using errcode = 'P0001';\n  end if;\n\n  if (select count(distinct u.id) from unnest(p_column_ids) as u (id)) <> v_n then\n    raise exception 'A score column is listed twice in the new order; refresh and try again' using errcode = 'P0001';\n  end if;\n\n  -- \u2500\u2500 which set \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  select count(*), count(distinct coalesce(sc.section_id::text, 'school')), min(sc.section_id::text)::uuid\n    into v_found, v_sets, v_section\n  from public.score_columns sc\n  where sc.organization_id = p_organization_id\n    and sc.id = any (p_column_ids);\n\n  if v_found <> v_n then\n    raise exception 'One of these score columns no longer exists; refresh and try again' using errcode = 'P0001';\n  end if;\n\n  if v_sets <> 1 then\n    raise exception 'These score columns are from different sets; put the school''s columns and each section''s columns in order separately' using errcode = 'P0001';\n  end if;\n\n  -- \u2500\u2500 lock the whole set, then check nothing is left out \u2500\u2500\u2500\u2500\u2500\u2500\n  -- (v_section is null for the school's set)\n  select count(*), count(*) filter (where l.id = any (p_column_ids))\n    into v_in_set, v_matched\n  from (\n    select sc.id\n    from public.score_columns sc\n    where sc.organization_id = p_organization_id\n      and sc.section_id is not distinct from v_section\n    order by sc.id\n    for update\n  ) l;\n\n  if v_matched <> v_n then\n    -- deleted by someone else while this call waited for the lock\n    raise exception 'One of these score columns no longer exists; refresh and try again' using errcode = 'P0001';\n  end if;\n\n  if v_in_set <> v_n then\n    raise exception 'A score column is missing from the new order; refresh and try again' using errcode = 'P0001';\n  end if;\n\n  -- \u2500\u2500 the write: 1..n in the order given, in one statement \u2500\u2500\u2500\u2500\n  update public.score_columns sc\n  set sort_order = o.pos::int\n  from unnest(p_column_ids) with ordinality as o (id, pos)\n  where sc.id = o.id\n    and sc.organization_id = p_organization_id\n    and sc.sort_order is distinct from o.pos::int;\nend;\n$$;"
+  },
   "rotate_platform_join_code": {
    "calls": [
     "is_platform_admin",
@@ -1659,6 +1686,7 @@ window.SNIPPETS = {
      "create_standard_grading",
      "create_standard_structure",
      "create_standard_subjects",
+     "reorder_score_columns",
      "session_readiness",
      "set_current_session",
      "set_current_term"

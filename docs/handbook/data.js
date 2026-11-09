@@ -9,7 +9,7 @@
 window.HANDBOOK = {
   meta: {
     updated: '2026-11-09',
-    migrationsInRepo: 32, // highest migration number in supabase/migrations/
+    migrationsInRepo: 33, // highest migration number in supabase/migrations/
     migrationsLive: 32, // highest one applied to the live project (ccvyhbyrtobdsecqvhcr)
   },
 
@@ -585,6 +585,7 @@ window.HANDBOOK = {
         'Setup counts as done (Home and More) when there is a score column and a grade boundary, whatever section they belong to.',
         'The app checks names (per set, case-insensitive), marks above 0 and where a grade starts before it asks; the database refuses the same things with 23505 and 23514.',
         'No migration was needed: migration 08 already has the tables, policies, column grants and `create_standard_grading`.',
+        'Migration 33 (in the repo, **not applied to the live project yet**) adds `reorder_score_columns`: the whole set’s new order in one call and one UPDATE, so moving a column is atomic. The app still swaps two rows until it is applied and the service switches over.',
       ],
       ops: [
         {
@@ -636,9 +637,9 @@ window.HANDBOOK = {
           trigger: 'A column’s sheet → **Position** → up or down arrow. Only with two or more columns.',
           touches: ['update score_columns (sort_order)'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
-          steps: ['Swaps the `sort_order` of the column and its neighbour (two updates, `sort_order` is granted for update and has no unique index). If the second fails the first is put back, so two columns don’t end up with the same order. The page reloads; a new column still goes last.'],
+          steps: ['Swaps the `sort_order` of the column and its neighbour (two updates, `sort_order` is granted for update and has no unique index). If the second fails the first is put back, so two columns don’t end up with the same order. The page reloads; a new column still goes last.', 'Not atomic. Migration 33 (not applied yet) adds `rpc reorder_score_columns(p_organization_id, p_column_ids)`: the set’s complete new order, written as `sort_order` 1..n in one UPDATE after locking the set. The app switches to it once migration 33 is live.'],
           refusals: [{ when: 'Not a leader (RLS changes no rows)', code: '42501', text: '“Only the owner, admins, the principal and vice principals can change grading.”' }],
-          sources: ['grading_service.dart:swapScoreColumnOrder'],
+          sources: ['grading_service.dart:swapScoreColumnOrder', 'migration 33 (not live yet)'],
         },
         {
           id: 'grd-d1', kind: 'delete', title: 'Remove a score column', target: 'delete score_columns',
@@ -1066,6 +1067,7 @@ window.HANDBOOK = {
     { n: 30, title: 'Staff list search', text: '`list_staff`: one page of the staff list with search (name, number, email, phone in any format), login, role, type and status filters, two sorts, keyset paging and chip counts.' },
     { n: 31, title: 'Register a student', text: '`register_student`: the Add Student wizard in one transaction: the student and private details, new or reused parents, links, the placement for the session and optional subjects, with readable refusals checked before any write.' },
     { n: 32, title: 'Register student: switched-off section', text: '`register_student` also refuses a class whose section is switched off (the same function, one extra check before any write).' },
+    { n: 33, title: 'Reorder score columns', text: '`reorder_score_columns`: one set of score columns (the school’s, or one section’s) in its complete new order, written as `sort_order` 1..n in one UPDATE after locking the set, with readable refusals checked before the write.' },
   ],
 
   // ────────────────────────────────────────────────────────────────────
@@ -1082,7 +1084,7 @@ window.HANDBOOK = {
     { name: 'class_teachers · student_placements', purpose: 'Who looks after an arm, and which arm each student is in, per session.', read: 'Class teachers: every member. Placements: leaders, bursar, current teachers, parents, the student.', write: 'Leaders. At most one lead and two assistants per arm; a new lead demotes the old.', del: 'Leaders, not in a closed session.', migrations: '04 · 19 · 23' },
     { name: 'subjects · arm_subjects', purpose: 'The school’s subjects and each arm’s curriculum.', read: 'Every member and Hamrash.', write: 'Leaders.', del: 'Subject: blocked while taught or chosen. Arm subject: blocked while taught or chosen in an open session.', migrations: '06 · 22 · 24' },
     { name: 'teaching_assignments · student_subjects', purpose: 'One teacher per subject per arm per session; students’ optional subject choices.', read: 'Assignments: every member. Choices: leaders, bursar, current teachers, parents, the student.', write: 'Leaders. The subject must be offered to the arm; choices only for optional subjects in the student’s arm.', del: 'Leaders, not in a closed session.', migrations: '06 · 19' },
-    { name: 'score_columns · grade_boundaries', purpose: 'Grading setup for the school, or a section’s own.', read: 'Every member and Hamrash.', write: 'Leaders, from the Grading page in Hamrash Admin (score columns: the school’s own set; grade boundaries: the school default and each section’s own scale).', del: 'Leaders. Deleting a section deletes its own set.', rules: 'A complete set needs a boundary at 0%; only `grading_problems` reports it.', migrations: '08' },
+    { name: 'score_columns · grade_boundaries', purpose: 'Grading setup for the school, or a section’s own.', read: 'Every member and Hamrash.', write: 'Leaders, from the Grading page in Hamrash Admin (score columns: the school’s own set; grade boundaries: the school default and each section’s own scale).', del: 'Leaders. Deleting a section deletes its own set.', rules: 'A complete set needs a boundary at 0%; only `grading_problems` reports it. `sort_order` has no unique index; `reorder_score_columns` rewrites a whole set as 1..n in one statement.', migrations: '08 · 33' },
     { name: 'private.number_sequences', purpose: 'Counters behind admission and staff numbers.', read: 'Nobody.', write: 'Only the numbering triggers.', del: 'Goes with the school.', migrations: '03' },
   ],
 
@@ -1107,6 +1109,7 @@ window.HANDBOOK = {
     { group: 'Structure and subjects', name: 'arm_subject_usage', security: 'definer', who: 'Any active member.', does: 'Which arm subjects are taught or chosen in an open session, and by whom.', errors: [['42501', 'School not found']], from: 'Hamrash Admin → a class’s subjects.' },
     { group: 'Structure and subjects', name: 'apply_standard_curriculum · copy_assignments_forward · session_readiness', security: 'invoker', who: 'Leaders.', does: 'Curriculum for one arm; copy class and subject teachers into a new session; readiness counts for a session.', from: 'Not used by an app yet.' },
     { group: 'Grading', name: 'create_standard_grading · grading_problems · grade_for', security: 'invoker', who: 'Leaders (create); any member (read).', does: 'CA 1 / CA 2 / Exam with A–F (and WAEC A1–F9 for Secondary); report what’s missing; look up a grade.', from: 'Hamrash Admin’s Grading page calls `create_standard_grading`; the other two aren’t used by an app yet.' },
+    { group: 'Grading', name: 'reorder_score_columns', security: 'invoker', who: 'Leaders of the school (checked first, then RLS and the `sort_order` column grant on the write).', does: 'Takes `p_column_ids`, the complete new order of ONE set (the school’s columns, or one section’s own), locks that set’s rows, and sets `sort_order` to 1..n by position in one UPDATE (only rows that move are written). Every rule is checked before the write; a refusal changes nothing.', errors: [['42501', 'Only the school’s leaders can reorder score columns'], ['P0001', 'There are no score columns to put in order'], ['P0001', 'A score column is listed twice in the new order; refresh and try again'], ['P0001', 'One of these score columns no longer exists; refresh and try again'], ['P0001', 'These score columns are from different sets; put the school’s columns and each section’s columns in order separately'], ['P0001', 'A score column is missing from the new order; refresh and try again']], from: 'Not used by an app yet: Grading → Move a score column switches to it once migration 33 is applied. Migration 33.' },
     { group: 'Grading', name: 'score_columns_for_arm · grade_boundaries_for_arm', security: 'invoker', who: 'Any member (RLS applies).', does: 'The score columns or grade boundaries that apply to an arm: its section’s own set if it has one, otherwise the school’s.', from: 'Not used by an app yet.' },
     { group: 'People', name: 'create_staff · update_staff', security: 'invoker', who: 'Leaders (RLS decides).', does: 'Writes the staff profile and its private details in one call, including middle name, gender, address and residence state/LGA. A blank staff number is generated; on update it keeps the current one.', errors: [['42501', 'Staff record not found, or you can’t edit it'], ['23505', 'duplicate staff number'], ['23514', 'blank name']], from: 'Hamrash Admin → Add Staff Members (create_staff); a Staff page → Details → Change (update_staff).' },
     { group: 'People', name: 'list_staff', security: 'invoker', who: 'Any active member of the school (RLS decides). Only leaders see other people’s logins; everyone else gets `member` null except on their own row.', does: 'One page of the staff list as one jsonb: `rows` (staff profile plus embedded `member`, no private details), `next_cursor`, `total` and login chip `counts` (which ignore the login filter). Search covers names, staff number, email and phone (digits only, without 0 or +234). Filters: login, roles (people with a login only), staff type, statuses. Sort `name` (owner first) or `newest`; keyset cursor; page size 1–100 (default 30). Someone outside the school gets nothing.', errors: [['22023', 'Choose a school to list its staff'], ['22023', 'Unknown login filter … / Unknown sort …'], ['22023', 'This page cursor is not valid for this list. Load the list again from the start']], from: 'Hamrash Admin → Staffs (list, filter sheet, pages). Migration 30.' },

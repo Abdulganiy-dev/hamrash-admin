@@ -8,6 +8,46 @@ The single list of open work. The design docs explain how things work; anything 
 
 - [ ] **Build the gradebook,** the first item under *With results* below. Design: [docs/results-design.md](docs/results-design.md).
 
+## Grading: come back to this
+
+Built 2026-11-09 and **not signed off**. The screens exist (`lib/views/grading/`, Paper section § 9 · Grading), but the owner isn't satisfied with how it works yet. This is everything known to be missing or unreviewed, so nothing is lost when we return to it.
+
+**Start here**
+- [ ] **Say what feels wrong.** The reasons for the dissatisfaction aren't written down yet. Add them here before redesigning, for example: is the setup too heavy, are the two sheets the wrong shape, is the section scale confusing, or is the whole thing better as a guided flow?
+- [ ] **Walk it on a real phone.** Nothing here has been run on a device or compared screen-by-screen with Paper. Check every artboard 9.1 to 9.11 against the app, including the keyboard on the number fields.
+
+**Designed but not built**
+- [ ] **A score column that has scores** (Paper 9.4a): "Out of" read-only with the reason, no Remove, rename still allowed.
+- [ ] **"Published report cards keep their grades…"** note on the grade sheet (Paper 9.6a).
+- [ ] Both need the gradebook migration (a way to know a column has scores, and report-card snapshots). See *Gradebook and workflow* below. Ask which agent writes it first.
+
+**Built differently from the design, or only partly**
+- [ ] **Reordering columns isn't atomic.** It does two updates and puts the first back if the second fails. Migration 33 (`reorder_score_columns`, the whole set's new order in one call) is written but **not applied**. Once the owner applies it, switch `GradingService.swapScoreColumnOrder` from the two-update swap to `reorder_score_columns`, then bump `meta.migrationsLive`.
+- [ ] **Position row** shows only with two or more columns. Paper 9.4 doesn't show it either; decide whether that's right.
+- [ ] **Section scales cover grades only.** A section can have its own grade scale, but not its own score columns, though the schema allows it (see the handbook gap "A section's own score columns").
+- [ ] **Chip row** clips at the 16px page padding, not at the screen edge as the Design System's scrolling chips do.
+- [ ] **Dividers** use `AppDivider` (stone-50), which is fainter than the stone-100 lines drawn in Paper.
+- [ ] **Missing-grade tile** in the incomplete state shows "?" because Paper's "F" can't be known.
+- [ ] **Home checklist** step 4 now opens Grading. It was added without being asked; confirm it's wanted.
+- [ ] **Unused `grading_problems` RPC.** Coverage is computed from the loaded rows instead.
+
+**Ideas from the UX critique that were skipped**
+- [ ] **Place a new column before Exam** by default when an Exam column exists, instead of always last.
+- [ ] **Fill the remark from the standard set** when a grade name matches ("A" → "Excellent") and Remark is empty.
+- [ ] **Say why Save is disabled** when nothing is visibly wrong ("Add a name to save.").
+- [ ] **Plainer remove-grade message** when the grade is the one at 0%: "Report cards can't be made until another grade starts at 0."
+- [ ] **iOS decimal pad has no return key,** so "next" does nothing on the percentage and marks fields. Check the flow on a device.
+- [ ] **Accessibility and tap-target pass** on the chips, the position buttons and the sheets.
+- [ ] **Start the standard setup automatically** (for example at first school confirmation) so most schools never see an empty Grading screen.
+
+**Wording nobody has reviewed**
+- [ ] Copy the agent wrote because the designs didn't have it: the remove confirmations, the read-only empty states, the extra validation messages, the "Create {section} scale" / "Use the school's scale instead" sheets and their toasts, and the message when the school default has nothing to copy. Add it to Paper and check it reads well.
+- [ ] **The order warning** ("A will now be below B") only judges names like `A` or `B2`; a name like "Distinction" is never warned. Decide if that's enough.
+- [ ] **Section load failure** shows the full-screen error view. Decide whether a partial page is better.
+
+**Tests**
+- [ ] Widget tests cover the main states, but not every sheet (the grade sheet's warning and preview, the section sheet, the confirm sheets) end to end.
+
 ## With results
 
 Plan and decisions: [docs/results-design.md](docs/results-design.md).
