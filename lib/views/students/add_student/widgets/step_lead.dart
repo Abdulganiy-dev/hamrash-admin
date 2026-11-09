@@ -65,10 +65,10 @@ class StepScroll extends StatelessWidget {
   Widget build(BuildContext context) {
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     return SingleChildScrollView(
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+
       padding: EdgeInsets.fromLTRB(
         AppSpacing.screen,
-        AppSpacing.lg,
+        0,
         AppSpacing.screen,
         AppSpacing.lg + keyboard,
       ),

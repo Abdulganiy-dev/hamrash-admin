@@ -13,7 +13,7 @@ import 'package:hamrash_admin/views/students/add_student/add_student_view_model.
 import 'package:hamrash_admin/views/students/add_student/widgets/parent_card.dart';
 import 'package:hamrash_admin/views/students/add_student/widgets/step_lead.dart';
 
-/// 11.11 · Step 5: everything entered, in section cards with Edit, before
+/// 11.11 · Step 6: everything entered, in section cards with Edit, before
 /// Register. Nothing has been saved yet.
 class ReviewStep extends StatelessWidget {
   const ReviewStep({super.key, required this.model});
@@ -42,6 +42,8 @@ class ReviewStep extends StatelessWidget {
     final middle = model.middleName.text.trim();
     final number = model.admissionNumber.text.trim();
     final chosen = model.chosenSubjects;
+    final address = model.address.text.trim();
+    final notes = model.medicalNotes.text.trim();
     return StepScroll(
       children: [
         Column(
@@ -100,8 +102,27 @@ class ReviewStep extends StatelessWidget {
           ],
         ),
         AppSectionCard(
+          title: 'Personal details',
+          action: _edit('personal details', AddStudentStep.personal),
+          children: [
+            ReviewRow(value: address, label: 'Home address'),
+            ReviewRow(
+              value: model.originSummary,
+              label: 'State of origin and LGA',
+            ),
+            ReviewRow(
+              value: model.healthSummary,
+              label: 'Blood group and genotype',
+            ),
+            ReviewRow(
+              value: notes.isEmpty ? 'Not added' : notes,
+              label: 'Medical notes',
+              muted: notes.isEmpty,
+            ),
+          ],
+        ),
+        AppSectionCard(
           title: 'Parents',
-          caption: '${model.parents.length} added',
           action: _edit('parents', AddStudentStep.parents),
           children: [
             for (var i = 0; i < model.parents.length; i++)

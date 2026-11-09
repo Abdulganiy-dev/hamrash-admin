@@ -35,7 +35,7 @@ class AppSectionCard extends StatelessWidget {
   final bool divided;
 
   /// Space between the header and the card.
-  static const double headerGap = 10;
+  static const double headerGap = 0;
 
   /// The card's padding; rows bring their own height.
   static const EdgeInsets cardPadding = EdgeInsets.symmetric(

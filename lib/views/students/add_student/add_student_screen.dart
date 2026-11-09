@@ -15,13 +15,14 @@ import 'package:hamrash_admin/views/academic_calendar/sessions/academic_sessions
 import 'package:hamrash_admin/views/students/add_student/add_student_view_model.dart';
 import 'package:hamrash_admin/views/students/add_student/steps/class_step.dart';
 import 'package:hamrash_admin/views/students/add_student/steps/parents_step.dart';
+import 'package:hamrash_admin/views/students/add_student/steps/personal_step.dart';
 import 'package:hamrash_admin/views/students/add_student/steps/review_step.dart';
 import 'package:hamrash_admin/views/students/add_student/steps/student_step.dart';
 import 'package:hamrash_admin/views/students/add_student/steps/subjects_step.dart';
 import 'package:hamrash_admin/views/students/add_student/widgets/registered_view.dart';
 import 'package:stacked/stacked.dart';
 
-/// 11.3–11.13 · Add a student, one step at a time. The steps sit side by
+/// 11.3–11.15 · Add a student, one step at a time. The steps sit side by
 /// side in an [AppSpringPager], so typed text and scroll survive moving back
 /// and forth. Pops `true` when a student was registered.
 class AddStudentScreen extends StatelessWidget {
@@ -117,7 +118,7 @@ class _Body extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(height: insets.topInset + insets.appBarHeight + AppSpacing.sm),
+        SizedBox(height: insets.bodyTopInset),
         Padding(
           padding: AppSpacing.screenPadding,
           child: AppStepSegments(
@@ -126,6 +127,7 @@ class _Body extends StatelessWidget {
             complete: done,
           ),
         ),
+        SizedBox(height: AppSpacing.lg),
         Expanded(
           child: done
               ? RegisteredView(model: model)
@@ -133,6 +135,7 @@ class _Body extends StatelessWidget {
                   index: model.step.index,
                   children: [
                     StudentStep(model: model),
+                    PersonalStep(model: model),
                     ParentsStep(model: model),
                     ClassStep(model: model),
                     SubjectsStep(model: model),

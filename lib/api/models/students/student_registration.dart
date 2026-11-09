@@ -51,6 +51,9 @@ class NewRegistrationParent extends RegistrationParent {
     required this.phone,
     required super.relationship,
     required super.isPrimaryContact,
+    required this.email,
+    required this.occupation,
+    required this.address,
     this.title,
     this.photo,
   });
@@ -63,6 +66,12 @@ class NewRegistrationParent extends RegistrationParent {
   final String phone;
   final RegistrationPhoto? photo;
 
+  /// Private details (`parent_private_details`). Required in the app;
+  /// `register_student` itself takes them as optional.
+  final String email;
+  final String occupation;
+  final String address;
+
   @override
   Map<String, Object?> toJson() => {
     'title': title,
@@ -71,6 +80,9 @@ class NewRegistrationParent extends RegistrationParent {
     'phone': phone,
     'photo_id': photo?.id,
     'photo_url': photo?.url,
+    'email': email,
+    'occupation': occupation,
+    'address': address,
     'relationship': relationship.value,
     'is_primary_contact': isPrimaryContact,
   };
@@ -93,6 +105,12 @@ class StudentRegistration {
     this.dateOfBirth,
     this.admissionDate,
     this.photo,
+    this.address,
+    this.stateOfOrigin,
+    this.lga,
+    this.bloodGroup,
+    this.genotype,
+    this.medicalNotes,
   });
 
   final String organizationId;
@@ -113,9 +131,20 @@ class StudentRegistration {
   final String? sessionId;
   final List<String> optionalSubjectIds;
 
+  /// Private details (`student_private_details`); null when blank. The app
+  /// needs all but [medicalNotes]; the database takes them as optional.
+  /// Blood group and genotype must be one of `BloodGroups` / `Genotypes`.
+  final String? address;
+  final String? stateOfOrigin;
+  final String? lga;
+  final String? bloodGroup;
+  final String? genotype;
+  final String? medicalNotes;
+
   static final _date = DateFormat('yyyy-MM-dd');
 
-  /// The RPC's named arguments, exactly as migration 31 declares them.
+  /// The RPC's named arguments, exactly as migrations 31 and 32 declare
+  /// them.
   Map<String, Object?> toParams() => {
     'p_organization_id': organizationId,
     'p_first_name': firstName,
@@ -133,6 +162,12 @@ class StudentRegistration {
     'p_photo_id': photo?.id,
     'p_photo_url': photo?.url,
     'p_date_of_birth': dateOfBirth == null ? null : _date.format(dateOfBirth!),
+    'p_address': address,
+    'p_state_of_origin': stateOfOrigin,
+    'p_lga': lga,
+    'p_blood_group': bloodGroup,
+    'p_genotype': genotype,
+    'p_medical_notes': medicalNotes,
   };
 }
 

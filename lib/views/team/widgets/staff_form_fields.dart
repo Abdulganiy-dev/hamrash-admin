@@ -146,12 +146,16 @@ class StaffLocationFields extends StatelessWidget {
     required this.onStateChanged,
     required this.onLgaChanged,
     this.sheetSubtitle,
+    this.stateLabel = 'State',
   });
 
   final String? state;
   final String? lga;
   final ValueChanged<String> onStateChanged;
   final ValueChanged<String> onLgaChanged;
+
+  /// "State", or "State of origin" on the Add student wizard.
+  final String stateLabel;
 
   /// "For Chinedu Obi" in the choice sheet while editing.
   final String? sheetSubtitle;
@@ -190,7 +194,7 @@ class StaffLocationFields extends StatelessWidget {
     children: [
       Expanded(
         child: AppPickerField(
-          label: 'State',
+          label: stateLabel,
           valueText: state,
           placeholder: 'Choose',
           onTap: () => _pickState(context),

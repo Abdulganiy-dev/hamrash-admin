@@ -258,3 +258,20 @@ void fillStudent(AddStudentViewModel model) {
   model.pickGender(StaffGender.female);
   model.pickDateOfBirth(DateTime(2015, 3, 14));
 }
+
+/// Fills the five details step 2 needs (medical notes stay blank).
+void fillPersonal(AddStudentViewModel model) {
+  model
+    ..pickStateOfOrigin('Enugu')
+    ..pickLga('Nsukka')
+    ..pickBloodGroup('O+')
+    ..pickGenotype('AA');
+  model.address.text = '12 Ogui Road, Enugu';
+}
+
+/// Fills a new parent's email, occupation and address.
+void fillNewParentDetails(AddStudentViewModel model) {
+  model.newParentEmail.text = 'emeka@example.com';
+  model.newParentOccupation.text = 'Civil engineer';
+  model.newParentAddress.text = '5 Zik Avenue, Enugu';
+}

@@ -17,7 +17,9 @@ class StudentStep extends StatelessWidget {
 
   final AddStudentViewModel model;
 
-  static final _optional = AppTypography.label.copyWith(
+  /// The muted "(optional)" beside a label, shared with the Personal
+  /// details step.
+  static final optionalStyle = AppTypography.label.copyWith(
     fontSize: 12,
     height: 16 / 12,
     fontWeight: FontWeight.w400,
@@ -75,7 +77,7 @@ class StudentStep extends StatelessWidget {
           AppTextField(
             label: 'Middle name',
             isOptional: true,
-            optionalStyle: _optional,
+            optionalStyle: optionalStyle,
             hintText: 'Middle name',
             controller: model.middleName,
             textCapitalization: TextCapitalization.words,
@@ -116,7 +118,7 @@ class StudentStep extends StatelessWidget {
       AppTextField(
         label: 'Admission number',
         isOptional: true,
-        optionalStyle: _optional,
+        optionalStyle: optionalStyle,
         hintText: model.admissionNumberHint,
         helperText:
             'Leave blank and the next number is given when you register.',

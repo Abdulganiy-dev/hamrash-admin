@@ -32,6 +32,7 @@ import 'package:image_picker/image_picker.dart';
 /// offers no optional subjects.
 enum AddStudentStep {
   student('Student'),
+  personal('Personal details'),
   parents('Parents'),
   placement('Class'),
   subjects('Subjects'),
@@ -39,7 +40,7 @@ enum AddStudentStep {
 
   const AddStudentStep(this.label);
 
-  /// The eyebrow's name: "STEP 1 OF 5 · STUDENT".
+  /// The eyebrow's name: "STEP 1 OF 6 · STUDENT".
   final String label;
 }
 
@@ -54,7 +55,10 @@ class AddedParent {
       firstName = match.firstName,
       lastName = match.lastName,
       phone = match.phone,
-      photo = null;
+      photo = null,
+      email = null,
+      occupation = null,
+      address = null;
 
   AddedParent.created({
     required this.firstName,
@@ -62,6 +66,9 @@ class AddedParent {
     required this.phone,
     required this.relationship,
     required PhotoDraft this.photo,
+    required String this.email,
+    required String this.occupation,
+    required String this.address,
     this.title,
   }) : match = null;
 
@@ -77,6 +84,11 @@ class AddedParent {
 
   /// A new parent's optional photo.
   final PhotoDraft? photo;
+
+  /// A new parent's private details, trimmed; null for an existing parent.
+  final String? email;
+  final String? occupation;
+  final String? address;
 
   bool get isExisting => match != null;
 
@@ -106,14 +118,18 @@ class AddedParent {
           lastName: lastName,
           phone: phone,
           photo: photo?.ready,
+          email: email ?? '',
+          occupation: occupation ?? '',
+          address: address ?? '',
           relationship: relationship,
           isPrimaryContact: isPrimary,
         ),
       };
 }
 
-/// 11.3–11.13 · Add a student: who they are, their parents, their class and
-/// arm, their optional subjects, then a review. Nothing is saved until
+/// 11.3–11.15 · Add a student: who they are, their optional personal
+/// details, their parents, their class and arm, their optional subjects,
+/// then a review. Nothing is saved until
 /// Register, which sends everything to `register_student` in one call.
 ///
 /// Reads, each done once:
@@ -176,7 +192,7 @@ class AddStudentViewModel extends BaseViewModel {
   int get stepIndex => steps.indexOf(_step).clamp(0, steps.length - 1);
   int get stepCount => steps.length;
 
-  /// "Step 2 of 5 · Parents" for the step on screen.
+  /// "Step 3 of 6 · Parents" for the step on screen.
   String get eyebrow => stepEyebrow(_step);
 
   /// The eyebrow of [each] page. Pages stay built while hidden, so each one
@@ -190,6 +206,7 @@ class AddStudentViewModel extends BaseViewModel {
 
   bool canContinueFrom(AddStudentStep step) => switch (step) {
     AddStudentStep.student => studentValid,
+    AddStudentStep.personal => personalValid,
     AddStudentStep.parents => parents.isNotEmpty,
     AddStudentStep.placement => placementValid,
     AddStudentStep.subjects => true,
@@ -252,6 +269,7 @@ class AddStudentViewModel extends BaseViewModel {
       gender != null ||
       dateOfBirth != null ||
       !studentPhoto.isEmpty ||
+      hasPersonalDetails ||
       parents.isNotEmpty ||
       schoolClass != null;
 
@@ -323,6 +341,60 @@ class AddStudentViewModel extends BaseViewModel {
     admissionDate = value;
     changed();
   }
+
+  // ── Step 2 · Personal details ───────────────────────────────────────────
+
+  final address = TextEditingController();
+  final medicalNotes = TextEditingController();
+  String? stateOfOrigin;
+  String? lga;
+  String? bloodGroup;
+  String? genotype;
+
+  bool get hasPersonalDetails =>
+      address.text.trim().isNotEmpty ||
+      medicalNotes.text.trim().isNotEmpty ||
+      stateOfOrigin != null ||
+      lga != null ||
+      bloodGroup != null ||
+      genotype != null;
+
+  /// Everything but the medical notes is needed in the app (the database
+  /// itself takes them as optional).
+  bool get personalValid =>
+      stateOfOrigin != null &&
+      lga != null &&
+      address.text.trim().isNotEmpty &&
+      bloodGroup != null &&
+      genotype != null;
+
+  /// A different state has different LGAs, so the LGA starts again.
+  void pickStateOfOrigin(String value) {
+    if (stateOfOrigin != value) lga = null;
+    stateOfOrigin = value;
+    changed();
+  }
+
+  void pickLga(String value) {
+    lga = value;
+    changed();
+  }
+
+  void pickBloodGroup(String value) {
+    bloodGroup = value;
+    changed();
+  }
+
+  void pickGenotype(String value) {
+    genotype = value;
+    changed();
+  }
+
+  /// "Enugu · Nsukka" on the review.
+  String get originSummary => [?stateOfOrigin, ?lga].join(' · ');
+
+  /// "O+ · AA" on the review.
+  String get healthSummary => [?bloodGroup, ?genotype].join(' · ');
 
   // ── Photos ──────────────────────────────────────────────────────────────
 
@@ -456,7 +528,7 @@ class AddStudentViewModel extends BaseViewModel {
     }
   }
 
-  // ── Step 2 · Parents ────────────────────────────────────────────────────
+  // ── Step 3 · Parents ────────────────────────────────────────────────────
 
   final List<AddedParent> parents = [];
   int _mainIndex = 0;
@@ -516,6 +588,11 @@ class AddStudentViewModel extends BaseViewModel {
   final newParentPhone = TextEditingController();
   PhotoDraft newParentPhoto = PhotoDraft(MediaKind.parentPhoto);
 
+  /// 11.8 · A new parent's private details, all needed in the app.
+  final newParentEmail = TextEditingController();
+  final newParentOccupation = TextEditingController();
+  final newParentAddress = TextEditingController();
+
   bool get searching => _searching;
 
   /// Shown in the sheet: a refusal, or why a parent can't be added.
@@ -547,12 +624,24 @@ class AddStudentViewModel extends BaseViewModel {
       ? null
       : ValidationUtil.validateLastName(newParentLastName.text.trim());
 
+  /// Shown once something is typed: it must look like an email.
+  String? get newParentEmailProblem {
+    final value = newParentEmail.text.trim();
+    if (value.isEmpty) return null;
+    return ValidationUtil.validateEmail(value);
+  }
+
   bool get canAddNewParent =>
       !_searching &&
       newParentFirstName.text.trim().isNotEmpty &&
       newParentLastName.text.trim().isNotEmpty &&
       newParentFirstNameProblem == null &&
       newParentLastNameProblem == null &&
+      newParentTitle != null &&
+      newParentEmail.text.trim().isNotEmpty &&
+      newParentEmailProblem == null &&
+      newParentOccupation.text.trim().isNotEmpty &&
+      newParentAddress.text.trim().isNotEmpty &&
       _phoneComplete(newParentPhone.text) &&
       sheetRelationship != null &&
       !newParentPhoto.isUploading;
@@ -576,6 +665,9 @@ class AddStudentViewModel extends BaseViewModel {
     newParentLastName.clear();
     newParentPhone.clear();
     newParentPhoto = PhotoDraft(MediaKind.parentPhoto);
+    newParentEmail.clear();
+    newParentOccupation.clear();
+    newParentAddress.clear();
     notifyListeners();
   }
 
@@ -745,6 +837,9 @@ class AddStudentViewModel extends BaseViewModel {
         phone: PhoneFormat.stored(newParentPhone.text)!,
         relationship: relationship,
         photo: newParentPhoto,
+        email: newParentEmail.text.trim(),
+        occupation: newParentOccupation.text.trim(),
+        address: newParentAddress.text.trim(),
       ),
     );
     newParentPhoto = PhotoDraft(MediaKind.parentPhoto);
@@ -752,7 +847,7 @@ class AddStudentViewModel extends BaseViewModel {
     return true;
   }
 
-  // ── Step 3 · Class and arm ──────────────────────────────────────────────
+  // ── Step 4 · Class and arm ──────────────────────────────────────────────
 
   AcademicSession? _session;
   List<SchoolSection> _sections = const [];
@@ -943,7 +1038,7 @@ class AddStudentViewModel extends BaseViewModel {
     }
   }
 
-  // ── Step 4 · Optional subjects ──────────────────────────────────────────
+  // ── Step 5 · Optional subjects ──────────────────────────────────────────
 
   final Set<String> chosenSubjectIds = {};
 
@@ -958,7 +1053,7 @@ class AddStudentViewModel extends BaseViewModel {
       if (chosenSubjectIds.contains(offering.subjectId)) offering,
   ];
 
-  // ── Step 5 · Review and register ────────────────────────────────────────
+  // ── Step 6 · Review and register ────────────────────────────────────────
 
   bool _registering = false;
   String? _error;
@@ -983,6 +1078,7 @@ class AddStudentViewModel extends BaseViewModel {
   bool get canRegister =>
       !_registering &&
       studentValid &&
+      personalValid &&
       parents.isNotEmpty &&
       placementValid &&
       _registered == null;
@@ -990,19 +1086,28 @@ class AddStudentViewModel extends BaseViewModel {
   /// What register_student is sent. Null until every step is valid.
   StudentRegistration? buildRegistration() {
     final chosenArm = arm;
-    if (!studentValid || parents.isEmpty || chosenArm == null) return null;
-    final number = admissionNumber.text.trim();
-    final middle = middleName.text.trim();
+    if (!studentValid ||
+        !personalValid ||
+        parents.isEmpty ||
+        chosenArm == null) {
+      return null;
+    }
     return StudentRegistration(
       organizationId: school.id,
       firstName: firstName.text.trim(),
-      middleName: middle.isEmpty ? null : middle,
+      middleName: _blankToNull(middleName.text),
       lastName: lastName.text.trim(),
-      admissionNumber: number.isEmpty ? null : number,
+      admissionNumber: _blankToNull(admissionNumber.text),
       gender: gender,
       dateOfBirth: dateOfBirth,
       admissionDate: admissionDate,
       photo: studentPhoto.ready,
+      address: _blankToNull(address.text),
+      stateOfOrigin: stateOfOrigin,
+      lga: lga,
+      bloodGroup: bloodGroup,
+      genotype: genotype,
+      medicalNotes: _blankToNull(medicalNotes.text),
       parents: [
         for (var i = 0; i < parents.length; i++)
           parents[i].toRegistration(isPrimary: i == _mainIndex),
@@ -1064,6 +1169,12 @@ class AddStudentViewModel extends BaseViewModel {
     dateOfBirth = null;
     admissionDate = DateTime(_today.year, _today.month, _today.day);
     studentPhoto = PhotoDraft(MediaKind.studentPhoto);
+    address.clear();
+    medicalNotes.clear();
+    stateOfOrigin = null;
+    lga = null;
+    bloodGroup = null;
+    genotype = null;
     parents.clear();
     _mainIndex = 0;
     schoolClass = null;
@@ -1090,16 +1201,27 @@ class AddStudentViewModel extends BaseViewModel {
   static String _messageFor(Object error, String fallback) =>
       error is SupabaseRefusal ? error.message : fallback;
 
+  /// Trimmed, or null when blank (the RPC stores null, not '').
+  static String? _blankToNull(String text) {
+    final trimmed = text.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
   @override
   void dispose() {
     firstName.dispose();
     middleName.dispose();
     lastName.dispose();
     admissionNumber.dispose();
+    address.dispose();
+    medicalNotes.dispose();
     searchPhone.dispose();
     newParentFirstName.dispose();
     newParentLastName.dispose();
     newParentPhone.dispose();
+    newParentEmail.dispose();
+    newParentOccupation.dispose();
+    newParentAddress.dispose();
     super.dispose();
   }
 }

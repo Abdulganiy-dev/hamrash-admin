@@ -135,6 +135,10 @@ class AppTextField extends StatefulWidget {
   /// Whether to enable autocorrect
   final bool autocorrect;
 
+  /// Overrides [AppFieldStyle.contentPadding], e.g. a taller multi-line
+  /// field (3 lines with 16 above and below make 104).
+  final EdgeInsets? contentPadding;
+
   const AppTextField({
     super.key,
     this.controller,
@@ -172,6 +176,7 @@ class AppTextField extends StatefulWidget {
     this.textCapitalization = TextCapitalization.none,
     this.enableSuggestions = true,
     this.autocorrect = true,
+    this.contentPadding,
   });
 
   @override
@@ -481,7 +486,8 @@ class _AppTextFieldState extends State<AppTextField> {
               prefixIconConstraints: const BoxConstraints(),
               suffixIcon: _buildSuffix(context),
               suffixIconConstraints: const BoxConstraints(),
-              contentPadding: AppFieldStyle.contentPadding,
+              contentPadding:
+                  widget.contentPadding ?? AppFieldStyle.contentPadding,
               filled: true,
               hoverColor: Colors.transparent,
               fillColor: AppFieldStyle.fill(

@@ -38,9 +38,9 @@ void main() {
     await pump(tester);
 
     expect(find.text('Who is the student?'), findsOneWidget);
-    expect(find.text('STEP 1 OF 5 · STUDENT'), findsOneWidget);
+    expect(find.text('STEP 1 OF 6 · STUDENT'), findsOneWidget);
     expect(segments(tester).current, 0);
-    expect(segments(tester).count, 5);
+    expect(segments(tester).count, 6);
 
     await tester.enterText(find.byType(TextField).at(0), 'Ada');
     await tester.enterText(find.byType(TextField).at(1), 'Obi');
@@ -51,11 +51,32 @@ void main() {
 
     await tester.tap(find.widgetWithText(AppPrimaryButton, 'Continue'));
     await tester.pumpAndSettle();
+    expect(model.step, AddStudentStep.personal);
+    expect(find.text('More about them'), findsOneWidget);
+    expect(find.text('STEP 2 OF 6 · PERSONAL DETAILS'), findsOneWidget);
+    expect(segments(tester).current, 1);
+
+    expect(
+      tester
+          .widget<AppPrimaryButton>(
+            find.widgetWithText(AppPrimaryButton, 'Continue'),
+          )
+          .isDisabled,
+      isTrue,
+    );
+    expect(find.text('Skip for now'), findsNothing);
+    fillPersonal(model);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Continue'));
+    await tester.pumpAndSettle();
     expect(model.step, AddStudentStep.parents);
     expect(find.text('Who are the parents?'), findsOneWidget);
     expect(find.text('No parent added yet'), findsOneWidget);
-    expect(segments(tester).current, 1);
+    expect(segments(tester).current, 2);
 
+    await tester.tap(find.bySemanticsLabel('Back'));
+    await tester.pumpAndSettle();
+    expect(model.step, AddStudentStep.personal);
     await tester.tap(find.bySemanticsLabel('Back'));
     await tester.pumpAndSettle();
     expect(model.step, AddStudentStep.student);
@@ -75,6 +96,57 @@ void main() {
     await tester.tap(find.text('Continue'), warnIfMissed: false);
     await tester.pumpAndSettle();
     expect(model.step, AddStudentStep.student);
+  });
+
+  testWidgets('the personal details step shows its fields and waits for them', (
+    tester,
+  ) async {
+    await pump(tester);
+    fillStudent(model);
+    model.next();
+    await tester.pumpAndSettle();
+
+    expect(find.text('State of origin'), findsOneWidget);
+    expect(find.text('LGA'), findsOneWidget);
+    expect(find.text('Choose a state first'), findsOneWidget);
+    expect(find.text('Home address'), findsOneWidget);
+    expect(find.text('Blood group'), findsOneWidget);
+    expect(find.text('Genotype'), findsOneWidget);
+    expect(find.text('Medical notes  (optional)'), findsOneWidget);
+    expect(
+      find.text('Allergies, conditions or anything a teacher should know'),
+      findsOneWidget,
+    );
+    expect(
+      find.text("School leaders and the student's teachers can see these."),
+      findsOneWidget,
+    );
+    AppPrimaryButton button() => tester.widget<AppPrimaryButton>(
+      find.widgetWithText(AppPrimaryButton, 'Continue'),
+    );
+    expect(button().isDisabled, isTrue);
+
+    await tester.tap(find.text('Select').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('O+').last);
+    await tester.pumpAndSettle();
+    expect(model.bloodGroup, 'O+');
+    expect(button().isDisabled, isTrue);
+
+    model
+      ..pickStateOfOrigin('Enugu')
+      ..pickLga('Nsukka')
+      ..pickGenotype('AA');
+    await tester.enterText(
+      find.widgetWithText(TextField, '12 Ogui Road, Enugu'),
+      '12 Ogui Road, Enugu',
+    );
+    await tester.pumpAndSettle();
+    expect(button().isDisabled, isFalse);
+
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Continue'));
+    await tester.pumpAndSettle();
+    expect(model.step, AddStudentStep.parents);
   });
 
   testWidgets('back on the first step with something typed asks first', (
@@ -102,6 +174,15 @@ void main() {
       ..lastName.text = 'Obi'
       ..pickGender(StaffGender.female)
       ..pickDateOfBirth(DateTime(2015, 3, 14))
+      ..next();
+    await tester.pumpAndSettle();
+    expect(find.text('More about them'), findsOneWidget);
+    model
+      ..pickStateOfOrigin('Enugu')
+      ..pickLga('Nsukka')
+      ..pickBloodGroup('O+')
+      ..pickGenotype('AA')
+      ..address.text = '12 Ogui Road, Enugu'
       ..next();
     await tester.pumpAndSettle();
 
@@ -135,6 +216,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Register student'), findsOneWidget);
     expect(find.text('Class and subjects'), findsOneWidget);
+    expect(find.text('Personal details'), findsOneWidget);
+    expect(find.text('12 Ogui Road, Enugu'), findsOneWidget);
+    expect(find.text('Enugu · Nsukka'), findsOneWidget);
+    expect(find.text('State of origin and LGA'), findsOneWidget);
+    expect(find.text('O+ · AA'), findsOneWidget);
+    expect(find.text('Blood group and genotype'), findsOneWidget);
+    expect(find.text('Medical notes'), findsOneWidget);
+    expect(find.bySemanticsLabel('Edit personal details'), findsOneWidget);
+    // Photo and medical notes are both empty.
+    expect(find.text('Not added'), findsNWidgets(2));
+
+    await tester.tap(find.bySemanticsLabel('Edit personal details'));
+    await tester.pumpAndSettle();
+    expect(model.step, AddStudentStep.personal);
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Continue'));
+    await tester.pumpAndSettle();
+    expect(model.step, AddStudentStep.review);
 
     await tester.tap(find.widgetWithText(AppPrimaryButton, 'Register student'));
     await tester.pumpAndSettle();
@@ -159,6 +257,8 @@ void main() {
       ..pickGender(StaffGender.female)
       ..pickDateOfBirth(DateTime(2015, 3, 14))
       ..next();
+    fillPersonal(model);
+    model.next();
     fakes.students.matches = const [ngozi];
     model
       ..startParentSheet()

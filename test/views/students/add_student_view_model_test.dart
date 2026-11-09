@@ -42,12 +42,16 @@ void main() {
     model.pickNewParentTitle('Mr');
     model.newParentFirstName.text = 'Emeka';
     model.newParentLastName.text = 'Okafor';
+    fillNewParentDetails(model);
     expect(await model.addNewParent(), isTrue);
   }
 
   /// Gets to the review with JSS 1 Gold and French chosen.
   Future<void> reachReview() async {
     fillStudent(model);
+    model.next();
+    expect(model.step, AddStudentStep.personal);
+    fillPersonal(model);
     model.next();
     await addNgozi();
     model.next();
@@ -73,8 +77,33 @@ void main() {
       expect(model.canContinue, isTrue);
 
       model.next();
+      expect(model.step, AddStudentStep.personal);
+      expect(model.canContinue, isFalse, reason: 'nothing filled yet');
+      fillPersonal(model);
+      expect(model.canContinue, isTrue, reason: 'medical notes are optional');
+      model.next();
       expect(model.step, AddStudentStep.parents);
       expect(model.canContinue, isFalse, reason: 'no parent yet');
+    });
+
+    test('six steps in order, five without optional subjects', () {
+      expect(model.steps, [
+        AddStudentStep.student,
+        AddStudentStep.personal,
+        AddStudentStep.parents,
+        AddStudentStep.placement,
+        AddStudentStep.subjects,
+        AddStudentStep.review,
+      ]);
+      expect(model.stepCount, 6);
+      expect(
+        model.stepEyebrow(AddStudentStep.personal),
+        'Step 2 of 6 · Personal details',
+      );
+      expect(
+        model.stepEyebrow(AddStudentStep.parents),
+        'Step 3 of 6 · Parents',
+      );
     });
 
     test('back walks to the previous step and refuses on the first', () {
@@ -88,6 +117,8 @@ void main() {
 
     test('the class step waits for the arm and what it offers', () async {
       fillStudent(model);
+      model.next();
+      fillPersonal(model);
       model.next();
       await addNgozi();
       model.next();
@@ -194,8 +225,10 @@ void main() {
       model.startParentSheet();
       model.searchPhone.text = '08051112233';
       await model.findParent();
+      model.pickNewParentTitle('Mrs');
       model.newParentFirstName.text = 'Ngozi';
       model.newParentLastName.text = 'Okafor';
+      fillNewParentDetails(model);
       model.pickSheetRelationship(ParentRelationship.mother);
       model.newParentPhone.text = '08035550142';
       fakes.students.matches = const [ngozi];
@@ -225,6 +258,8 @@ void main() {
     test('an arm with no optional subjects skips the subjects step', () async {
       fillStudent(model);
       model.next();
+      fillPersonal(model);
+      model.next();
       await addNgozi();
       model.next();
       await model.loadPlacement();
@@ -234,11 +269,11 @@ void main() {
       await model.loadOfferings();
 
       expect(model.skipsSubjects, isTrue);
-      expect(model.stepCount, 4);
-      expect(model.eyebrow, 'Step 3 of 4 · Class');
+      expect(model.stepCount, 5);
+      expect(model.eyebrow, 'Step 4 of 5 · Class');
       model.next();
       expect(model.step, AddStudentStep.review);
-      expect(model.eyebrow, 'Step 4 of 4 · Review');
+      expect(model.eyebrow, 'Step 5 of 5 · Review');
     });
 
     test('each arm is read once', () async {
@@ -274,6 +309,13 @@ void main() {
       expect(params['p_admission_date'], '2026-09-07');
       expect(params['p_admission_number'], isNull);
       expect(params['p_middle_name'], isNull);
+      expect(params['p_address'], '12 Ogui Road, Enugu');
+      expect(params['p_state_of_origin'], 'Enugu');
+      expect(params['p_lga'], 'Nsukka');
+      expect(params['p_blood_group'], 'O+');
+      expect(params['p_genotype'], 'AA');
+      expect(params.containsKey('p_medical_notes'), isTrue);
+      expect(params['p_medical_notes'], isNull, reason: 'blank means null');
       expect(params['p_parents'], [
         {
           'parent_id': 'ngozi',
@@ -287,6 +329,9 @@ void main() {
           'phone': '+2348051112233',
           'photo_id': null,
           'photo_url': null,
+          'email': 'emeka@example.com',
+          'occupation': 'Civil engineer',
+          'address': '5 Zik Avenue, Enugu',
           'relationship': 'father',
           'is_primary_contact': false,
         },
@@ -316,6 +361,136 @@ void main() {
       expect(await model.register(), isFalse);
       expect(model.error, contains('Admission number'));
       expect(model.parentRefused, isFalse);
+    });
+
+    test('personal details reach the call trimmed', () async {
+      await reachReview();
+      model.edit(AddStudentStep.personal);
+      expect(model.step, AddStudentStep.personal);
+      model.address.text = '  12 Ogui Road, Enugu  ';
+      model.medicalNotes.text = '   ';
+      model.next();
+      expect(model.step, AddStudentStep.review);
+      expect(model.originSummary, 'Enugu · Nsukka');
+      expect(model.healthSummary, 'O+ · AA');
+
+      expect(await model.register(), isTrue);
+      final params = fakes.students.registrations.single.toParams();
+      expect(params['p_address'], '12 Ogui Road, Enugu');
+      expect(params['p_state_of_origin'], 'Enugu');
+      expect(params['p_lga'], 'Nsukka');
+      expect(params['p_blood_group'], 'O+');
+      expect(params['p_genotype'], 'AA');
+      expect(params['p_medical_notes'], isNull, reason: 'blank means null');
+    });
+
+    test('medical notes are sent trimmed when given', () async {
+      await reachReview();
+      model.medicalNotes.text = '  Peanut allergy ';
+      expect(await model.register(), isTrue);
+      final params = fakes.students.registrations.single.toParams();
+      expect(params['p_medical_notes'], 'Peanut allergy');
+    });
+
+    test('Add parent waits for title, email, occupation and address', () async {
+      fakes.students.matches = const [];
+      model.startParentSheet();
+      model.searchPhone.text = '08051112233';
+      await model.findParent();
+      model.newParentFirstName.text = 'Emeka';
+      model.newParentLastName.text = 'Okafor';
+      model.pickSheetRelationship(ParentRelationship.father);
+      expect(model.canAddNewParent, isFalse, reason: 'no title');
+      model.pickNewParentTitle('Mr');
+      expect(model.canAddNewParent, isFalse, reason: 'no email and so on');
+
+      model.newParentEmail.text = 'emeka@example.com';
+      model.newParentOccupation.text = 'Civil engineer';
+      expect(model.canAddNewParent, isFalse, reason: 'no address');
+      model.newParentAddress.text = '   ';
+      expect(model.canAddNewParent, isFalse, reason: 'blank address');
+      model.newParentAddress.text = '5 Zik Avenue';
+      expect(model.canAddNewParent, isTrue);
+
+      model.newParentEmail.text = 'not an email';
+      expect(model.newParentEmailProblem, isNotNull);
+      expect(model.canAddNewParent, isFalse, reason: 'a bad email blocks');
+      model.newParentEmail.text = '';
+      expect(model.newParentEmailProblem, isNull, reason: 'no error yet');
+      expect(model.canAddNewParent, isFalse);
+    });
+
+    test('a new parent\'s details go in p_parents trimmed; an existing '
+        'parent has no new keys', () async {
+      await reachReview();
+      fakes.students.matches = const [];
+      model.startParentSheet();
+      model.searchPhone.text = '08051112233';
+      await model.findParent();
+      model.pickNewParentTitle('Mr');
+      model.newParentFirstName.text = 'Emeka';
+      model.newParentLastName.text = 'Okafor';
+      model.newParentEmail.text = ' emeka@example.com ';
+      model.newParentOccupation.text = ' Civil engineer ';
+      model.newParentAddress.text = ' 5 Zik Avenue ';
+      expect(await model.addNewParent(), isTrue);
+
+      expect(await model.register(), isTrue);
+      final params = fakes.students.registrations.single.toParams();
+      final parents = params['p_parents']! as List;
+      final father = parents[1] as Map<String, Object?>;
+      expect(father['email'], 'emeka@example.com');
+      expect(father['occupation'], 'Civil engineer');
+      expect(father['address'], '5 Zik Avenue');
+      final mother = parents[0] as Map<String, Object?>;
+      expect(mother.keys, ['parent_id', 'relationship', 'is_primary_contact']);
+
+      model.startParentSheet();
+      expect(model.newParentEmail.text, isEmpty);
+      expect(model.newParentOccupation.text, isEmpty);
+      expect(model.newParentAddress.text, isEmpty);
+    });
+
+    test('Continue on personal details waits for the five', () {
+      fillStudent(model);
+      model.next();
+      expect(model.step, AddStudentStep.personal);
+      expect(model.canContinue, isFalse);
+      model.next();
+      expect(model.step, AddStudentStep.personal, reason: 'blocked');
+
+      model
+        ..pickStateOfOrigin('Enugu')
+        ..pickLga('Nsukka')
+        ..pickBloodGroup('O+');
+      model.address.text = '12 Ogui Road';
+      expect(model.canContinue, isFalse, reason: 'no genotype');
+      model.pickGenotype('AA');
+      model.address.text = '  ';
+      expect(model.canContinue, isFalse, reason: 'blank address');
+      model.address.text = '12 Ogui Road';
+      expect(model.canContinue, isTrue, reason: 'notes are optional');
+      model.pickStateOfOrigin('Lagos');
+      expect(model.canContinue, isFalse, reason: 'new state clears the LGA');
+      model.pickLga('Ikeja');
+      model.next();
+      expect(model.step, AddStudentStep.parents);
+    });
+
+    test('a new state of origin clears the LGA', () {
+      model
+        ..pickStateOfOrigin('Enugu')
+        ..pickLga('Nsukka')
+        ..pickStateOfOrigin('Enugu');
+      expect(model.lga, 'Nsukka', reason: 'same state keeps it');
+      model.pickStateOfOrigin('Lagos');
+      expect(model.lga, isNull);
+    });
+
+    test('personal details alone make closing ask first', () {
+      expect(model.hasEntered, isFalse);
+      model.pickGenotype('AS');
+      expect(model.hasEntered, isTrue);
     });
 
     test('Edit jumps back and Continue returns to the review', () async {
@@ -359,6 +534,13 @@ void main() {
 
     test('Add another student starts again at step 1', () async {
       await reachReview();
+      model
+        ..pickStateOfOrigin('Enugu')
+        ..pickLga('Nsukka')
+        ..pickBloodGroup('O+')
+        ..pickGenotype('AA');
+      model.address.text = '12 Ogui Road';
+      model.medicalNotes.text = 'Asthma';
       expect(await model.register(), isTrue);
       model.startAnother();
       expect(model.step, AddStudentStep.student);
@@ -366,6 +548,7 @@ void main() {
       expect(model.parents, isEmpty);
       expect(model.arm, isNull);
       expect(model.registered, isNull);
+      expect(model.hasPersonalDetails, isFalse);
     });
   });
 
@@ -430,6 +613,7 @@ Future<void> addNewFatherFromReview(
   model.pickNewParentTitle('Mr');
   model.newParentFirstName.text = 'Emeka';
   model.newParentLastName.text = 'Okafor';
+  fillNewParentDetails(model);
   expect(await model.addNewParent(), isTrue);
 }
 

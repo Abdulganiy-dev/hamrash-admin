@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/bottomSheets/list_bottom_sheet_util.dart';
 import 'package:hamrash_admin/core/bottomSheets/multi_select_bottom_sheet_util.dart';
 import 'package:hamrash_admin/core/bottomSheets/paginated_list_bottom_sheet_util.dart';
@@ -490,6 +491,7 @@ class AppSelectField<T> extends StatelessWidget {
         labelBuilder: _label,
         subtitleBuilder: subtitleBuilder,
         onSelected: onChanged,
+        size: AppSheetSize.floating,
       );
     }
     return PaginatedListBottomSheet.showSelectable<T>(
