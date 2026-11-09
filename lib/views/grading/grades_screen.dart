@@ -19,7 +19,6 @@ import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
-import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/grading/grades_view_model.dart';
 import 'package:hamrash_admin/views/grading/widgets/grade_sheet.dart';
@@ -28,6 +27,7 @@ import 'package:hamrash_admin/views/grading/widgets/grading_banner.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_bars.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_copy_sheet.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_list_card.dart';
+import 'package:hamrash_admin/views/grading/widgets/grading_body.dart';
 import 'package:stacked/stacked.dart';
 
 /// 9.32–9.34, 9.40 · One section's grades: choose a system, then edit the
@@ -65,19 +65,26 @@ class _GradesScreenState extends State<GradesScreen> {
             showBackButton: true,
             onBackPressed: () => NavigationService.popScreen(model.changed),
             backgroundColor: AppPalette.linen,
-            body: model.error != null
-                ? LoadErrorView(onRetry: model.load)
-                : model.loading
-                ? const SizedBox.shrink()
-                : choosing
-                ? _ChooseSystem(
-                    model: model,
-                    selected: _selected,
-                    onSelected: (system) => setState(() => _selected = system),
-                  )
-                : model.inheritsGrades && !model.hasOwnGrades
-                ? _InheritedGrades(model: model, actions: actions)
-                : _Ranges(model: model, actions: actions),
+            body: GradingBody(
+              loading: model.loading,
+              error: model.error,
+              onRetry: model.load,
+              stateKey: () => choosing
+                  ? 'choose'
+                  : model.inheritsGrades && !model.hasOwnGrades
+                  ? 'inherited'
+                  : 'ranges',
+              content: () => choosing
+                  ? _ChooseSystem(
+                      model: model,
+                      selected: _selected,
+                      onSelected: (system) =>
+                          setState(() => _selected = system),
+                    )
+                  : model.inheritsGrades && !model.hasOwnGrades
+                  ? _InheritedGrades(model: model, actions: actions)
+                  : _Ranges(model: model, actions: actions),
+            ),
             bottomNavigationBar: choosing && model.canChange
                 ? _UseSystemBar(
                     system: _selected,
@@ -130,6 +137,7 @@ class _ChooseSystem extends StatelessWidget {
           children: [
             AppText(
               'Which grades should ${model.section.name} use?',
+              colorType: AppTextColor.textStrong,
               style: AppTypography.heading(
                 24,
                 lineHeight: 32,

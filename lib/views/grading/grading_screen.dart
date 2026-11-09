@@ -4,22 +4,20 @@ import 'package:hamrash_admin/api/models/grading/section_grading.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
-import 'package:hamrash_admin/core/widgets/animated_section_content.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_divider.dart';
-import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
-import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/classes/classes_screen.dart';
-import 'package:hamrash_admin/views/classes/widgets/classes_skeleton.dart';
 import 'package:hamrash_admin/views/grading/grading_view_model.dart';
 import 'package:hamrash_admin/views/grading/section_grading_screen.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_banner.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_section_row.dart';
+import 'package:hamrash_admin/views/grading/widgets/grading_body.dart';
+import 'package:hamrash_admin/views/grading/widgets/grading_empty_state.dart';
 import 'package:stacked/stacked.dart';
 
 /// 9.20–9.22 · Grading from the More tab or the Home checklist: one row per
@@ -40,18 +38,14 @@ class GradingScreen extends StatelessWidget {
           showBackButton: true,
           onBackPressed: () => NavigationService.popScreen(model.changed),
           backgroundColor: AppPalette.linen,
-          body: AnimatedSectionContent(
-            morphHeight: false,
-            child: model.error != null
-                ? LoadErrorView(
-                    key: const ValueKey('error'),
-                    onRetry: model.load,
-                  )
-                : model.loading
-                ? const _Loading(key: ValueKey('loading'))
-                : model.showEmpty
+          body: GradingBody(
+            loading: model.loading,
+            error: model.error,
+            onRetry: model.load,
+            stateKey: () => model.showEmpty ? 'empty' : 'sections',
+            content: () => model.showEmpty
                 ? _NoSections(model: model)
-                : _Sections(key: const ValueKey('sections'), model: model),
+                : _Sections(model: model),
           ),
         ),
       );
@@ -59,7 +53,7 @@ class GradingScreen extends StatelessWidget {
 
 /// 9.20 · The active sections, in teaching order.
 class _Sections extends StatelessWidget {
-  const _Sections({super.key, required this.model});
+  const _Sections({required this.model});
 
   final GradingViewModel model;
 
@@ -85,6 +79,7 @@ class _Sections extends StatelessWidget {
           children: [
             AppText(
               'Grade each section its own way',
+              colorType: AppTextColor.textStrong,
               style: AppTypography.heading(
                 24,
                 lineHeight: 32,
@@ -172,29 +167,25 @@ class _NoSections extends StatelessWidget {
   final GradingViewModel model;
 
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    padding: EdgeInsets.only(top: ScaffoldInsets.bodyTopInsetOf(context)),
-    child: AppEmptyState(
-      icon: AppIcons.layers,
-      topPadding: 48,
-      title: model.hasAnySections
-          ? 'No active sections'
-          : 'Create your sections first',
-      subtitle: model.hasAnySections
-          ? 'Every section is switched off. Switch one on in Classes and '
-                'arms to grade it.'
-          : 'Each section, like Nursery or Junior Secondary, gets its own '
-                'grading. Sections are made in Classes and arms.',
-      actionLabel: model.canChange ? 'Go to Classes and arms' : null,
-      onAction: model.canChange
-          ? () async {
-              final changed = await NavigationService.animatedNavigation<bool>(
-                screen: ClassesScreen(school: model.school),
-              );
-              if (changed == true) await model.refresh().catchError((_) {});
-            }
-          : null,
-    ),
+  Widget build(BuildContext context) => GradingEmptyState(
+    icon: AppIcons.layers,
+    title: model.hasAnySections
+        ? 'No active sections'
+        : 'Create your sections first',
+    subtitle: model.hasAnySections
+        ? 'Every section is switched off. Switch one on in Classes and '
+              'arms to grade it.'
+        : 'Each section, like Nursery or Junior Secondary, gets its own '
+              'grading. Sections are made in Classes and arms.',
+    actionLabel: model.canChange ? 'Go to Classes and arms' : null,
+    onAction: model.canChange
+        ? () async {
+            final changed = await NavigationService.animatedNavigation<bool>(
+              screen: ClassesScreen(school: model.school),
+            );
+            if (changed == true) await model.refresh().catchError((_) {});
+          }
+        : null,
   );
 }
 
@@ -230,24 +221,6 @@ class _SaveNote extends StatelessWidget {
           ),
         ),
       ],
-    ),
-  );
-}
-
-class _Loading extends StatelessWidget {
-  const _Loading({super.key});
-
-  @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    physics: const NeverScrollableScrollPhysics(),
-    child: Builder(
-      builder: (context) => ScaffoldColumn(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(height: ScaffoldInsets.of(context).bodyTopInset),
-          const ClassesSkeleton(),
-        ],
-      ),
     ),
   );
 }

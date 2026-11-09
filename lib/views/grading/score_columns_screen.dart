@@ -9,7 +9,6 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_divider.dart';
-import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_icon_label.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
@@ -19,13 +18,14 @@ import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
-import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/grading/score_columns_view_model.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_banner.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_bars.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_copy_sheet.dart';
 import 'package:hamrash_admin/views/grading/widgets/score_column_sheet.dart';
+import 'package:hamrash_admin/views/grading/widgets/grading_body.dart';
+import 'package:hamrash_admin/views/grading/widgets/grading_empty_state.dart';
 import 'package:stacked/stacked.dart';
 
 /// 9.26–9.30 · What a subject's score is made of in one section.
@@ -54,15 +54,21 @@ class ScoreColumnsScreen extends StatelessWidget {
             showBackButton: true,
             onBackPressed: () => NavigationService.popScreen(model.changed),
             backgroundColor: AppPalette.linen,
-            body: model.error != null
-                ? LoadErrorView(onRetry: model.load)
-                : model.loading
-                ? const SizedBox.shrink()
-                : model.inheritsColumns
-                ? _Inherited(model: model, actions: actions)
-                : !model.hasColumns
-                ? _Empty(model: model, actions: actions)
-                : _Columns(model: model, actions: actions),
+            body: GradingBody(
+              loading: model.loading,
+              error: model.error,
+              onRetry: model.load,
+              stateKey: () => model.inheritsColumns
+                  ? 'inherited'
+                  : !model.hasColumns
+                  ? 'empty'
+                  : 'columns',
+              content: () => model.inheritsColumns
+                  ? _Inherited(model: model, actions: actions)
+                  : !model.hasColumns
+                  ? _Empty(model: model, actions: actions)
+                  : _Columns(model: model, actions: actions),
+            ),
           );
         },
       );
@@ -90,6 +96,7 @@ class _Columns extends StatelessWidget {
               children: [
                 AppText(
                   GradingNumbers.format(model.grading.totalMarks),
+                  colorType: AppTextColor.textStrong,
                   style: AppTypography.heading(
                     40,
                     lineHeight: 48,
@@ -274,21 +281,17 @@ class _Empty extends StatelessWidget {
   final _ColumnActions actions;
 
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    padding: EdgeInsets.only(top: ScaffoldInsets.bodyTopInsetOf(context)),
-    child: AppEmptyState(
-      icon: AppIcons.columns3,
-      topPadding: 40,
-      title: 'No score columns in ${model.section.name} yet',
-      subtitle:
-          'Add the parts of a subject’s score, like CA 1 out of 20 and an '
-          'Exam out of 60. Teachers can’t enter scores until there’s at '
-          'least one.',
-      actionLabel: model.canChange ? 'Add a column' : null,
-      onAction: model.canChange ? () => actions.add(context) : null,
-      secondaryLabel: model.canChange ? 'Copy from another section' : null,
-      onSecondary: model.canChange ? () => actions.copy(context) : null,
-    ),
+  Widget build(BuildContext context) => GradingEmptyState(
+    icon: AppIcons.columns3,
+    title: 'No score columns in ${model.section.name} yet',
+    subtitle:
+        'Add the parts of a subject’s score, like CA 1 out of 20 and an '
+        'Exam out of 60. Teachers can’t enter scores until there’s at '
+        'least one.',
+    actionLabel: model.canChange ? 'Add a column' : null,
+    onAction: model.canChange ? () => actions.add(context) : null,
+    secondaryLabel: model.canChange ? 'Copy from another section' : null,
+    onSecondary: model.canChange ? () => actions.copy(context) : null,
   );
 }
 

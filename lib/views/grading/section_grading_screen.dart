@@ -14,7 +14,6 @@ import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
-import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/grading/grades_screen.dart';
 import 'package:hamrash_admin/views/grading/grading_review_screen.dart';
@@ -24,6 +23,7 @@ import 'package:hamrash_admin/views/grading/widgets/grading_banner.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_bars.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_copy_sheet.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_status_badge.dart';
+import 'package:hamrash_admin/views/grading/widgets/grading_body.dart';
 import 'package:stacked/stacked.dart';
 
 /// 9.23–9.25 · One section's setup: its two tasks, copying another
@@ -53,48 +53,50 @@ class SectionGradingScreen extends StatelessWidget {
             showBackButton: true,
             onBackPressed: () => NavigationService.popScreen(model.changed),
             backgroundColor: AppPalette.linen,
-            body: model.error != null
-                ? LoadErrorView(onRetry: model.load)
-                : model.loading
-                ? const SizedBox.shrink()
-                : AppRefreshScrollView.children(
-                    onRefresh: model.refresh,
-                    children: [
-                      if (!model.canChange) ...[
-                        const GradingBanner(
-                          tone: GradingBannerTone.plain,
-                          icon: AppIcons.eye,
-                          title: 'Read only for you',
-                          message:
-                              'You can see how this section is graded. '
-                              'Only school leaders can change it.',
-                        ),
-                        const SizedBox(height: 24),
-                      ],
-                      _Header(section: section, grading: grading!),
-                      const SizedBox(height: 24),
-                      if (grading.usesSchoolSetup)
-                        _InheritedSetup(grading: grading)
-                      else
-                        _Tasks(model: model, actions: actions),
-                      if (!grading.usesSchoolSetup &&
-                          !grading.isComplete &&
-                          model.canChange) ...[
-                        const SizedBox(height: 24),
-                        _CopyRow(actions: actions),
-                      ],
-                      const SizedBox(height: 24),
-                      _SaveNote(
-                        model.canChange
-                            ? 'Each change saves as you make it. Teachers '
-                                  'can enter ${section.name} scores once both '
-                                  'parts are set up.'
-                            : 'Only school leaders can change how '
-                                  '${section.name} is graded.',
-                      ),
-                      const SizedBox(height: 24),
-                    ],
+            body: GradingBody(
+              loading: model.loading,
+              error: model.error,
+              onRetry: model.load,
+              stateKey: () => 'section',
+              content: () => AppRefreshScrollView.children(
+                onRefresh: model.refresh,
+                children: [
+                  if (!model.canChange) ...[
+                    const GradingBanner(
+                      tone: GradingBannerTone.plain,
+                      icon: AppIcons.eye,
+                      title: 'Read only for you',
+                      message:
+                          'You can see how this section is graded. '
+                          'Only school leaders can change it.',
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                  _Header(section: section, grading: grading!),
+                  const SizedBox(height: 24),
+                  if (grading.usesSchoolSetup)
+                    _InheritedSetup(grading: grading)
+                  else
+                    _Tasks(model: model, actions: actions),
+                  if (!grading.usesSchoolSetup &&
+                      !grading.isComplete &&
+                      model.canChange) ...[
+                    const SizedBox(height: 24),
+                    _CopyRow(actions: actions),
+                  ],
+                  const SizedBox(height: 24),
+                  _SaveNote(
+                    model.canChange
+                        ? 'Each change saves as you make it. Teachers '
+                              'can enter ${section.name} scores once both '
+                              'parts are set up.'
+                        : 'Only school leaders can change how '
+                              '${section.name} is graded.',
                   ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
             bottomNavigationBar: model.loading || model.error != null
                 ? null
                 : grading!.usesSchoolSetup
@@ -154,6 +156,7 @@ class _Header extends StatelessWidget {
               : grading.isComplete
               ? '${section.name} is ready'
               : 'Set up ${section.name}',
+          colorType: AppTextColor.textStrong,
           style: AppTypography.heading(
             24,
             lineHeight: 32,

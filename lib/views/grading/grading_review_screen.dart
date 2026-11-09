@@ -17,12 +17,12 @@ import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
-import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/grading/grades_screen.dart';
 import 'package:hamrash_admin/views/grading/grading_review_view_model.dart';
 import 'package:hamrash_admin/views/grading/score_columns_screen.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_bars.dart';
+import 'package:hamrash_admin/views/grading/widgets/grading_body.dart';
 import 'package:stacked/stacked.dart';
 
 /// 9.39 · Review how one section is graded, and try a score. Nothing typed
@@ -52,11 +52,13 @@ class GradingReviewScreen extends StatelessWidget {
             showBackButton: true,
             onBackPressed: () => NavigationService.popScreen(false),
             backgroundColor: AppPalette.linen,
-            body: model.error != null
-                ? LoadErrorView(onRetry: model.load)
-                : model.loading
-                ? const SizedBox.shrink()
-                : _ReviewView(model: model, actions: actions),
+            body: GradingBody(
+              loading: model.loading,
+              error: model.error,
+              onRetry: model.load,
+              stateKey: () => 'review',
+              content: () => _ReviewView(model: model, actions: actions),
+            ),
             bottomNavigationBar: model.loading || model.error != null
                 ? null
                 : AppKeyboardBar.isKeyboardOpen(context)
@@ -174,6 +176,7 @@ class _ReviewViewState extends State<_ReviewView> {
               const SizedBox(height: 6),
               AppText(
                 'How ${widget.model.section.name} is graded',
+                colorType: AppTextColor.textStrong,
                 style: AppTypography.heading(
                   24,
                   lineHeight: 32,
@@ -483,6 +486,7 @@ class _Result extends StatelessWidget {
               ),
               AppText(
                 review.percentLabel,
+                colorType: AppTextColor.textStrong,
                 style: AppTypography.heading(
                   40,
                   lineHeight: 44,
