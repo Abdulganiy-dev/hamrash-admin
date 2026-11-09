@@ -47,7 +47,8 @@ stmt = re.compile(
     r"(create|drop) (?:or replace )?(?:table|function) (?:if (?:not )?exists )?(public|private)\.([a-z_]+)"
 )
 for f in migrations:
-    for m in stmt.finditer(f.read_text(errors="ignore").lower()):
+    # comments stripped, so a "Down (manual): drop function …" note isn't read as a drop
+    for m in stmt.finditer(re.sub(r"--[^\n]*", "", f.read_text(errors="ignore")).lower()):
         verb, schema, name = m.groups()
         is_fn = "function" in m.group(0)
         if is_fn and schema != "public":

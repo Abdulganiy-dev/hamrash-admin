@@ -120,33 +120,22 @@ class GradingService {
         'Scores are already entered for this column, so it can’t be removed.',
   );
 
-  /// Swaps the report-card position of two columns: each takes the other's
-  /// `sort_order`. Two updates, since one update can't give two rows different
-  /// values; if the second fails the first is put back, so two columns never
-  /// end up with the same order.
-  Future<void> swapScoreColumnOrder(ScoreColumn a, ScoreColumn b) =>
-      _run('swapScoreColumnOrder', () async {
-        await _setSortOrder(a, b.sortOrder);
-        try {
-          await _setSortOrder(b, a.sortOrder);
-        } catch (_) {
-          try {
-            await _setSortOrder(a, a.sortOrder);
-          } catch (_) {
-            // Nothing more to do; the page reloads and shows what is stored.
-          }
-          rethrow;
-        }
-      }, log: (_) => {'column_a': a.id, 'column_b': b.id});
-
-  Future<void> _setSortOrder(ScoreColumn column, int sortOrder) async {
-    final changed = await _supabase
-        .from('score_columns')
-        .update({'sort_order': sortOrder})
-        .eq('id', column.id)
-        .select('id');
-    refuseIfNothingChanged(changed, leadersOnly);
-  }
+  /// Puts the school's score columns in a new report-card order. [orderedIds]
+  /// is every column, once, in the new order. One call (migration 33), so the
+  /// order changes completely or not at all. A column added or removed by
+  /// someone else since the page loaded is refused with a readable message.
+  Future<void> reorderScoreColumns(
+    String organizationId,
+    List<String> orderedIds,
+  ) => _run('reorderScoreColumns', () async {
+    await _supabase.rpc(
+      'reorder_score_columns',
+      params: {
+        'p_organization_id': organizationId,
+        'p_column_ids': orderedIds,
+      },
+    );
+  }, log: (_) => {'organization_id': organizationId, 'columns': orderedIds.length});
 
   /// Adds a grade to the school default scale, or to [sectionId]'s own scale.
   Future<void> addGradeBoundary({

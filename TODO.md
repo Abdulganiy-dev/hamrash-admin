@@ -16,13 +16,23 @@ Built 2026-11-09 and **not signed off**. The screens exist (`lib/views/grading/`
 - [ ] **Say what feels wrong.** The reasons for the dissatisfaction aren't written down yet. Add them here before redesigning, for example: is the setup too heavy, are the two sheets the wrong shape, is the section scale confusing, or is the whole thing better as a guided flow?
 - [ ] **Walk it on a real phone.** Nothing here has been run on a device or compared screen-by-screen with Paper. Check every artboard 9.1 to 9.11 against the app, including the keyboard on the number fields.
 
+**App must follow migration 34** (written 2026-11-09, **not applied**)
+- [ ] **Owner: do not apply migration 34 until the app below is updated and shipped.** It revokes the direct `grade_boundaries` writes today's Grading screen makes, so every grade change would fail with "permission denied". Apply it after the new app is out, then bump `meta.migrationsLive` to 34.
+- [ ] **Switch `GradingService` to the RPCs** (all through `runRefusable`; messages are written to be shown as they are):
+  - add, edit and remove a grade → `set_grade_scale(p_organization_id, p_section_id, p_grades)` with the **whole new list** for that set (`p_section_id` null = the school-level scale). The sheets send the full list, including a neighbour whose range moved.
+  - section presets → `apply_grade_system(…, 'waec' | 'standard')`.
+  - "Give Primary its own setup" and copying between sections → `copy_section_grading(p_organization_id, p_from_section_id, p_to_section_id, p_columns, p_grades)` (replaces the target's own rows).
+  - "Use the school's scale instead" → `remove_section_grade_scale(p_organization_id, p_section_id)`.
+  - Drop `addGradeBoundary`, `updateGradeBoundary`, `deleteGradeBoundary`, `copyScaleToSection` and `deleteSectionScale` as direct table writes.
+- [ ] **From and To fields** on the grade sheet (`max_percent` is now stored; read it in the model). Whole numbers only: **decimals are no longer allowed**, so the percentage keyboard and validation change.
+- [ ] **The "gap" / "Not covered" state becomes legacy-only.** The database refuses any set that doesn't cover 0 to 100, so new edits can't create one; keep the state only for a school whose old scale didn't start at 0 (until it is replaced).
+
 **Designed but not built**
 - [ ] **A score column that has scores** (Paper 9.4a): "Out of" read-only with the reason, no Remove, rename still allowed.
 - [ ] **"Published report cards keep their grades…"** note on the grade sheet (Paper 9.6a).
 - [ ] Both need the gradebook migration (a way to know a column has scores, and report-card snapshots). See *Gradebook and workflow* below. Ask which agent writes it first.
 
 **Built differently from the design, or only partly**
-- [ ] **Reordering columns isn't atomic.** It does two updates and puts the first back if the second fails. Migration 33 (`reorder_score_columns`, the whole set's new order in one call) is written but **not applied**. Once the owner applies it, switch `GradingService.swapScoreColumnOrder` from the two-update swap to `reorder_score_columns`, then bump `meta.migrationsLive`.
 - [ ] **Position row** shows only with two or more columns. Paper 9.4 doesn't show it either; decide whether that's right.
 - [ ] **Section scales cover grades only.** A section can have its own grade scale, but not its own score columns, though the schema allows it (see the handbook gap "A section's own score columns").
 - [ ] **Chip row** clips at the 16px page padding, not at the screen edge as the Design System's scrolling chips do.

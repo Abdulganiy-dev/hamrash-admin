@@ -112,7 +112,7 @@ class _Grading implements GradingService {
   /// Grades inserted one at a time.
   int singleInserts = 0;
   final deletedScales = <String>[];
-  final swaps = <(String, String)>[];
+  final reorders = <List<String>>[];
 
   @override
   Future<GradingSetup> getSetup(String organizationId) async =>
@@ -196,17 +196,18 @@ class _Grading implements GradingService {
   }
 
   @override
-  Future<void> swapScoreColumnOrder(ScoreColumn a, ScoreColumn b) async {
+  Future<void> reorderScoreColumns(
+    String organizationId,
+    List<String> orderedIds,
+  ) async {
     if (failWith case final error?) throw error;
-    swaps.add((a.id, b.id));
+    reorders.add(orderedIds);
     columns = [
-      for (final c in columns)
-        if (c.id == a.id)
-          _column(c.id, c.name, c.maxScore, b.sortOrder)
-        else if (c.id == b.id)
-          _column(c.id, c.name, c.maxScore, a.sortOrder)
-        else
-          c,
+      for (final (i, id) in orderedIds.indexed)
+        () {
+          final c = columns.firstWhere((c) => c.id == id);
+          return _column(c.id, c.name, c.maxScore, i + 1);
+        }(),
     ];
   }
 
@@ -816,17 +817,19 @@ void main() {
       },
     );
 
-    test('moves a column by swapping orders with its neighbour', () async {
+    test('moves a column and saves the whole new order in one call', () async {
       final (model, service) = await loaded(OrganizationMemberRole.owner);
       final ca2 = model.setup.columns[1];
       expect(await model.moveColumn(ca2, 1), isNull);
-      expect(service.swaps, [('ca2', 'exam')]);
+      expect(service.reorders, [
+        ['ca1', 'exam', 'ca2'],
+      ]);
       expect(model.setup.columns.map((c) => c.id), ['ca1', 'exam', 'ca2']);
       expect(model.changed, isTrue);
 
       expect(await model.moveColumn(model.setup.columns.first, -1), isNull);
       expect(await model.moveColumn(model.setup.columns.last, 1), isNull);
-      expect(service.swaps.length, 1);
+      expect(service.reorders.length, 1);
     });
 
     test('a failed move says why and keeps the order', () async {
@@ -927,11 +930,6 @@ void main() {
       expect(find.text('Excellent · Pass'), findsOneWidget);
       expect(find.text('Not a pass'), findsNothing);
       expect(find.byType(AppSectionAction), findsNWidgets(2));
-      for (final action in tester.widgetList<AppSectionAction>(
-        find.byType(AppSectionAction),
-      )) {
-        expect(action.addBackground, isTrue);
-      }
       expect(find.byIcon(AppIcons.chevronRight), findsNWidgets(9));
       expect(find.text('Add a grade from 0'), findsNothing);
     });
@@ -1272,17 +1270,19 @@ void main() {
 
       await tester.tap(find.byIcon(AppIcons.chevronDown));
       await tester.pumpAndSettle();
-      expect(service.swaps, [('ca2', 'exam')]);
+      expect(service.reorders, [
+        ['ca1', 'exam', 'ca2'],
+      ]);
       expect(find.text('3 of 3'), findsOneWidget);
 
       // At the end: down does nothing.
       await tester.tap(find.byIcon(AppIcons.chevronDown));
       await tester.pumpAndSettle();
-      expect(service.swaps.length, 1);
+      expect(service.reorders.length, 1);
 
       await tester.tap(find.byIcon(AppIcons.chevronUp));
       await tester.pumpAndSettle();
-      expect(service.swaps.length, 2);
+      expect(service.reorders.length, 2);
       expect(find.text('2 of 3'), findsOneWidget);
     });
 

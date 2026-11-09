@@ -193,15 +193,17 @@ class GradingViewModel extends BaseViewModel {
   }
 
   /// Moves [column] up ([delta] -1) or down (1) on the report card by
-  /// swapping its order with its neighbour's. Returns the reason it didn't
-  /// work, or null (also when it's already at that end).
+  /// swapping places with its neighbour, then saving the whole new order in
+  /// one call. Returns the reason it didn't work, or null (also when it's
+  /// already at that end).
   Future<String?> moveColumn(ScoreColumn column, int delta) {
-    final columns = setup.columns;
-    final from = columns.indexWhere((c) => c.id == column.id);
+    final ids = [for (final c in setup.columns) c.id];
+    final from = ids.indexOf(column.id);
     final to = from + delta;
-    if (from < 0 || to < 0 || to >= columns.length) return Future.value();
+    if (from < 0 || to < 0 || to >= ids.length) return Future.value();
+    ids.insert(to, ids.removeAt(from));
     return _save(
-      () => _service.swapScoreColumnOrder(columns[from], columns[to]),
+      () => _service.reorderScoreColumns(school.id, ids),
       "Couldn't move the column. Try again.",
       'Grading.moveColumn',
     );

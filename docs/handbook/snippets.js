@@ -2,6 +2,40 @@
 // Regenerate with: python3 docs/handbook/extract_sql.py
 window.SNIPPETS = {
  "functions": {
+  "apply_grade_system": {
+   "calls": [
+    "can_manage_academics",
+    "lock_grading_set",
+    "replace_grade_scale"
+   ],
+   "doc": "Replaces a section's own grade scale with a preset, atomically: 'waec'     A1 75\u2013100 \u00b7 B2 70\u201374 \u00b7 B3 65\u201369 \u00b7 C4 60\u201364 \u00b7 C5 55\u201359 \u00b7 C6 50\u201354 \u00b7 D7 45\u201349 \u00b7 E8 40\u201344 \u00b7 F9 0\u201339 (fail) 'standard' A 70\u2013100 \u00b7 B 60\u201369 \u00b7 C 50\u201359 \u00b7 D 45\u201349 \u00b7 E 40\u201344 \u00b7 F 0\u201339 (fail) Only for a real section of the school (not the school-level set).",
+   "file": "supabase/migrations/20261109170000_34_grade_boundaries_max_and_section_setup.sql",
+   "lines": [
+    442,
+    498
+   ],
+   "migration": 34,
+   "params": [
+    {
+     "default": null,
+     "name": "p_organization_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_section_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_system",
+     "type": "text"
+    }
+   ],
+   "returns": "void",
+   "security": "definer",
+   "sql": "create function public.apply_grade_system(p_organization_id uuid, p_section_id uuid, p_system text)\nreturns void\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_system text := lower(trim(p_system));\n  v_grades jsonb;\nbegin\n  if p_organization_id is null or not private.can_manage_academics(p_organization_id) then\n    raise exception 'Only the school''s leaders can change grading' using errcode = '42501';\n  end if;\n\n  if p_section_id is null then\n    raise exception 'Choose a section to apply the grade system to' using errcode = 'P0001';\n  end if;\n\n  if v_system is null or v_system not in ('waec', 'standard') then\n    raise exception 'Choose a grade system: waec or standard' using errcode = 'P0001';\n  end if;\n\n  if not exists (\n    select 1 from public.sections s\n    where s.id = p_section_id and s.organization_id = p_organization_id\n    for key share\n  ) then\n    raise exception 'That section no longer exists; refresh and try again' using errcode = 'P0001';\n  end if;\n\n  if v_system = 'waec' then\n    v_grades := jsonb_build_array(\n      jsonb_build_object('grade', 'A1', 'min_percent', 75, 'max_percent', 100, 'remark', 'Excellent', 'is_pass', true),\n      jsonb_build_object('grade', 'B2', 'min_percent', 70, 'max_percent',  74, 'remark', 'Very Good', 'is_pass', true),\n      jsonb_build_object('grade', 'B3', 'min_percent', 65, 'max_percent',  69, 'remark', 'Good',      'is_pass', true),\n      jsonb_build_object('grade', 'C4', 'min_percent', 60, 'max_percent',  64, 'remark', 'Credit',    'is_pass', true),\n      jsonb_build_object('grade', 'C5', 'min_percent', 55, 'max_percent',  59, 'remark', 'Credit',    'is_pass', true),\n      jsonb_build_object('grade', 'C6', 'min_percent', 50, 'max_percent',  54, 'remark', 'Credit',    'is_pass', true),\n      jsonb_build_object('grade', 'D7', 'min_percent', 45, 'max_percent',  49, 'remark', 'Pass',      'is_pass', true),\n      jsonb_build_object('grade', 'E8', 'min_percent', 40, 'max_percent',  44, 'remark', 'Pass',      'is_pass', true),\n      jsonb_build_object('grade', 'F9', 'min_percent',  0, 'max_percent',  39, 'remark', 'Fail',      'is_pass', false)\n    );\n  else\n    v_grades := jsonb_build_array(\n      jsonb_build_object('grade', 'A', 'min_percent', 70, 'max_percent', 100, 'remark', 'Excellent', 'is_pass', true),\n      jsonb_build_object('grade', 'B', 'min_percent', 60, 'max_percent',  69, 'remark', 'Very Good', 'is_pass', true),\n      jsonb_build_object('grade', 'C', 'min_percent', 50, 'max_percent',  59, 'remark', 'Good',      'is_pass', true),\n      jsonb_build_object('grade', 'D', 'min_percent', 45, 'max_percent',  49, 'remark', 'Fair',      'is_pass', true),\n      jsonb_build_object('grade', 'E', 'min_percent', 40, 'max_percent',  44, 'remark', 'Pass',      'is_pass', true),\n      jsonb_build_object('grade', 'F', 'min_percent',  0, 'max_percent',  39, 'remark', 'Fail',      'is_pass', false)\n    );\n  end if;\n\n  perform private.lock_grading_set(p_organization_id, p_section_id);\n  perform private.replace_grade_scale(p_organization_id, p_section_id, v_grades);\nend;\n$$;"
+  },
   "apply_standard_curriculum": {
    "calls": [
     "can_manage_academics",
@@ -146,6 +180,51 @@ window.SNIPPETS = {
    "returns": "table (class_teachers_copied int, subject_teachers_copied int)",
    "security": "invoker",
    "sql": "create function public.copy_assignments_forward(p_from_session_id uuid, p_to_session_id uuid)\nreturns table (class_teachers_copied int, subject_teachers_copied int)\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\n#variable_conflict use_column\ndeclare\n  v_org uuid;\n  v_ct  int;\n  v_ta  int;\nbegin\n  if p_from_session_id = p_to_session_id then\n    raise exception 'Choose two different sessions' using errcode = '22023';\n  end if;\n\n  select s.organization_id into v_org\n  from public.academic_sessions s\n  where s.id = p_to_session_id;\n\n  if not found or not private.can_manage_academics(v_org)\n     or not exists (select 1 from public.academic_sessions s where s.id = p_from_session_id and s.organization_id = v_org) then\n    raise exception 'Session not found, or you can''t manage this school''s calendar' using errcode = '42501';\n  end if;\n\n  insert into public.class_teachers (organization_id, session_id, arm_id, staff_id, is_lead)\n  select v_org, p_to_session_id, ct.arm_id, ct.staff_id, ct.is_lead\n  from public.class_teachers ct\n  join public.class_arms a on a.id = ct.arm_id and a.is_active\n  join public.staff st on st.id = ct.staff_id and st.status <> 'exited'\n  where ct.session_id = p_from_session_id\n    and not exists (\n      select 1 from public.class_teachers x\n      where x.session_id = p_to_session_id and x.arm_id = ct.arm_id\n    )\n  order by ct.is_lead desc;\n  get diagnostics v_ct = row_count;\n\n  insert into public.teaching_assignments (organization_id, session_id, arm_id, subject_id, staff_id)\n  select v_org, p_to_session_id, ta.arm_id, ta.subject_id, ta.staff_id\n  from public.teaching_assignments ta\n  join public.class_arms a on a.id = ta.arm_id and a.is_active\n  join public.arm_subjects asub on asub.arm_id = ta.arm_id and asub.subject_id = ta.subject_id\n  join public.staff st on st.id = ta.staff_id and st.status <> 'exited'\n  where ta.session_id = p_from_session_id\n  on conflict (session_id, arm_id, subject_id) do nothing;\n  get diagnostics v_ta = row_count;\n\n  return query select v_ct, v_ta;\nend;\n$$;"
+  },
+  "copy_section_grading": {
+   "calls": [
+    "can_manage_academics",
+    "grade_ranges_tile",
+    "lock_grading_set",
+    "replace_grade_scale"
+   ],
+   "doc": "Copies score columns and/or grades from one set into a section, replacing the section's own rows of each kind copied, atomically. p_from_section_id null = the school-level set (\"Give Primary its own setup\"). Columns copy name, max_score and sort_order. Every check (including that the source has what is asked for, and that its grades cover 0 to 100) runs before the first write. Replacing columns that already have scores will be refused by the gradebook's foreign key once it exists, and then nothing changes.",
+   "file": "supabase/migrations/20261109170000_34_grade_boundaries_max_and_section_setup.sql",
+   "lines": [
+    507,
+    623
+   ],
+   "migration": 34,
+   "params": [
+    {
+     "default": null,
+     "name": "p_organization_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_from_section_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_to_section_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_columns",
+     "type": "boolean"
+    },
+    {
+     "default": null,
+     "name": "p_grades",
+     "type": "boolean"
+    }
+   ],
+   "returns": "void",
+   "security": "definer",
+   "sql": "create function public.copy_section_grading(\n  p_organization_id uuid,\n  p_from_section_id uuid,\n  p_to_section_id   uuid,\n  p_columns         boolean,\n  p_grades          boolean\n)\nreturns void\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_columns  boolean := coalesce(p_columns, false);\n  v_grades   boolean := coalesce(p_grades, false);\n  v_from     text;\n  v_key_from text;\n  v_key_to   text;\n  v_mins     numeric[];\n  v_maxs     numeric[];\n  v_list     jsonb;\nbegin\n  -- \u2500\u2500 who \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if p_organization_id is null or not private.can_manage_academics(p_organization_id) then\n    raise exception 'Only the school''s leaders can change grading' using errcode = '42501';\n  end if;\n\n  -- \u2500\u2500 what \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if p_to_section_id is null then\n    raise exception 'Choose the section to copy to' using errcode = 'P0001';\n  end if;\n  if p_from_section_id is not distinct from p_to_section_id then\n    raise exception 'Choose a different set to copy from; a section can''t copy from itself' using errcode = 'P0001';\n  end if;\n  if not v_columns and not v_grades then\n    raise exception 'Choose what to copy: score columns, grades or both' using errcode = 'P0001';\n  end if;\n\n  -- \u2500\u2500 both sections belong to this school \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if not exists (\n    select 1 from public.sections s\n    where s.id = p_to_section_id and s.organization_id = p_organization_id\n    for key share\n  ) then\n    raise exception 'That section no longer exists; refresh and try again' using errcode = 'P0001';\n  end if;\n\n  if p_from_section_id is null then\n    v_from := 'the school''s setup';\n  else\n    select s.name into v_from\n    from public.sections s\n    where s.id = p_from_section_id and s.organization_id = p_organization_id\n    for key share;\n    if not found then\n      raise exception 'That section no longer exists; refresh and try again' using errcode = 'P0001';\n    end if;\n  end if;\n\n  -- \u2500\u2500 lock both sets, always in the same order \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  v_key_from := coalesce(p_from_section_id::text, 'school');\n  v_key_to   := p_to_section_id::text;\n  if v_key_from < v_key_to then\n    perform private.lock_grading_set(p_organization_id, p_from_section_id);\n    perform private.lock_grading_set(p_organization_id, p_to_section_id);\n  else\n    perform private.lock_grading_set(p_organization_id, p_to_section_id);\n    perform private.lock_grading_set(p_organization_id, p_from_section_id);\n  end if;\n\n  -- \u2500\u2500 the source has what was asked for \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if v_columns and not exists (\n    select 1 from public.score_columns sc\n    where sc.organization_id = p_organization_id\n      and sc.section_id is not distinct from p_from_section_id\n  ) then\n    raise exception 'There are no score columns to copy from %', v_from using errcode = 'P0001';\n  end if;\n\n  if v_grades then\n    select array_agg(gb.min_percent), array_agg(gb.max_percent),\n           jsonb_agg(jsonb_build_object('grade', gb.grade, 'min_percent', gb.min_percent,\n                                        'max_percent', gb.max_percent, 'remark', gb.remark,\n                                        'is_pass', gb.is_pass)\n                     order by gb.min_percent desc)\n      into v_mins, v_maxs, v_list\n    from public.grade_boundaries gb\n    where gb.organization_id = p_organization_id\n      and gb.section_id is not distinct from p_from_section_id;\n\n    if v_list is null then\n      raise exception 'There are no grades to copy from %', v_from using errcode = 'P0001';\n    end if;\n    if not private.grade_ranges_tile(v_mins, v_maxs) then\n      raise exception 'The grades in % don''t cover 0 to 100 yet, so they can''t be copied. Fix them first', v_from\n        using errcode = 'P0001';\n    end if;\n  end if;\n\n  -- \u2500\u2500 the writes \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if v_columns then\n    delete from public.score_columns sc\n    where sc.organization_id = p_organization_id\n      and sc.section_id = p_to_section_id;\n\n    insert into public.score_columns (organization_id, section_id, name, max_score, sort_order)\n    select p_organization_id, p_to_section_id, sc.name, sc.max_score, sc.sort_order\n    from public.score_columns sc\n    where sc.organization_id = p_organization_id\n      and sc.section_id is not distinct from p_from_section_id;\n  end if;\n\n  if v_grades then\n    perform private.replace_grade_scale(p_organization_id, p_to_section_id, v_list);\n  end if;\nend;\n$$;"
   },
   "create_organization": {
    "calls": [
@@ -388,13 +467,13 @@ window.SNIPPETS = {
    "calls": [
     "can_manage_academics"
    ],
-   "doc": "One-tap standard setup the school's (used by Nursery and Primary): score columns CA 1 (20) + CA 2 (20) + Exam (60) grades A 70 \u00b7 B 60 \u00b7 C 50 \u00b7 D 45 \u00b7 E 40 \u00b7 F 0 \"Secondary\" section, if it exists: its own grade boundaries only (WAEC) A1 75 \u00b7 B2 70 \u00b7 B3 65 \u00b7 C4 60 \u00b7 C5 55 \u00b7 C6 50 \u00b7 D7 45 \u00b7 E8 40 \u00b7 F9 0 \u2014 it keeps the school's score columns Only for a school with no grading setup yet; everything stays editable. Runs as the caller (leaders only).",
-   "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
+   "doc": "One-tap standard setup (migration 08), now writing max_percent. Same behaviour: only for a school with no grading setup; the school-level CA 1 (20) + CA 2 (20) + Exam (60) and A\u2013F; a section named \"Secondary\", if any, gets its own WAEC grades. security definer because authenticated can no longer insert grade rows; the leader check below is what keeps it to leaders, and every row it writes is for p_organization_id.",
+   "file": "supabase/migrations/20261109170000_34_grade_boundaries_max_and_section_setup.sql",
    "lines": [
-    238,
-    288
+    668,
+    718
    ],
-   "migration": 8,
+   "migration": 34,
    "params": [
     {
      "default": null,
@@ -403,8 +482,8 @@ window.SNIPPETS = {
     }
    ],
    "returns": "void",
-   "security": "invoker",
-   "sql": "create function public.create_standard_grading(p_organization_id uuid)\nreturns void\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_secondary uuid;\nbegin\n  if not private.can_manage_academics(p_organization_id) then\n    raise exception 'Only the school''s leaders can set up grading' using errcode = '42501';\n  end if;\n\n  if exists (select 1 from public.score_columns x where x.organization_id = p_organization_id)\n     or exists (select 1 from public.grade_boundaries x where x.organization_id = p_organization_id) then\n    raise exception 'This school already has a grading setup; the standard one is only for a new school' using errcode = 'P0001';\n  end if;\n\n  -- the school's score columns and grade boundaries\n  insert into public.score_columns (organization_id, name, max_score, sort_order)\n  values (p_organization_id, 'CA 1', 20, 1),\n         (p_organization_id, 'CA 2', 20, 2),\n         (p_organization_id, 'Exam', 60, 3);\n\n  insert into public.grade_boundaries (organization_id, grade, min_percent, remark, is_pass)\n  values (p_organization_id, 'A', 70, 'Excellent', true),\n         (p_organization_id, 'B', 60, 'Very Good', true),\n         (p_organization_id, 'C', 50, 'Good',      true),\n         (p_organization_id, 'D', 45, 'Fair',      true),\n         (p_organization_id, 'E', 40, 'Pass',      true),\n         (p_organization_id, 'F',  0, 'Fail',      false);\n\n  -- WAEC grade boundaries for a section named \"Secondary\"\n  select s.id into v_secondary\n  from public.sections s\n  where s.organization_id = p_organization_id and lower(s.name) = 'secondary';\n\n  if found then\n    insert into public.grade_boundaries (organization_id, section_id, grade, min_percent, remark, is_pass)\n    values (p_organization_id, v_secondary, 'A1', 75, 'Excellent', true),\n           (p_organization_id, v_secondary, 'B2', 70, 'Very Good', true),\n           (p_organization_id, v_secondary, 'B3', 65, 'Good',      true),\n           (p_organization_id, v_secondary, 'C4', 60, 'Credit',    true),\n           (p_organization_id, v_secondary, 'C5', 55, 'Credit',    true),\n           (p_organization_id, v_secondary, 'C6', 50, 'Credit',    true),\n           (p_organization_id, v_secondary, 'D7', 45, 'Pass',      true),\n           (p_organization_id, v_secondary, 'E8', 40, 'Pass',      true),\n           (p_organization_id, v_secondary, 'F9',  0, 'Fail',      false);\n  end if;\nend;\n$$;"
+   "security": "definer",
+   "sql": "create or replace function public.create_standard_grading(p_organization_id uuid)\nreturns void\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_secondary uuid;\nbegin\n  if p_organization_id is null or not private.can_manage_academics(p_organization_id) then\n    raise exception 'Only the school''s leaders can set up grading' using errcode = '42501';\n  end if;\n\n  if exists (select 1 from public.score_columns x where x.organization_id = p_organization_id)\n     or exists (select 1 from public.grade_boundaries x where x.organization_id = p_organization_id) then\n    raise exception 'This school already has a grading setup; the standard one is only for a new school' using errcode = 'P0001';\n  end if;\n\n  -- the school's score columns and grade boundaries\n  insert into public.score_columns (organization_id, name, max_score, sort_order)\n  values (p_organization_id, 'CA 1', 20, 1),\n         (p_organization_id, 'CA 2', 20, 2),\n         (p_organization_id, 'Exam', 60, 3);\n\n  insert into public.grade_boundaries (organization_id, grade, min_percent, max_percent, remark, is_pass)\n  values (p_organization_id, 'A', 70, 100, 'Excellent', true),\n         (p_organization_id, 'B', 60,  69, 'Very Good', true),\n         (p_organization_id, 'C', 50,  59, 'Good',      true),\n         (p_organization_id, 'D', 45,  49, 'Fair',      true),\n         (p_organization_id, 'E', 40,  44, 'Pass',      true),\n         (p_organization_id, 'F',  0,  39, 'Fail',      false);\n\n  -- WAEC grade boundaries for a section named \"Secondary\"\n  select s.id into v_secondary\n  from public.sections s\n  where s.organization_id = p_organization_id and lower(s.name) = 'secondary';\n\n  if found then\n    insert into public.grade_boundaries (organization_id, section_id, grade, min_percent, max_percent, remark, is_pass)\n    values (p_organization_id, v_secondary, 'A1', 75, 100, 'Excellent', true),\n           (p_organization_id, v_secondary, 'B2', 70,  74, 'Very Good', true),\n           (p_organization_id, v_secondary, 'B3', 65,  69, 'Good',      true),\n           (p_organization_id, v_secondary, 'C4', 60,  64, 'Credit',    true),\n           (p_organization_id, v_secondary, 'C5', 55,  59, 'Credit',    true),\n           (p_organization_id, v_secondary, 'C6', 50,  54, 'Credit',    true),\n           (p_organization_id, v_secondary, 'D7', 45,  49, 'Pass',      true),\n           (p_organization_id, v_secondary, 'E8', 40,  44, 'Pass',      true),\n           (p_organization_id, v_secondary, 'F9',  0,  39, 'Fail',      false);\n  end if;\nend;\n$$;"
   },
   "create_standard_structure": {
    "calls": [
@@ -573,13 +652,13 @@ window.SNIPPETS = {
   },
   "grade_for": {
    "calls": [],
-   "doc": "The grade a percentage gets in an arm (null if its boundaries don't reach down that far, i.e. the setup is incomplete).",
-   "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
+   "doc": "The grade a percentage gets in an arm. The percentage is first rounded half-up to a whole number (69.5 \u2192 70, 69.4 \u2192 69), then given the grade with the highest start it reaches. Null if the arm's scale doesn't reach down that far (a legacy incomplete scale).",
+   "file": "supabase/migrations/20261109170000_34_grade_boundaries_max_and_section_setup.sql",
    "lines": [
-    147,
-    159
+    724,
+    736
    ],
-   "migration": 8,
+   "migration": 34,
    "params": [
     {
      "default": null,
@@ -594,17 +673,19 @@ window.SNIPPETS = {
    ],
    "returns": "public.grade_boundaries",
    "security": "invoker",
-   "sql": "create function public.grade_for(p_arm_id uuid, p_percent numeric)\nreturns public.grade_boundaries\nlanguage sql\nstable\nsecurity invoker\nset search_path = ''\nas $$\n  select gb.*\n  from public.grade_boundaries_for_arm(p_arm_id) gb\n  where gb.min_percent <= p_percent\n  order by gb.min_percent desc\n  limit 1;\n$$;"
+   "sql": "create or replace function public.grade_for(p_arm_id uuid, p_percent numeric)\nreturns public.grade_boundaries\nlanguage sql\nstable\nsecurity invoker\nset search_path = ''\nas $$\n  select gb.*\n  from public.grade_boundaries_for_arm(p_arm_id) gb\n  where gb.min_percent <= round(p_percent)  -- numeric round: halves go up for percentages\n  order by gb.min_percent desc\n  limit 1;\n$$;"
   },
   "grading_problems": {
-   "calls": [],
-   "doc": "What's missing before a section (or, with no section, the school) can be graded \u2014 taking the fall-back to the school's setup into account.",
-   "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
-   "lines": [
-    163,
-    193
+   "calls": [
+    "grade_ranges_tile"
    ],
-   "migration": 8,
+   "doc": "What's missing before a section (or, with no section, the school) can be graded, taking the fall-back to the school's setup into account. Each message is reported when it is true: 'No score columns yet' 'No grade boundary at 0%'              (empty set, or no grade from 0) 'Grades don''t cover 0% to 100% yet'   (a set exists but doesn't tile 0 to 100: legacy, from before 34)",
+   "file": "supabase/migrations/20261109170000_34_grade_boundaries_max_and_section_setup.sql",
+   "lines": [
+    745,
+    783
+   ],
+   "migration": 34,
    "params": [
     {
      "default": null,
@@ -619,7 +700,7 @@ window.SNIPPETS = {
    ],
    "returns": "text[]",
    "security": "invoker",
-   "sql": "create function public.grading_problems(p_organization_id uuid, p_section_id uuid default null)\nreturns text[]\nlanguage sql\nstable\nsecurity invoker\nset search_path = ''\nas $$\n  with scope as (\n    select\n      case when p_section_id is not null\n                and exists (select 1 from public.score_columns x where x.section_id = p_section_id)\n           then p_section_id end as columns_section,\n      case when p_section_id is not null\n                and exists (select 1 from public.grade_boundaries x where x.section_id = p_section_id)\n           then p_section_id end as boundaries_section\n  )\n  select array_remove(array[\n    case when not exists (\n           select 1 from public.score_columns sc, scope\n           where sc.organization_id = p_organization_id\n             and sc.section_id is not distinct from scope.columns_section)\n         then 'No score columns yet' end,\n    case when not exists (\n           select 1 from public.grade_boundaries gb, scope\n           where gb.organization_id = p_organization_id\n             and gb.section_id is not distinct from scope.boundaries_section\n             and gb.min_percent = 0)\n         then 'No grade boundary at 0%' end\n  ], null)\n  from scope;\n$$;"
+   "sql": "create or replace function public.grading_problems(p_organization_id uuid, p_section_id uuid default null)\nreturns text[]\nlanguage sql\nstable\nsecurity invoker\nset search_path = ''\nas $$\n  with scope as (\n    select\n      case when p_section_id is not null\n                and exists (select 1 from public.score_columns x where x.section_id = p_section_id)\n           then p_section_id end as columns_section,\n      case when p_section_id is not null\n                and exists (select 1 from public.grade_boundaries x where x.section_id = p_section_id)\n           then p_section_id end as boundaries_section\n  ),\n  grades as (\n    select array_agg(gb.min_percent) as mins, array_agg(gb.max_percent) as maxs\n    from public.grade_boundaries gb, scope\n    where gb.organization_id = p_organization_id\n      and gb.section_id is not distinct from scope.boundaries_section\n  )\n  select array_remove(array[\n    case when not exists (\n           select 1 from public.score_columns sc, scope\n           where sc.organization_id = p_organization_id\n             and sc.section_id is not distinct from scope.columns_section)\n         then 'No score columns yet' end,\n    case when not exists (\n           select 1 from public.grade_boundaries gb, scope\n           where gb.organization_id = p_organization_id\n             and gb.section_id is not distinct from scope.boundaries_section\n             and gb.min_percent = 0)\n         then 'No grade boundary at 0%' end,\n    case when grades.mins is not null and not private.grade_ranges_tile(grades.mins, grades.maxs)\n         then 'Grades don''t cover 0% to 100% yet' end\n  ], null)\n  from scope, grades;\n$$;"
   },
   "invite_parent": {
    "calls": [
@@ -966,6 +1047,34 @@ window.SNIPPETS = {
    "security": "invoker",
    "sql": "create or replace function public.register_student(\n  p_organization_id      uuid,\n  p_first_name           text,\n  p_last_name            text,\n  p_parents              jsonb,\n  p_arm_id               uuid,\n  p_session_id           uuid          default null,\n  p_optional_subject_ids uuid[]        default '{}',\n  p_middle_name          text          default null,\n  p_admission_number     text          default null,\n  p_gender               public.gender default null,\n  p_admission_date       date          default null,\n  p_photo_id             text          default null,\n  p_photo_url            text          default null,\n  p_date_of_birth        date          default null,\n  p_address              text          default null,\n  p_state_of_origin      text          default null,\n  p_lga                  text          default null,\n  p_blood_group          text          default null,\n  p_genotype             text          default null,\n  p_medical_notes        text          default null\n)\nreturns jsonb\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_leaders     constant public.member_role[] := array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[];\n  v_item        jsonb;\n  v_n           int;\n  v_primaries   int := 0;\n  v_rel         text;\n  v_pid         uuid;\n  v_phone       text;\n  v_digits      text;\n  v_existing    record;\n  v_seen_ids    uuid[] := '{}';\n  v_seen_phones text[] := '{}';\n  v_arm         record;\n  v_session     record;\n  v_session_id  uuid;\n  v_subject_ids uuid[];\n  v_subject     record;\n  v_student     public.students;\n  v_parent      public.parents;\n  v_parent_ids  uuid[] := '{}';\nbegin\n  -- \u2500\u2500 who \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if p_organization_id is null\n     or p_organization_id not in (select private.my_org_ids(v_leaders)) then\n    raise exception 'Only the school''s leaders can register students' using errcode = '42501';\n  end if;\n\n  -- \u2500\u2500 the student \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if nullif(trim(p_first_name), '') is null or nullif(trim(p_last_name), '') is null then\n    raise exception 'Enter the student''s first and last name' using errcode = '22023';\n  end if;\n\n  if nullif(trim(p_admission_number), '') is not null and exists (\n    select 1 from public.students s\n    where s.organization_id = p_organization_id\n      and s.admission_number = trim(p_admission_number)\n  ) then\n    raise exception 'Admission number % is already used in this school. Leave it blank to generate one', trim(p_admission_number)\n      using errcode = '23505';\n  end if;\n\n  -- \u2500\u2500 parents \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if p_parents is null or jsonb_typeof(p_parents) <> 'array' or jsonb_array_length(p_parents) = 0 then\n    raise exception 'Add at least one parent or guardian' using errcode = '22023';\n  end if;\n\n  for v_item in select e from jsonb_array_elements(p_parents) as t(e) loop\n    if jsonb_typeof(v_item) <> 'object' then\n      raise exception 'Each parent must be an object with a relationship' using errcode = '22023';\n    end if;\n\n    v_rel := nullif(trim(v_item ->> 'relationship'), '');\n    if v_rel is null or v_rel not in ('father', 'mother', 'guardian', 'other') then\n      raise exception 'Choose how each parent is related to the student: father, mother, guardian or other'\n        using errcode = '22023';\n    end if;\n\n    if coalesce(v_item -> 'is_primary_contact' = 'true'::jsonb, false) then\n      v_primaries := v_primaries + 1;\n    end if;\n\n    if nullif(trim(v_item ->> 'parent_id'), '') is not null then\n      -- existing parent\n      begin\n        v_pid := (v_item ->> 'parent_id')::uuid;\n      exception when invalid_text_representation then\n        raise exception 'One of the parents has an id that isn''t valid' using errcode = '22023';\n      end;\n\n      if v_pid = any (v_seen_ids) then\n        raise exception 'The same parent is listed twice. Add each parent once' using errcode = '22023';\n      end if;\n      v_seen_ids := v_seen_ids || v_pid;\n\n      if not exists (\n        select 1 from public.parents p\n        where p.id = v_pid and p.organization_id = p_organization_id\n      ) then\n        raise exception 'That parent isn''t in this school. Search for them again, or add them as a new parent'\n          using errcode = 'P0002';\n      end if;\n    else\n      -- new parent\n      v_phone := nullif(trim(v_item ->> 'phone'), '');\n      if nullif(trim(v_item ->> 'first_name'), '') is null\n         or nullif(trim(v_item ->> 'last_name'), '') is null\n         or v_phone is null then\n        raise exception 'Enter each new parent''s first name, last name and phone number' using errcode = '22023';\n      end if;\n\n      if nullif(trim(v_item ->> 'gender'), '') is not null\n         and trim(v_item ->> 'gender') not in ('male', 'female') then\n        raise exception 'A parent''s gender must be male or female' using errcode = '22023';\n      end if;\n\n      v_digits := coalesce(private.phone_digits(v_phone), v_phone);\n      if v_digits = any (v_seen_phones) then\n        raise exception 'Two new parents have the same phone number %. Add each parent once', v_phone\n          using errcode = '22023';\n      end if;\n      v_seen_phones := v_seen_phones || v_digits;\n\n      select p.id, p.first_name, p.last_name into v_existing\n      from public.parents p\n      where p.organization_id = p_organization_id\n        and (p.phone = v_phone or private.phone_digits(p.phone) = v_digits)\n      limit 1;\n      if found then\n        raise exception '% % is already a parent in this school with phone %. Choose them as an existing parent instead of adding them again',\n          v_existing.first_name, v_existing.last_name, v_phone\n          using errcode = '23505';\n      end if;\n    end if;\n  end loop;\n\n  if v_primaries = 0 then\n    raise exception 'Choose one parent as the primary contact' using errcode = '22023';\n  elsif v_primaries > 1 then\n    raise exception 'Only one parent can be the primary contact' using errcode = '22023';\n  end if;\n\n  -- \u2500\u2500 class and arm \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  select a.id, a.name, a.is_active, c.name as class_name, c.is_active as class_active,\n         sec.name as section_name, sec.is_active as section_active\n  into v_arm\n  from public.class_arms a\n  join public.classes c on c.id = a.class_id\n  join public.sections sec on sec.id = c.section_id\n  where a.id = p_arm_id\n    and a.organization_id = p_organization_id;\n  if not found then\n    raise exception 'Choose a class and arm in this school' using errcode = 'P0002';\n  end if;\n  if not v_arm.section_active then\n    raise exception 'The % section is switched off. Choose a class in another section, or switch it back on first', v_arm.section_name\n      using errcode = 'P0001';\n  end if;\n  if not v_arm.class_active then\n    raise exception '% is switched off. Choose another class, or switch it back on first', v_arm.class_name\n      using errcode = 'P0001';\n  end if;\n  if not v_arm.is_active then\n    raise exception '% % is switched off. Choose another arm, or switch it back on first', v_arm.class_name, v_arm.name\n      using errcode = 'P0001';\n  end if;\n\n  -- \u2500\u2500 session \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if p_session_id is null then\n    select s.id, s.closed_at into v_session\n    from public.academic_sessions s\n    where s.organization_id = p_organization_id\n      and s.is_current;\n    if not found then\n      raise exception 'This school has no current session. Set one up in the calendar first' using errcode = 'P0001';\n    end if;\n  else\n    select s.id, s.closed_at into v_session\n    from public.academic_sessions s\n    where s.id = p_session_id\n      and s.organization_id = p_organization_id;\n    if not found then\n      raise exception 'Session not found in this school' using errcode = 'P0002';\n    end if;\n  end if;\n  if v_session.closed_at is not null then\n    raise exception 'That session is closed. Nothing new can be added to it; use the current session.'\n      using errcode = 'P0001';\n  end if;\n  v_session_id := v_session.id;\n\n  -- \u2500\u2500 optional subjects \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  -- Same rule as private.check_student_subject: offered by the arm, and\n  -- optional there. Duplicates and nulls in the array are dropped.\n  select coalesce(array_agg(distinct x), '{}') into v_subject_ids\n  from unnest(coalesce(p_optional_subject_ids, '{}'::uuid[])) as t(x)\n  where x is not null;\n\n  for v_subject in\n    select x as id, sj.name, asub.is_compulsory, asub.subject_id is not null as offered\n    from unnest(v_subject_ids) as t(x)\n    left join public.subjects sj on sj.id = x and sj.organization_id = p_organization_id\n    left join public.arm_subjects asub on asub.arm_id = p_arm_id and asub.subject_id = x\n  loop\n    if not v_subject.offered then\n      raise exception '% isn''t offered to %. Choose from the arm''s optional subjects',\n        coalesce(v_subject.name, 'That subject'), v_arm.class_name || ' ' || v_arm.name\n        using errcode = '23514';\n    end if;\n    if v_subject.is_compulsory then\n      raise exception '% is compulsory for %, so every student already takes it',\n        v_subject.name, v_arm.class_name || ' ' || v_arm.name\n        using errcode = '23514';\n    end if;\n  end loop;\n\n  -- \u2500\u2500 writes \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  -- 1. student + private details (create_student runs as the caller too)\n  v_student := public.create_student(\n    p_organization_id  => p_organization_id,\n    p_first_name       => trim(p_first_name),\n    p_last_name        => trim(p_last_name),\n    p_middle_name      => nullif(trim(p_middle_name), ''),\n    p_admission_number => nullif(trim(p_admission_number), ''),\n    p_gender           => p_gender,\n    p_admission_date   => p_admission_date,\n    p_photo_id         => p_photo_id,\n    p_photo_url        => p_photo_url,\n    p_status           => 'active',\n    p_date_of_birth    => p_date_of_birth,\n    p_address          => p_address,\n    p_state_of_origin  => p_state_of_origin,\n    p_lga              => p_lga,\n    p_blood_group      => p_blood_group,\n    p_genotype         => p_genotype,\n    p_medical_notes    => p_medical_notes\n  );\n\n  -- 2 + 3. new parents, then every link (in the order given)\n  for v_item, v_n in select e, i from jsonb_array_elements(p_parents) with ordinality as t(e, i) order by i loop\n    if nullif(trim(v_item ->> 'parent_id'), '') is not null then\n      v_pid := (v_item ->> 'parent_id')::uuid;\n    else\n      v_parent := public.create_parent(\n        p_organization_id => p_organization_id,\n        p_first_name      => trim(v_item ->> 'first_name'),\n        p_last_name       => trim(v_item ->> 'last_name'),\n        p_phone           => trim(v_item ->> 'phone'),\n        p_title           => nullif(trim(v_item ->> 'title'), ''),\n        p_gender          => nullif(trim(v_item ->> 'gender'), '')::public.gender,\n        p_alt_phone       => nullif(trim(v_item ->> 'alt_phone'), ''),\n        p_photo_id        => nullif(trim(v_item ->> 'photo_id'), ''),\n        p_photo_url       => nullif(trim(v_item ->> 'photo_url'), ''),\n        p_is_active       => true,\n        p_email           => nullif(trim(v_item ->> 'email'), ''),\n        p_occupation      => nullif(trim(v_item ->> 'occupation'), ''),\n        p_address         => nullif(trim(v_item ->> 'address'), '')\n      );\n      v_pid := v_parent.id;\n    end if;\n\n    insert into public.student_parents (organization_id, student_id, parent_id, relationship, is_primary_contact)\n    values (p_organization_id, v_student.id, v_pid,\n            trim(v_item ->> 'relationship')::public.parent_relationship,\n            coalesce(v_item -> 'is_primary_contact' = 'true'::jsonb, false));\n\n    v_parent_ids := v_parent_ids || v_pid;\n  end loop;\n\n  -- 4. placement for the session\n  insert into public.student_placements (organization_id, student_id, session_id, arm_id)\n  values (p_organization_id, v_student.id, v_session_id, p_arm_id);\n\n  -- 5. optional subjects (private.check_student_subject still checks each)\n  insert into public.student_subjects (organization_id, student_id, session_id, subject_id)\n  select p_organization_id, v_student.id, v_session_id, x\n  from unnest(v_subject_ids) as t(x);\n\n  return jsonb_build_object(\n    'student',     to_jsonb(v_student),\n    'parent_ids',  to_jsonb(v_parent_ids),\n    'placement',   jsonb_build_object('session_id', v_session_id, 'arm_id', p_arm_id),\n    'subject_ids', to_jsonb(v_subject_ids)\n  );\nend;\n$$;"
   },
+  "remove_section_grade_scale": {
+   "calls": [
+    "can_manage_academics",
+    "lock_grading_set"
+   ],
+   "doc": "Deletes a section's own grade rows, so it uses the school-level scale again. Nothing to delete is fine. The school-level scale can't be removed.",
+   "file": "supabase/migrations/20261109170000_34_grade_boundaries_max_and_section_setup.sql",
+   "lines": [
+    627,
+    656
+   ],
+   "migration": 34,
+   "params": [
+    {
+     "default": null,
+     "name": "p_organization_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_section_id",
+     "type": "uuid"
+    }
+   ],
+   "returns": "void",
+   "security": "definer",
+   "sql": "create function public.remove_section_grade_scale(p_organization_id uuid, p_section_id uuid)\nreturns void\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\nbegin\n  if p_organization_id is null or not private.can_manage_academics(p_organization_id) then\n    raise exception 'Only the school''s leaders can change grading' using errcode = '42501';\n  end if;\n\n  if p_section_id is null then\n    raise exception 'Choose a section. The school''s own grade scale can''t be removed' using errcode = 'P0001';\n  end if;\n\n  if not exists (\n    select 1 from public.sections s\n    where s.id = p_section_id and s.organization_id = p_organization_id\n    for key share\n  ) then\n    raise exception 'That section no longer exists; refresh and try again' using errcode = 'P0001';\n  end if;\n\n  perform private.lock_grading_set(p_organization_id, p_section_id);\n\n  delete from public.grade_boundaries gb\n  where gb.organization_id = p_organization_id\n    and gb.section_id = p_section_id;\nend;\n$$;"
+  },
   "reopen_session": {
    "calls": [
     "my_org_ids"
@@ -1140,6 +1249,40 @@ window.SNIPPETS = {
    "returns": "public.academic_terms",
    "security": "definer",
    "sql": "create function public.set_current_term(p_term_id uuid)\nreturns public.academic_terms\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_term public.academic_terms;\nbegin\n  select t.* into v_term\n  from public.academic_terms t\n  where t.id = p_term_id\n    and private.can_manage_academics(t.organization_id)\n  for update;\n  if not found then\n    raise exception 'Term not found, or you can''t manage this school''s calendar' using errcode = '42501';\n  end if;\n\n  update public.academic_terms t\n  set is_current = false\n  where t.organization_id = v_term.organization_id\n    and t.is_current\n    and t.id <> v_term.id;\n\n  update public.academic_sessions s\n  set is_current = false\n  where s.organization_id = v_term.organization_id\n    and s.is_current\n    and s.id <> v_term.session_id;\n\n  update public.academic_sessions s\n  set is_current = true\n  where s.id = v_term.session_id\n    and not s.is_current;\n\n  update public.academic_terms t\n  set is_current = true\n  where t.id = v_term.id\n    and not t.is_current;\n\n  select t.* into v_term from public.academic_terms t where t.id = p_term_id;\n  return v_term;\nend;\n$$;"
+  },
+  "set_grade_scale": {
+   "calls": [
+    "can_manage_academics",
+    "lock_grading_set",
+    "replace_grade_scale"
+   ],
+   "doc": "Replaces ONE set's grades with p_grades, atomically: the section's own scale, or the school-level scale when p_section_id is null. Every grade edit in the app (add, edit, remove, a change that moves a neighbour's start) sends the whole new list. Refusals change nothing.",
+   "file": "supabase/migrations/20261109170000_34_grade_boundaries_max_and_section_setup.sql",
+   "lines": [
+    413,
+    435
+   ],
+   "migration": 34,
+   "params": [
+    {
+     "default": null,
+     "name": "p_organization_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_section_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_grades",
+     "type": "jsonb"
+    }
+   ],
+   "returns": "void",
+   "security": "definer",
+   "sql": "create function public.set_grade_scale(p_organization_id uuid, p_section_id uuid, p_grades jsonb)\nreturns void\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\nbegin\n  if p_organization_id is null or not private.can_manage_academics(p_organization_id) then\n    raise exception 'Only the school''s leaders can change grading' using errcode = '42501';\n  end if;\n\n  if p_section_id is not null and not exists (\n    select 1 from public.sections s\n    where s.id = p_section_id and s.organization_id = p_organization_id\n    for key share\n  ) then\n    raise exception 'That section no longer exists; refresh and try again' using errcode = 'P0001';\n  end if;\n\n  perform private.lock_grading_set(p_organization_id, p_section_id);\n  perform private.replace_grade_scale(p_organization_id, p_section_id, p_grades);\nend;\n$$;"
   },
   "set_organization_status": {
    "calls": [
@@ -1679,17 +1822,21 @@ window.SNIPPETS = {
    "sql": "create function private.can_manage_academics(p_organization_id uuid)\nreturns boolean\nlanguage sql\nstable\nset search_path = ''\nas $$\n  select p_organization_id in (\n    select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])\n  );\n$$;",
    "usedBy": {
     "functions": [
+     "apply_grade_system",
      "apply_standard_curriculum",
      "close_session",
      "copy_arm_subjects",
      "copy_assignments_forward",
+     "copy_section_grading",
      "create_standard_grading",
      "create_standard_structure",
      "create_standard_subjects",
+     "remove_section_grade_scale",
      "reorder_score_columns",
      "session_readiness",
      "set_current_session",
-     "set_current_term"
+     "set_current_term",
+     "set_grade_scale"
     ],
     "policies": [
      {
@@ -1699,6 +1846,34 @@ window.SNIPPETS = {
     ],
     "private": [],
     "triggers": []
+   }
+  },
+  "check_grade_scale": {
+   "calls": [
+    "check_grade_scale",
+    "grade_ranges_tile"
+   ],
+   "doc": "4. The deferred check: every touched set still tiles 0 to 100 Runs at commit for each inserted, updated or deleted row and checks the whole set that row belonged to (both sets, if an update moved a row). An empty set passes (the section falls back to the school's scale), so section deletes cascade fine. security definer so it sees the whole set whatever the caller's RLS; it only reads, and clients can't execute it.",
+   "file": "supabase/migrations/20261109170000_34_grade_boundaries_max_and_section_setup.sql",
+   "lines": [
+    360,
+    398
+   ],
+   "migration": 34,
+   "params": [],
+   "returns": "trigger",
+   "security": "definer",
+   "sql": "create function private.check_grade_scale()\nreturns trigger\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_orgs uuid[] := '{}';\n  v_secs uuid[] := '{}';\n  v_mins numeric[];\n  v_maxs numeric[];\n  i      int;\nbegin\n  if tg_op in ('INSERT', 'UPDATE') then\n    v_orgs := array_append(v_orgs, new.organization_id);\n    v_secs := array_append(v_secs, new.section_id);\n  end if;\n  if tg_op in ('UPDATE', 'DELETE') then\n    v_orgs := array_append(v_orgs, old.organization_id);\n    v_secs := array_append(v_secs, old.section_id);\n  end if;\n\n  for i in 1 .. cardinality(v_orgs) loop\n    select array_agg(gb.min_percent), array_agg(gb.max_percent)\n      into v_mins, v_maxs\n    from public.grade_boundaries gb\n    where gb.organization_id = v_orgs[i]\n      and gb.section_id is not distinct from v_secs[i];\n\n    if v_mins is not null and not private.grade_ranges_tile(v_mins, v_maxs) then\n      raise exception 'A grade scale must cover 0 to 100 exactly, with no gaps or overlaps (school %, %). Change grades with set_grade_scale',\n        v_orgs[i], coalesce('section ' || v_secs[i]::text, 'school-level')\n        using errcode = '23514';\n    end if;\n  end loop;\n\n  return null;\nend;\n$$;",
+   "usedBy": {
+    "functions": [],
+    "policies": [],
+    "private": [],
+    "triggers": [
+     {
+      "name": "grade_boundaries_check_scale",
+      "table": "grade_boundaries"
+     }
+    ]
    }
   },
   "check_student_subject": {
@@ -1908,6 +2083,44 @@ window.SNIPPETS = {
      }
     ],
     "private": [],
+    "triggers": []
+   }
+  },
+  "grade_ranges_tile": {
+   "calls": [
+    "grade_ranges_tile"
+   ],
+   "doc": "True when the ranges (min_percent[i], max_percent[i]) tile 0 to 100 exactly: the lowest starts at 0, each starts at the one below's max + 1, min <= max, the top ends at 100. False for an empty list. Pure; used by the scale trigger, copy_section_grading and grading_problems.",
+   "file": "supabase/migrations/20261109170000_34_grade_boundaries_max_and_section_setup.sql",
+   "lines": [
+    197,
+    216
+   ],
+   "migration": 34,
+   "params": [
+    {
+     "default": null,
+     "name": "p_mins",
+     "type": "numeric[]"
+    },
+    {
+     "default": null,
+     "name": "p_maxs",
+     "type": "numeric[]"
+    }
+   ],
+   "returns": "boolean",
+   "security": "invoker",
+   "sql": "create function private.grade_ranges_tile(p_mins numeric[], p_maxs numeric[])\nreturns boolean\nlanguage sql\nimmutable\nset search_path = ''\nas $$\n  with r as (\n    select u.mn, u.mx,\n           lag(u.mx) over (order by u.mn, u.mx) as prev_max,\n           row_number() over (order by u.mn, u.mx) as i,\n           count(*) over () as n\n    from unnest(p_mins, p_maxs) as u (mn, mx)\n  )\n  select coalesce(bool_and(\n           r.mn is not null and r.mx is not null and r.mn <= r.mx\n           and case when r.i = 1 then r.mn = 0 else r.mn = r.prev_max + 1 end\n           and (r.i < r.n or r.mx = 100)\n         ), false)\n  from r;\n$$;",
+   "usedBy": {
+    "functions": [
+     "copy_section_grading",
+     "grading_problems"
+    ],
+    "policies": [],
+    "private": [
+     "check_grade_scale"
+    ],
     "triggers": []
    }
   },
@@ -2242,6 +2455,44 @@ window.SNIPPETS = {
       "table": "class_teachers"
      }
     ]
+   }
+  },
+  "lock_grading_set": {
+   "calls": [
+    "lock_grading_set"
+   ],
+   "doc": "Serialises writers of one grading set (a school's school-level set when p_section_id is null, otherwise one section's) until the transaction ends.",
+   "file": "supabase/migrations/20261109170000_34_grade_boundaries_max_and_section_setup.sql",
+   "lines": [
+    220,
+    229
+   ],
+   "migration": 34,
+   "params": [
+    {
+     "default": null,
+     "name": "p_organization_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_section_id",
+     "type": "uuid"
+    }
+   ],
+   "returns": "void",
+   "security": "invoker",
+   "sql": "create function private.lock_grading_set(p_organization_id uuid, p_section_id uuid)\nreturns void\nlanguage sql\nvolatile\nset search_path = ''\nas $$\n  select pg_advisory_xact_lock(\n    hashtextextended('grading_set:' || p_organization_id::text || ':' || coalesce(p_section_id::text, 'school'), 0)\n  );\n$$;",
+   "usedBy": {
+    "functions": [
+     "apply_grade_system",
+     "copy_section_grading",
+     "remove_section_grade_scale",
+     "set_grade_scale"
+    ],
+    "policies": [],
+    "private": [],
+    "triggers": []
    }
   },
   "member_role_app": {
@@ -2754,18 +3005,6 @@ window.SNIPPETS = {
       "table": "score_columns"
      },
      {
-      "name": "grade_boundaries: leaders can add",
-      "table": "grade_boundaries"
-     },
-     {
-      "name": "grade_boundaries: leaders can edit",
-      "table": "grade_boundaries"
-     },
-     {
-      "name": "grade_boundaries: leaders can remove",
-      "table": "grade_boundaries"
-     },
-     {
       "name": "grade_boundaries: members and platform admins can read",
       "table": "grade_boundaries"
      }
@@ -3232,6 +3471,48 @@ window.SNIPPETS = {
       "table": "student_subjects"
      }
     ]
+   }
+  },
+  "replace_grade_scale": {
+   "calls": [
+    "replace_grade_scale"
+   ],
+   "doc": "Validates p_grades (the whole new grade scale of one set) and, only if all of it is valid, replaces that set's rows with it. Called only by the security-definer RPCs below, AFTER they have checked the caller and the section and taken the set's lock; clients can't execute it. Each element: {grade, min_percent, max_percent, remark, is_pass}. Other keys (an id the app sends back, say) are ignored. Rows are replaced, so grade ids change; nothing references grade_boundaries ids.",
+   "file": "supabase/migrations/20261109170000_34_grade_boundaries_max_and_section_setup.sql",
+   "lines": [
+    238,
+    350
+   ],
+   "migration": 34,
+   "params": [
+    {
+     "default": null,
+     "name": "p_organization_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_section_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_grades",
+     "type": "jsonb"
+    }
+   ],
+   "returns": "void",
+   "security": "invoker",
+   "sql": "create function private.replace_grade_scale(p_organization_id uuid, p_section_id uuid, p_grades jsonb)\nreturns void\nlanguage plpgsql\nset search_path = ''\nas $$\ndeclare\n  v_item     jsonb;\n  v_name     text;\n  v_min      numeric;\n  v_max      numeric;\n  v_names    text[]    := '{}';\n  v_mins     numeric[] := '{}';\n  v_maxs     numeric[] := '{}';\n  v_remarks  text[]    := '{}';\n  v_passes   boolean[] := '{}';\n  v_expected numeric   := 0;\n  v_gap      text;\n  r          record;\nbegin\n  -- \u2500\u2500 the list \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if p_grades is null or jsonb_typeof(p_grades) <> 'array' then\n    raise exception 'Send the grade scale as a list of grades' using errcode = 'P0001';\n  end if;\n  if jsonb_array_length(p_grades) = 0 then\n    raise exception 'Add at least one grade' using errcode = 'P0001';\n  end if;\n  if jsonb_array_length(p_grades) > 20 then\n    raise exception 'A grade scale can have at most 20 grades' using errcode = 'P0001';\n  end if;\n\n  -- \u2500\u2500 each grade \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  for v_item in select e from jsonb_array_elements(p_grades) as t (e) loop\n    if jsonb_typeof(v_item) <> 'object' then\n      raise exception 'Each grade needs a name, a from and to percentage, a remark and whether it is a pass'\n        using errcode = 'P0001';\n    end if;\n\n    if jsonb_typeof(v_item -> 'grade') is distinct from 'string'\n       or nullif(trim(v_item ->> 'grade'), '') is null then\n      raise exception 'Every grade needs a name' using errcode = 'P0001';\n    end if;\n    v_name := trim(v_item ->> 'grade');\n\n    if lower(v_name) in (select lower(x) from unnest(v_names) as t (x)) then\n      raise exception 'Two grades are called %. Give each grade its own name', v_name using errcode = 'P0001';\n    end if;\n\n    if jsonb_typeof(v_item -> 'min_percent') is distinct from 'number'\n       or jsonb_typeof(v_item -> 'max_percent') is distinct from 'number' then\n      raise exception 'Grade %: from and to must be whole numbers from 0 to 100', v_name using errcode = 'P0001';\n    end if;\n    v_min := (v_item ->> 'min_percent')::numeric;\n    v_max := (v_item ->> 'max_percent')::numeric;\n    if v_min <> trunc(v_min) or v_max <> trunc(v_max) or v_min < 0 or v_max > 100 then\n      raise exception 'Grade %: from and to must be whole numbers from 0 to 100', v_name using errcode = 'P0001';\n    end if;\n    v_min := trunc(v_min);\n    v_max := trunc(v_max);\n    if v_min > v_max then\n      raise exception 'Grade %: from (%) is higher than to (%)', v_name, v_min, v_max using errcode = 'P0001';\n    end if;\n\n    if jsonb_typeof(v_item -> 'remark') not in ('string', 'null') then\n      raise exception 'Grade %: the remark must be text', v_name using errcode = 'P0001';\n    end if;\n\n    if jsonb_typeof(v_item -> 'is_pass') is distinct from 'boolean' then\n      raise exception 'Grade %: say whether it is a pass grade', v_name using errcode = 'P0001';\n    end if;\n\n    v_names   := array_append(v_names, v_name);\n    v_mins    := array_append(v_mins, v_min);\n    v_maxs    := array_append(v_maxs, v_max);\n    v_remarks := array_append(v_remarks, nullif(trim(v_item ->> 'remark'), ''));\n    v_passes  := array_append(v_passes, (v_item -> 'is_pass') = 'true'::jsonb);\n  end loop;\n\n  -- \u2500\u2500 together they cover 0 to 100, no gaps, no overlaps \u2500\u2500\u2500\u2500\u2500\u2500\n  for r in\n    select u.g, u.mn, u.mx\n    from unnest(v_names, v_mins, v_maxs) as u (g, mn, mx)\n    order by u.mn, u.mx\n  loop\n    if r.mn > v_expected then\n      -- the uncovered stretch, \"61 to 69\" (or just \"69\" when it is one number)\n      v_gap := case when r.mn - 1 = v_expected then v_expected::text else v_expected || ' to ' || (r.mn - 1) end;\n      if v_expected = 0 then\n        raise exception 'The lowest grade must start at 0. Nothing covers %', v_gap using errcode = 'P0001';\n      end if;\n      raise exception 'Nothing covers %. % should start at %', v_gap, r.g, v_expected\n        using errcode = 'P0001';\n    elsif r.mn < v_expected then\n      raise exception '% overlaps the grade below it. % should start at %', r.g, r.g, v_expected\n        using errcode = 'P0001';\n    end if;\n    v_expected := r.mx + 1;\n  end loop;\n  if v_expected <> 101 then\n    raise exception 'The highest grade must end at 100. Nothing covers %',\n      case when v_expected = 100 then '100' else v_expected || ' to 100' end\n      using errcode = 'P0001';\n  end if;\n\n  -- \u2500\u2500 the write: the whole set, delete then insert \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  delete from public.grade_boundaries gb\n  where gb.organization_id = p_organization_id\n    and gb.section_id is not distinct from p_section_id;\n\n  insert into public.grade_boundaries (organization_id, section_id, grade, min_percent, max_percent, remark, is_pass)\n  select p_organization_id, p_section_id, u.g, u.mn, u.mx, u.rm, u.ps\n  from unnest(v_names, v_mins, v_maxs, v_remarks, v_passes) as u (g, mn, mx, rm, ps);\nend;\n$$;",
+   "usedBy": {
+    "functions": [
+     "apply_grade_system",
+     "copy_section_grading",
+     "set_grade_scale"
+    ],
+    "policies": [],
+    "private": [],
+    "triggers": []
    }
   },
   "revoke_login_of_deleted_person": {
@@ -4279,6 +4560,11 @@ window.SNIPPETS = {
     {
      "name": "updated_at",
      "type": "timestamptz not null default now()"
+    },
+    {
+     "added": 34,
+     "name": "max_percent",
+     "type": "numeric(5, 2)"
     }
    ],
    "constraints": [
@@ -4301,42 +4587,6 @@ window.SNIPPETS = {
      "alters": [],
      "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
      "lines": [
-      216,
-      218
-     ],
-     "migration": 8,
-     "name": "grade_boundaries: leaders can add",
-     "sql": "create policy \"grade_boundaries: leaders can add\"\n  on public.grade_boundaries for insert to authenticated\n  with check (organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])));",
-     "table": "grade_boundaries"
-    },
-    {
-     "alters": [],
-     "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
-     "lines": [
-      219,
-      222
-     ],
-     "migration": 8,
-     "name": "grade_boundaries: leaders can edit",
-     "sql": "create policy \"grade_boundaries: leaders can edit\"\n  on public.grade_boundaries for update to authenticated\n  using      (organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])))\n  with check (organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])));",
-     "table": "grade_boundaries"
-    },
-    {
-     "alters": [],
-     "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
-     "lines": [
-      223,
-      225
-     ],
-     "migration": 8,
-     "name": "grade_boundaries: leaders can remove",
-     "sql": "create policy \"grade_boundaries: leaders can remove\"\n  on public.grade_boundaries for delete to authenticated\n  using (organization_id in (select private.my_org_ids(array['owner', 'admin', 'principal', 'vice_principal']::public.member_role[])));",
-     "table": "grade_boundaries"
-    },
-    {
-     "alters": [],
-     "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",
-     "lines": [
       213,
       215
      ],
@@ -4348,6 +4598,22 @@ window.SNIPPETS = {
    ],
    "schema": "public",
    "triggers": [
+    {
+     "each_row": true,
+     "file": "supabase/migrations/20261109170000_34_grade_boundaries_max_and_section_setup.sql",
+     "function": "check_grade_scale",
+     "function_schema": "private",
+     "lines": [
+      400,
+      403
+     ],
+     "migration": 34,
+     "name": "grade_boundaries_check_scale",
+     "sql": "create constraint trigger grade_boundaries_check_scale\n  after insert or update or delete on public.grade_boundaries\n  deferrable initially deferred\n  for each row execute function private.check_grade_scale();",
+     "table": "grade_boundaries",
+     "timing": "AFTER INSERT OR UPDATE OR DELETE",
+     "when": null
+    },
     {
      "each_row": true,
      "file": "supabase/migrations/20261011144926_08_create_grading_setup.sql",

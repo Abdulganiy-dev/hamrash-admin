@@ -1,10 +1,12 @@
--- Access test for migration 08 (score columns and grade boundaries).
+-- Access test for migration 08 (score columns and grade boundaries), updated
+-- for migration 34: grades are whole-number ranges, percentages are rounded
+-- before grading, and grade_boundaries is written only through the RPCs.
 --
 -- How to run: paste the whole file into the Supabase SQL editor and run it.
 -- It acts as several fake users, checks every rule, then raises an exception on
 -- purpose so EVERYTHING is rolled back. The "error" at the end is the report.
 --
--- Requires migrations 01–08.
+-- Requires migrations 01–34. Migration 34's own tests: 21_grade_scales_test.sql.
 
 do $test$
 declare
@@ -65,7 +67,10 @@ begin
       and (select sum(max_score) from public.score_columns where organization_id = v_org and section_id is null) = 100
       and (select count(*) from public.grade_boundaries where organization_id = v_org and section_id is null) = 6
       and (select count(*) from public.score_columns    where section_id = v_secondary) = 0
-      and (select count(*) from public.grade_boundaries where section_id = v_secondary) = 9;
+      and (select count(*) from public.grade_boundaries where section_id = v_secondary) = 9
+      and (select string_agg(grade || ' ' || min_percent::int || '-' || max_percent::int, ',' order by min_percent desc)
+             from public.grade_boundaries where organization_id = v_org and section_id is null)
+          = 'A 70-100,B 60-69,C 50-59,D 45-49,E 40-44,F 0-39';
   v_log := v_log || E'\n' || case when v_ok then 'PASS' else 'FAIL' end || ' 00a standard grading setup created';
 
   -- 00b only for a new school
@@ -84,11 +89,11 @@ begin
       and (select count(*) from public.grade_boundaries_for_arm(v_pry1a)) = 6;
   v_log := v_log || E'\n' || case when v_ok then 'PASS' else 'FAIL' end || ' 01 columns and boundaries each fall back to the school''s';
 
-  -- 02 grades come from boundaries, including decimals between them
-  v_txt := (public.grade_for(v_jss1a, 74.5)).grade || ',' || (public.grade_for(v_jss1a, 75)).grade || ','
-        || (public.grade_for(v_jss1a, 39.99)).grade || ',' || (public.grade_for(v_pry1a, 69.99)).grade || ','
+  -- 02 grades come from the ranges; a percentage is rounded half-up first (migration 34)
+  v_txt := (public.grade_for(v_jss1a, 74.4)).grade || ',' || (public.grade_for(v_jss1a, 74.5)).grade || ','
+        || (public.grade_for(v_jss1a, 39.49)).grade || ',' || (public.grade_for(v_pry1a, 69.99)).grade || ','
         || (public.grade_for(v_pry1a, 0)).grade || ',' || (public.grade_for(v_pry1a, 100)).grade;
-  v_log := v_log || E'\n' || case when v_txt = 'B2,A1,F9,B,F,A' then 'PASS' else 'FAIL' end || ' 02 grades come from boundaries [' || coalesce(v_txt, 'null') || ']';
+  v_log := v_log || E'\n' || case when v_txt = 'B2,A1,F9,A,F,A' then 'PASS' else 'FAIL' end || ' 02 grades come from the ranges, rounded first [' || coalesce(v_txt, 'null') || ']';
   v_ok := not (public.grade_for(v_jss1a, 30)).is_pass and (public.grade_for(v_jss1a, 45)).is_pass;
   v_log := v_log || E'\n' || case when v_ok then 'PASS' else 'FAIL' end || ' 02b pass/fail flag comes with the grade';
 
@@ -112,18 +117,18 @@ begin
   insert into public.score_columns (organization_id, section_id, name, max_score) values (v_org, v_nursery, 'CA 1', 10);
   v_log := v_log || E'\nPASS 04b the same column name is fine in another set (Nursery CA 1)';
   begin
-    insert into public.grade_boundaries (organization_id, section_id, grade, min_percent) values (v_org, v_secondary, 'X', 75);
-    v_log := v_log || E'\nFAIL 04c duplicate starting point accepted';
+    insert into public.grade_boundaries (organization_id, section_id, grade, min_percent, max_percent) values (v_org, v_secondary, 'X', 75, 100);
+    v_log := v_log || E'\nFAIL 04c owner inserted a grade row directly';
   exception when others then
-    v_log := v_log || E'\n' || case when sqlstate = '23505' then 'PASS' else 'FAIL' end || ' 04c one grade per starting point within a set [' || sqlerrm || ']';
+    v_log := v_log || E'\n' || case when sqlstate = '42501' then 'PASS' else 'FAIL' end || ' 04c grade rows can''t be written directly, even by the owner (migration 34) [' || sqlerrm || ']';
   end;
 
   -- 05 validation
   begin
-    insert into public.grade_boundaries (organization_id, grade, min_percent) values (v_org, 'Z', 100);
-    v_log := v_log || E'\nFAIL 05a boundary at 100% accepted';
+    perform public.set_grade_scale(v_org, null, '[{"grade":"A","min_percent":0,"max_percent":101,"remark":null,"is_pass":true}]'::jsonb);
+    v_log := v_log || E'\nFAIL 05a grade ending above 100% accepted';
   exception when others then
-    v_log := v_log || E'\n' || case when sqlstate = '23514' then 'PASS' else 'FAIL' end || ' 05a boundaries must be below 100% [' || sqlerrm || ']';
+    v_log := v_log || E'\n' || case when sqlstate = 'P0001' and sqlerrm like '%whole numbers from 0 to 100%' then 'PASS' else 'FAIL' end || ' 05a grades end at 100% at most [' || sqlerrm || ']';
   end;
   begin
     insert into public.score_columns (organization_id, name, max_score) values (v_org, 'Project', 0);
@@ -147,9 +152,12 @@ begin
   exception when others then
     v_log := v_log || E'\n' || case when sqlstate = '42501' then 'PASS' else 'FAIL' end || ' 06b teachers can''t change the setup [' || sqlerrm || ']';
   end;
-  update public.grade_boundaries set min_percent = 50 where organization_id = v_org and section_id is null and grade = 'A';
-  get diagnostics v_n = row_count;
-  v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 06c teachers can''t edit grade boundaries';
+  begin
+    update public.grade_boundaries set min_percent = 50 where organization_id = v_org and section_id is null and grade = 'A';
+    v_log := v_log || E'\nFAIL 06c teacher update on grade boundaries accepted';
+  exception when others then
+    v_log := v_log || E'\n' || case when sqlstate = '42501' then 'PASS' else 'FAIL' end || ' 06c teachers can''t edit grade boundaries [' || sqlerrm || ']';
+  end;
   begin
     perform public.create_standard_grading(v_org2);
     v_log := v_log || E'\nFAIL 06d teacher set up another school';
@@ -176,7 +184,7 @@ begin
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_owner","role":"authenticated"}', true);
   execute 'set local role authenticated';
-  delete from public.grade_boundaries where section_id = v_secondary;
+  perform public.remove_section_grade_scale(v_org, v_secondary);
   v_ok := (public.grade_for(v_jss1a, 74.5)).grade = 'A'
       and (select count(*) from public.grade_boundaries_for_arm(v_jss1a)) = 6;
   v_log := v_log || E'\n' || case when v_ok then 'PASS' else 'FAIL' end || ' 09 without its own boundaries, Secondary uses the school''s';
