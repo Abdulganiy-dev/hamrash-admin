@@ -19,6 +19,7 @@ import 'package:hamrash_admin/views/home/widgets/setup_card_skeleton.dart';
 import 'package:hamrash_admin/views/academic_calendar/create_session/create_session_screen.dart';
 import 'package:hamrash_admin/views/classes/classes_screen.dart';
 import 'package:hamrash_admin/views/students/add_student/add_student_screen.dart';
+import 'package:hamrash_admin/views/grading/grading_screen.dart';
 import 'package:hamrash_admin/views/subjects/subjects_screen.dart';
 import 'package:hamrash_admin/views/team/team_screen.dart';
 import 'package:hamrash_admin/views/schools/widgets/school_logo.dart';
@@ -301,6 +302,8 @@ class _SetupCard extends StatelessWidget {
         screen = ClassesScreen(school: model.school);
       case SetupStep.subjects:
         screen = SubjectsScreen(school: model.school);
+      case SetupStep.grading:
+        screen = GradingScreen(school: model.school);
       case SetupStep.staff:
         screen = TeamScreen(school: model.school);
       case SetupStep.students:

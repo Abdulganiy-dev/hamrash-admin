@@ -5,6 +5,7 @@ import 'package:hamrash_admin/api/services/supabase_services/organization_member
 import 'package:hamrash_admin/api/services/supabase_services/school_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/academic_calendar_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/class_structure_service.dart';
+import 'package:hamrash_admin/api/services/supabase_services/grading_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/student_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/subject_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
@@ -59,6 +60,10 @@ void setupLocator() {
 
   locator.registerLazySingleton<SubjectService>(
     () => SubjectService(locator<SupabaseClient>()),
+  );
+
+  locator.registerLazySingleton<GradingService>(
+    () => GradingService(locator<SupabaseClient>()),
   );
 
   locator.registerLazySingleton<TeamService>(

@@ -116,11 +116,11 @@ void main() {
         expect(model.areas, isNot(contains(SchoolArea.team)));
         expect(model.areasTitle, 'About your school');
         expect(service.askedForTeam, isFalse);
-        // These have read-only views; grading doesn't yet.
+        // These areas all have read-only views.
         expect(model.blockedReason(SchoolArea.academicCalendar), isNull);
         expect(model.blockedReason(SchoolArea.classes), isNull);
         expect(model.blockedReason(SchoolArea.subjects), isNull);
-        expect(model.blockedReason(SchoolArea.grading), isNotNull);
+        expect(model.blockedReason(SchoolArea.grading), isNull);
         expect(model.statusFor(SchoolArea.academicCalendar), 'Not set up yet');
       },
     );
