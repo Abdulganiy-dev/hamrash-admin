@@ -7,8 +7,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// The school's grading setup: score columns and grade boundaries. Every
 /// member reads them; school leaders change them.
 ///
-/// Only the school's own set (`section_id` null) is handled here, never a
-/// section's own overrides.
+/// Score columns are the school's own (`section_id` null). Grade boundaries
+/// are the school default plus any section's own scale, a full set of grades
+/// with that `section_id`: a section that has any uses them instead of the
+/// school's.
 ///
 /// Refusals come back as [SupabaseRefusal] with a readable message.
 class GradingService {
@@ -20,7 +22,8 @@ class GradingService {
       'Only the owner, admins, the principal and vice principals can change '
       'grading.';
 
-  /// The school's score columns (report-card order) and grade boundaries.
+  /// The school's score columns (report-card order) and every grade
+  /// boundary: the school default and each section's own scale.
   Future<GradingSetup> getSetup(String organizationId) => _run(
     'getSetup',
     () async {
@@ -36,7 +39,6 @@ class GradingService {
             .from('grade_boundaries')
             .select(GradeBoundary.columns)
             .eq('organization_id', organizationId)
-            .isFilter('section_id', null)
             .order('min_percent', ascending: false),
       ]);
       return GradingSetup(
@@ -48,6 +50,7 @@ class GradingService {
       'organization_id': organizationId,
       'columns': setup.columns.length,
       'grades': setup.boundaries.length,
+      'section_scales': setup.sectionBoundaries.length,
     },
   );
 
@@ -117,17 +120,48 @@ class GradingService {
         'Scores are already entered for this column, so it can’t be removed.',
   );
 
+  /// Swaps the report-card position of two columns: each takes the other's
+  /// `sort_order`. Two updates, since one update can't give two rows different
+  /// values; if the second fails the first is put back, so two columns never
+  /// end up with the same order.
+  Future<void> swapScoreColumnOrder(ScoreColumn a, ScoreColumn b) =>
+      _run('swapScoreColumnOrder', () async {
+        await _setSortOrder(a, b.sortOrder);
+        try {
+          await _setSortOrder(b, a.sortOrder);
+        } catch (_) {
+          try {
+            await _setSortOrder(a, a.sortOrder);
+          } catch (_) {
+            // Nothing more to do; the page reloads and shows what is stored.
+          }
+          rethrow;
+        }
+      }, log: (_) => {'column_a': a.id, 'column_b': b.id});
+
+  Future<void> _setSortOrder(ScoreColumn column, int sortOrder) async {
+    final changed = await _supabase
+        .from('score_columns')
+        .update({'sort_order': sortOrder})
+        .eq('id', column.id)
+        .select('id');
+    refuseIfNothingChanged(changed, leadersOnly);
+  }
+
+  /// Adds a grade to the school default scale, or to [sectionId]'s own scale.
   Future<void> addGradeBoundary({
     required String organizationId,
     required String grade,
     required double minPercent,
     required String? remark,
     required bool isPass,
+    String? sectionId,
   }) => _run(
     'addGradeBoundary',
     () async {
       await _supabase.from('grade_boundaries').insert({
         'organization_id': organizationId,
+        'section_id': ?sectionId,
         'grade': grade,
         'min_percent': minPercent,
         'remark': remark,
@@ -174,6 +208,57 @@ class GradingService {
             .select('id');
         refuseIfNothingChanged(removed, leadersOnly);
       }, log: (_) => {'boundary_id': boundary.id});
+
+  /// Gives [sectionId] its own scale, starting as a copy of [grades] (the
+  /// school default). All rows go in one insert, so the section gets the whole
+  /// scale or nothing: a partial set would silently replace the school's
+  /// scale for that section.
+  Future<void> copyScaleToSection({
+    required String organizationId,
+    required String sectionId,
+    required List<GradeBoundary> grades,
+  }) => _run(
+    'copyScaleToSection',
+    () async {
+      await _supabase.from('grade_boundaries').insert([
+        for (final g in grades)
+          {
+            'organization_id': organizationId,
+            'section_id': sectionId,
+            'grade': g.grade,
+            'min_percent': g.minPercent,
+            'remark': g.remark,
+            'is_pass': g.isPass,
+          },
+      ]);
+    },
+    log: (_) => {
+      'organization_id': organizationId,
+      'section_id': sectionId,
+      'grades': grades.length,
+    },
+    duplicate: 'That section already has its own grade scale.',
+    invalid: _gradeInvalid,
+  );
+
+  /// Removes all of [sectionId]'s own grades in one delete, so the section
+  /// goes back to the school default.
+  Future<void> deleteSectionScale({
+    required String organizationId,
+    required String sectionId,
+  }) => _run(
+    'deleteSectionScale',
+    () async {
+      final removed = await _supabase
+          .from('grade_boundaries')
+          .delete()
+          .eq('organization_id', organizationId)
+          .eq('section_id', sectionId)
+          .select('id');
+      refuseIfNothingChanged(removed, leadersOnly);
+    },
+    log: (_) => {'organization_id': organizationId, 'section_id': sectionId},
+  );
 
   static const _gradeTaken =
       'Another grade already has that name or starts at that number.';

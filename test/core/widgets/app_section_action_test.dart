@@ -13,6 +13,7 @@ void main() {
           label: 'Change',
           icon: AppIcons.pencil,
           semanticLabel: 'Change details',
+          addBackground: true,
           onPressed: onPressed,
         ),
       ),

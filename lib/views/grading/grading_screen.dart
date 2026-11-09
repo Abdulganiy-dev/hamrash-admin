@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamrash_admin/api/models/class_structure/class_structure.dart';
 import 'package:hamrash_admin/api/models/grading/grade_boundary.dart';
 import 'package:hamrash_admin/api/models/grading/grading_numbers.dart';
 import 'package:hamrash_admin/api/models/grading/grading_setup.dart';
@@ -8,15 +9,19 @@ import 'package:hamrash_admin/core/bottomSheets/app_confirm_sheet.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/animated_section_content.dart';
+import 'package:hamrash_admin/core/widgets/app_chip_row.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
+import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
+import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
@@ -25,12 +30,14 @@ import 'package:hamrash_admin/views/grading/grading_view_model.dart';
 import 'package:hamrash_admin/views/grading/widgets/grade_sheet.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_banner.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_list_card.dart';
+import 'package:hamrash_admin/views/grading/widgets/section_scale_sheet.dart';
 import 'package:hamrash_admin/views/grading/widgets/score_column_sheet.dart';
 import 'package:hamrash_admin/views/grading/widgets/standard_setup_sheet.dart';
 import 'package:stacked/stacked.dart';
 
-/// 9.1–9.9 · Grading, from setup step 4 or the More tab: the score columns a
-/// subject's score is made of, and the grade scale. Leaders change them;
+/// 9.1–9.11 · Grading, from setup step 4 or the More tab: the score columns a
+/// subject's score is made of, and the grade scale (the school default, or a
+/// section's own). Leaders change them;
 /// everyone else reads. Pops `true` when something was saved, so the page
 /// behind reloads.
 class GradingScreen extends StatelessWidget {
@@ -67,12 +74,10 @@ class GradingScreen extends StatelessWidget {
                       subtitle:
                           'Set what each subject’s score is made of, like CA 1 '
                           'out of 20, and the grades a percentage earns, like '
-                          'A from 70. Start from the standard setup or build '
-                          'your own.',
+                          'A from 70. Start from the standard setup and change '
+                          'anything you need.',
                       actionLabel: 'Use the standard setup',
                       onAction: () => actions.useStandardSetup(context),
-                      secondaryLabel: 'Build my own',
-                      onSecondary: model.buildOwn,
                     )
                   : model.showNotSetUp
                   ? const AppEmptyState(
@@ -123,7 +128,7 @@ class _Setup extends StatelessWidget {
               ? AppSectionAction(
                   label: 'Add column',
                   icon: AppIcons.plus,
-             
+   
                   onPressed: () => actions.addColumn(context),
                 )
               : null,
@@ -173,7 +178,24 @@ class _Setup extends StatelessWidget {
                 : null,
           ),
         ),
-        const SizedBox(height: 16),
+        if (model.hasSections) ...[
+          const SizedBox(height: 12),
+          _ScaleChips(model: model, actions: actions),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: AppText(
+              model.scopeCaption,
+              style: AppTypography.body.copyWith(
+                fontSize: 13,
+                height: 18 / 13,
+                color: LightColors.textMuted,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ] else
+          const SizedBox(height: 16),
         if (canChange) ...[_Coverage(setup: setup), const SizedBox(height: 16)],
         if (!setup.hasBoundaries && !canChange)
           const GradingBanner(
@@ -214,10 +236,77 @@ class _Setup extends StatelessWidget {
             child: const Text('Add a grade from 0'),
           ),
         ],
+        if (canChange && model.inSectionScope) ...[
+          const SizedBox(height: 16),
+          _TextLink(
+            label: 'Use the school’s scale instead',
+            onPressed: () => actions.useSchoolScale(context),
+          ),
+        ],
         const SizedBox(height: 24),
       ],
     );
   }
+}
+
+/// 9.2, 9.10 · One chip for the school default and one for each section with
+/// its own scale; "+ New scale" for leaders while a section has none.
+class _ScaleChips extends StatelessWidget {
+  const _ScaleChips({required this.model, required this.actions});
+
+  final GradingViewModel model;
+  final _GradingActions actions;
+
+  @override
+  Widget build(BuildContext context) => AppChipRow(
+    inset: 0,
+    children: [
+      AppFilterChip(
+        label: 'School default',
+        selected: !model.inSectionScope,
+        onTap: () => model.selectScope(null),
+      ),
+      for (final section in model.ownScaleSections)
+        AppFilterChip(
+          label: section.name,
+          selected: section.id == model.scopeId,
+          onTap: () => model.selectScope(section.id),
+        ),
+      if (model.canAddScale)
+        AppFilterChip(
+          label: 'New scale',
+          suggestion: true,
+          onTap: () => actions.addScale(context),
+        ),
+    ],
+  );
+}
+
+/// A centred text action under a list, 44 tall.
+class _TextLink extends StatelessWidget {
+  const _TextLink({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => BouncyButton(
+    onPressed: onPressed,
+    child: SizedBox(
+      height: 44,
+      child: Center(
+        child: AppText(
+          label,
+          style: AppTypography.body.copyWith(
+            fontSize: 15,
+            height: 20 / 15,
+            fontWeight: FontWeight.w700,
+            color: LightColors.primaryPrimaryText,
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 /// "Total 100 marks." and, for leaders, why the columns needn't add up to
@@ -326,6 +415,7 @@ class _GradingActions {
         column: column,
         onSave: (name, marks) => model.saveColumn(column, name, marks),
         onRemove: () => _removeColumn(context, column),
+        onMove: (delta) => model.moveColumn(column, delta),
       ),
     );
     if (saved == true) AppToast.show('${column.name} saved');
@@ -398,6 +488,46 @@ class _GradingActions {
       onConfirm: () => model.removeGrade(boundary),
     );
     if (removed == true) AppToast.show('Grade ${boundary.grade} removed');
+  }
+
+  /// 9.11 · Pick a section and copy the school default into it.
+  Future<void> addScale(BuildContext context) async {
+    SchoolSection? created;
+    final done = await _sheet(
+      context,
+      SectionScaleSheet(
+        sections: model.sectionsWithoutOwnScale,
+        ownScaleNames: [for (final s in model.ownScaleSections) s.name],
+        onCreate: (section) async {
+          final error = await model.createSectionScale(section.id);
+          if (error == null) created = section;
+          return error;
+        },
+      ),
+    );
+    if (done == true && created != null) {
+      AppToast.show('${created!.name} scale created');
+    }
+  }
+
+  /// Deletes the selected section's own grades after asking.
+  Future<void> useSchoolScale(BuildContext context) async {
+    final section = model.scopeSection;
+    if (section == null) return;
+    final removed = await AppConfirmSheet.show(
+      context,
+      icon: AppIcons.trash2,
+      isDestructive: true,
+      title: 'Use the school’s scale for ${section.name}?',
+      message:
+          '${section.name}’s own grades will be removed, and it will use the '
+          'school default scale again.',
+      confirmLabel: 'Remove ${section.name}’s scale',
+      onConfirm: model.removeSectionScale,
+    );
+    if (removed == true) {
+      AppToast.show('${section.name} uses the school’s scale');
+    }
   }
 
   static Future<bool?> _sheet(BuildContext context, Widget sheet) =>

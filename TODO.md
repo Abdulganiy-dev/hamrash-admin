@@ -18,6 +18,10 @@ Plan and decisions: [docs/results-design.md](docs/results-design.md).
   - arm reviews (lead class teacher)
   - remarks, and behaviour ratings: a fixed trait list stored as a `behaviour_trait` enum, rated 1–5 (see docs/results-design.md)
   - row-level security that follows role and workflow state
+  - **What the Grading designs need from it.** Each needs a database change, so it belongs in the gradebook migration (nothing is written yet):
+    - A score column that has scores shows **Out of** read-only with the reason, and no **Remove** (Paper 9.4a).
+    - The grade sheet shows "Published report cards keep their grades. Results not yet published use the new scale." (Paper 9.6a).
+    - Published report cards snapshot the column names and max scores as well as the grades, so changing the setup later never rewrites a published card.
 - [ ] **Publishing and report cards:** freeze totals, grades, positions within the arm, class stats and the annual result on publish. Parents and students see published results only.
 - [ ] **Homework:** assignments posted to an arm and subject, submissions and marking, and pulling marks into a CA component. Attachments are images via Cloudflare and documents via Supabase Storage.
 - [ ] **Teachers keep their past work.** A teacher can always see the work rows (results, assignments, projects…) for the **subject + arm + session they taught**, even after the student is promoted or graduates.

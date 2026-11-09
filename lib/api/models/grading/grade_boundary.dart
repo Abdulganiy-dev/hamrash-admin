@@ -7,10 +7,15 @@ class GradeBoundary {
     required this.minPercent,
     required this.remark,
     required this.isPass,
+    this.sectionId,
   });
 
   final String id;
   final String grade;
+
+  /// The section whose own scale this grade belongs to, or null for the
+  /// school default.
+  final String? sectionId;
 
   /// 0 up to (not including) 100, with up to 2 decimals.
   final double minPercent;
@@ -21,10 +26,11 @@ class GradeBoundary {
   /// Whether this grade counts as a pass on report cards.
   final bool isPass;
 
-  static const columns = 'id,grade,min_percent,remark,is_pass';
+  static const columns = 'id,section_id,grade,min_percent,remark,is_pass';
 
   factory GradeBoundary.fromJson(Map<String, dynamic> json) => GradeBoundary(
     id: json['id'] as String,
+    sectionId: json['section_id'] as String?,
     grade: json['grade'] as String,
     minPercent: (json['min_percent'] as num).toDouble(),
     remark: json['remark'] as String?,

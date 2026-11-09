@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hamrash_admin/api/models/grading/grade_boundary.dart';
@@ -18,7 +20,10 @@ import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart
 import 'package:hamrash_admin/views/grading/widgets/grading_preview_line.dart';
 
 /// 9.5 · Add a grade, 9.6 · Edit one: its name, where it starts, a remark
-/// and whether it counts as a pass. Pops `true` once saved.
+/// and whether it is a pass grade. Shows what saving changes in the scale.
+/// Pops `true` once saved.
+///
+/// [setup] is the scale being edited: the school default or a section's own.
 class GradeSheet extends StatefulWidget {
   const GradeSheet({
     super.key,
@@ -64,12 +69,33 @@ class _GradeSheetState extends State<GradeSheet> {
         : GradingNumbers.format(_saved.minPercent),
   );
   late final _remark = TextEditingController(text: _saved?.remark ?? '');
-  late bool _isPass = _saved?.isPass ?? true;
+  late bool _isPass =
+      _saved?.isPass ?? widget.setup.defaultIsPass(widget.initialPercent ?? '');
+  final _gradeFocus = FocusNode();
+
+  /// Once the person flips the switch, typing the start no longer moves it.
+  bool _passTouched = false;
+
+  /// A taken name shows on blur, shortly after typing stops, and on Save,
+  /// not on every keystroke.
+  bool _showNameError = false;
+  Timer? _nameTimer;
+  static const _nameDelay = Duration(milliseconds: 500);
   bool _saving = false;
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    _gradeFocus.addListener(() {
+      if (!_gradeFocus.hasFocus) _revealNameError();
+    });
+  }
+
+  @override
   void dispose() {
+    _nameTimer?.cancel();
+    _gradeFocus.dispose();
     _grade.dispose();
     _percent.dispose();
     _remark.dispose();
@@ -80,6 +106,7 @@ class _GradeSheetState extends State<GradeSheet> {
 
   String? get _gradeProblem =>
       widget.setup.gradeNameProblem(_gradeName, except: _saved);
+  String? get _gradeNameError => _showNameError ? _gradeProblem : null;
   String? get _percentProblem =>
       widget.setup.percentProblem(_percent.text, except: _saved);
   double? get _minPercent =>
@@ -94,7 +121,32 @@ class _GradeSheetState extends State<GradeSheet> {
         _isPass != saved.isPass;
   }
 
+  void _revealNameError() {
+    _nameTimer?.cancel();
+    if (mounted && !_showNameError) setState(() => _showNameError = true);
+  }
+
+  void _nameChanged() {
+    _nameTimer?.cancel();
+    _nameTimer = Timer(_nameDelay, _revealNameError);
+    setState(() {
+      _error = null;
+      _showNameError = false;
+    });
+  }
+
+  void _percentChanged() => setState(() {
+    _error = null;
+    if (_saved == null && !_passTouched) {
+      _isPass = widget.setup.defaultIsPass(_percent.text);
+    }
+  });
+
   Future<void> _save() async {
+    if (_gradeProblem != null) {
+      _revealNameError();
+      return;
+    }
     setState(() {
       _saving = true;
       _error = null;
@@ -116,21 +168,21 @@ class _GradeSheetState extends State<GradeSheet> {
     });
   }
 
-  String get _goesUpTo {
-    if (_percent.text.trim().isEmpty) return 'Enter where it starts first';
-    return widget.setup.goesUpTo(_percent.text, except: _saved) ??
-        'Pick another number first';
-  }
-
   @override
   Widget build(BuildContext context) {
     final saved = _saved;
     final canSave =
-        !_saving &&
-        _gradeName.isNotEmpty &&
-        _gradeProblem == null &&
-        _minPercent != null &&
-        _hasChanges;
+        !_saving && _gradeName.isNotEmpty && _minPercent != null && _hasChanges;
+    final changes = widget.setup.gradeChanges(
+      name: _grade.text,
+      percentText: _percent.text,
+      except: _saved,
+    );
+    final warning = widget.setup.gradeOrderWarning(
+      name: _grade.text,
+      percentText: _percent.text,
+      except: _saved,
+    );
 
     return AppSheet(
       title: saved == null ? 'Add a grade' : 'Edit grade ${saved.grade}',
@@ -145,10 +197,12 @@ class _GradeSheetState extends State<GradeSheet> {
             label: 'Grade',
             hintText: 'e.g. A',
             controller: _grade,
-            errorText: _gradeProblem,
+            focusNode: _gradeFocus,
+            errorText: _gradeNameError,
+            textCapitalization: TextCapitalization.characters,
             textInputAction: TextInputAction.next,
             inputFormatters: [LengthLimitingTextInputFormatter(10)],
-            onChanged: (_) => setState(() => _error = null),
+            onChanged: (_) => _nameChanged(),
           ),
           const SizedBox(height: 20),
           AppTextField(
@@ -156,7 +210,6 @@ class _GradeSheetState extends State<GradeSheet> {
             hintText: 'e.g. 65',
             controller: _percent,
             errorText: _percentProblem,
-            helperText: 'Up to 2 decimal places. Must be below 100.',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textInputAction: TextInputAction.next,
             inputFormatters: [
@@ -169,11 +222,17 @@ class _GradeSheetState extends State<GradeSheet> {
                 color: LightColors.textMuted,
               ),
             ),
-            onChanged: (_) => setState(() => _error = null),
+            onChanged: (_) => _percentChanged(),
           ),
           const SizedBox(height: 20),
-          GradingPreviewLine(label: 'Goes up to', value: _goesUpTo),
-          const SizedBox(height: 20),
+          if (changes.isNotEmpty) ...[
+            GradingChangesBlock(changes: changes),
+            if (warning != null) ...[
+              const SizedBox(height: 8),
+              GradingWarningLine(message: warning),
+            ],
+            const SizedBox(height: 20),
+          ],
           AppTextField(
             label: 'Remark',
             isOptional: true,
@@ -189,6 +248,7 @@ class _GradeSheetState extends State<GradeSheet> {
             value: _isPass,
             onChanged: (value) => setState(() {
               _isPass = value;
+              _passTouched = true;
               _error = null;
             }),
           ),
@@ -228,7 +288,7 @@ class _GradeSheetState extends State<GradeSheet> {
   }
 }
 
-/// "Counts as a pass" with its switch; the whole card toggles it.
+/// "Pass grade" with its switch; the whole card toggles it.
 class _PassToggle extends StatelessWidget {
   const _PassToggle({required this.value, required this.onChanged});
 
@@ -252,7 +312,7 @@ class _PassToggle extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AppText(
-                  'Counts as a pass',
+                  'Pass grade',
                   style: AppTypography.subtitle.copyWith(
                     fontSize: 15,
                     color: LightColors.textStrong,
@@ -260,7 +320,7 @@ class _PassToggle extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 AppText(
-                  'Used on report cards.',
+                  'Marks the subject as passed.',
                   style: AppTypography.body.copyWith(
                     fontSize: 13,
                     height: 18 / 13,
