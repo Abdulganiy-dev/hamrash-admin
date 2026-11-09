@@ -15,11 +15,15 @@ class GradingBanner extends StatelessWidget {
     required this.tone,
     required this.title,
     required this.message,
+    this.icon,
   });
 
   final GradingBannerTone tone;
   final String title;
   final String message;
+
+  /// Overrides the tone's icon. Null keeps the tone's own (or none).
+  final IconData? icon;
 
   Color get _fill => switch (tone) {
     GradingBannerTone.success => LightColors.successSuccessMute,
@@ -41,14 +45,17 @@ class GradingBanner extends StatelessWidget {
 
   Color get _iconColor => switch (tone) {
     GradingBannerTone.success => LightColors.successSuccessDefault,
-    _ => LightColors.warningWarningDefault,
+    GradingBannerTone.warning => LightColors.warningWarningDefault,
+    GradingBannerTone.plain => LightColors.textBody,
   };
 
-  IconData? get _icon => switch (tone) {
-    GradingBannerTone.success => AppIcons.circleCheck,
-    GradingBannerTone.warning => AppIcons.circleAlert,
-    GradingBannerTone.plain => null,
-  };
+  IconData? get _icon =>
+      icon ??
+      switch (tone) {
+        GradingBannerTone.success => AppIcons.circleCheck,
+        GradingBannerTone.warning => AppIcons.circleAlert,
+        GradingBannerTone.plain => null,
+      };
 
   @override
   Widget build(BuildContext context) => Container(

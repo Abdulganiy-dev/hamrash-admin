@@ -3,8 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/api/models/class_structure/class_structure.dart';
 import 'package:hamrash_admin/api/models/grading/grade_boundary.dart';
+import 'package:hamrash_admin/api/models/grading/grade_editing.dart';
+import 'package:hamrash_admin/api/models/grading/grade_review.dart';
+import 'package:hamrash_admin/api/models/grading/grade_systems.dart';
 import 'package:hamrash_admin/api/models/grading/grading_setup.dart';
 import 'package:hamrash_admin/api/models/grading/score_column.dart';
+import 'package:hamrash_admin/api/models/grading/section_grading.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
@@ -13,21 +17,38 @@ import 'package:hamrash_admin/api/services/supabase_services/grading_service.dar
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_icons.dart';
-import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
+import 'package:hamrash_admin/views/grading/grades_screen.dart';
+import 'package:hamrash_admin/views/grading/grades_view_model.dart';
+import 'package:hamrash_admin/views/grading/grading_review_screen.dart';
 import 'package:hamrash_admin/views/grading/grading_screen.dart';
 import 'package:hamrash_admin/views/grading/grading_view_model.dart';
-import 'package:hamrash_admin/views/grading/widgets/standard_setup_sheet.dart';
+import 'package:hamrash_admin/views/grading/score_columns_screen.dart';
+import 'package:hamrash_admin/views/grading/score_columns_view_model.dart';
+import 'package:hamrash_admin/views/grading/section_grading_screen.dart';
+import 'package:hamrash_admin/views/grading/section_grading_view_model.dart';
+import 'package:hamrash_admin/views/grading/widgets/grade_sheet.dart';
 
-ScoreColumn _column(String id, String name, double max, int order) =>
-    ScoreColumn(id: id, name: name, maxScore: max, sortOrder: order);
+ScoreColumn _column(
+  String id,
+  String name,
+  double max,
+  int order, {
+  String? sectionId,
+}) => ScoreColumn(
+  id: id,
+  name: name,
+  maxScore: max,
+  sortOrder: order,
+  sectionId: sectionId,
+);
 
 GradeBoundary _grade(
   String grade,
-  double min,
+  int min,
+  int max,
   String? remark, {
   bool isPass = true,
   String? sectionId,
@@ -36,29 +57,64 @@ GradeBoundary _grade(
   sectionId: sectionId,
   grade: grade,
   minPercent: min,
+  maxPercent: max,
   remark: remark,
   isPass: isPass,
 );
 
-/// Secondary's own WAEC-style scale.
-List<GradeBoundary> _waec() => [
-  _grade('A1', 75, 'Excellent', sectionId: 'secondary'),
-  _grade('B2', 70, 'Very Good', sectionId: 'secondary'),
-  _grade('F9', 0, 'Fail', isPass: false, sectionId: 'secondary'),
+List<GradeBoundary> _standard({String? sectionId}) => [
+  for (final grade in GradeSystem.standard.boundaries)
+    grade.copyWith(
+      id: '${sectionId ?? 'school'}-${grade.grade}',
+      sectionId: sectionId,
+    ),
 ];
 
-SchoolSection _section(String id, String name, int order) => SchoolSection(
+List<GradeBoundary> _waec({String? sectionId}) => [
+  for (final grade in GradeSystem.waec.boundaries)
+    grade.copyWith(
+      id: '${sectionId ?? 'school'}-${grade.grade}',
+      sectionId: sectionId,
+    ),
+];
+
+List<ScoreColumn> _standardColumns({String? sectionId}) => [
+  _column('${sectionId ?? 'school'}-ca1', 'CA 1', 20, 1, sectionId: sectionId),
+  _column('${sectionId ?? 'school'}-ca2', 'CA 2', 20, 2, sectionId: sectionId),
+  _column('${sectionId ?? 'school'}-exam', 'Exam', 60, 3, sectionId: sectionId),
+];
+
+SchoolSection _section(
+  String id,
+  String name,
+  int order, {
+  bool isActive = true,
+  List<String> classes = const [],
+}) => SchoolSection(
   id: id,
   name: name,
   sortOrder: order,
-  isActive: true,
-  classes: const [],
+  isActive: isActive,
+  classes: [
+    for (final (i, className) in classes.indexed)
+      SchoolClass(
+        id: '$id-class-$i',
+        sectionId: id,
+        name: className,
+        sortOrder: i + 1,
+        isGraduating: false,
+        isActive: true,
+        arms: const [],
+      ),
+  ],
 );
 
 List<SchoolSection> _sections() => [
-  _section('nursery', 'Nursery', 1),
-  _section('primary', 'Primary', 2),
-  _section('secondary', 'Secondary', 3),
+  _section('nursery', 'Nursery', 1, classes: ['Nursery 1', 'Nursery 2']),
+  _section('primary', 'Primary', 2, classes: ['Primary 1']),
+  _section('junior', 'Junior Secondary', 3, classes: ['JSS 1']),
+  _section('senior', 'Senior Secondary', 4, classes: ['SS 1']),
+  _section('pre', 'Pre-Nursery', 5, isActive: false),
 ];
 
 class _Structure implements ClassStructureService {
@@ -75,21 +131,6 @@ class _Structure implements ClassStructureService {
       sections;
 }
 
-List<ScoreColumn> _standardColumns() => [
-  _column('ca1', 'CA 1', 20, 1),
-  _column('ca2', 'CA 2', 20, 2),
-  _column('exam', 'Exam', 60, 3),
-];
-
-List<GradeBoundary> _standardGrades({bool withFail = true}) => [
-  _grade('A', 70, 'Excellent'),
-  _grade('B', 60, 'Very Good'),
-  _grade('C', 50, 'Good'),
-  _grade('D', 45, 'Fair'),
-  _grade('E', 40, 'Pass'),
-  if (withFail) _grade('F', 0, 'Fail', isPass: false),
-];
-
 class _Grading implements GradingService {
   _Grading({List<ScoreColumn>? columns, List<GradeBoundary>? grades})
     : columns = columns ?? [],
@@ -101,97 +142,65 @@ class _Grading implements GradingService {
   List<ScoreColumn> columns;
   List<GradeBoundary> grades;
   Object? failWith;
-  bool standardRequested = false;
-  ({String name, double max, int order})? added;
-  ScoreColumn? removedColumn;
-  ({String? sectionId, String grade, double min, bool isPass})? addedGrade;
+  int _ids = 0;
 
-  /// One entry per bulk insert, and how many grades went in each.
-  final copies = <({String sectionId, int grades})>[];
-
-  /// Grades inserted one at a time.
-  int singleInserts = 0;
-  final deletedScales = <String>[];
+  final setScales = <({String? sectionId, List<GradeBoundary> grades})>[];
+  final appliedSystems = <({String sectionId, String system})>[];
+  final copies = <({String? from, String to, bool columns, bool grades})>[];
+  final removedScales = <String>[];
   final reorders = <List<String>>[];
+  ({String? sectionId, String name, double max, int order})? added;
+  ScoreColumn? removedColumn;
+  ScoreColumn? updatedColumn;
 
   @override
-  Future<GradingSetup> getSetup(String organizationId) async =>
-      GradingSetup(columns: columns, boundaries: grades);
-
-  @override
-  Future<void> createStandardGrading(String organizationId) async {
+  Future<GradingSetup> getSetup(String organizationId) async {
     if (failWith case final error?) throw error;
-    standardRequested = true;
-    columns = _standardColumns();
-    grades = _standardGrades();
+    return GradingSetup(columns: [...columns], grades: [...grades]);
   }
 
   @override
-  Future<void> addScoreColumn({
+  Future<String> addScoreColumn({
     required String organizationId,
     required String name,
     required double maxScore,
     required int sortOrder,
-  }) async {
-    if (failWith case final error?) throw error;
-    added = (name: name, max: maxScore, order: sortOrder);
-    columns = [...columns, _column(name, name, maxScore, sortOrder)];
-  }
-
-  @override
-  Future<void> addGradeBoundary({
-    required String organizationId,
-    required String grade,
-    required double minPercent,
-    required String? remark,
-    required bool isPass,
     String? sectionId,
   }) async {
     if (failWith case final error?) throw error;
-    singleInserts++;
-    addedGrade = (
-      sectionId: sectionId,
-      grade: grade,
-      min: minPercent,
-      isPass: isPass,
-    );
-    grades = [
-      ...grades,
-      _grade(grade, minPercent, remark, isPass: isPass, sectionId: sectionId),
+    final id = 'new-${++_ids}';
+    added = (sectionId: sectionId, name: name, max: maxScore, order: sortOrder);
+    columns = [
+      ...columns,
+      _column(id, name, maxScore, sortOrder, sectionId: sectionId),
+    ];
+    return id;
+  }
+
+  @override
+  Future<void> updateScoreColumn(
+    ScoreColumn column, {
+    required String name,
+    required double maxScore,
+  }) async {
+    if (failWith case final error?) throw error;
+    updatedColumn = column;
+    columns = [
+      for (final existing in columns)
+        if (existing.id == column.id)
+          existing.copyWith(name: name, maxScore: maxScore)
+        else
+          existing,
     ];
   }
 
   @override
-  Future<void> copyScaleToSection({
-    required String organizationId,
-    required String sectionId,
-    required List<GradeBoundary> grades,
-  }) async {
+  Future<void> deleteScoreColumn(ScoreColumn column) async {
     if (failWith case final error?) throw error;
-    copies.add((sectionId: sectionId, grades: grades.length));
-    this.grades = [
-      ...this.grades,
-      for (final g in grades)
-        _grade(
-          g.grade,
-          g.minPercent,
-          g.remark,
-          isPass: g.isPass,
-          sectionId: sectionId,
-        ),
-    ];
-  }
-
-  @override
-  Future<void> deleteSectionScale({
-    required String organizationId,
-    required String sectionId,
-  }) async {
-    if (failWith case final error?) throw error;
-    deletedScales.add(sectionId);
-    grades = [
-      for (final g in grades)
-        if (g.sectionId != sectionId) g,
+    removedColumn = column;
+    columns = [
+      for (final c in columns)
+        if (c.id != column.id) c,
     ];
   }
 
@@ -204,20 +213,94 @@ class _Grading implements GradingService {
     reorders.add(orderedIds);
     columns = [
       for (final (i, id) in orderedIds.indexed)
-        () {
-          final c = columns.firstWhere((c) => c.id == id);
-          return _column(c.id, c.name, c.maxScore, i + 1);
-        }(),
+        columns.firstWhere((c) => c.id == id).copyWith(sortOrder: i + 1),
+      for (final c in columns)
+        if (!orderedIds.contains(c.id)) c,
     ];
   }
 
   @override
-  Future<void> deleteScoreColumn(ScoreColumn column) async {
+  Future<void> setGradeScale({
+    required String organizationId,
+    required String? sectionId,
+    required List<GradeBoundary> grades,
+  }) async {
     if (failWith case final error?) throw error;
-    removedColumn = column;
-    columns = [
-      for (final existing in columns)
-        if (existing.id != column.id) existing,
+    setScales.add((sectionId: sectionId, grades: grades));
+    this.grades = [
+      for (final existing in this.grades)
+        if (existing.sectionId != sectionId) existing,
+      for (final grade in grades) grade.copyWith(sectionId: sectionId),
+    ];
+  }
+
+  @override
+  Future<void> applyGradeSystem({
+    required String organizationId,
+    required String sectionId,
+    required String system,
+  }) async {
+    if (failWith case final error?) throw error;
+    appliedSystems.add((sectionId: sectionId, system: system));
+    final preset = GradeSystem.values.byName(system).boundaries;
+    grades = [
+      for (final existing in grades)
+        if (existing.sectionId != sectionId) existing,
+      for (final grade in preset)
+        grade.copyWith(id: '$sectionId-${grade.grade}', sectionId: sectionId),
+    ];
+  }
+
+  @override
+  Future<void> copySectionGrading({
+    required String organizationId,
+    required String? fromSectionId,
+    required String toSectionId,
+    required bool columns,
+    required bool grades,
+  }) async {
+    if (failWith case final error?) throw error;
+    copies.add((
+      from: fromSectionId,
+      to: toSectionId,
+      columns: columns,
+      grades: grades,
+    ));
+    if (columns) {
+      final source = [
+        for (final c in this.columns)
+          if (c.sectionId == fromSectionId) c,
+      ];
+      this.columns = [
+        for (final c in this.columns)
+          if (c.sectionId != toSectionId) c,
+        for (final c in source) c.copyWith(sectionId: toSectionId),
+      ];
+    }
+    if (grades) {
+      final source = [
+        for (final g in this.grades)
+          if (g.sectionId == fromSectionId) g,
+      ];
+      this.grades = [
+        for (final g in this.grades)
+          if (g.sectionId != toSectionId) g,
+        for (final g in source)
+          g.copyWith(id: '$toSectionId-${g.grade}', sectionId: toSectionId),
+      ];
+    }
+  }
+
+  @override
+  Future<void> removeSectionGradeScale({
+    required String organizationId,
+    required String sectionId,
+  }) async {
+    if (failWith case final error?) throw error;
+    removedScales.add(sectionId);
+    grades = [
+      for (final g in grades)
+        if (g.sectionId != sectionId) g,
     ];
   }
 }
@@ -236,8 +319,6 @@ MemberSchool _school(OrganizationMemberRole role) => MemberSchool(
 );
 
 void main() {
-  // Real Nunito metrics, so text widths match the app rather than the wider
-  // test fallback font.
   setUpAll(() async {
     final loader = FontLoader('Nunito');
     for (final file in ['Regular', 'Bold', 'ExtraBold']) {
@@ -246,276 +327,448 @@ void main() {
     await loader.load();
   });
 
-  group('GradingSetup', () {
+  group('SectionGrading', () {
     final setup = GradingSetup(
-      columns: _standardColumns(),
-      boundaries: _standardGrades(),
+      columns: [
+        ..._standardColumns(),
+        _column('junior-ca1', 'CA 1', 20, 1, sectionId: 'junior'),
+        _column('junior-ca2', 'CA 2', 20, 2, sectionId: 'junior'),
+        _column('junior-exam', 'Exam', 60, 3, sectionId: 'junior'),
+      ],
+      grades: [
+        ..._standard(),
+        ..._waec(sectionId: 'nursery'),
+      ],
     );
 
-    test('adds up the columns', () {
-      expect(setup.totalMarks, 100);
-      expect(setup.nextSortOrder, 4);
-      expect(setup.isComplete, isTrue);
-      expect(setup.uncoveredRange, isNull);
+    test('falls back independently for columns and grades', () {
+      final nursery = setup.forSectionId('nursery', sectionName: 'Nursery');
+      expect(nursery.hasOwnGrades, isTrue);
+      expect(nursery.hasOwnColumns, isFalse);
+      expect(nursery.usesSchoolColumns, isTrue);
+      expect(nursery.usesSchoolGrades, isFalse);
+      expect(nursery.gradeSystem, GradeSystem.waec);
+
+      final primary = setup.forSectionId('primary', sectionName: 'Primary');
+      expect(primary.hasOwnColumns, isFalse);
+      expect(primary.hasOwnGrades, isFalse);
+      expect(primary.usesSchoolColumns, isTrue);
+      expect(primary.usesSchoolGrades, isTrue);
+      expect(primary.usesSchoolSetup, isTrue);
+      expect(primary.status, GradingStatus.setUp);
+      expect(primary.summary, '3 columns · 100 marks · Standard grades');
     });
 
-    test('shows each grade from where it starts to just before the next', () {
-      expect(
-        [for (final b in setup.boundaries) setup.rangeOf(b)],
-        [
-          '70 to 100',
-          '60 to 69',
-          '50 to 59',
-          '45 to 49',
-          '40 to 44',
-          '0 to 39',
+    test('status follows both parts, and a legacy gap is not set up', () {
+      final junior = setup.forSectionId(
+        'junior',
+        sectionName: 'Junior Secondary',
+      );
+      expect(junior.hasColumns, isTrue);
+      expect(junior.hasGrades, isTrue);
+      expect(junior.status, GradingStatus.setUp);
+      expect(junior.summary, '3 columns · 100 marks · Standard grades');
+
+      final empty = GradingSetup(
+        columns: _standardColumns(),
+        grades: const [],
+      ).forSectionId('senior', sectionName: 'Senior Secondary');
+      expect(empty.status, GradingStatus.partlySetUp);
+      expect(empty.gradesSummary, 'No grades yet');
+
+      final none = GradingSetup(
+        columns: const [],
+        grades: const [],
+      ).forSectionId('senior', sectionName: 'Senior Secondary');
+      expect(none.status, GradingStatus.notSetUp);
+      expect(none.summary, 'No columns or grades yet');
+
+      final legacy = GradingSetup(
+        columns: _standardColumns(),
+        grades: [
+          _grade('A', 70, 100, 'Excellent'),
+          _grade('B', 60, 69, 'Very Good'),
+          _grade('C', 50, 59, 'Good'),
+          _grade('D', 45, 49, 'Fair'),
+          _grade('E', 40, 44, 'Pass'),
         ],
-      );
-      expect(setup.detailsOf(setup.boundaries.first), 'Excellent · Pass');
-    });
-
-    test('lists a remark with Pass or Fail, without repeating the word', () {
-      expect(setup.detailsOf(_grade('B', 60, 'Very Good')), 'Very Good · Pass');
+      ).forSectionId('primary', sectionName: 'Primary');
+      expect(legacy.status, GradingStatus.partlySetUp);
+      expect(legacy.gradesTile, isFalse);
+      expect(legacy.uncoveredRange, '0 to 39');
       expect(
-        setup.detailsOf(_grade('D', 40, 'Poor', isPass: false)),
-        'Poor · Fail',
+        legacy.summary,
+        '3 columns · 100 marks · Grades don’t cover 0 to 100',
       );
-      expect(setup.detailsOf(_grade('E', 40, 'Pass')), 'Pass');
-      expect(setup.detailsOf(setup.boundaries.last), 'Fail');
-      expect(setup.detailsOf(_grade('X', 10, null, isPass: false)), 'Fail');
-      expect(setup.detailsOf(_grade('Y', 10, '  ')), 'Pass');
+      expect(legacy.gradesSummary, '5 grades · doesn’t cover 0 to 100 yet');
     });
 
-    test('says what the scale leaves out when nothing starts at 0', () {
-      final incomplete = GradingSetup(
+    test('reads ranges, remarks and the grade for a percentage', () {
+      final grading = setup.forSectionId('primary', sectionName: 'Primary');
+      expect(grading.rangeOf(grading.grades.first), '70 to 100');
+      expect(grading.detailsOf(grading.grades.first), 'Excellent · Pass');
+      expect(grading.detailsOf(_grade('E', 40, 44, 'Pass')), 'Pass');
+      expect(
+        grading.detailsOf(_grade('F', 0, 39, null, isPass: false)),
+        'Fail',
+      );
+      expect(grading.gradeFor(85)?.grade, 'A');
+      expect(grading.gradeFor(70)?.grade, 'A');
+      expect(grading.gradeFor(69)?.grade, 'B');
+      expect(grading.gradeFor(0)?.grade, 'F');
+    });
+
+    test('detects the preset, or leaves a custom scale alone', () {
+      final standard = setup.forSectionId('primary');
+      expect(standard.gradeSystem, GradeSystem.standard);
+      expect(standard.gradesSummary, 'Standard · 6 grades · covers 0 to 100');
+      final waec = setup.forSectionId('nursery');
+      expect(waec.gradesSummary, 'WAEC · 9 grades · covers 0 to 100');
+      final custom = GradingSetup(
         columns: const [],
-        boundaries: _standardGrades(withFail: false),
-      );
-      expect(incomplete.uncoveredRange, '0 to 39');
-      expect(incomplete.isComplete, isFalse);
-      expect(
-        GradingSetup(columns: const [], boundaries: const []).uncoveredRange,
-        '0 to 100',
-      );
+        grades: [_grade('X', 0, 100, 'Custom')],
+      ).forSectionId('primary');
+      expect(custom.gradeSystem, isNull);
+      expect(custom.gradesSummary, '1 grade · covers 0 to 100');
     });
 
-    test('checks marks: above 0, up to 2 decimals', () {
-      expect(GradingSetup.marksProblem(''), isNull);
-      expect(GradingSetup.marksProblem('20'), isNull);
-      expect(GradingSetup.marksProblem('12.5'), isNull);
+    test('checks column names, marks, total and suggestions', () {
+      final grading = setup.forSectionId('primary', sectionName: 'Primary');
       expect(
-        GradingSetup.marksProblem('0'),
-        'A column has to be out of more than 0. Enter at least 0.01.',
-      );
-      expect(GradingSetup.marksProblem('1.234'), contains('2 decimal places'));
-      expect(GradingSetup.marksProblem('abc'), isNotNull);
-      expect(GradingSetup.marksProblem('10000'), isNotNull);
-      expect(GradingSetup.marks('0'), isNull);
-      expect(GradingSetup.marks('12,5'), 12.5);
-    });
-
-    test('previews the total with a column added or changed', () {
-      expect(setup.totalWith('20'), 120);
-      expect(setup.totalWith('0'), isNull);
-      expect(setup.totalWith(''), isNull);
-      expect(setup.totalWith('30', replacing: setup.columns[0]), 110);
-    });
-
-    test('checks column and grade names, case-insensitively', () {
-      expect(setup.columnNameProblem('exam'), contains('already a column'));
-      expect(setup.columnNameProblem('exam', except: setup.columns[2]), isNull);
-      expect(setup.columnNameProblem('  '), isNull);
-      expect(setup.gradeNameProblem('a'), contains('already a grade'));
-      expect(setup.gradeNameProblem('A', except: setup.boundaries[0]), isNull);
-    });
-
-    test('checks where a grade starts', () {
-      expect(setup.percentProblem(''), isNull);
-      expect(setup.percentProblem('65'), isNull);
-      expect(
-        setup.percentProblem('50', except: setup.boundaries[1]),
-        'C already starts at 50. Try 51, or edit C.',
-      );
-      expect(setup.percentProblem('50', except: setup.boundaries[2]), isNull);
-      expect(setup.percentProblem('100'), contains('below 100'));
-      expect(setup.percentProblem('65.555'), contains('2 decimal places'));
-      expect(setup.percentProblem('x'), isNotNull);
-    });
-
-    test('suggests the nearest free whole number above a taken start', () {
-      final crowded = GradingSetup(
-        columns: const [],
-        boundaries: [
-          _grade('A', 98, null),
-          _grade('B', 99, null),
-          _grade('C', 0, null),
-        ],
-      );
-      expect(crowded.percentProblem('98'), 'A already starts at 98. Edit A.');
-      expect(crowded.percentProblem('99'), 'B already starts at 99. Edit B.');
-      // 50.5 is free, so nothing to say; a taken whole number skips ahead.
-      final skip = GradingSetup(
-        columns: const [],
-        boundaries: [
-          _grade('A', 70, null),
-          _grade('B', 60, null),
-          _grade('C', 61, null),
-        ],
+        grading.columnNameProblem('exam'),
+        'Primary already has a column called exam. Pick another name.',
       );
       expect(
-        skip.percentProblem('60'),
-        'B already starts at 60. Try 62, or edit B.',
-      );
-      expect(skip.percentProblem('60', except: skip.boundaries[2]), isNull);
-    });
-
-    test('says what a new grade and the one below it become', () {
-      final changes = setup.gradeChanges(name: 'B+', percentText: '65');
-      expect(
-        [for (final c in changes) '${c.label}|${c.value}'],
-        ['New grade|65 to 69', 'B becomes|60 to 64, from 60 to 69'],
-      );
-      // On top: no grade above, so up to 100.
-      expect(
-        setup.gradeChanges(name: 'S', percentText: '90').first.value,
-        '90 to 100',
-      );
-      // At the bottom, nothing below to change.
-      final bottom = GradingSetup(
-        columns: const [],
-        boundaries: _standardGrades(withFail: false),
-      );
-      expect(bottom.gradeChanges(name: 'F', percentText: '0').length, 1);
-      // Nothing to say while the start isn't valid.
-      expect(setup.gradeChanges(name: 'X', percentText: ''), isEmpty);
-      expect(setup.gradeChanges(name: 'X', percentText: '50'), isEmpty);
-    });
-
-    test('says what an edited grade and the one below it become', () {
-      final b = setup.boundaries[1];
-      final changes = setup.gradeChanges(
-        name: 'B',
-        percentText: '62',
-        except: b,
+        SectionGrading.marksProblem('0'),
+        'Enter marks above 0, like 20 or 12.5.',
       );
       expect(
-        [for (final c in changes) '${c.label}|${c.value}'],
-        [
-          'B becomes|62 to 69, from 60 to 69',
-          'C becomes|50 to 61, from 50 to 59',
-        ],
+        SectionGrading.marksProblem('1.234'),
+        contains('2 decimal places'),
       );
-      // Same start: nothing changes.
-      expect(
-        setup.gradeChanges(name: 'B', percentText: '60', except: b),
-        isEmpty,
-      );
-    });
-
-    test('warns when a grade would sit below one that sorts after it', () {
-      final a = setup.boundaries[0];
-      expect(
-        setup.gradeOrderWarning(name: 'A', percentText: '55', except: a),
-        'A will now be below B. Grades usually go down from A.',
-      );
-      // A new C above A: A ends up below C.
-      expect(setup.gradeOrderWarning(name: 'C+', percentText: '65'), isNull);
-      expect(
-        setup.gradeOrderWarning(name: 'D', percentText: '75'),
-        'A will now be below D. Grades usually go down from A.',
-      );
-      // Fine where it is, or when it only moves among its neighbours.
-      expect(
-        setup.gradeOrderWarning(name: 'A', percentText: '75', except: a),
-        isNull,
-      );
-      // Names that aren't a letter and a number aren't judged.
-      expect(
-        setup.gradeOrderWarning(name: 'Distinction', percentText: '55'),
-        isNull,
-      );
-      expect(setup.gradeOrderWarning(name: '', percentText: '55'), isNull);
-      // A1, B2 style names compare letters, then numbers.
-      final waec = GradingSetup(
-        columns: const [],
-        boundaries: _waec(),
-      ).scoped('secondary');
-      expect(
-        waec.gradeOrderWarning(name: 'B3', percentText: '80'),
-        'A1 will now be below B3. Grades usually go down from A.',
-      );
-      expect(waec.gradeOrderWarning(name: 'B3', percentText: '65'), isNull);
-    });
-
-    test('a new grade is a pass unless it starts below every pass grade', () {
-      expect(setup.defaultIsPass(''), isTrue);
-      expect(setup.defaultIsPass('65'), isTrue);
-      expect(setup.defaultIsPass('40'), isTrue);
-      expect(setup.defaultIsPass('39'), isFalse);
-      expect(setup.defaultIsPass('0'), isFalse);
-      final noPass = GradingSetup(
-        columns: const [],
-        boundaries: [_grade('F', 0, 'Fail', isPass: false)],
-      );
-      expect(noPass.defaultIsPass('10'), isTrue);
-    });
-
-    test('suggests column names that are not used yet', () {
-      expect(setup.columnSuggestions, ['CA 3', 'Test', 'Assignment']);
-      final more = GradingSetup(
-        columns: [
-          _column('a', 'CA 1', 10, 1),
-          _column('b', 'CA 3', 10, 2),
-          _column('c', 'test', 10, 3),
-        ],
-        boundaries: const [],
-      );
-      expect(more.columnSuggestions, ['CA 4', 'Assignment']);
-      expect(
-        GradingSetup(columns: const [], boundaries: const []).columnSuggestions,
-        ['CA 1', 'Test', 'Assignment'],
-      );
-    });
-
-    test('the total line stays, becomes, or asks for the marks', () {
-      final ca2 = setup.columns[1];
-      expect(setup.totalLine('20', replacing: ca2), (
+      expect(SectionGrading.marks('12,5'), 12.5);
+      expect(grading.totalWith('20'), 120);
+      expect(grading.totalLine('20', replacing: grading.columns[1]), (
         label: 'Total stays',
         value: '100 marks',
         muted: false,
       ));
-      expect(setup.totalLine('30', replacing: ca2), (
-        label: 'Total becomes',
-        value: '110 marks, from 100 now',
-        muted: false,
-      ));
-      expect(setup.totalLine('20').value, '120 marks, from 100 now');
-      expect(setup.totalLine('0'), (
-        label: 'Total becomes',
-        value: 'Enter the marks first',
-        muted: true,
-      ));
+      expect(grading.columnSuggestions, ['CA 3', 'Test', 'Assignment']);
+      expect(grading.shareOf(grading.columns[2]), 60);
     });
 
-    test('splits the grades into the school default and each section', () {
-      final all = GradingSetup(
-        columns: _standardColumns(),
-        boundaries: [..._standardGrades(), ..._waec()],
-      );
-      expect(all.boundaries.length, 6);
-      expect(all.hasOwnScale('secondary'), isTrue);
-      expect(all.hasOwnScale('primary'), isFalse);
-      final secondary = all.scoped('secondary');
-      expect(secondary.boundaries.map((b) => b.grade), ['A1', 'B2', 'F9']);
-      expect(secondary.totalMarks, 100);
-      expect(secondary.rangeOf(secondary.boundaries[1]), '70 to 74');
-      expect(secondary.isComplete, isTrue);
-      expect(identical(all.scoped(null), all), isTrue);
-      // A section's grades alone are something, not "nothing set up".
+    test('checks grade names and the default pass state', () {
+      final grading = setup.forSectionId('primary', sectionName: 'Primary');
       expect(
-        GradingSetup(columns: const [], boundaries: _waec()).isEmpty,
-        isFalse,
+        grading.gradeNameProblem('a'),
+        'Primary already has a grade called a.',
       );
+      expect(
+        grading.gradeNameProblem('A', except: grading.grades.first),
+        isNull,
+      );
+      expect(grading.defaultIsPass('0'), isFalse);
+      expect(grading.defaultIsPass('65'), isTrue);
+    });
+  });
+
+  group('GradeEditor', () {
+    final grades = _standard();
+
+    test('editing To moves where the grade above starts', () {
+      final b = grades.firstWhere((g) => g.grade == 'B');
+      final result = GradeEditor.edit(
+        grades: grades,
+        original: b,
+        name: 'B',
+        from: 60,
+        to: 70,
+        remark: 'Very Good',
+        isPass: true,
+        sectionName: 'Junior Secondary',
+      );
+      expect(result.error, isNull);
+      expect(
+        [for (final c in result.changes) '${c.label}|${c.value}'],
+        ['B becomes|60 to 70, from 60 to 69', 'A will start at|71, from 70'],
+      );
+      final next = result.grades!;
+      expect(next.firstWhere((g) => g.grade == 'B').maxPercent, 70);
+      expect(next.firstWhere((g) => g.grade == 'A').minPercent, 71);
+      expect(gradeRangesTile(next), isTrue);
+    });
+
+    test('editing From moves where the grade below ends', () {
+      final a = grades.firstWhere((g) => g.grade == 'A');
+      final result = GradeEditor.edit(
+        grades: grades,
+        original: a,
+        name: 'A',
+        from: 72,
+        to: 100,
+        remark: 'Excellent',
+        isPass: true,
+        sectionName: 'Junior Secondary',
+      );
+      expect(
+        [for (final c in result.changes) '${c.label}|${c.value}'],
+        ['A becomes|72 to 100, from 70 to 100', 'B will end at|71, from 69'],
+      );
+      expect(result.grades!.firstWhere((g) => g.grade == 'B').maxPercent, 71);
+    });
+
+    test('locks the top To and the bottom From', () {
+      final a = grades.firstWhere((g) => g.grade == 'A');
+      expect(
+        GradeEditor.edit(
+          grades: grades,
+          original: a,
+          name: 'A',
+          from: 70,
+          to: 99,
+          remark: null,
+          isPass: true,
+          sectionName: 'Junior Secondary',
+        ).error,
+        'The top grade always goes up to 100.',
+      );
+      final f = grades.firstWhere((g) => g.grade == 'F');
+      expect(
+        GradeEditor.edit(
+          grades: grades,
+          original: f,
+          name: 'F',
+          from: 2,
+          to: 39,
+          remark: null,
+          isPass: false,
+          sectionName: 'Junior Secondary',
+        ).error,
+        'The lowest grade always starts at 0.',
+      );
+    });
+
+    test('refuses a change that would cover a whole neighbour', () {
+      final a = grades.firstWhere((g) => g.grade == 'A');
+      expect(
+        GradeEditor.edit(
+          grades: grades,
+          original: a,
+          name: 'A',
+          from: 60,
+          to: 100,
+          remark: null,
+          isPass: true,
+          sectionName: 'Junior Secondary',
+        ).error,
+        'This would cover all of B (60 to 69). Change or remove B first.',
+      );
+      final b = grades.firstWhere((g) => g.grade == 'B');
+      expect(
+        GradeEditor.edit(
+          grades: grades,
+          original: b,
+          name: 'B',
+          from: 60,
+          to: 100,
+          remark: null,
+          isPass: true,
+          sectionName: 'Junior Secondary',
+        ).error,
+        'This would cover all of A (70 to 100). Change or remove A first.',
+      );
+    });
+
+    test('refuses From above To and duplicate names', () {
+      final b = grades.firstWhere((g) => g.grade == 'B');
+      expect(
+        GradeEditor.edit(
+          grades: grades,
+          original: b,
+          name: 'B',
+          from: 72,
+          to: 69,
+          remark: null,
+          isPass: true,
+          sectionName: 'Junior Secondary',
+        ).error,
+        'From can’t be higher than To. Make From 69 or lower, or To 72 or higher.',
+      );
+      expect(
+        GradeEditor.edit(
+          grades: grades,
+          original: b,
+          name: 'a',
+          from: 60,
+          to: 69,
+          remark: null,
+          isPass: true,
+          sectionName: 'Junior Secondary',
+        ).error,
+        'Junior Secondary already has a grade called a.',
+      );
+    });
+
+    test('adding inside a band splits it', () {
+      final result = GradeEditor.add(
+        grades: grades,
+        name: 'B+',
+        from: 65,
+        remark: null,
+        isPass: true,
+        sectionName: 'Junior Secondary',
+      );
+      expect(
+        [for (final c in result.changes) '${c.label}|${c.value}'],
+        ['B+ (new)|65 to 69', 'B becomes|60 to 64, from 60 to 69'],
+      );
+      final next = result.grades!;
+      expect(next.firstWhere((g) => g.grade == 'B+').range, '65 to 69');
+      expect(next.firstWhere((g) => g.grade == 'B').range, '60 to 64');
+      expect(gradeRangesTile(next), isTrue);
+    });
+
+    test('adding from 0 fills a legacy gap and keeps the grade above', () {
+      final legacy = [
+        _grade('A', 70, 100, 'Excellent'),
+        _grade('B', 60, 69, 'Very Good'),
+        _grade('C', 50, 59, 'Good'),
+        _grade('D', 45, 49, 'Fair'),
+        _grade('E', 40, 44, 'Pass'),
+      ];
+      final result = GradeEditor.add(
+        grades: legacy,
+        name: 'F',
+        from: 0,
+        remark: 'Fail',
+        isPass: false,
+        sectionName: 'Junior Secondary',
+      );
+      expect(
+        [for (final c in result.changes) '${c.label}|${c.value}'],
+        ['F (new)|0 to 39', 'E stays|40 to 44'],
+      );
+      expect(result.grades!.firstWhere((g) => g.grade == 'F').range, '0 to 39');
+      expect(gradeRangesTile(result.grades!), isTrue);
+    });
+
+    test('a new grade cannot start where one already starts', () {
+      final result = GradeEditor.add(
+        grades: grades,
+        name: 'B2',
+        from: 60,
+        remark: null,
+        isPass: true,
+        sectionName: 'Junior Secondary',
+      );
+      expect(
+        result.error,
+        'B already starts at 60. Start this grade higher to split B, or edit '
+        'B instead.',
+      );
+    });
+
+    test('removing a grade lets the grade below absorb the range', () {
+      final top = GradeEditor.remove(
+        grades: grades,
+        target: grades.firstWhere((g) => g.grade == 'A'),
+        sectionName: 'Junior Secondary',
+        sectionOwned: true,
+      );
+      expect(top.grades.firstWhere((g) => g.grade == 'B').range, '60 to 100');
+      expect(top.message, contains('B now covers 60 to 100'));
+
+      final middle = GradeEditor.remove(
+        grades: grades,
+        target: grades.firstWhere((g) => g.grade == 'B'),
+        sectionName: 'Junior Secondary',
+        sectionOwned: true,
+      );
+      expect(middle.grades.firstWhere((g) => g.grade == 'C').range, '50 to 69');
+      expect(middle.absorbedBy, 'C');
+      expect(gradeRangesTile(middle.grades), isTrue);
+    });
+
+    test('removing the bottom grade lets the one above expand down', () {
+      final bottom = GradeEditor.remove(
+        grades: grades,
+        target: grades.firstWhere((g) => g.grade == 'F'),
+        sectionName: 'Junior Secondary',
+        sectionOwned: true,
+      );
+      expect(bottom.grades.firstWhere((g) => g.grade == 'E').range, '0 to 44');
+      expect(bottom.message, contains('E now covers 0 to 44'));
+    });
+
+    test('removing the last grade leaves an empty, section-owned set', () {
+      final only = GradeEditor.remove(
+        grades: [_grade('A', 0, 100, 'Excellent')],
+        target: _grade('A', 0, 100, 'Excellent'),
+        sectionName: 'Primary',
+        sectionOwned: true,
+      );
+      expect(only.isEmpty, isTrue);
+      expect(only.message, contains('use the school’s grades again'));
+    });
+  });
+
+  group('GradeReview', () {
+    final grading = GradingSetup(
+      columns: _standardColumns(),
+      grades: _standard(),
+    ).forSectionId('junior', sectionName: 'Junior Secondary');
+
+    test('adds the scores up and rounds the percentage before grading', () {
+      final review = GradeReview.calculate(
+        grading: grading,
+        scores: {'school-ca1': '17', 'school-ca2': '15', 'school-exam': '54'},
+      );
+      expect(review.totalScore, 86);
+      expect(review.totalMarks, 100);
+      expect(review.percent, 86);
+      expect(review.percentLabel, '86%');
+      expect(review.scoreLine, '86 out of 100 marks');
+      expect(review.grade?.grade, 'A');
+      expect(review.gradeLine, 'Pass · 70 to 100');
+    });
+
+    test('rounds half-up and clamps a score to its column', () {
+      final three = GradingSetup(
+        columns: [
+          _column('a', 'A', 1, 1),
+          _column('b', 'B', 1, 2),
+          _column('c', 'C', 1, 3),
+        ],
+        grades: _standard(),
+      ).forSectionId('junior');
+      final rounded = GradeReview.calculate(
+        grading: three,
+        scores: {'a': '1', 'b': '1', 'c': '0'},
+      );
+      expect(rounded.percent, 67);
+      expect(rounded.grade?.grade, 'B');
+
+      final clamped = GradeReview.calculate(
+        grading: grading,
+        scores: {'school-ca1': '30', 'school-ca2': '', 'school-exam': ''},
+      );
+      expect(clamped.totalScore, 20);
+      expect(clamped.percent, 20);
+      expect(clamped.grade?.grade, 'F');
+    });
+
+    test('a total that is not 100 still reads as a percentage', () {
+      final thirty = GradingSetup(
+        columns: [_column('a', 'CA 1', 10, 1), _column('b', 'CA 2', 20, 2)],
+        grades: _standard(),
+      ).forSectionId('junior');
+      final review = GradeReview.calculate(
+        grading: thirty,
+        scores: {'a': '10', 'b': '5'},
+      );
+      expect(review.scoreLine, '15 out of 30 marks');
+      expect(review.percent, 50);
+      expect(review.grade?.grade, 'C');
     });
   });
 
@@ -534,130 +787,83 @@ void main() {
       return (model, fake);
     }
 
-    test(
-      'a leader starts from the start page when nothing is set up',
-      () async {
-        final (model, _) = await loaded(OrganizationMemberRole.principal);
-        expect(model.showStart, isTrue);
-        expect(model.showNotSetUp, isFalse);
-        expect(model.building, isFalse);
-      },
-    );
-
-    test('someone who can only look is told it is not set up', () async {
-      final (model, _) = await loaded(OrganizationMemberRole.bursar);
-      expect(model.canChange, isFalse);
-      expect(model.showStart, isFalse);
-      expect(model.showNotSetUp, isTrue);
+    test('hides switched-off sections and counts only active ones', () async {
+      final (model, _) = await loaded(
+        OrganizationMemberRole.owner,
+        service: _Grading(),
+      );
+      expect(model.activeSections.map((s) => s.name), [
+        'Nursery',
+        'Primary',
+        'Junior Secondary',
+        'Senior Secondary',
+      ]);
+      expect(
+        model.sections.map((s) => s.sectionName),
+        isNot(contains('Pre-Nursery')),
+      );
+      expect(model.sectionCount, 4);
     });
 
-    test('goes straight to the setup when there is one', () async {
+    test('summarises each active section and its set-up count', () async {
       final (model, _) = await loaded(
         OrganizationMemberRole.owner,
         service: _Grading(
-          columns: _standardColumns(),
-          grades: _standardGrades(),
+          columns: [
+            ..._standardColumns(),
+            _column('junior-ca1', 'CA 1', 20, 1, sectionId: 'junior'),
+            _column('junior-ca2', 'CA 2', 20, 2, sectionId: 'junior'),
+            _column('junior-exam', 'Exam', 60, 3, sectionId: 'junior'),
+          ],
+          grades: [
+            ..._standard(),
+            ..._waec(sectionId: 'nursery'),
+            _grade('A', 70, 100, 'Excellent', sectionId: 'junior'),
+            _grade('B', 60, 69, 'Very Good', sectionId: 'junior'),
+            _grade('C', 50, 59, 'Good', sectionId: 'junior'),
+            _grade('D', 45, 49, 'Fair', sectionId: 'junior'),
+            _grade('E', 40, 44, 'Pass', sectionId: 'junior'),
+          ],
         ),
       );
-      expect(model.showStart, isFalse);
-      expect(model.setup.totalMarks, 100);
-      expect(model.changed, isFalse);
+      final byName = {
+        for (final section in model.sections) section.sectionName: section,
+      };
+      expect(byName['Nursery']!.status, GradingStatus.setUp);
+      expect(byName['Nursery']!.hasOwnGrades, isTrue);
+      expect(byName['Primary']!.usesSchoolSetup, isTrue);
+      expect(byName['Primary']!.status, GradingStatus.setUp);
+      expect(byName['Junior Secondary']!.status, GradingStatus.partlySetUp);
+      expect(byName['Senior Secondary']!.usesSchoolSetup, isTrue);
+      expect(model.setUpCount, 3);
     });
 
-    test('uses the standard setup and reloads', () async {
-      final (model, service) = await loaded(OrganizationMemberRole.owner);
-      expect(await model.useStandardSetup(), isNull);
-      expect(service.standardRequested, isTrue);
-      expect(model.setup.isComplete, isTrue);
-      expect(model.changed, isTrue);
-      expect(model.showStart, isFalse);
+    test('a non-leader is read only', () async {
+      final (model, _) = await loaded(OrganizationMemberRole.bursar);
+      expect(model.canChange, isFalse);
     });
 
-    test('hands back the database reason when it refuses', () async {
-      final (model, service) = await loaded(OrganizationMemberRole.owner);
-      service.failWith = const SupabaseRefusal(
-        'This school already has a grading setup; the standard one is only '
-        'for a new school',
-      );
-      expect(await model.useStandardSetup(), contains('already has a grading'));
-      expect(model.changed, isFalse);
-
-      service.failWith = Exception('offline');
+    test('with no school rows every active section is not set up', () async {
+      final (model, _) = await loaded(OrganizationMemberRole.owner);
       expect(
-        await model.useStandardSetup(),
-        "Couldn't set up grading. Try again.",
+        model.sections.every((s) => s.status == GradingStatus.notSetUp),
+        isTrue,
       );
-    });
-
-    test('adds a column at the end with the marks typed', () async {
-      final (model, service) = await loaded(
-        OrganizationMemberRole.owner,
-        service: _Grading(columns: _standardColumns()),
-      );
-      expect(await model.addColumn(' Project ', '12.5'), isNull);
-      expect(service.added, (name: 'Project', max: 12.5, order: 4));
-      expect(model.setup.totalMarks, 112.5);
-      expect(model.changed, isTrue);
-    });
-
-    test('does not add a column with no valid marks', () async {
-      final (model, service) = await loaded(OrganizationMemberRole.owner);
-      expect(await model.addColumn('Test', '0'), 'Enter the marks.');
-      expect(service.added, isNull);
-    });
-
-    test('removing a column says what the total becomes', () async {
-      final (model, service) = await loaded(
-        OrganizationMemberRole.owner,
-        service: _Grading(columns: _standardColumns()),
-      );
-      final ca2 = model.setup.columns[1];
-      expect(model.removeColumnMessage(ca2), contains('80 marks'));
-      await model.removeColumn(ca2);
-      expect(service.removedColumn?.id, 'ca2');
-      expect(model.setup.totalMarks, 80);
-    });
-
-    test('a refused removal throws for the confirm sheet', () async {
-      final (model, service) = await loaded(
-        OrganizationMemberRole.owner,
-        service: _Grading(columns: _standardColumns()),
-      );
-      service.failWith = const SupabaseRefusal('Scores are entered.');
-      await expectLater(
-        model.removeColumn(model.setup.columns.first),
-        throwsA(
-          isA<AppAlertError>().having(
-            (e) => e.message,
-            'message',
-            'Scores are entered.',
-          ),
-        ),
-      );
-    });
-
-    test('an emptied setup stays on the setup page', () async {
-      final (model, _) = await loaded(
-        OrganizationMemberRole.owner,
-        service: _Grading(columns: [_column('ca1', 'CA 1', 20, 1)]),
-      );
-      await model.removeColumn(model.setup.columns.first);
-      expect(model.setup.isEmpty, isTrue);
-      expect(model.showStart, isFalse);
+      expect(model.setUpCount, 0);
     });
   });
 
-  group('GradingViewModel · scales and order', () {
-    Future<(GradingViewModel, _Grading)> loaded(
+  group('SectionGradingViewModel', () {
+    Future<(SectionGradingViewModel, _Grading)> loaded(
       OrganizationMemberRole role, {
-      List<GradeBoundary>? grades,
+      _Grading? service,
+      SchoolSection? section,
     }) async {
-      final fake = _Grading(
-        columns: _standardColumns(),
-        grades: grades ?? [..._standardGrades(), ..._waec()],
-      );
-      final model = GradingViewModel(
+      final fake =
+          service ?? _Grading(columns: _standardColumns(), grades: _standard());
+      final model = SectionGradingViewModel(
         school: _school(role),
+        section: section ?? _sections().first,
         service: fake,
         structure: _Structure(),
       );
@@ -665,181 +871,273 @@ void main() {
       return (model, fake);
     }
 
-    test('starts on the school default, with a chip for Secondary', () async {
-      final (model, _) = await loaded(OrganizationMemberRole.owner);
-      expect(model.inSectionScope, isFalse);
-      expect([for (final s in model.ownScaleSections) s.name], ['Secondary']);
-      expect(
-        [for (final s in model.sectionsWithoutOwnScale) s.name],
-        ['Nursery', 'Primary'],
-      );
-      expect(model.scopeCaption, 'Used by Nursery and Primary.');
-      expect(model.canAddScale, isTrue);
-      expect(model.setup.boundaries.map((b) => b.grade).first, 'A');
-    });
-
-    test('switching to a section swaps the grades and the caption', () async {
-      final (model, _) = await loaded(OrganizationMemberRole.owner);
-      model.selectScope('secondary');
-      expect(model.inSectionScope, isTrue);
-      expect(model.setup.boundaries.map((b) => b.grade), ['A1', 'B2', 'F9']);
-      expect(
-        model.scopeCaption,
-        'Secondary’s own grades. Other sections use the school default.',
-      );
-      // The columns are the school's in every scope.
-      expect(model.setup.totalMarks, 100);
-
-      model.selectScope(null);
-      expect(model.setup.boundaries.first.grade, 'A');
-      // A section with no scale of its own can't be selected.
-      model.selectScope('primary');
-      expect(model.inSectionScope, isFalse);
-    });
-
-    test('names the sections that use the school default, naturally', () {
-      expect(GradingViewModel.joinNames(['Nursery']), 'Nursery');
-      expect(
-        GradingViewModel.joinNames(['Nursery', 'Primary', 'Secondary']),
-        'Nursery, Primary and Secondary',
-      );
-    });
-
-    test('says every section when all of them have their own scale', () async {
-      final (model, service) = await loaded(OrganizationMemberRole.owner);
-      for (final id in ['nursery', 'primary']) {
-        await model.createSectionScale(id);
-      }
-      expect(service.copies.length, 2);
-      model.selectScope(null);
-      expect(model.scopeCaption, 'Used by every section.');
-      expect(model.canAddScale, isFalse);
-    });
-
-    test('only leaders can start a new scale', () async {
-      final (model, _) = await loaded(OrganizationMemberRole.bursar);
-      expect(model.canAddScale, isFalse);
-      expect([for (final s in model.ownScaleSections) s.name], ['Secondary']);
-    });
-
-    test('adds a grade to the selected scale', () async {
-      final (model, service) = await loaded(OrganizationMemberRole.owner);
-      model.selectScope('secondary');
-      expect(
-        await model.addGrade(
-          grade: 'C4',
-          percent: '50',
-          remark: '',
-          isPass: true,
-        ),
-        isNull,
-      );
-      expect(service.addedGrade?.sectionId, 'secondary');
-      expect(model.setup.boundaries.map((b) => b.grade), contains('C4'));
-
-      // And the school default's grade goes in with no section.
-      model.selectScope(null);
-      await model.addGrade(grade: 'S', percent: '90', remark: '', isPass: true);
-      expect(service.addedGrade?.sectionId, isNull);
-    });
-
-    test('checks a new grade against the selected scale only', () async {
-      final (model, _) = await loaded(OrganizationMemberRole.owner);
-      // 75 is taken in Secondary (A1) but free in the school default.
-      expect(model.setup.percentProblem('75'), isNull);
-      model.selectScope('secondary');
-      expect(model.setup.percentProblem('75'), contains('A1 already starts'));
-      expect(model.setup.hasZeroBoundary, isTrue);
-    });
-
-    test('a new section scale copies the default in one insert', () async {
-      final (model, service) = await loaded(OrganizationMemberRole.owner);
-      expect(await model.createSectionScale('primary'), isNull);
-      expect(service.copies, [(sectionId: 'primary', grades: 6)]);
-      expect(service.singleInserts, 0);
-      expect(model.scopeId, 'primary');
-      expect(model.setup.boundaries.length, 6);
-      expect(model.setup.boundaries.first.grade, 'A');
+    test('give own setup copies both parts from the school', () async {
+      final (model, fake) = await loaded(OrganizationMemberRole.owner);
+      expect(await model.giveOwnSetup(), isNull);
+      expect(fake.copies, [
+        (from: null, to: 'nursery', columns: true, grades: true),
+      ]);
       expect(model.changed, isTrue);
-      expect(model.scopeCaption, startsWith('Primary’s own grades.'));
+      expect(model.grading.hasOwnColumns, isTrue);
+      expect(model.grading.hasOwnGrades, isTrue);
     });
 
-    test('a refused copy leaves the scope alone and says why', () async {
-      final (model, service) = await loaded(OrganizationMemberRole.owner);
-      service.failWith = const SupabaseRefusal('Not allowed.');
-      expect(await model.createSectionScale('primary'), 'Not allowed.');
-      expect(model.scopeId, isNull);
-      expect(model.ownScaleSections.length, 1);
+    test(
+      'copying from a source that follows the school uses the school set',
+      () async {
+        final (model, fake) = await loaded(OrganizationMemberRole.owner);
+        final primary = model.copySources.firstWhere(
+          (s) => s.name == 'Primary',
+        );
+        expect(
+          await model.copyFrom(
+            sourceSectionId: primary.id,
+            columns: true,
+            grades: false,
+          ),
+          isNull,
+        );
+        expect(fake.copies.single.from, isNull);
+      },
+    );
+
+    test(
+      'copying from a section with its own rows uses that section',
+      () async {
+        final (model, fake) = await loaded(
+          OrganizationMemberRole.owner,
+          service: _Grading(
+            columns: [
+              ..._standardColumns(),
+              ..._standardColumns(sectionId: 'primary'),
+            ],
+            grades: _standard(),
+          ),
+        );
+        expect(
+          await model.copyFrom(
+            sourceSectionId: 'primary',
+            columns: true,
+            grades: false,
+          ),
+          isNull,
+        );
+        expect(fake.copies.single.from, 'primary');
+      },
+    );
+
+    test('a refused copy returns the database message', () async {
+      final (model, fake) = await loaded(OrganizationMemberRole.owner);
+      fake.failWith = const SupabaseRefusal('Nothing to copy.');
+      expect(await model.giveOwnSetup(), 'Nothing to copy.');
+      expect(model.changed, isFalse);
+    });
+  });
+
+  group('ScoreColumnsViewModel', () {
+    Future<(ScoreColumnsViewModel, _Grading)> loaded({
+      _Grading? service,
+      SchoolSection? section,
+    }) async {
+      final fake =
+          service ??
+          _Grading(
+            columns: _standardColumns(sectionId: 'junior'),
+            grades: _standard(sectionId: 'junior'),
+          );
+      final model = ScoreColumnsViewModel(
+        school: _school(OrganizationMemberRole.owner),
+        section: section ?? _sections()[2],
+        service: fake,
+        structure: _Structure(),
+      );
+      await model.load();
+      return (model, fake);
+    }
+
+    test('adds a column and puts it in the chosen position', () async {
+      final (model, fake) = await loaded();
+      expect(await model.addColumn('Test', '10', position: 2), isNull);
+      expect(fake.added?.sectionId, 'junior');
+      expect(fake.added?.order, 4);
+      expect(fake.reorders.single, [
+        'junior-ca1',
+        'new-1',
+        'junior-ca2',
+        'junior-exam',
+      ]);
+      expect(model.grading.columns[1].name, 'Test');
+      expect(model.changed, isTrue);
     });
 
-    test('there is nothing to copy while the default has no grades', () async {
-      final (model, service) = await loaded(
-        OrganizationMemberRole.owner,
-        grades: _waec(),
+    test('validates the name and marks before adding', () async {
+      final (model, fake) = await loaded();
+      expect(
+        await model.addColumn('Exam', '10', position: 4),
+        'Junior Secondary already has a column called Exam. Pick another name.',
       );
       expect(
-        await model.createSectionScale('primary'),
-        contains('no grades to copy'),
+        await model.addColumn('Test', '0', position: 4),
+        'Enter marks above 0, like 20 or 12.5.',
       );
-      expect(service.copies, isEmpty);
+      expect(fake.added, isNull);
     });
 
-    test('going back to the school scale deletes the section grades', () async {
-      final (model, service) = await loaded(OrganizationMemberRole.owner);
-      model.selectScope('secondary');
-      await model.removeSectionScale();
-      expect(service.deletedScales, ['secondary']);
-      expect(model.inSectionScope, isFalse);
-      expect(model.ownScaleSections, isEmpty);
-      expect(model.setup.boundaries.first.grade, 'A');
+    test('moves a column and saves the whole order', () async {
+      final (model, fake) = await loaded();
+      final ca2 = model.columns[1];
+      expect(await model.moveColumn(ca2, 1), isNull);
+      expect(fake.reorders.single, ['junior-ca1', 'junior-exam', 'junior-ca2']);
       expect(model.changed, isTrue);
     });
 
     test('a refused removal throws for the confirm sheet', () async {
-      final (model, service) = await loaded(OrganizationMemberRole.owner);
-      model.selectScope('secondary');
-      service.failWith = const SupabaseRefusal('Leaders only.');
+      final (model, fake) = await loaded();
+      fake.failWith = const SupabaseRefusal('Scores are entered.');
       await expectLater(
-        model.removeSectionScale(),
+        model.removeColumn(model.columns.first),
         throwsA(isA<AppAlertError>()),
       );
-      expect(model.scopeId, 'secondary');
     });
 
     test(
-      'a scope that no longer has a scale falls back to the default',
+      'a section that follows the school has no own columns to edit',
       () async {
-        final (model, service) = await loaded(OrganizationMemberRole.owner);
-        model.selectScope('secondary');
-        service.grades = _standardGrades();
-        await model.refresh();
-        expect(model.inSectionScope, isFalse);
+        final (model, _) = await loaded(
+          service: _Grading(columns: _standardColumns(), grades: _standard()),
+          section: _sections()[1],
+        );
+        expect(model.inheritsColumns, isTrue);
+        expect(model.hasColumns, isTrue);
+        expect(await model.giveOwnSetup(), isNull);
+      },
+    );
+  });
+
+  group('GradesViewModel', () {
+    Future<(GradesViewModel, _Grading)> loaded({
+      _Grading? service,
+      SchoolSection? section,
+    }) async {
+      final fake =
+          service ??
+          _Grading(
+            columns: _standardColumns(sectionId: 'junior'),
+            grades: _standard(sectionId: 'junior'),
+          );
+      final model = GradesViewModel(
+        school: _school(OrganizationMemberRole.owner),
+        section: section ?? _sections()[2],
+        service: fake,
+        structure: _Structure(),
+      );
+      await model.load();
+      return (model, fake);
+    }
+
+    test('applies WAEC or Standard', () async {
+      final (model, fake) = await loaded();
+      expect(await model.applySystem(GradeSystem.waec), isNull);
+      expect(fake.appliedSystems.single.system, 'waec');
+      expect(model.grading.grades.length, 9);
+      expect(model.system, GradeSystem.waec);
+      expect(model.changed, isTrue);
+    });
+
+    test('sends the whole new scale for an edit', () async {
+      final (model, fake) = await loaded();
+      final b = model.grading.grades.firstWhere((g) => g.grade == 'B');
+      final result = GradeEditor.edit(
+        grades: model.grading.grades,
+        original: b,
+        name: 'B',
+        from: 60,
+        to: 70,
+        remark: 'Very Good',
+        isPass: true,
+        sectionName: model.section.name,
+      );
+      expect(await model.saveScale(result.grades!), isNull);
+      expect(fake.setScales.single.grades.length, 6);
+      expect(
+        fake.setScales.single.grades
+            .firstWhere((g) => g.grade == 'A')
+            .minPercent,
+        71,
+      );
+    });
+
+    test('removing the last grade goes back to the school scale', () async {
+      final only = _grade('A', 0, 100, 'Excellent', sectionId: 'junior');
+      final (model, fake) = await loaded(
+        service: _Grading(
+          columns: _standardColumns(sectionId: 'junior'),
+          grades: [only],
+        ),
+      );
+      await model.removeGrade(only);
+      expect(fake.removedScales, ['junior']);
+      expect(fake.setScales, isEmpty);
+    });
+
+    test(
+      'removing a middle grade sends the neighbour that absorbs it',
+      () async {
+        final (model, fake) = await loaded();
+        final b = model.grading.grades.firstWhere((g) => g.grade == 'B');
+        expect(model.removalOf(b).absorbedBy, 'C');
+        await model.removeGrade(b);
+        expect(
+          fake.setScales.single.grades
+              .firstWhere((g) => g.grade == 'C')
+              .maxPercent,
+          69,
+        );
       },
     );
 
-    test('moves a column and saves the whole new order in one call', () async {
-      final (model, service) = await loaded(OrganizationMemberRole.owner);
-      final ca2 = model.setup.columns[1];
-      expect(await model.moveColumn(ca2, 1), isNull);
-      expect(service.reorders, [
-        ['ca1', 'exam', 'ca2'],
-      ]);
-      expect(model.setup.columns.map((c) => c.id), ['ca1', 'exam', 'ca2']);
-      expect(model.changed, isTrue);
-
-      expect(await model.moveColumn(model.setup.columns.first, -1), isNull);
-      expect(await model.moveColumn(model.setup.columns.last, 1), isNull);
-      expect(service.reorders.length, 1);
+    test('copying from an inherited source uses the school set', () async {
+      final (model, fake) = await loaded();
+      final primary = model.copySources.firstWhere((s) => s.name == 'Primary');
+      expect(await model.copyGradesFrom(primary), isNull);
+      expect(fake.copies.single.from, isNull);
     });
 
-    test('a failed move says why and keeps the order', () async {
-      final (model, service) = await loaded(OrganizationMemberRole.owner);
-      service.failWith = const SupabaseRefusal('Leaders only.');
-      expect(
-        await model.moveColumn(model.setup.columns[1], -1),
-        'Leaders only.',
+    test('copying both parts resolves a mixed source part by part', () async {
+      final (model, fake) = await loaded(
+        service: _Grading(
+          columns: [
+            ..._standardColumns(),
+            ..._standardColumns(sectionId: 'primary'),
+          ],
+          grades: _standard(),
+        ),
       );
-      expect(model.setup.columns.map((c) => c.id), ['ca1', 'ca2', 'exam']);
+      final primary = model.copySources.firstWhere((s) => s.name == 'Primary');
+      expect(
+        await model.copyFrom(primary, columns: true, grades: true),
+        isNull,
+      );
+      expect(fake.copies.length, 2);
+      expect(fake.copies.first.from, 'primary');
+      expect(fake.copies.first.columns, isTrue);
+      expect(fake.copies.last.from, isNull);
+      expect(fake.copies.last.grades, isTrue);
+    });
+
+    test('a non-leader cannot change anything, but sees the system', () async {
+      final model = GradesViewModel(
+        school: _school(OrganizationMemberRole.bursar),
+        section: _sections()[2],
+        service: _Grading(
+          columns: _standardColumns(sectionId: 'junior'),
+          grades: _standard(sectionId: 'junior'),
+        ),
+        structure: _Structure(),
+      );
+      await model.load();
+      expect(model.canChange, isFalse);
+      expect(model.system, GradeSystem.standard);
     });
   });
 
@@ -862,625 +1160,498 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    _Grading standard({List<GradeBoundary>? grades}) => _Grading(
-      columns: _standardColumns(),
-      grades: grades ?? _standardGrades(),
-    );
-
-    Finder field(String hint) => find.widgetWithText(TextField, hint);
-
-    bool chipSelected(WidgetTester tester, String label) => tester
-        .widget<AppFilterChip>(find.widgetWithText(AppFilterChip, label))
-        .selected;
-
-    testWidgets('the start page offers only the standard setup', (
-      tester,
-    ) async {
-      await pump(tester, OrganizationMemberRole.owner, _Grading());
-
-      expect(find.text('Grading isn’t set up yet'), findsOneWidget);
-      expect(find.text('Use the standard setup'), findsOneWidget);
-      expect(find.text('Build my own'), findsNothing);
-      expect(
-        find.textContaining(
-          'Start from the standard setup and change anything',
-        ),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('the standard setup sheet lists what it adds', (tester) async {
-      final service = _Grading();
-      await pump(tester, OrganizationMemberRole.owner, service);
-
-      await tester.tap(
-        find.widgetWithText(AppPrimaryButton, 'Use the standard setup'),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Use the standard setup?'), findsOneWidget);
-      expect(find.text('70 to 100'), findsOneWidget);
-      expect(find.text('Not now'), findsOneWidget);
-
-      await tester.tap(
-        find.descendant(
-          of: find.byType(StandardSetupSheet),
-          matching: find.byType(AppPrimaryButton),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(service.standardRequested, isTrue);
-      expect(find.text('Covers 0 to 100'), findsOneWidget);
-      expect(find.textContaining('Total 100 marks.'), findsOneWidget);
-    });
-
-    testWidgets('a complete setup shows columns, scale and coverage', (
-      tester,
-    ) async {
-      await pump(tester, OrganizationMemberRole.principal, standard());
-
-      expect(find.text('CA 1'), findsOneWidget);
-      expect(find.text('Out of 60'), findsOneWidget);
-      expect(
-        find.textContaining('so the columns don’t have to add up'),
-        findsOneWidget,
-      );
-      expect(find.text('Covers 0 to 100'), findsOneWidget);
-      expect(find.text('60 to 69'), findsOneWidget);
-      expect(find.text('Excellent · Pass'), findsOneWidget);
-      expect(find.text('Not a pass'), findsNothing);
-      expect(find.byType(AppSectionAction), findsNWidgets(2));
-      expect(find.byIcon(AppIcons.chevronRight), findsNWidgets(9));
-      expect(find.text('Add a grade from 0'), findsNothing);
-    });
-
-    testWidgets('lists a grade as its remark and Pass or Fail', (tester) async {
-      await pump(tester, OrganizationMemberRole.principal, standard());
-
-      // D: "Fair · Pass", E: remark is already "Pass", F: already "Fail".
-      expect(find.text('Fair · Pass'), findsOneWidget);
-      expect(find.text('Pass'), findsOneWidget);
-      expect(find.text('Fail'), findsOneWidget);
-    });
-
-    testWidgets('a scale with nothing at 0 says what is missing', (
-      tester,
-    ) async {
-      await pump(
-        tester,
-        OrganizationMemberRole.admin,
-        _Grading(grades: _standardGrades(withFail: false)),
-      );
-
-      expect(find.text('No score columns yet'), findsOneWidget);
-      expect(find.text('Not covered: 0 to 39'), findsOneWidget);
-      expect(find.text('Missing. Add a grade from 0.'), findsOneWidget);
-      expect(find.text('Add a grade from 0'), findsOneWidget);
-    });
-
-    testWidgets('not a leader: read only, no actions', (tester) async {
-      await pump(tester, OrganizationMemberRole.bursar, standard());
-
-      expect(find.text('Read only for you'), findsOneWidget);
-      expect(find.text('Total 100 marks.'), findsOneWidget);
-      expect(find.textContaining('so the columns don’t'), findsNothing);
-      expect(find.byType(AppSectionAction), findsNothing);
-      expect(find.byIcon(AppIcons.chevronRight), findsNothing);
-      expect(find.text('Covers 0 to 100'), findsNothing);
-      expect(find.text('70 to 100'), findsOneWidget);
-    });
-
-    testWidgets('not a leader and nothing set up: a plain empty state', (
-      tester,
-    ) async {
-      await pump(tester, OrganizationMemberRole.bursar, _Grading());
-
-      expect(find.text('Grading isn’t set up yet'), findsOneWidget);
-      expect(find.text('The school’s leaders will set it up.'), findsOneWidget);
-      expect(find.text('Use the standard setup'), findsNothing);
-      expect(find.text('Build my own'), findsNothing);
-    });
-
-    testWidgets('chips pick the school default or a section’s own scale', (
+    testWidgets('lists active sections with their status and count', (
       tester,
     ) async {
       await pump(
         tester,
         OrganizationMemberRole.owner,
-        standard(grades: [..._standardGrades(), ..._waec()]),
+        _Grading(
+          columns: [
+            ..._standardColumns(),
+            ..._standardColumns(sectionId: 'junior'),
+            ..._standardColumns(sectionId: 'pre'),
+          ],
+          grades: [
+            ..._standard(),
+            ..._waec(sectionId: 'nursery'),
+            ..._standard(sectionId: 'pre'),
+            _grade('A', 70, 100, 'Excellent', sectionId: 'junior'),
+            _grade('B', 60, 69, 'Very Good', sectionId: 'junior'),
+            _grade('C', 50, 59, 'Good', sectionId: 'junior'),
+            _grade('D', 45, 49, 'Fair', sectionId: 'junior'),
+            _grade('E', 40, 44, 'Pass', sectionId: 'junior'),
+          ],
+        ),
       );
 
-      expect(find.byType(AppFilterChip), findsNWidgets(3));
-      expect(chipSelected(tester, 'School default'), isTrue);
-      expect(chipSelected(tester, 'Secondary'), isFalse);
-      expect(find.text('New scale'), findsOneWidget);
-      expect(find.text('Used by Nursery and Primary.'), findsOneWidget);
-      expect(find.text('Use the school’s scale instead'), findsNothing);
-      expect(find.text('70 to 100'), findsOneWidget);
-
-      await tester.tap(find.widgetWithText(AppFilterChip, 'Secondary'));
-      await tester.pumpAndSettle();
-
-      expect(chipSelected(tester, 'Secondary'), isTrue);
-      expect(chipSelected(tester, 'School default'), isFalse);
+      expect(find.text('Grade each section its own way'), findsOneWidget);
+      expect(find.text('Sections'), findsOneWidget);
+      expect(find.text('3 of 4 set up'), findsOneWidget);
+      expect(find.text('Nursery'), findsOneWidget);
+      expect(find.text('Primary'), findsOneWidget);
+      expect(find.text('Junior Secondary'), findsOneWidget);
+      expect(find.text('Senior Secondary'), findsOneWidget);
+      expect(find.text('Pre-Nursery'), findsNothing);
+      expect(find.text('Uses the school’s setup'), findsNWidgets(2));
+      expect(find.text('Partly set up'), findsOneWidget);
+      expect(find.text('Set up'), findsNWidgets(3));
       expect(
-        find.text(
-          'Secondary’s own grades. Other sections use the school default.',
-        ),
+        find.text('3 columns · 100 marks · Grades don’t cover 0 to 100'),
         findsOneWidget,
       );
-      expect(find.text('75 to 100'), findsOneWidget);
-      expect(find.text('70 to 100'), findsNothing);
-      expect(find.text('70 to 74'), findsOneWidget);
-      expect(find.text('Covers 0 to 100'), findsOneWidget);
-      expect(find.text('Use the school’s scale instead'), findsOneWidget);
-
-      await tester.tap(find.widgetWithText(AppFilterChip, 'School default'));
-      await tester.pumpAndSettle();
-      expect(find.text('70 to 100'), findsOneWidget);
-      expect(find.text('Use the school’s scale instead'), findsNothing);
     });
 
-    testWidgets('read only: chips to look, but no new scale', (tester) async {
+    testWidgets('read only: a banner, but the sections still open', (
+      tester,
+    ) async {
       await pump(
         tester,
         OrganizationMemberRole.bursar,
-        standard(grades: [..._standardGrades(), ..._waec()]),
+        _Grading(columns: _standardColumns(), grades: _standard()),
       );
-
-      expect(find.byType(AppFilterChip), findsNWidgets(2));
-      expect(find.text('New scale'), findsNothing);
-
-      await tester.tap(find.widgetWithText(AppFilterChip, 'Secondary'));
-      await tester.pumpAndSettle();
-      expect(find.text('75 to 100'), findsOneWidget);
-      expect(find.text('Use the school’s scale instead'), findsNothing);
+      expect(find.text('Read only for you'), findsOneWidget);
+      expect(find.text('Sections'), findsOneWidget);
+      expect(find.text('Set up'), findsNWidgets(4));
     });
 
-    testWidgets('no chips when the school has no sections', (tester) async {
+    testWidgets('no active section: create your sections first', (
+      tester,
+    ) async {
       await pump(
         tester,
         OrganizationMemberRole.owner,
-        standard(),
+        _Grading(),
         sections: const [],
       );
-      expect(find.byType(AppFilterChip), findsNothing);
+      expect(find.text('Create your sections first'), findsOneWidget);
+      expect(find.text('Go to Classes and arms'), findsOneWidget);
     });
 
-    testWidgets('a new scale copies the default into a section', (
+    testWidgets('a school with no setup shows every section as not set up', (
       tester,
     ) async {
-      final service = standard();
-      await pump(tester, OrganizationMemberRole.owner, service);
+      await pump(tester, OrganizationMemberRole.owner, _Grading());
+      expect(find.text('0 of 4 set up'), findsOneWidget);
+      expect(find.text('Not set up'), findsNWidgets(4));
+      expect(find.text('No columns or grades yet'), findsNWidgets(4));
+    });
+  });
 
-      expect(
-        find.text('Used by Nursery, Primary and Secondary.'),
-        findsOneWidget,
-      );
-      await tester.tap(find.widgetWithText(AppFilterChip, 'New scale'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Give a section its own scale'), findsOneWidget);
-      expect(find.text('Create Nursery scale'), findsOneWidget);
-      expect(
-        find.textContaining('Other sections keep using the school default'),
-        findsOneWidget,
-      );
-
-      await tester.tap(find.text('Primary'));
-      await tester.pumpAndSettle();
-      expect(find.text('Create Primary scale'), findsOneWidget);
-
-      await tester.tap(find.text('Create Primary scale'));
-      await tester.pumpAndSettle();
-
-      expect(service.copies, [(sectionId: 'primary', grades: 6)]);
-      expect(service.singleInserts, 0);
-      expect(chipSelected(tester, 'Primary'), isTrue);
-      expect(
-        find.text(
-          'Primary’s own grades. Other sections use the school default.',
+  group('SectionGradingScreen', () {
+    Future<void> pump(
+      WidgetTester tester,
+      _Grading service,
+      SchoolSection section, {
+      OrganizationMemberRole role = OrganizationMemberRole.owner,
+    }) async {
+      locator.registerSingleton<GradingService>(service);
+      locator.registerSingleton<ClassStructureService>(_Structure());
+      addTearDown(locator.reset);
+      tester.view.physicalSize = const Size(390, 1800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SectionGradingScreen(school: _school(role), section: section),
         ),
-        findsOneWidget,
       );
-    });
+      await tester.pumpAndSettle();
+    }
 
-    testWidgets('Not now closes the new scale sheet without copying', (
+    testWidgets('not set up: two tasks, copy row and no review button', (
       tester,
     ) async {
-      final service = standard();
-      await pump(tester, OrganizationMemberRole.owner, service);
-
-      await tester.tap(find.widgetWithText(AppFilterChip, 'New scale'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Not now'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Give a section its own scale'), findsNothing);
-      expect(service.copies, isEmpty);
+      await pump(tester, _Grading(), _sections()[2]);
+      expect(find.text('Set up Junior Secondary'), findsOneWidget);
+      expect(find.text('Score columns'), findsOneWidget);
+      expect(find.text('Grades'), findsOneWidget);
+      expect(find.text('Not set up'), findsNWidgets(2));
+      expect(find.text('Copy from another section'), findsOneWidget);
+      expect(find.text('Review Junior Secondary'), findsNothing);
     });
 
-    testWidgets('using the school’s scale again asks, then removes it', (
-      tester,
-    ) async {
-      final service = standard(grades: [..._standardGrades(), ..._waec()]);
-      await pump(tester, OrganizationMemberRole.owner, service);
-
-      await tester.tap(find.widgetWithText(AppFilterChip, 'Secondary'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Use the school’s scale instead'));
-      await tester.pumpAndSettle();
-      expect(
-        find.text('Use the school’s scale for Secondary?'),
-        findsOneWidget,
-      );
-      expect(service.deletedScales, isEmpty);
-
-      await tester.tap(find.text('Remove Secondary’s scale'));
-      await tester.pumpAndSettle();
-
-      expect(service.deletedScales, ['secondary']);
-      expect(chipSelected(tester, 'School default'), isTrue);
-      expect(find.widgetWithText(AppFilterChip, 'Secondary'), findsNothing);
-      expect(find.text('Used by every section.'), findsNothing);
-      expect(
-        find.text('Used by Nursery, Primary and Secondary.'),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('the column sheet previews the total and checks the marks', (
-      tester,
-    ) async {
-      await pump(tester, OrganizationMemberRole.owner, standard());
-
-      await tester.tap(find.text('Add column'));
-      await tester.pumpAndSettle();
-      expect(find.text('Add a score column'), findsOneWidget);
-      expect(find.text('Enter the marks first'), findsOneWidget);
-      expect(find.textContaining('Up to 2 decimal places'), findsNothing);
-
-      await tester.enterText(field('e.g. 20'), '20');
-      await tester.pumpAndSettle();
-      expect(find.text('Total becomes'), findsOneWidget);
-      expect(find.text('120 marks, from 100 now'), findsOneWidget);
-
-      await tester.enterText(field('e.g. 20').first, '0');
-      await tester.pumpAndSettle();
-      expect(
-        find.text(
-          'A column has to be out of more than 0. Enter at least 0.01.',
-        ),
-        findsOneWidget,
-      );
-      expect(find.text('Enter the marks first'), findsOneWidget);
-    });
-
-    testWidgets('the column sheet suggests names and moves on to the marks', (
-      tester,
-    ) async {
-      await pump(tester, OrganizationMemberRole.owner, standard());
-
-      await tester.tap(find.text('Add column'));
-      await tester.pumpAndSettle();
-
-      final chips = find.descendant(
-        of: find.byType(Wrap),
-        matching: find.byType(AppFilterChip),
-      );
-      expect(chips, findsNWidgets(3));
-      for (final label in ['CA 3', 'Test', 'Assignment']) {
-        expect(find.widgetWithText(AppFilterChip, label), findsOneWidget);
-      }
-
-      await tester.tap(find.widgetWithText(AppFilterChip, 'Test'));
-      await tester.pumpAndSettle();
-
-      final name = tester.widget<TextField>(field('e.g. CA 1'));
-      expect(name.controller?.text, 'Test');
-      final marks = tester.widget<TextField>(field('e.g. 20'));
-      expect(marks.focusNode?.hasFocus, isTrue);
-      // Marks are not prefilled.
-      expect(marks.controller?.text, '');
-    });
-
-    testWidgets('the column sheet hides names that are already columns', (
+    testWidgets('set up: the two summaries and a pinned review button', (
       tester,
     ) async {
       await pump(
         tester,
-        OrganizationMemberRole.owner,
         _Grading(
-          columns: [..._standardColumns(), _column('t', 'Test', 10, 4)],
-          grades: _standardGrades(),
+          columns: _standardColumns(sectionId: 'junior'),
+          grades: _standard(sectionId: 'junior'),
+        ),
+        _sections()[2],
+      );
+      expect(find.text('Junior Secondary is ready'), findsOneWidget);
+      expect(find.text('3 columns · 100 marks'), findsOneWidget);
+      expect(
+        find.text('Standard · 6 grades · covers 0 to 100'),
+        findsOneWidget,
+      );
+      expect(find.text('Review Junior Secondary'), findsOneWidget);
+    });
+
+    testWidgets('inherited: shows the rows, give own setup and copy instead', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        _Grading(columns: _standardColumns(), grades: _standard()),
+        _sections()[1],
+      );
+      expect(find.text('Primary follows the school’s grading'), findsOneWidget);
+      expect(find.text('Uses the school’s setup'), findsOneWidget);
+      expect(find.text('CA 1'), findsOneWidget);
+      expect(find.text('Give Primary its own setup'), findsOneWidget);
+      expect(find.text('Copy from another section instead'), findsOneWidget);
+    });
+
+    testWidgets('read only: no give-own-setup action', (tester) async {
+      await pump(
+        tester,
+        _Grading(columns: _standardColumns(), grades: _standard()),
+        _sections()[1],
+        role: OrganizationMemberRole.bursar,
+      );
+      expect(find.text('Read only for you'), findsOneWidget);
+      expect(find.text('Give Primary its own setup'), findsNothing);
+      expect(find.text('Copy from another section instead'), findsNothing);
+    });
+  });
+
+  group('ScoreColumnsScreen', () {
+    Future<void> pump(
+      WidgetTester tester,
+      _Grading service,
+      SchoolSection section, {
+      OrganizationMemberRole role = OrganizationMemberRole.owner,
+    }) async {
+      locator.registerSingleton<GradingService>(service);
+      locator.registerSingleton<ClassStructureService>(_Structure());
+      addTearDown(locator.reset);
+      tester.view.physicalSize = const Size(390, 1800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ScoreColumnsScreen(school: _school(role), section: section),
         ),
       );
+      await tester.pumpAndSettle();
+    }
 
+    testWidgets('shows the total, shares and the columns', (tester) async {
+      await pump(
+        tester,
+        _Grading(
+          columns: _standardColumns(sectionId: 'junior'),
+          grades: _standard(sectionId: 'junior'),
+        ),
+        _sections()[2],
+      );
+      expect(find.text('100'), findsOneWidget);
+      expect(find.text('marks in total'), findsOneWidget);
+      expect(find.text('20%'), findsNWidgets(4));
+      expect(find.text('60%'), findsNWidgets(2));
+      expect(find.text('Columns'), findsOneWidget);
+      expect(find.text('Add column'), findsOneWidget);
+      expect(find.text('Copy columns from another section'), findsOneWidget);
+    });
+
+    testWidgets('empty state opens the add-column sheet', (tester) async {
+      await pump(tester, _Grading(), _sections()[3]);
+      expect(
+        find.text('No score columns in Senior Secondary yet'),
+        findsOneWidget,
+      );
+      await tester.tap(find.widgetWithText(AppPrimaryButton, 'Add a column'));
+      await tester.pumpAndSettle();
+      expect(find.text('Add a column to Senior Secondary'), findsOneWidget);
+      expect(find.text('Add column'), findsOneWidget);
+    });
+
+    testWidgets('a column sheet previews the total and hides used names', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        _Grading(
+          columns: _standardColumns(sectionId: 'junior'),
+          grades: _standard(sectionId: 'junior'),
+        ),
+        _sections()[2],
+      );
       await tester.tap(find.text('Add column'));
       await tester.pumpAndSettle();
+      expect(find.text('Add a column to Junior Secondary'), findsOneWidget);
       expect(find.widgetWithText(AppFilterChip, 'CA 3'), findsOneWidget);
-      expect(find.widgetWithText(AppFilterChip, 'Test'), findsNothing);
-      expect(find.widgetWithText(AppFilterChip, 'Assignment'), findsOneWidget);
-    });
-
-    testWidgets('editing a column has no chips and says when the total stays', (
-      tester,
-    ) async {
-      await pump(tester, OrganizationMemberRole.owner, standard());
-
-      await tester.tap(find.text('CA 2'));
+      expect(find.widgetWithText(AppFilterChip, 'Test'), findsOneWidget);
+      expect(find.text('Enter the marks first'), findsOneWidget);
+      await tester.enterText(find.widgetWithText(TextField, 'e.g. 20'), '10');
       await tester.pumpAndSettle();
-      expect(find.text('Edit CA 2'), findsOneWidget);
-      expect(
-        find.descendant(
-          of: find.byType(Wrap),
-          matching: find.byType(AppFilterChip),
-        ),
-        findsNothing,
-      );
-      expect(find.text('Total stays'), findsOneWidget);
-      expect(find.text('100 marks'), findsOneWidget);
-
-      await tester.enterText(field('e.g. 20'), '30');
-      await tester.pumpAndSettle();
-      expect(find.text('Total becomes'), findsOneWidget);
       expect(find.text('110 marks, from 100 now'), findsOneWidget);
+      expect(find.text('4 of 4, last'), findsOneWidget);
     });
+  });
 
-    testWidgets('a taken column name shows after a pause, and on Save', (
-      tester,
-    ) async {
-      final service = standard();
-      await pump(tester, OrganizationMemberRole.owner, service);
-
-      await tester.tap(find.text('Add column'));
+  group('GradesScreen', () {
+    Future<void> pump(
+      WidgetTester tester,
+      _Grading service,
+      SchoolSection section, {
+      OrganizationMemberRole role = OrganizationMemberRole.owner,
+    }) async {
+      locator.registerSingleton<GradingService>(service);
+      locator.registerSingleton<ClassStructureService>(_Structure());
+      addTearDown(locator.reset);
+      tester.view.physicalSize = const Size(390, 1800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GradesScreen(school: _school(role), section: section),
+        ),
+      );
       await tester.pumpAndSettle();
-      await tester.enterText(field('e.g. 20'), '10');
-      await tester.enterText(field('e.g. CA 1'), 'exam');
-      await tester.pump(const Duration(milliseconds: 200));
-      expect(find.textContaining('There’s already a column'), findsNothing);
+    }
 
-      await tester.pump(const Duration(milliseconds: 400));
+    testWidgets('no grades: choose a system, WAEC selected', (tester) async {
+      final service = _Grading(columns: _standardColumns(sectionId: 'junior'));
+      await pump(tester, service, _sections()[2]);
       expect(
-        find.text('There’s already a column called exam. Use another name.'),
+        find.text('Which grades should Junior Secondary use?'),
         findsOneWidget,
       );
+      expect(find.text('WAEC grades'), findsOneWidget);
+      expect(find.text('Usual for SS'), findsOneWidget);
+      expect(find.text('Standard grades'), findsOneWidget);
+      expect(find.text('Use Standard grades'), findsOneWidget);
 
-      // Typing again hides it until the pause; Save shows it at once.
-      await tester.enterText(field('e.g. CA 1'), 'ca 1');
-      await tester.pump();
-      expect(find.textContaining('There’s already a column'), findsNothing);
-      await tester.tap(find.text('Save column'));
-      await tester.pump();
-      expect(find.textContaining('There’s already a column'), findsOneWidget);
-      expect(service.added, isNull);
+      await tester.tap(find.text('WAEC grades'));
       await tester.pumpAndSettle();
+      expect(find.text('Use WAEC grades'), findsOneWidget);
+      await tester.tap(
+        find.widgetWithText(AppPrimaryButton, 'Use WAEC grades'),
+      );
+      await tester.pumpAndSettle();
+
+      expect(service.appliedSystems.single.system, 'waec');
+      expect(find.text('Covers 0 to 100'), findsOneWidget);
+      expect(find.text('70 to 100'), findsNothing);
+      expect(find.text('75 to 100'), findsOneWidget);
     });
 
-    testWidgets('the position row moves a column and stops at the ends', (
-      tester,
-    ) async {
-      final service = standard();
-      await pump(tester, OrganizationMemberRole.owner, service);
-
-      await tester.tap(find.text('CA 2'));
-      await tester.pumpAndSettle();
-      expect(find.text('Position'), findsOneWidget);
-      expect(find.text('2 of 3'), findsOneWidget);
-
-      await tester.tap(find.byIcon(AppIcons.chevronDown));
-      await tester.pumpAndSettle();
-      expect(service.reorders, [
-        ['ca1', 'exam', 'ca2'],
-      ]);
-      expect(find.text('3 of 3'), findsOneWidget);
-
-      // At the end: down does nothing.
-      await tester.tap(find.byIcon(AppIcons.chevronDown));
-      await tester.pumpAndSettle();
-      expect(service.reorders.length, 1);
-
-      await tester.tap(find.byIcon(AppIcons.chevronUp));
-      await tester.pumpAndSettle();
-      expect(service.reorders.length, 2);
-      expect(find.text('2 of 3'), findsOneWidget);
-    });
-
-    testWidgets('a lone column has nothing to move', (tester) async {
+    testWidgets('ranges show the coverage and each band', (tester) async {
       await pump(
         tester,
-        OrganizationMemberRole.owner,
         _Grading(
-          columns: [_column('ca1', 'CA 1', 100, 1)],
-          grades: _standardGrades(),
+          columns: _standardColumns(sectionId: 'junior'),
+          grades: _standard(sectionId: 'junior'),
         ),
+        _sections()[2],
       );
-      await tester.tap(find.text('CA 1'));
-      await tester.pumpAndSettle();
-      expect(find.text('Edit CA 1'), findsOneWidget);
-      expect(find.text('Position'), findsNothing);
+      expect(find.text('Covers 0 to 100'), findsOneWidget);
+      expect(find.text('70 to 100'), findsOneWidget);
+      expect(find.text('Excellent · Pass'), findsOneWidget);
+      expect(find.text('Fail'), findsOneWidget);
+      expect(find.text('Change to WAEC grades'), findsOneWidget);
+      expect(find.text('Copy grades from another section'), findsOneWidget);
+      expect(find.text('Add grade'), findsOneWidget);
     });
 
-    testWidgets('the grade sheet says what a new grade changes', (
+    testWidgets('a legacy gap is a warning with add from 0', (tester) async {
+      await pump(
+        tester,
+        _Grading(
+          columns: _standardColumns(sectionId: 'junior'),
+          grades: [
+            _grade('A', 70, 100, 'Excellent', sectionId: 'junior'),
+            _grade('B', 60, 69, 'Very Good', sectionId: 'junior'),
+            _grade('C', 50, 59, 'Good', sectionId: 'junior'),
+            _grade('D', 45, 49, 'Fair', sectionId: 'junior'),
+            _grade('E', 40, 44, 'Pass', sectionId: 'junior'),
+          ],
+        ),
+        _sections()[2],
+      );
+      expect(find.text('Not covered: 0 to 39'), findsOneWidget);
+      expect(find.text('Add a grade from 0'), findsOneWidget);
+      expect(find.text('Change to WAEC grades'), findsNothing);
+    });
+
+    testWidgets('changing the system asks first, then replaces', (
       tester,
     ) async {
-      await pump(tester, OrganizationMemberRole.owner, standard());
-
-      await tester.tap(find.text('Add grade'));
-      await tester.pumpAndSettle();
-      expect(find.text('Add a grade'), findsOneWidget);
-      expect(find.text('New grade'), findsNothing);
-      expect(find.textContaining('Up to 2 decimal places'), findsNothing);
-      expect(find.text('Pass grade'), findsOneWidget);
-      expect(find.text('Marks the subject as passed.'), findsOneWidget);
-
-      await tester.enterText(field('e.g. 65'), '65');
-      await tester.pumpAndSettle();
-      expect(find.text('New grade'), findsOneWidget);
-      expect(find.text('65 to 69'), findsOneWidget);
-      expect(find.text('B becomes'), findsOneWidget);
-      expect(find.text('60 to 64, from 60 to 69'), findsOneWidget);
-      expect(find.textContaining('69.99'), findsNothing);
-    });
-
-    testWidgets('the grade name field capitalises letters', (tester) async {
-      await pump(tester, OrganizationMemberRole.owner, standard());
-
-      await tester.tap(find.text('Add grade'));
-      await tester.pumpAndSettle();
-      expect(
-        tester.widget<TextField>(field('e.g. A')).textCapitalization,
-        TextCapitalization.characters,
+      final service = _Grading(
+        columns: _standardColumns(sectionId: 'junior'),
+        grades: _standard(sectionId: 'junior'),
       );
-    });
-
-    testWidgets('editing a grade shows its own change and the one below', (
-      tester,
-    ) async {
-      await pump(tester, OrganizationMemberRole.owner, standard());
-
-      await tester.tap(find.text('60 to 69'));
+      await pump(tester, service, _sections()[2]);
+      await tester.tap(find.text('Change to WAEC grades'));
       await tester.pumpAndSettle();
-      expect(find.text('Edit grade B'), findsOneWidget);
-      expect(find.text('B becomes'), findsNothing);
-      // The remark is filled in.
+      expect(find.text('Replace Junior Secondary’s grades?'), findsOneWidget);
       expect(
-        tester.widget<TextField>(find.byType(TextField).at(2)).controller?.text,
-        'Very Good',
-      );
-
-      await tester.enterText(find.byType(TextField).at(1), '62');
-      await tester.pumpAndSettle();
-      expect(find.text('B becomes'), findsOneWidget);
-      expect(find.text('62 to 69, from 60 to 69'), findsOneWidget);
-      expect(find.text('C becomes'), findsOneWidget);
-      expect(find.text('50 to 61, from 50 to 59'), findsOneWidget);
-      expect(find.textContaining('will now be below'), findsNothing);
-    });
-
-    testWidgets('a taken start says what to try and hides the preview', (
-      tester,
-    ) async {
-      await pump(tester, OrganizationMemberRole.owner, standard());
-
-      await tester.tap(find.text('60 to 69'));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).at(1), '50');
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text('C already starts at 50. Try 51, or edit C.'),
+        find.textContaining('will be replaced by the 9 WAEC'),
         findsOneWidget,
       );
-      expect(find.text('B becomes'), findsNothing);
+      expect(find.text('Keep Standard grades'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Replace with WAEC grades'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.text('Replace with WAEC grades'),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+      expect(service.appliedSystems.single.system, 'waec');
+      expect(find.text('75 to 100'), findsOneWidget);
+    });
+  });
+
+  group('GradeSheet', () {
+    Future<void> pump(
+      WidgetTester tester, {
+      required SectionGrading grading,
+      GradeBoundary? grade,
+      String? initialFrom,
+      Future<String?> Function(List<GradeBoundary>)? onSave,
+    }) async {
+      tester.view.physicalSize = const Size(390, 1800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: GradeSheet(
+              grading: grading,
+              grade: grade,
+              initialFrom: initialFrom,
+              onSave: onSave ?? (_) async => null,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('editing To shows the range and the neighbour that moves', (
+      tester,
+    ) async {
+      final grading = GradingSetup(
+        columns: _standardColumns(sectionId: 'junior'),
+        grades: _standard(sectionId: 'junior'),
+      ).forSectionId('junior', sectionName: 'Junior Secondary');
+      final b = grading.grades.firstWhere((g) => g.grade == 'B');
+      await pump(tester, grading: grading, grade: b);
+
+      expect(find.text('Edit grade B'), findsOneWidget);
+      await tester.enterText(find.widgetWithText(TextField, 'e.g. 69'), '70');
+      await tester.pumpAndSettle();
+      expect(find.text('B becomes'), findsOneWidget);
+      expect(find.text('60 to 70, from 60 to 69'), findsOneWidget);
+      expect(find.text('A will start at'), findsOneWidget);
+      expect(find.text('71, from 70'), findsOneWidget);
+    });
+
+    testWidgets('a change that covers a neighbour is refused', (tester) async {
+      final grading = GradingSetup(
+        columns: _standardColumns(sectionId: 'junior'),
+        grades: _standard(sectionId: 'junior'),
+      ).forSectionId('junior', sectionName: 'Junior Secondary');
+      final a = grading.grades.firstWhere((g) => g.grade == 'A');
+      await pump(tester, grading: grading, grade: a);
+
+      await tester.enterText(find.widgetWithText(TextField, 'e.g. 60'), '60');
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'This would cover all of B (60 to 69). Change or remove B first.',
+        ),
+        findsOneWidget,
+      );
       final save = tester.widget<AppPrimaryButton>(
         find.widgetWithText(AppPrimaryButton, 'Save grade'),
       );
       expect(save.isDisabled, isTrue);
     });
 
-    testWidgets('a grade that would sit below a later letter gets a warning', (
-      tester,
-    ) async {
-      await pump(tester, OrganizationMemberRole.owner, standard());
-
-      await tester.tap(find.text('70 to 100'));
+    testWidgets('adding splits a band and previews both parts', (tester) async {
+      final grading = GradingSetup(
+        columns: _standardColumns(sectionId: 'junior'),
+        grades: _standard(sectionId: 'junior'),
+      ).forSectionId('junior', sectionName: 'Junior Secondary');
+      await pump(tester, grading: grading);
+      await tester.enterText(find.widgetWithText(TextField, 'e.g. A'), 'B+');
+      await tester.enterText(find.widgetWithText(TextField, 'e.g. 60'), '65');
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).at(1), '55');
-      await tester.pumpAndSettle();
 
-      expect(
-        find.text('A will now be below B. Grades usually go down from A.'),
-        findsOneWidget,
-      );
-      // Save stays available: it is a warning, not an error.
-      final save = tester.widget<AppPrimaryButton>(
-        find.widgetWithText(AppPrimaryButton, 'Save grade'),
-      );
-      expect(save.isDisabled, isFalse);
+      expect(find.text('B+ (new)'), findsOneWidget);
+      expect(find.text('65 to 69'), findsOneWidget);
+      expect(find.text('B becomes'), findsOneWidget);
+      expect(find.text('60 to 64, from 60 to 69'), findsOneWidget);
     });
 
-    testWidgets('a taken grade name shows after a pause, and on Save', (
+    testWidgets('adding from 0 fills the gap and turns the pass off', (
       tester,
     ) async {
-      final service = standard();
-      await pump(tester, OrganizationMemberRole.owner, service);
-
-      await tester.tap(find.text('Add grade'));
+      final grading = GradingSetup(
+        columns: _standardColumns(),
+        grades: [
+          _grade('A', 70, 100, 'Excellent'),
+          _grade('B', 60, 69, 'Very Good'),
+          _grade('C', 50, 59, 'Good'),
+          _grade('D', 45, 49, 'Fair'),
+          _grade('E', 40, 44, 'Pass'),
+        ],
+      ).forSectionId('junior', sectionName: 'Junior Secondary');
+      await pump(tester, grading: grading, initialFrom: '0');
+      await tester.enterText(find.widgetWithText(TextField, 'e.g. A'), 'F');
       await tester.pumpAndSettle();
-      await tester.enterText(field('e.g. 65'), '65');
-      await tester.enterText(field('e.g. A'), 'b');
-      await tester.pump(const Duration(milliseconds: 200));
-      expect(find.textContaining('There’s already a grade'), findsNothing);
-
-      await tester.pump(const Duration(milliseconds: 400));
-      expect(
-        find.text('There’s already a grade called b. Use another name.'),
-        findsOneWidget,
-      );
-
-      await tester.enterText(field('e.g. A'), 'c');
-      await tester.pump();
-      expect(find.textContaining('There’s already a grade'), findsNothing);
-      await tester.tap(find.text('Save grade'));
-      await tester.pump();
-      expect(find.textContaining('There’s already a grade'), findsOneWidget);
-      expect(service.addedGrade, isNull);
-      await tester.pumpAndSettle();
+      expect(find.text('Add a grade from 0'), findsOneWidget);
+      expect(find.text('0 to 39'), findsOneWidget);
+      final switchWidget = tester.widget<AppSwitch>(find.byType(AppSwitch));
+      expect(switchWidget.value, isFalse);
     });
+  });
 
-    testWidgets('the pass switch follows the start until it is touched', (
+  group('GradingReviewScreen', () {
+    testWidgets('works the score out locally and marks the grade bar', (
       tester,
     ) async {
-      await pump(
-        tester,
-        OrganizationMemberRole.owner,
+      locator.registerSingleton<GradingService>(
         _Grading(
-          columns: _standardColumns(),
-          grades: _standardGrades(withFail: false),
+          columns: _standardColumns(sectionId: 'junior'),
+          grades: _standard(sectionId: 'junior'),
         ),
       );
-      bool isPass() => tester.widget<AppSwitch>(find.byType(AppSwitch)).value;
-
-      // "Add a grade from 0" starts as not a pass.
-      await tester.tap(find.text('Add a grade from 0').first);
-      await tester.pumpAndSettle();
-      expect(isPass(), isFalse);
-
-      await tester.enterText(field('e.g. 65'), '35');
-      await tester.pumpAndSettle();
-      expect(isPass(), isFalse);
-      await tester.enterText(field('e.g. 65'), '65');
-      await tester.pumpAndSettle();
-      expect(isPass(), isTrue);
-
-      await tester.tap(find.text('Pass grade'));
-      await tester.pumpAndSettle();
-      expect(isPass(), isFalse);
-      await tester.enterText(field('e.g. 65'), '66');
-      await tester.pumpAndSettle();
-      expect(isPass(), isFalse);
-    });
-
-    testWidgets('saving a grade in a section scale adds it to that section', (
-      tester,
-    ) async {
-      final service = standard(grades: [..._standardGrades(), ..._waec()]);
-      await pump(tester, OrganizationMemberRole.owner, service);
-
-      await tester.tap(find.widgetWithText(AppFilterChip, 'Secondary'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Add grade'));
-      await tester.pumpAndSettle();
-      await tester.enterText(field('e.g. A'), 'C4');
-      await tester.enterText(field('e.g. 65'), '72');
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Save grade'));
+      addTearDown(locator.reset);
+      tester.view.physicalSize = const Size(390, 1800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GradingReviewScreen(
+            school: _school(OrganizationMemberRole.owner),
+            section: _sections()[2],
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
 
-      expect(service.addedGrade?.sectionId, 'secondary');
-      expect(service.addedGrade?.grade, 'C4');
-      expect(service.addedGrade?.isPass, isTrue);
+      expect(find.text('Set up · already saved'), findsOneWidget);
+      expect(find.text('How Junior Secondary is graded'), findsOneWidget);
+      expect(find.text('86%'), findsNWidgets(2));
+      expect(find.text('86 out of 100 marks'), findsOneWidget);
+      expect(find.text('A'), findsWidgets);
+      expect(find.text('Pass · 70 to 100'), findsOneWidget);
+
+      final fields = find.byType(TextField);
+      expect(fields, findsNWidgets(3));
+      await tester.enterText(fields.first, '0');
+      await tester.pumpAndSettle();
+      expect(find.text('69%'), findsNWidgets(2));
+      expect(find.text('69 out of 100 marks'), findsOneWidget);
+      expect(find.text('Pass · 60 to 69'), findsOneWidget);
     });
   });
 }

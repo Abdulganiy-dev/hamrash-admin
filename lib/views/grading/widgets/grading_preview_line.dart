@@ -83,6 +83,63 @@ class GradingChangesBlock extends StatelessWidget {
   );
 }
 
+/// An error-tone line under a sheet's field or preview.
+class GradingErrorLine extends StatelessWidget {
+  const GradingErrorLine({super.key, required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Padding(
+        padding: EdgeInsets.only(top: 1),
+        child: AppIcon(
+          AppIcons.circleAlert,
+          size: 16,
+          color: LightColors.errorErrorDefault,
+        ),
+      ),
+      const SizedBox(width: 6),
+      Expanded(
+        child: AppText(
+          message,
+          style: AppTypography.caption.copyWith(
+            fontWeight: FontWeight.w600,
+            color: LightColors.errorErrorText,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+/// A quiet explanation, e.g. why the top grade's To is locked.
+class GradingNoteLine extends StatelessWidget {
+  const GradingNoteLine({super.key, required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Padding(
+        padding: EdgeInsets.only(top: 2),
+        child: AppIcon(AppIcons.info, size: 14, color: LightColors.textMuted),
+      ),
+      const SizedBox(width: 6),
+      Expanded(
+        child: AppText(
+          message,
+          style: AppTypography.caption.copyWith(color: LightColors.textMuted),
+        ),
+      ),
+    ],
+  );
+}
+
 /// A warning-tone line under a sheet's preview, e.g. "A will now be below B.
 /// Grades usually go down from A.".
 class GradingWarningLine extends StatelessWidget {

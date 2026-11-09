@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hamrash_admin/api/models/grading/grading_numbers.dart';
-import 'package:hamrash_admin/api/models/grading/grading_setup.dart';
 import 'package:hamrash_admin/api/models/grading/score_column.dart';
+import 'package:hamrash_admin/api/models/grading/section_grading.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
@@ -19,34 +19,44 @@ import 'package:hamrash_admin/core/widgets/button/app_sheet_link_action.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_preview_line.dart';
 
-/// 9.3 · Add a score column, 9.4 · Edit one: its name, what it's out of and
-/// what that does to the total. Adding offers common names as chips; editing
-/// has a Position row to move the column on the report card (9.4b). Pops
-/// `true` once saved.
+/// 9.28–9.30 · Add or edit a score column: its name, what it is out of, where
+/// it sits on the report card, and what saving does to the total. Pops `true`
+/// once saved.
 class ScoreColumnSheet extends StatefulWidget {
   const ScoreColumnSheet({
     super.key,
-    required this.setup,
+    required this.grading,
+    required this.sectionName,
+    required this.position,
+    required this.count,
     required this.onSave,
     this.column,
     this.onRemove,
     this.onMove,
   });
 
-  final GradingSetup setup;
+  final SectionGrading grading;
+  final String sectionName;
+
+  /// 1 first. For a new column this is where it will be put.
+  final int position;
+
+  /// Columns already in the set.
+  final int count;
+
+  /// Saves what was typed; returns the reason it wasn't saved, or null.
+  final Future<String?> Function(String name, String marks, int position)
+  onSave;
 
   /// Null to add a new column.
   final ScoreColumn? column;
-
-  /// Saves what was typed; returns the reason it wasn't saved, or null.
-  final Future<String?> Function(String name, String marks) onSave;
 
   /// Run after this sheet closes, to ask for confirmation. Null for a new
   /// column.
   final VoidCallback? onRemove;
 
-  /// Moves the column up (-1) or down (1) on the report card straight away;
-  /// returns the reason it didn't work, or null. Null for a new column.
+  /// Moves an existing column up (-1) or down (1) straight away; returns the
+  /// reason it didn't work, or null. Null for a new column.
   final Future<String?> Function(int delta)? onMove;
 
   @override
@@ -62,19 +72,17 @@ class _ScoreColumnSheetState extends State<ScoreColumnSheet> {
   final _nameFocus = FocusNode();
   final _marksFocus = FocusNode();
 
-  /// A taken name shows on blur, shortly after typing stops, and on Save,
-  /// not on every keystroke.
   bool _showNameError = false;
   Timer? _nameTimer;
   static const _nameDelay = Duration(milliseconds: 500);
 
-  /// Where the column sits on the report card (1 first), kept here as it
-  /// moves, since the setup this sheet was opened with doesn't change.
-  late int _position =
-      widget.setup.columns.indexWhere((c) => c.id == _saved?.id) + 1;
+  late int _position = widget.position;
   bool _moving = false;
   bool _saving = false;
   String? _error;
+
+  bool get _isNew => _saved == null;
+  int get _maxPosition => _isNew ? widget.count + 1 : widget.count;
 
   @override
   void initState() {
@@ -97,15 +105,16 @@ class _ScoreColumnSheetState extends State<ScoreColumnSheet> {
   String get _columnName => _name.text.trim();
 
   String? get _nameProblem =>
-      widget.setup.columnNameProblem(_columnName, except: _saved);
+      widget.grading.columnNameProblem(_columnName, except: _saved);
   String? get _nameError => _showNameError ? _nameProblem : null;
-  String? get _marksProblem => GradingSetup.marksProblem(_marks.text);
+  String? get _marksProblem => SectionGrading.marksProblem(_marks.text);
 
   bool get _hasChanges {
     final saved = _saved;
     return saved == null ||
         _columnName != saved.name ||
-        GradingSetup.marks(_marks.text) != saved.maxScore;
+        SectionGrading.marks(_marks.text) != saved.maxScore ||
+        _position != widget.position;
   }
 
   void _revealNameError() {
@@ -122,7 +131,6 @@ class _ScoreColumnSheetState extends State<ScoreColumnSheet> {
     });
   }
 
-  /// Fills the name from a chip and goes on to the marks.
   void _useSuggestion(String name) {
     _nameTimer?.cancel();
     setState(() {
@@ -137,6 +145,12 @@ class _ScoreColumnSheetState extends State<ScoreColumnSheet> {
   }
 
   Future<void> _move(int delta) async {
+    final target = _position + delta;
+    if (target < 1 || target > _maxPosition) return;
+    if (_isNew) {
+      setState(() => _position = target);
+      return;
+    }
     final onMove = widget.onMove;
     if (onMove == null || _moving) return;
     setState(() {
@@ -148,7 +162,7 @@ class _ScoreColumnSheetState extends State<ScoreColumnSheet> {
     setState(() {
       _moving = false;
       if (error == null) {
-        _position += delta;
+        _position = target;
       } else {
         _error = error;
       }
@@ -164,7 +178,7 @@ class _ScoreColumnSheetState extends State<ScoreColumnSheet> {
       _saving = true;
       _error = null;
     });
-    final error = await widget.onSave(_columnName, _marks.text);
+    final error = await widget.onSave(_columnName, _marks.text, _position);
     if (!mounted) return;
     if (error == null) {
       Navigator.of(context).pop(true);
@@ -176,26 +190,40 @@ class _ScoreColumnSheetState extends State<ScoreColumnSheet> {
     });
   }
 
+  String get _positionLabel {
+    if (_isNew) {
+      if (_position > widget.count) {
+        return '$_position of ${widget.count + 1}, last';
+      }
+      final before = widget.grading.columns[_position - 1].name;
+      return '$_position of ${widget.count + 1}, before $before';
+    }
+    return '$_position of ${widget.count}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final saved = _saved;
-    final total = widget.setup.totalLine(_marks.text, replacing: saved);
-    final count = widget.setup.columns.length;
+    final total = widget.grading.totalLine(_marks.text, replacing: saved);
     final suggestions = saved == null
-        ? widget.setup.columnSuggestions
+        ? widget.grading.columnSuggestions
         : const [];
     final canSave =
         !_saving &&
         _columnName.isNotEmpty &&
-        GradingSetup.marks(_marks.text) != null &&
+        SectionGrading.marks(_marks.text) != null &&
         _hasChanges;
+    final showPosition = _isNew ? widget.count > 0 : widget.count > 1;
 
     return AppSheet(
-      title: saved == null ? 'Add a score column' : 'Edit ${saved.name}',
+      title: saved == null
+          ? 'Add a column to ${widget.sectionName}'
+          : 'Edit ${saved.name}',
       subtitle: saved == null
-          ? 'A part of each subject’s score, like a test or the exam, and '
-                'the most it can earn.'
-          : 'A part of each subject’s score, and the most it can earn.',
+          ? 'A part of each subject’s score and the most it can earn. '
+                'Only ${widget.sectionName} gets it.'
+          : 'In ${widget.sectionName}. A part of each subject’s score and '
+                'the most it can earn.',
       bodyPadding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -258,11 +286,12 @@ class _ScoreColumnSheetState extends State<ScoreColumnSheet> {
             value: total.value,
             muted: total.muted,
           ),
-          if (saved != null && widget.onMove != null && count > 1) ...[
+          if (showPosition) ...[
             const SizedBox(height: 20),
             _PositionRow(
+              label: _positionLabel,
               position: _position,
-              count: count,
+              maxPosition: _maxPosition,
               busy: _moving || _saving,
               onMove: _move,
             ),
@@ -281,7 +310,7 @@ class _ScoreColumnSheetState extends State<ScoreColumnSheet> {
             loadingText: 'Saving…',
             isDisabled: !canSave,
             onPressed: _save,
-            child: const Text('Save column'),
+            child: Text(saved == null ? 'Add column' : 'Save column'),
           ),
           if (saved != null && widget.onRemove != null) ...[
             const SizedBox(height: AppSpacing.md),
@@ -303,18 +332,19 @@ class _ScoreColumnSheetState extends State<ScoreColumnSheet> {
   }
 }
 
-/// 9.4b · "Position 2 of 3" with up and down buttons to move the column on
-/// the report card. Each button greys out at its end.
+/// "Position 2 of 3" with up and down buttons. Greyed at each end.
 class _PositionRow extends StatelessWidget {
   const _PositionRow({
+    required this.label,
     required this.position,
-    required this.count,
+    required this.maxPosition,
     required this.busy,
     required this.onMove,
   });
 
+  final String label;
   final int position;
-  final int count;
+  final int maxPosition;
   final bool busy;
   final ValueChanged<int> onMove;
 
@@ -338,8 +368,11 @@ class _PositionRow extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: AppText(
-            '$position of $count',
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: AppTypography.subtitle.copyWith(
+              fontSize: 14,
               color: LightColors.textStrong,
             ),
           ),
@@ -352,15 +385,13 @@ class _PositionRow extends StatelessWidget {
         _MoveButton(
           icon: AppIcons.chevronDown,
           label: 'Move down',
-          onPressed: position < count && !busy ? () => onMove(1) : null,
+          onPressed: position < maxPosition && !busy ? () => onMove(1) : null,
         ),
       ],
     ),
   );
 }
 
-/// Round stone-100 button like the sheet's close button: 36 visible, 44 to
-/// tap.
 class _MoveButton extends StatelessWidget {
   const _MoveButton({
     required this.icon,

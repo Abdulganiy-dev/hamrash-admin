@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hamrash_admin/api/models/grading/grade_boundary.dart';
-import 'package:hamrash_admin/api/models/grading/grading_numbers.dart';
-import 'package:hamrash_admin/api/models/grading/grading_setup.dart';
+import 'package:hamrash_admin/api/models/grading/grade_editing.dart';
+import 'package:hamrash_admin/api/models/grading/section_grading.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
@@ -19,38 +19,30 @@ import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_preview_line.dart';
 
-/// 9.5 · Add a grade, 9.6 · Edit one: its name, where it starts, a remark
-/// and whether it is a pass grade. Shows what saving changes in the scale.
-/// Pops `true` once saved.
-///
-/// [setup] is the scale being edited: the school default or a section's own.
+/// 9.35–9.38 · Add or edit one grade: its name, From and To, remark and
+/// whether it is a pass. Moves the neighbouring ranges as the design does:
+/// editing To moves where the grade above starts, editing From moves where
+/// the grade below ends. Pops `true` once saved.
 class GradeSheet extends StatefulWidget {
   const GradeSheet({
     super.key,
-    required this.setup,
+    required this.grading,
     required this.onSave,
-    this.boundary,
-    this.initialPercent,
+    this.grade,
+    this.initialFrom,
     this.onRemove,
   });
 
-  final GradingSetup setup;
+  final SectionGrading grading;
+
+  /// Saves the whole new scale; returns the reason it wasn't saved, or null.
+  final Future<String?> Function(List<GradeBoundary> grades) onSave;
 
   /// Null to add a new grade.
-  final GradeBoundary? boundary;
+  final GradeBoundary? grade;
 
-  /// Starting point filled in for a new grade, e.g. "0" for the one the
-  /// scale is missing.
-  final String? initialPercent;
-
-  /// Saves what was typed; returns the reason it wasn't saved, or null.
-  final Future<String?> Function(
-    String grade,
-    String percent,
-    String remark,
-    bool isPass,
-  )
-  onSave;
+  /// Starting point filled in for a new grade, e.g. "0".
+  final String? initialFrom;
 
   /// Run after this sheet closes, to ask for confirmation. Null for a new
   /// grade.
@@ -61,63 +53,152 @@ class GradeSheet extends StatefulWidget {
 }
 
 class _GradeSheetState extends State<GradeSheet> {
-  late final GradeBoundary? _saved = widget.boundary;
-  late final _grade = TextEditingController(text: _saved?.grade ?? '');
-  late final _percent = TextEditingController(
-    text: _saved == null
-        ? widget.initialPercent ?? ''
-        : GradingNumbers.format(_saved.minPercent),
+  late final GradeBoundary? _saved = widget.grade;
+  late final _name = TextEditingController(text: _saved?.grade ?? '');
+  late final _from = TextEditingController(
+    text: _saved?.minPercent.toString() ?? widget.initialFrom ?? '',
+  );
+  late final _to = TextEditingController(
+    text: _saved?.maxPercent.toString() ?? '',
   );
   late final _remark = TextEditingController(text: _saved?.remark ?? '');
   late bool _isPass =
-      _saved?.isPass ?? widget.setup.defaultIsPass(widget.initialPercent ?? '');
-  final _gradeFocus = FocusNode();
+      _saved?.isPass ?? widget.grading.defaultIsPass(widget.initialFrom ?? '');
+  final _nameFocus = FocusNode();
 
-  /// Once the person flips the switch, typing the start no longer moves it.
   bool _passTouched = false;
-
-  /// A taken name shows on blur, shortly after typing stops, and on Save,
-  /// not on every keystroke.
   bool _showNameError = false;
   Timer? _nameTimer;
   static const _nameDelay = Duration(milliseconds: 500);
   bool _saving = false;
   String? _error;
 
+  bool get _isNew => _saved == null;
+
   @override
   void initState() {
     super.initState();
-    _gradeFocus.addListener(() {
-      if (!_gradeFocus.hasFocus) _revealNameError();
+    _nameFocus.addListener(() {
+      if (!_nameFocus.hasFocus) _revealNameError();
     });
+    _refreshDerivedTo();
+  }
+
+  /// A new grade's To follows the band it splits; it isn't typed.
+  void _refreshDerivedTo() {
+    if (!_isNew) return;
+    final text = _derivedTo?.toString() ?? '';
+    if (_to.text == text) return;
+    _to.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
+  int? get _derivedTo {
+    final from = _whole(_from);
+    if (from == null) return null;
+    final ascending = [...widget.grading.grades]
+      ..sort((a, b) => a.minPercent.compareTo(b.minPercent));
+    if (ascending.isEmpty) return from == 0 ? 100 : null;
+    final lowest = ascending.first;
+    if (from == 0 && lowest.minPercent > 0) return lowest.minPercent - 1;
+    final band = ascending
+        .where((g) => from >= g.minPercent && from <= g.maxPercent)
+        .firstOrNull;
+    if (band == null || from == band.minPercent) return null;
+    return band.maxPercent;
   }
 
   @override
   void dispose() {
     _nameTimer?.cancel();
-    _gradeFocus.dispose();
-    _grade.dispose();
-    _percent.dispose();
+    _nameFocus.dispose();
+    _name.dispose();
+    _from.dispose();
+    _to.dispose();
     _remark.dispose();
     super.dispose();
   }
 
-  String get _gradeName => _grade.text.trim();
+  String get _gradeName => _name.text.trim();
 
-  String? get _gradeProblem =>
-      widget.setup.gradeNameProblem(_gradeName, except: _saved);
-  String? get _gradeNameError => _showNameError ? _gradeProblem : null;
-  String? get _percentProblem =>
-      widget.setup.percentProblem(_percent.text, except: _saved);
-  double? get _minPercent =>
-      widget.setup.percent(_percent.text, except: _saved);
+  String? get _nameProblem =>
+      widget.grading.gradeNameProblem(_gradeName, except: _saved);
+  String? get _nameError => _showNameError ? _nameProblem : null;
+
+  int? _whole(TextEditingController controller) {
+    final text = controller.text.trim();
+    if (text.isEmpty) return null;
+    return int.tryParse(text);
+  }
+
+  bool _invalidNumber(TextEditingController controller) {
+    final text = controller.text.trim();
+    if (text.isEmpty) return false;
+    final value = int.tryParse(text);
+    return value == null || value < 0 || value > 100;
+  }
+
+  bool get _isTop {
+    final saved = _saved;
+    if (saved == null) return false;
+    final ascending = [...widget.grading.grades]
+      ..sort((a, b) => a.minPercent.compareTo(b.minPercent));
+    return ascending.isNotEmpty && ascending.last.id == saved.id;
+  }
+
+  bool get _isBottom {
+    final saved = _saved;
+    if (saved == null) return false;
+    final ascending = [...widget.grading.grades]
+      ..sort((a, b) => a.minPercent.compareTo(b.minPercent));
+    return ascending.isNotEmpty && ascending.first.id == saved.id;
+  }
+
+  GradeEditOutcome get _outcome {
+    if (_invalidNumber(_from) || (!_isNew && !_isTop && _invalidNumber(_to))) {
+      return const GradeEditOutcome(
+        error:
+            'Use a number from 0 to 100. Grades are a percent of the '
+            'section’s marks.',
+      );
+    }
+    final from = _whole(_from);
+    if (_isNew) {
+      return GradeEditor.add(
+        grades: widget.grading.grades,
+        name: _gradeName,
+        from: from,
+        remark: _remarkValue,
+        isPass: _isPass,
+        sectionName: widget.grading.sectionName,
+      );
+    }
+    return GradeEditor.edit(
+      grades: widget.grading.grades,
+      original: _saved!,
+      name: _gradeName,
+      from: from,
+      to: _isTop ? 100 : _whole(_to),
+      remark: _remarkValue,
+      isPass: _isPass,
+      sectionName: widget.grading.sectionName,
+    );
+  }
+
+  String? get _remarkValue {
+    final value = _remark.text.trim();
+    return value.isEmpty ? null : value;
+  }
 
   bool get _hasChanges {
     final saved = _saved;
-    return saved == null ||
-        _gradeName != saved.grade ||
-        _minPercent != saved.minPercent ||
-        _remark.text.trim() != (saved.remark ?? '') ||
+    if (saved == null) return _outcome.canSave;
+    return _gradeName != saved.grade ||
+        _whole(_from) != saved.minPercent ||
+        (_isTop ? 100 : _whole(_to)) != saved.maxPercent ||
+        _remarkValue != saved.remark ||
         _isPass != saved.isPass;
   }
 
@@ -135,28 +216,29 @@ class _GradeSheetState extends State<GradeSheet> {
     });
   }
 
-  void _percentChanged() => setState(() {
-    _error = null;
-    if (_saved == null && !_passTouched) {
-      _isPass = widget.setup.defaultIsPass(_percent.text);
-    }
-  });
+  void _fieldChanged() {
+    setState(() {
+      _error = null;
+      if (_isNew && !_passTouched) {
+        _isPass = widget.grading.defaultIsPass(_from.text);
+      }
+    });
+    _refreshDerivedTo();
+  }
 
   Future<void> _save() async {
-    if (_gradeProblem != null) {
+    final outcome = _outcome;
+    if (_nameProblem != null) {
       _revealNameError();
       return;
     }
+    final grades = outcome.grades;
+    if (grades == null) return;
     setState(() {
       _saving = true;
       _error = null;
     });
-    final error = await widget.onSave(
-      _gradeName,
-      _percent.text,
-      _remark.text,
-      _isPass,
-    );
+    final error = await widget.onSave(grades);
     if (!mounted) return;
     if (error == null) {
       Navigator.of(context).pop(true);
@@ -171,24 +253,31 @@ class _GradeSheetState extends State<GradeSheet> {
   @override
   Widget build(BuildContext context) {
     final saved = _saved;
+    final outcome = _outcome;
+    final error = _nameProblem == null ? outcome.error : null;
     final canSave =
-        !_saving && _gradeName.isNotEmpty && _minPercent != null && _hasChanges;
-    final changes = widget.setup.gradeChanges(
-      name: _grade.text,
-      percentText: _percent.text,
-      except: _saved,
-    );
-    final warning = widget.setup.gradeOrderWarning(
-      name: _grade.text,
-      percentText: _percent.text,
-      except: _saved,
-    );
+        !_saving &&
+        _gradeName.isNotEmpty &&
+        _nameProblem == null &&
+        outcome.canSave &&
+        _hasChanges;
+    final title = _isNew
+        ? (widget.initialFrom == '0'
+              ? 'Add a grade from 0'
+              : 'Add a grade to ${widget.grading.sectionName}')
+        : 'Edit grade ${saved!.grade}';
+    final marks = widget.grading.marksLabel;
+    final subtitle = _isNew
+        ? 'Percent of its $marks. Only ${widget.grading.sectionName} gets '
+              'it.'
+        : widget.grading.totalIsHundred
+        ? 'In ${widget.grading.sectionName}. Percent of its 100 marks: 85 '
+              'out of 100 is 85%.'
+        : 'In ${widget.grading.sectionName}. Percent of its $marks.';
 
     return AppSheet(
-      title: saved == null ? 'Add a grade' : 'Edit grade ${saved.grade}',
-      subtitle:
-          'Scores from this point up get this grade, until the next grade '
-          'starts.',
+      title: title,
+      subtitle: subtitle,
       bodyPadding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -196,43 +285,99 @@ class _GradeSheetState extends State<GradeSheet> {
           AppTextField(
             label: 'Grade',
             hintText: 'e.g. A',
-            controller: _grade,
-            focusNode: _gradeFocus,
-            errorText: _gradeNameError,
+            controller: _name,
+            focusNode: _nameFocus,
+            errorText: _nameError,
             textCapitalization: TextCapitalization.characters,
             textInputAction: TextInputAction.next,
             inputFormatters: [LengthLimitingTextInputFormatter(10)],
             onChanged: (_) => _nameChanged(),
           ),
           const SizedBox(height: 20),
-          AppTextField(
-            label: 'Starts at',
-            hintText: 'e.g. 65',
-            controller: _percent,
-            errorText: _percentProblem,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            textInputAction: TextInputAction.next,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp('[0-9.,]')),
-              LengthLimitingTextInputFormatter(6),
-            ],
-            suffixIcon: AppText(
-              '%',
-              style: AppTypography.bodyLarge.copyWith(
-                color: LightColors.textMuted,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: AppTextField(
+                  label: 'From',
+                  hintText: 'e.g. 60',
+                  controller: _from,
+                  readOnly: _isBottom,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.next,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(3),
+                  ],
+                  suffixIcon: _isBottom
+                      ? const AppIcon(
+                          AppIcons.lock,
+                          size: 16,
+                          color: LightColors.textMuted,
+                        )
+                      : null,
+                  onChanged: (_) => _fieldChanged(),
+                ),
               ),
-            ),
-            onChanged: (_) => _percentChanged(),
-          ),
-          const SizedBox(height: 20),
-          if (changes.isNotEmpty) ...[
-            GradingChangesBlock(changes: changes),
-            if (warning != null) ...[
-              const SizedBox(height: 8),
-              GradingWarningLine(message: warning),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 48, 10, 0),
+                child: AppText(
+                  'to',
+                  style: AppTypography.body.copyWith(
+                    fontSize: 14,
+                    height: 20 / 14,
+                    color: LightColors.textMuted,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: AppTextField(
+                  label: 'To',
+                  hintText: 'e.g. 69',
+                  controller: _to,
+                  readOnly: _isNew || _isTop,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(3),
+                  ],
+                  suffixIcon: _isTop
+                      ? const AppIcon(
+                          AppIcons.lock,
+                          size: 16,
+                          color: LightColors.textMuted,
+                        )
+                      : null,
+                  onChanged: (_) => _fieldChanged(),
+                ),
+              ),
             ],
-            const SizedBox(height: 20),
+          ),
+          if (_isTop) ...[
+            const SizedBox(height: 8),
+            GradingNoteLine(
+              message:
+                  '${saved!.grade} is the top grade, so it always goes up to '
+                  '100.',
+            ),
+          ] else if (_isBottom) ...[
+            const SizedBox(height: 8),
+            GradingNoteLine(
+              message:
+                  '${saved!.grade} is the lowest grade, so it always starts '
+                  'at 0.',
+            ),
           ],
+          if (error != null) ...[
+            const SizedBox(height: 10),
+            GradingErrorLine(message: error),
+          ],
+          if (error == null && outcome.changes.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            GradingChangesBlock(changes: outcome.changes),
+          ],
+          const SizedBox(height: 20),
           AppTextField(
             label: 'Remark',
             isOptional: true,
@@ -266,7 +411,7 @@ class _GradeSheetState extends State<GradeSheet> {
             loadingText: 'Saving…',
             isDisabled: !canSave,
             onPressed: _save,
-            child: const Text('Save grade'),
+            child: Text(_isNew ? 'Add grade' : 'Save grade'),
           ),
           if (saved != null && widget.onRemove != null) ...[
             const SizedBox(height: AppSpacing.md),
@@ -320,7 +465,9 @@ class _PassToggle extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 AppText(
-                  'Marks the subject as passed.',
+                  value
+                      ? 'Marks the subject as passed.'
+                      : 'Off, so a subject in this range is failed.',
                   style: AppTypography.body.copyWith(
                     fontSize: 13,
                     height: 18 / 13,

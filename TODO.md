@@ -16,16 +16,16 @@ Built 2026-11-09 and **not signed off**. The screens exist (`lib/views/grading/`
 - [ ] **Say what feels wrong.** The reasons for the dissatisfaction aren't written down yet. Add them here before redesigning, for example: is the setup too heavy, are the two sheets the wrong shape, is the section scale confusing, or is the whole thing better as a guided flow?
 - [ ] **Walk it on a real phone.** Nothing here has been run on a device or compared screen-by-screen with Paper. Check every artboard 9.1 to 9.11 against the app, including the keyboard on the number fields.
 
-**App must follow migration 34** (written 2026-11-09, **not applied**)
-- [ ] **Owner: do not apply migration 34 until the app below is updated and shipped.** It revokes the direct `grade_boundaries` writes today's Grading screen makes, so every grade change would fail with "permission denied". Apply it after the new app is out, then bump `meta.migrationsLive` to 34.
-- [ ] **Switch `GradingService` to the RPCs** (all through `runRefusable`; messages are written to be shown as they are):
+**App must follow migration 34** (applied to the live project 2026-11-09)
+- [x] **Urgent: grade edits in the current app now fail.** Migration 34 revoked the direct `grade_boundaries` writes today's Grading screen makes, so adding, editing or removing a grade returns "permission denied" until the switch below ships. Reading still works.
+- [x] **Switch `GradingService` to the RPCs** (all through `runRefusable`; messages are written to be shown as they are):
   - add, edit and remove a grade → `set_grade_scale(p_organization_id, p_section_id, p_grades)` with the **whole new list** for that set (`p_section_id` null = the school-level scale). The sheets send the full list, including a neighbour whose range moved.
   - section presets → `apply_grade_system(…, 'waec' | 'standard')`.
   - "Give Primary its own setup" and copying between sections → `copy_section_grading(p_organization_id, p_from_section_id, p_to_section_id, p_columns, p_grades)` (replaces the target's own rows).
   - "Use the school's scale instead" → `remove_section_grade_scale(p_organization_id, p_section_id)`.
   - Drop `addGradeBoundary`, `updateGradeBoundary`, `deleteGradeBoundary`, `copyScaleToSection` and `deleteSectionScale` as direct table writes.
-- [ ] **From and To fields** on the grade sheet (`max_percent` is now stored; read it in the model). Whole numbers only: **decimals are no longer allowed**, so the percentage keyboard and validation change.
-- [ ] **The "gap" / "Not covered" state becomes legacy-only.** The database refuses any set that doesn't cover 0 to 100, so new edits can't create one; keep the state only for a school whose old scale didn't start at 0 (until it is replaced).
+- [x] **From and To fields** on the grade sheet (`max_percent` is now stored; read it in the model). Whole numbers only: **decimals are no longer allowed**, so the percentage keyboard and validation change.
+- [x] **The "gap" / "Not covered" state becomes legacy-only.** The database refuses any set that doesn't cover 0 to 100, so new edits can't create one; keep the state only for a school whose old scale didn't start at 0 (until it is replaced).
 
 **Designed but not built**
 - [ ] **A score column that has scores** (Paper 9.4a): "Out of" read-only with the reason, no Remove, rename still allowed.
@@ -34,10 +34,7 @@ Built 2026-11-09 and **not signed off**. The screens exist (`lib/views/grading/`
 
 **Built differently from the design, or only partly**
 - [ ] **Position row** shows only with two or more columns. Paper 9.4 doesn't show it either; decide whether that's right.
-- [ ] **Section scales cover grades only.** A section can have its own grade scale, but not its own score columns, though the schema allows it (see the handbook gap "A section's own score columns").
-- [ ] **Chip row** clips at the 16px page padding, not at the screen edge as the Design System's scrolling chips do.
 - [ ] **Dividers** use `AppDivider` (stone-50), which is fainter than the stone-100 lines drawn in Paper.
-- [ ] **Missing-grade tile** in the incomplete state shows "?" because Paper's "F" can't be known.
 - [ ] **Home checklist** step 4 now opens Grading. It was added without being asked; confirm it's wanted.
 - [ ] **Unused `grading_problems` RPC.** Coverage is computed from the loaded rows instead.
 
@@ -51,8 +48,7 @@ Built 2026-11-09 and **not signed off**. The screens exist (`lib/views/grading/`
 - [ ] **Start the standard setup automatically** (for example at first school confirmation) so most schools never see an empty Grading screen.
 
 **Wording nobody has reviewed**
-- [ ] Copy the agent wrote because the designs didn't have it: the remove confirmations, the read-only empty states, the extra validation messages, the "Create {section} scale" / "Use the school's scale instead" sheets and their toasts, and the message when the school default has nothing to copy. Add it to Paper and check it reads well.
-- [ ] **The order warning** ("A will now be below B") only judges names like `A` or `B2`; a name like "Distinction" is never warned. Decide if that's enough.
+- [ ] Copy the agent wrote because the designs didn't have it: the remove confirmations, the read-only empty states, the extra validation messages, the copy sheet and its toasts, and the “Give {Section} its own setup” copy. Add it to Paper and check it reads well.
 - [ ] **Section load failure** shows the full-screen error view. Decide whether a partial page is better.
 
 **Tests**

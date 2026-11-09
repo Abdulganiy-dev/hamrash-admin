@@ -4,15 +4,16 @@ import 'package:hamrash_admin/api/models/grading/score_column.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// The school's grading setup: score columns and grade boundaries. Every
-/// member reads them; school leaders change them.
+/// The school's grading setup: score columns and grade boundaries, per
+/// section. Every member reads them; school leaders change them.
 ///
-/// Score columns are the school's own (`section_id` null). Grade boundaries
-/// are the school default plus any section's own scale, a full set of grades
-/// with that `section_id`: a section that has any uses them instead of the
-/// school's.
+/// Score columns keep their direct single-row writes (migration 08) and
+/// `reorder_score_columns` (33). Grade boundaries can only change through the
+/// whole-set RPCs from migration 34: `set_grade_scale`, `apply_grade_system`,
+/// `copy_section_grading` and `remove_section_grade_scale`.
 ///
-/// Refusals come back as [SupabaseRefusal] with a readable message.
+/// Refusals come back as [SupabaseRefusal] with a readable message; the
+/// RPCs' P0001 messages are written to be shown as they are.
 class GradingService {
   GradingService(this._supabase);
 
@@ -22,8 +23,8 @@ class GradingService {
       'Only the owner, admins, the principal and vice principals can change '
       'grading.';
 
-  /// The school's score columns (report-card order) and every grade
-  /// boundary: the school default and each section's own scale.
+  /// Every score column and grade boundary of the school, with the
+  /// `section_id` that says which set each row belongs to.
   Future<GradingSetup> getSetup(String organizationId) => _run(
     'getSetup',
     () async {
@@ -32,7 +33,6 @@ class GradingService {
             .from('score_columns')
             .select(ScoreColumn.columns)
             .eq('organization_id', organizationId)
-            .isFilter('section_id', null)
             .order('sort_order')
             .order('name'),
         _supabase
@@ -43,14 +43,15 @@ class GradingService {
       ]);
       return GradingSetup(
         columns: results[0].map(ScoreColumn.fromJson).toList(),
-        boundaries: results[1].map(GradeBoundary.fromJson).toList(),
+        grades: results[1].map(GradeBoundary.fromJson).toList(),
       );
     },
     log: (setup) => {
       'organization_id': organizationId,
       'columns': setup.columns.length,
-      'grades': setup.boundaries.length,
-      'section_scales': setup.sectionBoundaries.length,
+      'grades': setup.grades.length,
+      'section_columns': setup.columns.where((c) => c.sectionId != null).length,
+      'section_grades': setup.grades.where((g) => g.sectionId != null).length,
     },
   );
 
@@ -65,25 +66,37 @@ class GradingService {
         );
       }, log: (_) => {'organization_id': organizationId});
 
-  /// Adds a score column at [sortOrder] on the report card.
-  Future<void> addScoreColumn({
+  /// Adds a score column to [sectionId]'s own set, or to the school's when
+  /// null. Returns the new column's id.
+  Future<String> addScoreColumn({
     required String organizationId,
     required String name,
     required double maxScore,
     required int sortOrder,
+    String? sectionId,
   }) => _run(
     'addScoreColumn',
     () async {
-      await _supabase.from('score_columns').insert({
-        'organization_id': organizationId,
-        'name': name,
-        'max_score': maxScore,
-        'sort_order': sortOrder,
-      });
+      final row = await _supabase
+          .from('score_columns')
+          .insert({
+            'organization_id': organizationId,
+            'section_id': ?sectionId,
+            'name': name,
+            'max_score': maxScore,
+            'sort_order': sortOrder,
+          })
+          .select('id')
+          .single();
+      return row['id'] as String;
     },
-    log: (_) => {'organization_id': organizationId, 'name': name},
-    duplicate: 'There’s already a column with that name.',
-    invalid: 'A column needs a name and has to be out of more than 0.',
+    log: (id) => {
+      'organization_id': organizationId,
+      'section_id': sectionId,
+      'column_id': id,
+    },
+    duplicate: 'There’s already a column with that name. Pick another name.',
+    invalid: 'Enter marks above 0, like 20 or 12.5.',
   );
 
   Future<void> updateScoreColumn(
@@ -101,8 +114,8 @@ class GradingService {
       refuseIfNothingChanged(changed, leadersOnly);
     },
     log: (_) => {'column_id': column.id},
-    duplicate: 'There’s already a column with that name.',
-    invalid: 'A column needs a name and has to be out of more than 0.',
+    duplicate: 'There’s already a column with that name. Pick another name.',
+    invalid: 'Enter marks above 0, like 20 or 12.5.',
   );
 
   Future<void> deleteScoreColumn(ScoreColumn column) => _run(
@@ -120,139 +133,138 @@ class GradingService {
         'Scores are already entered for this column, so it can’t be removed.',
   );
 
-  /// Puts the school's score columns in a new report-card order. [orderedIds]
-  /// is every column, once, in the new order. One call (migration 33), so the
-  /// order changes completely or not at all. A column added or removed by
-  /// someone else since the page loaded is refused with a readable message.
+  /// Puts one set's score columns in a new report-card order. [orderedIds]
+  /// is every column in that set, once, in the new order. One call
+  /// (migration 33), so the order changes completely or not at all.
   Future<void> reorderScoreColumns(
     String organizationId,
     List<String> orderedIds,
-  ) => _run('reorderScoreColumns', () async {
-    await _supabase.rpc(
-      'reorder_score_columns',
-      params: {
-        'p_organization_id': organizationId,
-        'p_column_ids': orderedIds,
-      },
-    );
-  }, log: (_) => {'organization_id': organizationId, 'columns': orderedIds.length});
-
-  /// Adds a grade to the school default scale, or to [sectionId]'s own scale.
-  Future<void> addGradeBoundary({
-    required String organizationId,
-    required String grade,
-    required double minPercent,
-    required String? remark,
-    required bool isPass,
-    String? sectionId,
-  }) => _run(
-    'addGradeBoundary',
+  ) => _run(
+    'reorderScoreColumns',
     () async {
-      await _supabase.from('grade_boundaries').insert({
-        'organization_id': organizationId,
-        'section_id': ?sectionId,
-        'grade': grade,
-        'min_percent': minPercent,
-        'remark': remark,
-        'is_pass': isPass,
-      });
+      await _supabase.rpc(
+        'reorder_score_columns',
+        params: {
+          'p_organization_id': organizationId,
+          'p_column_ids': orderedIds,
+        },
+      );
     },
-    log: (_) => {'organization_id': organizationId, 'grade': grade},
-    duplicate: _gradeTaken,
-    invalid: _gradeInvalid,
+    log: (_) => {
+      'organization_id': organizationId,
+      'columns': orderedIds.length,
+    },
   );
 
-  Future<void> updateGradeBoundary(
-    GradeBoundary boundary, {
-    required String grade,
-    required double minPercent,
-    required String? remark,
-    required bool isPass,
-  }) => _run(
-    'updateGradeBoundary',
-    () async {
-      final changed = await _supabase
-          .from('grade_boundaries')
-          .update({
-            'grade': grade,
-            'min_percent': minPercent,
-            'remark': remark,
-            'is_pass': isPass,
-          })
-          .eq('id', boundary.id)
-          .select('id');
-      refuseIfNothingChanged(changed, leadersOnly);
-    },
-    log: (_) => {'boundary_id': boundary.id},
-    duplicate: _gradeTaken,
-    invalid: _gradeInvalid,
-  );
-
-  Future<void> deleteGradeBoundary(GradeBoundary boundary) =>
-      _run('deleteGradeBoundary', () async {
-        final removed = await _supabase
-            .from('grade_boundaries')
-            .delete()
-            .eq('id', boundary.id)
-            .select('id');
-        refuseIfNothingChanged(removed, leadersOnly);
-      }, log: (_) => {'boundary_id': boundary.id});
-
-  /// Gives [sectionId] its own scale, starting as a copy of [grades] (the
-  /// school default). All rows go in one insert, so the section gets the whole
-  /// scale or nothing: a partial set would silently replace the school's
-  /// scale for that section.
-  Future<void> copyScaleToSection({
+  /// Replaces ONE set's whole grade scale: a section's own when [sectionId]
+  /// is set, otherwise the school-level set. Every add, edit and remove sends
+  /// the complete new list.
+  Future<void> setGradeScale({
     required String organizationId,
-    required String sectionId,
+    required String? sectionId,
     required List<GradeBoundary> grades,
   }) => _run(
-    'copyScaleToSection',
+    'setGradeScale',
     () async {
-      await _supabase.from('grade_boundaries').insert([
-        for (final g in grades)
-          {
-            'organization_id': organizationId,
-            'section_id': sectionId,
-            'grade': g.grade,
-            'min_percent': g.minPercent,
-            'remark': g.remark,
-            'is_pass': g.isPass,
-          },
-      ]);
+      await _supabase.rpc(
+        'set_grade_scale',
+        params: {
+          'p_organization_id': organizationId,
+          'p_section_id': sectionId,
+          'p_grades': [
+            for (final grade in grades)
+              {
+                'grade': grade.grade,
+                'min_percent': grade.minPercent,
+                'max_percent': grade.maxPercent,
+                'remark': grade.remark,
+                'is_pass': grade.isPass,
+              },
+          ],
+        },
+      );
     },
     log: (_) => {
       'organization_id': organizationId,
       'section_id': sectionId,
       'grades': grades.length,
     },
-    duplicate: 'That section already has its own grade scale.',
-    invalid: _gradeInvalid,
   );
 
-  /// Removes all of [sectionId]'s own grades in one delete, so the section
-  /// goes back to the school default.
-  Future<void> deleteSectionScale({
+  /// Puts the WAEC or Standard preset on one section, atomically.
+  Future<void> applyGradeSystem({
+    required String organizationId,
+    required String sectionId,
+    required String system,
+  }) => _run(
+    'applyGradeSystem',
+    () async {
+      await _supabase.rpc(
+        'apply_grade_system',
+        params: {
+          'p_organization_id': organizationId,
+          'p_section_id': sectionId,
+          'p_system': system,
+        },
+      );
+    },
+    log: (_) => {
+      'organization_id': organizationId,
+      'section_id': sectionId,
+      'system': system,
+    },
+  );
+
+  /// Copies score columns and/or grades into [toSectionId], replacing its own
+  /// rows of each kind copied. [fromSectionId] null copies the school-level
+  /// set ("Give Primary its own setup").
+  Future<void> copySectionGrading({
+    required String organizationId,
+    required String? fromSectionId,
+    required String toSectionId,
+    required bool columns,
+    required bool grades,
+  }) => _run(
+    'copySectionGrading',
+    () async {
+      await _supabase.rpc(
+        'copy_section_grading',
+        params: {
+          'p_organization_id': organizationId,
+          'p_from_section_id': fromSectionId,
+          'p_to_section_id': toSectionId,
+          'p_columns': columns,
+          'p_grades': grades,
+        },
+      );
+    },
+    log: (_) => {
+      'organization_id': organizationId,
+      'from_section_id': fromSectionId,
+      'to_section_id': toSectionId,
+      'columns': columns,
+      'grades': grades,
+    },
+  );
+
+  /// Deletes a section's own grade rows, so it uses the school-level scale
+  /// again. Score columns are not touched.
+  Future<void> removeSectionGradeScale({
     required String organizationId,
     required String sectionId,
   }) => _run(
-    'deleteSectionScale',
+    'removeSectionGradeScale',
     () async {
-      final removed = await _supabase
-          .from('grade_boundaries')
-          .delete()
-          .eq('organization_id', organizationId)
-          .eq('section_id', sectionId)
-          .select('id');
-      refuseIfNothingChanged(removed, leadersOnly);
+      await _supabase.rpc(
+        'remove_section_grade_scale',
+        params: {
+          'p_organization_id': organizationId,
+          'p_section_id': sectionId,
+        },
+      );
     },
     log: (_) => {'organization_id': organizationId, 'section_id': sectionId},
   );
-
-  static const _gradeTaken =
-      'Another grade already has that name or starts at that number.';
-  static const _gradeInvalid =
-      'A grade needs a name and has to start from 0 up to below 100.';
 
   Future<T> _run<T>(
     String name,

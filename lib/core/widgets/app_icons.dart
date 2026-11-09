@@ -28,6 +28,7 @@ abstract final class AppIcons {
   static const circleX = LucideIcons.circleX;
   static const clipboardPaste = LucideIcons.clipboardPaste;
   static const clock = LucideIcons.clock;
+  static const columns3 = LucideIcons.columns3;
   static const copy = LucideIcons.copy;
   static const ellipsis = LucideIcons.ellipsis;
   static const eye = LucideIcons.eye;
