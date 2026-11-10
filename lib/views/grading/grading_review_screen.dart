@@ -448,7 +448,7 @@ class _ScoreRow extends StatelessWidget {
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
                     focusedBorder: InputBorder.none,
-                    enabledBorder: InputBorder.none
+                    enabledBorder: InputBorder.none,
                   ),
                 ),
               ),

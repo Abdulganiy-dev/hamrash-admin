@@ -25,7 +25,7 @@ import 'package:hamrash_admin/views/grading/widgets/grading_copy_sheet.dart';
 import 'package:hamrash_admin/views/grading/widgets/score_column_sheet.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_body.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_empty_state.dart';
-import 'package:hamrash_admin/views/grading/widgets/grading_secondary_button.dart';
+import 'package:hamrash_admin/views/grading/widgets/grading_text_link.dart';
 import 'package:stacked/stacked.dart';
 
 /// 9.26–9.30 · What a subject's score is made of in one section.
@@ -180,7 +180,7 @@ class _Columns extends StatelessWidget {
       ),
       const SizedBox(height: 16),
       if (model.canChange)
-        GradingSecondaryButton(
+        GradingTextLink(
           icon: AppIcons.copy,
           label: 'Copy columns from another section',
           onPressed: () => actions.copy(context),
@@ -379,7 +379,7 @@ class _Inherited extends StatelessWidget {
         ),
       const SizedBox(height: 16),
       if (model.canChange)
-        GradingSecondaryButton(
+        GradingTextLink(
           icon: AppIcons.copy,
           label: 'Copy columns from another section',
           onPressed: () => actions.copy(context),
