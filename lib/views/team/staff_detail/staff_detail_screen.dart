@@ -78,26 +78,33 @@ class StaffDetailScreen extends StatelessWidget {
             StaffDetailViewModel(school: school, staffId: staffId),
         onViewModelReady: (model) => model.load(),
         builder: (context, model, _) {
-          final content = model.error == null && !model.loading
-              ? _Content(model: model, openTeaching: _openTeaching)
-              : null;
           return DefaultScaffold(
             title: 'Staff',
             showBackButton: true,
             onBackPressed: () => NavigationService.popScreen(model.changed),
             backgroundColor: AppPalette.linen,
-            body:
-                content ??
-                (model.error != null
-                    ? LoadErrorView(onRetry: model.load)
-                    : const _Loading()),
+            body: AnimatedSectionContent(
+              morphHeight: false,
+              child: model.error != null
+                  ? LoadErrorView(
+                      key: const ValueKey('error'),
+                      onRetry: model.load,
+                    )
+                  : model.loading
+                  ? const _Loading(key: ValueKey('loading'))
+                  : _Content(
+                      key: const ValueKey('content'),
+                      model: model,
+                      openTeaching: _openTeaching,
+                    ),
+            ),
           );
         },
       );
 }
 
 class _Content extends StatelessWidget {
-  const _Content({required this.model, required this.openTeaching});
+  const _Content({super.key, required this.model, required this.openTeaching});
 
   final StaffDetailViewModel model;
 
@@ -504,7 +511,7 @@ class _Content extends StatelessWidget {
 
 /// [StaffDetailSkeleton] where the page's content starts.
 class _Loading extends StatelessWidget {
-  const _Loading();
+  const _Loading({super.key});
 
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
