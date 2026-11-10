@@ -231,7 +231,9 @@ class _ActionCircle extends StatelessWidget {
               decoration: BoxDecoration(
                 color: _enabled ? AppPalette.white : AppPalette.stone100,
                 shape: BoxShape.circle,
-                border: Border.all(color: LightColors.strokeColourStrokeCard),
+                border: _enabled
+                    ? Border.all(color: LightColors.strokeColourStrokeCard)
+                    : null,
               ),
               child: Center(
                 child: AppIcon(

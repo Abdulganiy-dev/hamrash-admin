@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// and `x500` SVGs) now share one Lucide icon: the line weight comes from the
 /// icon font, so a name describes the shape, not the stroke.
 abstract final class AppIcons {
+  static const activity = LucideIcons.activity;
   static const arrowLeftRight = LucideIcons.arrowLeftRight;
   static const award = LucideIcons.award;
   static const bell = LucideIcons.bell;
@@ -33,6 +34,7 @@ abstract final class AppIcons {
   static const ellipsis = LucideIcons.ellipsis;
   static const eye = LucideIcons.eye;
   static const eyeOff = LucideIcons.eyeOff;
+  static const flag = LucideIcons.flag;
   static const graduationCap = LucideIcons.graduationCap;
   static const hash = LucideIcons.hash;
   static const house = LucideIcons.house;
@@ -63,6 +65,7 @@ abstract final class AppIcons {
   static const trash2 = LucideIcons.trash2;
   static const triangleAlert = LucideIcons.triangleAlert;
   static const user = LucideIcons.user;
+  static const userMinus = LucideIcons.userMinus;
   static const userPlus = LucideIcons.userPlus;
   static const users = LucideIcons.users;
   static const wallet = LucideIcons.wallet;

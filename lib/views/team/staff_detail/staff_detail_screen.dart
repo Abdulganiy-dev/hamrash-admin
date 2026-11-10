@@ -7,19 +7,19 @@ import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
+import 'package:hamrash_admin/core/utils/phone_format.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
+import 'package:hamrash_admin/core/widgets/app_icon_label.dart';
+import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/animated_section_content.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
-import 'package:hamrash_admin/core/utils/phone_format.dart';
-import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
-import 'package:hamrash_admin/core/widgets/navigation/app_nav_button.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_view_model.dart';
 import 'package:hamrash_admin/views/team/staff_teaching/teaching_setup_view_model.dart';
@@ -30,16 +30,15 @@ import 'package:hamrash_admin/views/team/widgets/invite_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/role_picker_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/share_invite.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_access_section.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_danger_action.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_detail_identity.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_invite_code_field.dart';
 import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
 import 'package:stacked/stacked.dart';
 
-/// 8.4, 8.9, 8.10 · One staff member. The page is the same in all three
-/// states; where their login has got to decides what it offers. Pops `true`
-/// when something was saved.
+/// 8.14 – 8.18 · One staff member. The page is the same in every state;
+/// where their login has got to decides what it offers. Pops `true` when
+/// something was saved.
 class StaffDetailScreen extends StatelessWidget {
   const StaffDetailScreen({
     super.key,
@@ -80,65 +79,52 @@ class StaffDetailScreen extends StatelessWidget {
         onViewModelReady: (model) => model.load(),
         builder: (context, model, _) {
           final content = model.error == null && !model.loading
-              ? _Content(model: model)
+              ? _Content(model: model, openTeaching: _openTeaching)
               : null;
           return DefaultScaffold(
             title: 'Staff',
             showBackButton: true,
             onBackPressed: () => NavigationService.popScreen(model.changed),
             backgroundColor: AppPalette.linen,
-            actions: [
-              if (model.canSetTeaching)
-                AppNavIconButton(
-                  icon: AppIcons.graduationCap,
-                  iconColor: LightColors.primaryPrimaryDefault,
-                  semanticLabel: 'Teaching setup',
-                  onPressed: () => _openTeaching(context, model),
-                ),
-            ],
             body:
                 content ??
                 (model.error != null
                     ? LoadErrorView(onRetry: model.load)
                     : const _Loading()),
-            bottomNavigationBar: content != null && model.showDanger
-                ? _DangerBar(
-                    label: model.dangerLabel,
-                    caption: model.dangerCaption,
-                    onPressed: model.isPending
-                        ? () => content._cancelInvite(context)
-                        : () => content._remove(context),
-                  )
-                : null,
-            // The footer draws its own top hairline.
-            bottomBarFade: false,
           );
         },
       );
 }
 
 class _Content extends StatelessWidget {
-  const _Content({required this.model});
+  const _Content({required this.model, required this.openTeaching});
 
   final StaffDetailViewModel model;
 
-  StaffMember get _member => model.member;
+  /// Opens the teaching setup sheet from either Teaching row.
+  final Future<void> Function(BuildContext context, StaffDetailViewModel model)
+  openTeaching;
 
-  Color get _statusDot => switch (_member.status) {
-    StaffRecordStatus.active => LightColors.successSuccessDefault,
-    StaffRecordStatus.onLeave => LightColors.warningWarningDefault,
-    StaffRecordStatus.exited => AppPalette.stone400,
-  };
+  StaffMember get _member => model.member;
 
   @override
   Widget build(BuildContext context) {
+    // Every section is the same card; only the first one takes the wider
+    // gap under the header.
+    final sections = <Widget>[
+      if (model.showTeaching) _teaching(context),
+      _details(context),
+      if (model.showPersonal) _personal(),
+      if (model.showAccess) _access(context),
+    ];
+
     return AppRefreshScrollView.children(
       onRefresh: model.refresh,
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
+        AppSpacing.screen,
         AppSpacing.sm,
-        AppSpacing.md,
-        AppSpacing.lg,
+        AppSpacing.screen,
+        AppSpacing.xl,
       ),
       children: [
         StaffDetailIdentity(
@@ -150,30 +136,32 @@ class _Content extends StatelessWidget {
         // code, or nothing. One slot means the change morphs instead of
         // jumping.
         AnimatedSectionContent(child: _actionSlot(context)),
-        const SizedBox(height: 24),
-        _details(context),
-        if (model.showTeaching) ...[const SizedBox(height: 28), _teaching()],
-        if (model.showPersonal) ...[const SizedBox(height: 28), _personal()],
-        if (model.showAccess) ...[const SizedBox(height: 28), _access(context)],
+        for (final (index, section) in sections.indexed)
+          Padding(
+            padding: EdgeInsets.only(
+              top: index == 0 ? AppSpacing.lg + AppSpacing.xs : AppSpacing.lg,
+            ),
+            child: section,
+          ),
       ],
     );
   }
 
-  /// 8.15 / 8.16 · The block between the identity and Details: the invite
-  /// button and its note, the unused invite's code, or nothing. The key is the
-  /// access state — that key change is what drives the crossfade.
+  /// 8.15 / 8.16 · The block between the identity and the first card: the
+  /// invite button and its note, the unused invite's code, or nothing. The key
+  /// is the access state — that key change is what drives the crossfade.
   Widget _actionSlot(BuildContext context) {
     if (model.isNotOnApp) {
       return Padding(
         key: ValueKey(model.access),
-        padding: const EdgeInsets.only(top: 24),
+        padding: const EdgeInsets.only(top: AppSpacing.lg),
         child: _noLogin(context),
       );
     }
     if (model.isPending) {
       return Padding(
         key: ValueKey(model.access),
-        padding: const EdgeInsets.only(top: 24),
+        padding: const EdgeInsets.only(top: AppSpacing.lg),
         child: _pending(context),
       );
     }
@@ -235,18 +223,13 @@ class _Content extends StatelessWidget {
         value: model.staffTypeLabel,
       ),
       StaffInfoRow(
-        icon: switch (_member.status) {
-          StaffRecordStatus.active => AppIcons.circleCheck,
-          StaffRecordStatus.onLeave => AppIcons.clock,
-          StaffRecordStatus.exited => AppIcons.circleMinus,
-        },
+        icon: AppIcons.activity,
         label: 'Status',
         value: model.statusLabel,
-        valueDot: _statusDot,
       ),
       StaffInfoRow(
         icon: AppIcons.calendar,
-        label: 'Employment date',
+        label: 'Employed',
         value: model.employmentDateLabel,
       ),
       StaffInfoRow(
@@ -258,60 +241,54 @@ class _Content extends StatelessWidget {
     ],
   );
 
-  /// Where this person teaches this session: their homeroom, then each
-  /// subject with its class and arm.
-  Widget _teaching() => StaffInfoSection(
+  /// Where this person teaches this session. Both rows open the teaching
+  /// sheet; a save refreshes the card.
+  Widget _teaching(BuildContext context) => StaffInfoSection(
     title: 'Teaching',
     trailing: model.teachingSession.isEmpty
         ? null
         : AppText(
             model.teachingSession,
-            style: AppTypography.body.copyWith(
-              fontSize: 13,
-              height: 18 / 13,
+            style: AppTypography.caption.copyWith(
               fontWeight: FontWeight.w600,
               color: LightColors.textMuted,
             ),
           ),
     rows: [
-      if (model.homerooms.isEmpty)
-        const StaffInfoRow(
-          icon: AppIcons.school,
-          label: 'Homeroom',
-          value: 'Not assigned',
-        )
-      else
-        for (final row in model.homerooms)
-          StaffInfoRow(
-            icon: AppIcons.school,
-            label: row.isLead ? 'Lead teacher' : 'Assistant teacher',
-            value: row.armLabel,
-          ),
-      if (model.subjectsTaught.isEmpty)
-        const StaffInfoRow(
-          icon: AppIcons.bookOpen,
-          label: 'Subjects',
-          value: 'None assigned',
-        )
-      else
-        for (final row in model.subjectsTaught)
-          StaffInfoRow(
-            icon: AppIcons.bookOpen,
-            label: row.subjectName,
-            value: row.armLabel,
-          ),
+      StaffTeachingRow(
+        key: const ValueKey('teaching-homeroom'),
+        icon: AppIcons.house,
+        tileColor: LightColors.primaryPrimaryMute,
+        iconColor: LightColors.primaryPrimaryDefault,
+        caption: model.homeroomCaption,
+        value: model.homeroomValue,
+        onTap: () => openTeaching(context, model),
+      ),
+      StaffTeachingRow(
+        key: const ValueKey('teaching-subjects'),
+        icon: AppIcons.bookOpen,
+        tileColor: AppPalette.honeyMute,
+        iconColor: AppPalette.honeyText,
+        caption: model.subjectsCaption,
+        value: model.subjectsValue,
+        onTap: () => openTeaching(context, model),
+      ),
     ],
   );
 
   /// Private to leaders: the page is leaders-only, and the guard stays.
   Widget _personal() => StaffInfoSection(
     title: 'Personal',
-    trailing: AppText(
-      'LEADER ONLY',
-      style: AppTypography.overline.copyWith(
-        letterSpacing: 0.66,
-        height: 14 / 11,
-        color: LightColors.textBody,
+    trailing: AppIconLabel(
+      icon: AppIcons.lock,
+      label: 'Only leaders see this',
+      iconColor: LightColors.textMuted,
+      iconSize: 13,
+      gap: 5,
+      hugContent: true,
+      style: AppTypography.caption.copyWith(
+        fontWeight: FontWeight.w600,
+        color: LightColors.textMuted,
       ),
     ),
     rows: [
@@ -328,14 +305,14 @@ class _Content extends StatelessWidget {
         value: model.genderLabel,
       ),
       StaffInfoRow(
-        icon: AppIcons.mapPin,
-        label: 'Lives in',
-        value: model.livesInLabel,
+        icon: AppIcons.flag,
+        label: 'From',
+        value: model.stateOfOrigin,
       ),
       StaffInfoRow(
         icon: AppIcons.mapPin,
-        label: 'From',
-        value: model.stateOfOrigin,
+        label: 'Lives in',
+        value: model.livesInLabel,
       ),
       StaffInfoRow(
         icon: AppIcons.house,
@@ -346,13 +323,19 @@ class _Content extends StatelessWidget {
     ],
   );
 
-  /// 8.14 · They have used the code. Access is the only thing left.
+  /// 8.14 – 8.16 · Who can use the app: the role and the access actions, or
+  /// just remove for someone who never had a login.
   Widget _access(BuildContext context) => StaffAccessSection(
     roleLabel: model.role.teamLabel,
+    isOnApp: model.isOnApp,
+    isPending: model.isPending,
     isSuspended: model.isSuspended,
     joinedCaption: model.joinedCaption,
-    onChangeRole: () => _changeRole(context),
-    onToggleAccess: () => _toggleAccess(context),
+    invitedCaption: model.invitedCaption,
+    onChangeRole: model.showRoleRow ? () => _changeRole(context) : null,
+    onToggleAccess: model.canManageAccess ? () => _toggleAccess(context) : null,
+    onCancelInvite: model.canCancelInvite ? () => _cancelInvite(context) : null,
+    onRemove: model.canRemove ? () => _remove(context) : null,
   );
 
   Future<T?> _sheet<T>(
@@ -517,45 +500,6 @@ class _Content extends StatelessWidget {
       NavigationService.popScreen(true);
     }
   }
-}
-
-/// The pinned action at the bottom of the page. It sits in the scaffold's
-/// bottom bar, so the SafeArea keeps it clear of the home indicator and the
-/// scroll content above never runs behind it.
-class _DangerBar extends StatelessWidget {
-  const _DangerBar({
-    required this.label,
-    required this.caption,
-    required this.onPressed,
-  });
-
-  final String label;
-  final String caption;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      border: const Border(top: BorderSide(color: AppPalette.stone200)),
-    ),
-    child: SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          AppSpacing.ms,
-          AppSpacing.md,
-          AppSpacing.ms + AppSpacing.xxs,
-        ),
-        child: StaffDangerAction(
-          label: label,
-          caption: caption,
-          onPressed: onPressed,
-        ),
-      ),
-    ),
-  );
 }
 
 /// [StaffDetailSkeleton] where the page's content starts.

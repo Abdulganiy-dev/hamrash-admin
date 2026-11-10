@@ -40,7 +40,7 @@ final _member = StaffMember(
     role: OrganizationMemberRole.teacher,
     status: OrganizationMemberStatus.invited,
     claimCode: 'K7M2QX9P',
-    createdAt: DateTime.now(),
+    createdAt: DateTime(2026, 11, 8),
   ),
 );
 
@@ -65,7 +65,7 @@ void main() {
   });
 
   Future<void> pump(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(390, 1400);
+    tester.view.physicalSize = const Size(390, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
@@ -86,6 +86,7 @@ void main() {
 
     expect(find.byType(StaffInviteCodeField), findsOneWidget);
     expect(find.text('INVITE CODE'), findsOneWidget);
+    expect(find.text('Never expires'), findsOneWidget);
     expect(find.text('K7M2-QX9P'), findsOneWidget);
     expect(
       tester.getSize(find.byKey(const ValueKey('invite-code-field'))).height,
@@ -105,19 +106,24 @@ void main() {
     expect(find.text('EXPIRES'), findsNothing);
     expect(find.text('Invite to Hamrash'), findsNothing);
 
-    // Details hold the record; no Access section for an unused invite.
+    // Details hold the record; the Access card holds the invite actions.
     expect(find.text('Staff number'), findsOneWidget);
     expect(find.text('Staff type'), findsOneWidget);
     expect(find.text('Phone'), findsOneWidget);
     expect(find.text('Email'), findsNWidgets(2)); // action label and row
-    expect(find.text('Access'), findsNothing);
 
-    expect(find.text('Cancel invite', skipOffstage: false), findsOneWidget);
+    expect(find.text('Access'), findsOneWidget);
+    expect(find.text('Invited 8 Nov'), findsOneWidget);
+    expect(find.text('Role'), findsNothing);
+    expect(find.text('Suspend access'), findsNothing);
+    expect(find.text('Cancel invite'), findsOneWidget);
     expect(
-      find.text(
-        'The code stops working. Tunde stays on the staff list.',
-        skipOffstage: false,
-      ),
+      find.text('The code stops working. They stay on the list.'),
+      findsOneWidget,
+    );
+    expect(find.text('Remove from staff list'), findsOneWidget);
+    expect(
+      find.text('Their record is removed. Nothing else changes.'),
       findsOneWidget,
     );
   });

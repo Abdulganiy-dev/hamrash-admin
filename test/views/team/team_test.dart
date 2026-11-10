@@ -452,12 +452,36 @@ void main() {
       expect(model.stateOfOrigin, 'Imo');
     });
 
+    test('the access card also holds remove for someone never invited', () async {
+      final (model, _) = await loaded(_teacher);
+
+      expect(model.access, StaffAccess.notOnApp);
+      expect(model.showAccess, isTrue);
+      expect(model.showRoleRow, isFalse);
+    });
+
+    test('the invite caption uses the login\'s created date', () async {
+      final (model, _) = await loaded(_bursar);
+
+      expect(model.invitedCaption, 'Invited 5 Nov');
+      expect(model.joinedCaption, isNull);
+    });
+
+    test("the teaching card's empty rows still read clearly", () async {
+      final (model, _) = await loaded(_teacher);
+
+      expect(model.homeroomCaption, 'Homeroom');
+      expect(model.homeroomValue, 'Not assigned');
+      expect(model.subjectsCaption, 'Subjects · 0 this session');
+      expect(model.subjectsValue, 'None this session');
+    });
+
     test('a claimed login can be managed by its owner', () async {
       final (model, _) = await loaded(_admin, memberIds: ['m-owner']);
 
       expect(model.access, StaffAccess.onApp);
       expect(model.identityMeta, 'Admin · Non-teaching');
-      expect(model.joinedCaption, 'Joined 3 Sep');
+      expect(model.joinedCaption, 'Joined 3 Sep 2026');
       expect(model.canManageAccess, isTrue);
       expect(model.canRemove, isTrue);
       expect(model.canInvite, isFalse);

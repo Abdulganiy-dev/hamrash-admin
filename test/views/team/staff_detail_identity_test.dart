@@ -213,6 +213,41 @@ void main() {
     expect(launcher.opened, ['tel:+2348035550142']);
   });
 
+  testWidgets('a disabled circle drops its border and reads stone 100', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      access: StaffAccess.onApp,
+      member: _member(phone: null, email: null),
+    );
+
+    final decoration =
+        tester
+                .widget<Container>(
+                  find
+                      .descendant(
+                        of: find.byKey(const ValueKey('action-email')),
+                        matching: find.byType(Container),
+                      )
+                      .first,
+                )
+                .decoration!
+            as BoxDecoration;
+    expect(decoration.color, AppPalette.stone100);
+    expect(decoration.border, isNull);
+
+    final icon = tester.widget<Icon>(
+      find.descendant(
+        of: find.byKey(const ValueKey('action-email')),
+        matching: find.byType(Icon),
+      ),
+    );
+    expect(icon.color, AppPalette.stone400);
+    final label = tester.widget<Text>(find.text('Email'));
+    expect(label.style?.color, LightColors.textDisabled);
+  });
+
   testWidgets('fits at 320 with a long name', (tester) async {
     await pump(
       tester,

@@ -15,7 +15,7 @@ import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/staff_teaching/teaching_catalog.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 
-/// 8.4, 8.9, 8.10 · One staff member. Everything about inviting lives here:
+/// 8.14 – 8.18 · One staff member. Everything about inviting lives here:
 /// no login yet → invite, an unused code → share or cancel, a login → change
 /// the role, suspend, restore, or remove the record.
 ///
@@ -81,9 +81,10 @@ class StaffDetailViewModel extends BaseViewModel {
   /// Only the owner and admins change roles and status.
   bool get canManageAccess => school.canManageAccess && !isOwnerRow;
 
-  /// The Access card belongs to someone with a login. The owner's own row
-  /// never shows it.
-  bool get showAccess => canManageAccess && (isOnApp || isSuspended);
+  /// The Access card belongs to someone a leader may manage. It holds the
+  /// role and the actions that change access; the owner's own row never
+  /// shows it.
+  bool get showAccess => canManageAccess;
 
   /// Only the owner and admins remove a record; the owner's own is never
   /// offered.
@@ -134,22 +135,8 @@ class StaffDetailViewModel extends BaseViewModel {
   /// The same tiers as inviting: a principal can't cancel an admin's invite.
   bool get canCancelInvite => isPending && school.canInviteRole(role);
 
-  /// The one action at the bottom: cancel an unused invite, or remove the
-  /// record. Null when the viewer may do neither.
-  bool get showDanger => isPending ? canCancelInvite : canRemove;
-
-  String get dangerLabel =>
-      isPending ? 'Cancel invite' : 'Remove from staff list';
-
-  String get dangerCaption => switch (access) {
-    StaffAccess.invitePending =>
-      'The code stops working. ${member.firstNameOnly} stays on the staff '
-          'list.',
-    StaffAccess.onApp ||
-    StaffAccess.owner ||
-    StaffAccess.suspended => 'Also removes their login.',
-    StaffAccess.notOnApp => 'Their record is removed. Nothing else changes.',
-  };
+  /// The Role row only exists for a live login.
+  bool get showRoleRow => canManageAccess && (isOnApp || isSuspended);
 
   /// "Teaching" or "Non-teaching", as the details card writes it.
   String get staffTypeLabel =>
@@ -208,11 +195,45 @@ class StaffDetailViewModel extends BaseViewModel {
     return origin == null || origin.isEmpty ? null : origin;
   }
 
-  /// "Joined 3 Sep", or null when the login has no joined date.
+  /// "Joined 3 Sep 2026", or null when the login has no joined date.
   String? get joinedCaption {
     final joined = login?.joinedAt;
-    return joined == null ? null : 'Joined ${AppDateFormat.dayMonth(joined)}';
+    return joined == null
+        ? null
+        : 'Joined ${AppDateFormat.dayMonthYear(joined)}';
   }
+
+  /// "Invited 8 Nov", or null when there is no invite.
+  ///
+  /// TODO(data): the login has no separate invited-at column, so this reads
+  /// its created date — the closest record the database keeps. Swap it when
+  /// the login exposes the invite's own date.
+  String? get invitedCaption {
+    final created = login?.createdAt;
+    return isPending && created != null
+        ? 'Invited ${AppDateFormat.dayMonth(created)}'
+        : null;
+  }
+
+  /// "Homeroom · Lead teacher", or just "Homeroom" when they have none.
+  String get homeroomCaption => _homerooms.isEmpty
+      ? 'Homeroom'
+      : 'Homeroom · ${_homerooms.first.isLead ? 'Lead teacher' : 'Assistant teacher'}';
+
+  /// Every arm they lead or assist, e.g. "JSS 1A, JSS 2B", or "Not assigned".
+  String get homeroomValue => _homerooms.isEmpty
+      ? 'Not assigned'
+      : _homerooms.map((row) => row.armLabel).join(', ');
+
+  /// "Subjects · 3 this session".
+  String get subjectsCaption =>
+      'Subjects · ${_subjectsTaught.length} this session';
+
+  /// Every subject they teach this session, e.g. "Maths, Basic Science,
+  /// Civic Education"; "None this session" when there are none.
+  String get subjectsValue => _subjectsTaught.isEmpty
+      ? 'None this session'
+      : _subjectsTaught.map((row) => row.subjectName).join(', ');
 
   /// The role the invite sheet starts on, kept inside what the viewer may
   /// issue. An admin job title seen by a principal drops to principal.

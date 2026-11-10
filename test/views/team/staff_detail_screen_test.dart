@@ -8,6 +8,8 @@ import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
+import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/widgets/app_segmented_control.dart';
@@ -19,7 +21,6 @@ import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
 import 'package:hamrash_admin/views/team/widgets/change_details_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/choice_list_sheet.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_danger_action.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_form_fields.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
 import 'package:url_launcher_platform_interface/link.dart';
@@ -172,7 +173,7 @@ void main() {
     _FakeTeam? team,
   }) async {
     if (tester.view.devicePixelRatio != 1) {
-      tester.view.physicalSize = const Size(390, 1600);
+      tester.view.physicalSize = const Size(390, 1900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
     }
@@ -230,10 +231,13 @@ void main() {
     expect(find.text('Staff type'), findsOneWidget);
     expect(find.text('Non-teaching'), findsOneWidget);
     expect(find.text('Phone'), findsOneWidget);
-    // Staff number, phone, email, status-adjacent rows and Personal have nothing.
+    // Staff number, phone and email, plus the four Personal rows, have nothing.
     expect(find.text('Not added'), findsNWidgets(9));
+
+    // The Access card holds just the remove action for someone never invited.
+    expect(find.text('Access'), findsOneWidget);
+    expect(find.text('Not invited yet'), findsOneWidget);
     expect(find.text('Role'), findsNothing);
-    expect(find.text('Access'), findsNothing);
     expect(find.text('Suspend access'), findsNothing);
 
     // The three action circles are there, Call, Message and Email greyed.
@@ -280,25 +284,33 @@ void main() {
     expect(find.text('tunde@example.com'), findsOneWidget);
 
     expect(find.text('Personal'), findsOneWidget);
-    expect(find.text('LEADER ONLY'), findsOneWidget);
+    expect(find.text('Only leaders see this'), findsOneWidget);
     expect(find.text('Date of birth'), findsOneWidget);
     expect(find.text('12 Mar 1991'), findsOneWidget);
     expect(find.text('Gender'), findsOneWidget);
     expect(find.text('Female'), findsOneWidget);
     expect(find.text('Lives in'), findsOneWidget);
     expect(find.text('Ikeja, Lagos'), findsOneWidget);
-    expect(find.text('From'), findsOneWidget);
-    expect(find.text('Imo'), findsOneWidget);
-    expect(find.text('Status'), findsOneWidget);
-    expect(find.text('Active'), findsOneWidget);
-    expect(find.text('Employment date'), findsOneWidget);
-    expect(find.text('1 Sep 2020'), findsOneWidget);
     expect(find.text('Home address'), findsOneWidget);
     expect(find.text('14 Bode Thomas, Surulere, Lagos'), findsOneWidget);
     expect(find.text('Not added'), findsNothing);
+    // Status and employment date sit in Details; state of origin in Personal.
+    expect(find.text('Status'), findsOneWidget);
+    expect(find.text('Active'), findsOneWidget);
+    expect(find.text('Employed'), findsOneWidget);
+    expect(find.text('1 Sep 2020'), findsOneWidget);
+    expect(find.text('From'), findsOneWidget);
+    expect(find.text('Imo'), findsOneWidget);
+
+    // Teaching staff get the card with the session and their two rows.
+    expect(find.widgetWithText(StaffSectionTitle, 'Teaching'), findsOneWidget);
+    expect(find.text('Homeroom'), findsOneWidget);
+    expect(find.text('Not assigned'), findsOneWidget);
+    expect(find.text('Subjects · 0 this session'), findsOneWidget);
+    expect(find.text('None this session'), findsOneWidget);
 
     expect(find.text('Access'), findsOneWidget);
-    expect(find.text('Joined 3 Sep'), findsOneWidget);
+    expect(find.text('Joined 3 Sep 2026'), findsOneWidget);
     expect(find.text('Role'), findsOneWidget);
     expect(find.text('Teacher'), findsOneWidget);
     expect(find.text('Suspend access'), findsOneWidget);
@@ -307,7 +319,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Invite to Hamrash'), findsNothing);
-    expect(find.byType(StaffInfoRow), findsNWidgets(14));
+    // Four Details rows, four Personal rows and the Access role row.
+    expect(find.byType(StaffInfoRow), findsNWidgets(12));
 
     expect(
       find.text('Remove from staff list', skipOffstage: false),
@@ -355,7 +368,7 @@ void main() {
 
     expect(find.text('Suspended'), findsOneWidget);
     expect(find.text('Access'), findsOneWidget);
-    expect(find.text('Joined 3 Sep'), findsOneWidget);
+    expect(find.text('Joined 3 Sep 2026'), findsOneWidget);
     expect(find.text('Restore access'), findsOneWidget);
     expect(find.text('They can sign in again.'), findsOneWidget);
   });
@@ -372,7 +385,6 @@ void main() {
     expect(find.text('Access'), findsNothing);
     expect(find.text('Role'), findsNothing);
     expect(find.text('Change'), findsOneWidget);
-    expect(find.byType(StaffDangerAction), findsNothing);
   });
 
   testWidgets("the owner's own record has no Access section", (tester) async {
@@ -387,7 +399,6 @@ void main() {
     expect(find.text('On app'), findsOneWidget);
     expect(find.text('Owner · Teaching'), findsOneWidget);
     expect(find.text('Access'), findsNothing);
-    expect(find.byType(StaffDangerAction), findsNothing);
   });
 
   testWidgets('the Role row opens the picker and saves the new role', (
@@ -442,43 +453,42 @@ void main() {
     expect(launcher.opened, isEmpty);
   });
 
-  testWidgets('the danger action is a pinned bottom bar', (tester) async {
+  testWidgets('the page has no pinned bar; Remove lives in the Access card', (
+    tester,
+  ) async {
     await pump(tester, _member(login: _login()));
 
-    final danger = find.byType(StaffDangerAction);
-    expect(danger, findsOneWidget);
-    // The footer paints its own hairline, so the scaffold fade is off.
+    expect(find.byKey(const ValueKey('bottom-bar-surface')), findsNothing);
     expect(find.byKey(const ValueKey('bottom-bar-fade')), findsNothing);
-    expect(find.byKey(const ValueKey('bottom-bar-surface')), findsOneWidget);
-    // Inside the scaffold's bottom bar, not the scrolling page.
+
+    final remove = find.text('Remove from staff list');
+    expect(remove, findsOneWidget);
+    // Inside the scrolling page and its white card, not a bottom bar.
     expect(
-      find.ancestor(of: danger, matching: find.byType(AppRefreshScrollView)),
-      findsNothing,
+      find.ancestor(of: remove, matching: find.byType(AppRefreshScrollView)),
+      findsOneWidget,
     );
     expect(
-      find.ancestor(of: danger, matching: find.byType(SafeArea)),
-      findsWidgets,
+      find.ancestor(of: remove, matching: find.byType(AppCard)),
+      findsOneWidget,
     );
   });
 
-  testWidgets('the details header is 44 tall and Change is flush right', (
+  testWidgets('the details header is 32 tall and Change is flush right', (
     tester,
   ) async {
     await pump(tester, _member(login: _login()));
 
     final header = find.byKey(const ValueKey('details-header'));
-    expect(tester.getSize(header).height, 44);
+    expect(tester.getSize(header).height, 32);
     final action = find.byType(AppSectionAction);
-    expect(tester.getSize(action).height, 44);
     expect(
       tester.getTopRight(action).dx,
       closeTo(tester.getTopRight(header).dx, 0.5),
     );
   });
 
-  testWidgets('rows are 54 tall, hairline-separated and fill the gutters', (
-    tester,
-  ) async {
+  testWidgets('rows are 52 tall inside the 16 gutter cards', (tester) async {
     tester.view.physicalSize = const Size(390, 1400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -486,11 +496,11 @@ void main() {
 
     final rows = find.byType(StaffInfoRow);
     final first = tester.getRect(rows.first);
-    expect(first.left, 16);
-    expect(first.width, 390 - 32);
-    // 1px hairline on top of a 54 row.
-    expect(first.height, 55);
-    expect(find.byType(StaffRowDivider), findsWidgets);
+    // 16 screen gutter + 1 card border + 16 card padding.
+    expect(first.left, 33);
+    expect(first.width, 390 - 32 - 34);
+    expect(first.height, 52);
+    expect(find.byType(AppDivider), findsWidgets);
   });
 
   testWidgets('a non-leader has no Change button', (tester) async {

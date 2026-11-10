@@ -220,8 +220,10 @@ void main() {
   testWidgets('teaching staff open the setup sheet', (tester) async {
     await pump(tester, _staff());
 
-    expect(find.byIcon(AppIcons.graduationCap), findsOneWidget);
-    await tester.tap(find.byIcon(AppIcons.graduationCap));
+    // The Teaching card replaces the old app-bar button.
+    expect(find.byIcon(AppIcons.graduationCap), findsNothing);
+    expect(find.byKey(const ValueKey('teaching-homeroom')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('teaching-homeroom')));
     await tester.pumpAndSettle();
 
     expect(find.text('Teaching setup'), findsOneWidget);
@@ -229,7 +231,7 @@ void main() {
     expect(find.text('Set homeroom'), findsOneWidget);
     expect(find.text('Not set'), findsOneWidget);
     expect(find.text('Set subject'), findsOneWidget);
-    expect(find.text('None this session'), findsOneWidget);
+    expect(find.text('None this session'), findsWidgets);
   });
 
   testWidgets('the staff page lists the class and subjects they teach', (
@@ -263,9 +265,10 @@ void main() {
 
     expect(find.widgetWithText(StaffSectionTitle, 'Teaching'), findsOneWidget);
     expect(find.text('2026/27'), findsOneWidget);
-    expect(find.text('Lead teacher'), findsOneWidget);
+    expect(find.text('Homeroom · Lead teacher'), findsOneWidget);
+    expect(find.text('Subjects · 1 this session'), findsOneWidget);
+    expect(find.text('JSS 1A'), findsOneWidget);
     expect(find.text('Mathematics'), findsOneWidget);
-    expect(find.text('JSS 1A'), findsNWidgets(2));
   });
 
   testWidgets('a non-teaching record has no Teaching card', (tester) async {
@@ -281,7 +284,7 @@ void main() {
 
   testWidgets('the homeroom sheet inserts a new lead', (tester) async {
     await pump(tester, _staff());
-    await tester.tap(find.byIcon(AppIcons.graduationCap));
+    await tester.tap(find.byKey(const ValueKey('teaching-homeroom')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Set homeroom'));
     await tester.pumpAndSettle();
@@ -320,7 +323,7 @@ void main() {
     expect(structure.structureReads, 0);
 
     // The menu: the session.
-    await tester.tap(find.byIcon(AppIcons.graduationCap));
+    await tester.tap(find.byKey(const ValueKey('teaching-subjects')));
     await tester.pumpAndSettle();
     expect(structure.sessionReads, 1);
     expect(structure.structureReads, 0);

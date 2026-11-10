@@ -77,17 +77,27 @@ class _StaffInviteCodeFieldState extends State<StaffInviteCodeField> {
                 ),
               ),
             ),
+            AppText(
+              'Never expires',
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.w600,
+                color: LightColors.textMuted,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
         Container(
           key: const ValueKey('invite-code-field'),
           height: 64,
-          padding: const EdgeInsets.only(left: AppSpacing.md, right: 14),
+          padding: const EdgeInsets.only(
+            left: AppSpacing.md,
+            right: AppSpacing.ms,
+          ),
           decoration: BoxDecoration(
             color: AppPalette.white,
-            borderRadius: AppRadius.brControl,
-            border: Border.all(color: AppPalette.stone200),
+            borderRadius: AppRadius.brCard,
+            border: Border.all(color: LightColors.strokeColourStrokeCard),
           ),
           child: Row(
             children: [

@@ -8,14 +8,10 @@ import 'package:hamrash_admin/api/models/team/staff_filter.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_page.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
-import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/add_staff/add_staff_screen.dart';
-import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
-import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
 import 'package:hamrash_admin/views/team/team_screen.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_danger_action.dart';
 
 import 'staff_page_fake.dart';
 
@@ -26,14 +22,9 @@ const _screen = Size(390, 844);
 const _homeIndicator = 34.0;
 
 class _FakeTeam implements TeamService {
-  _FakeTeam({this.member, List<StaffMember>? people})
-    : people = people ?? const [];
+  _FakeTeam({List<StaffMember>? people}) : people = people ?? const [];
 
-  final StaffMember? member;
   final List<StaffMember> people;
-
-  @override
-  Future<StaffMember> getStaff(String staffId) async => member!;
 
   @override
   Future<StaffPage> listStaffPage({
@@ -73,14 +64,6 @@ StaffMember _member({StaffLogin? login}) => StaffMember(
   createdAt: DateTime(2026, 11, 8),
   memberId: login?.id,
   login: login,
-);
-
-final _pending = StaffLogin(
-  id: 'm1',
-  role: OrganizationMemberRole.teacher,
-  status: OrganizationMemberStatus.invited,
-  claimCode: 'K7M2QX9P',
-  createdAt: DateTime(2026, 11, 5),
 );
 
 Future<void> _setUp(WidgetTester tester) async {
@@ -144,90 +127,6 @@ void main() {
     expect(tester.getSize(button).width, _screen.width - 32);
     expect(tester.getSize(button).height, 56);
     expect(tester.getTopLeft(button).dx, 16);
-  });
-
-  testWidgets('the danger action centres its title and caption in the bar', (
-    tester,
-  ) async {
-    // Same bar the staff detail page builds, without the page's details card.
-    await _setUp(tester);
-    await tester.pumpWidget(
-      MaterialApp(
-        home: DefaultScaffold(
-          body: const SizedBox.expand(),
-          bottomNavigationBar: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
-              child: StaffDangerAction(
-                label: 'Remove from staff list',
-                caption: 'Tunde stays in the school records.',
-                onPressed: () {},
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final title = find.text('Remove from staff list');
-    final caption = find.text('Tunde stays in the school records.');
-    _expectFullWidthBar(tester, caption);
-    _expectCentred(tester, title);
-    _expectCentred(tester, caption);
-  });
-
-  testWidgets('Staff detail (active): remove action is centred in a full bar', (
-    tester,
-  ) async {
-    await _setUp(tester);
-    locator.registerSingleton<TeamService>(_FakeTeam(member: _member()));
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: StaffDetailScreen(school: _school, staffId: 's1'),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final title = find.text('Remove from staff list');
-    _expectFullWidthBar(tester, title);
-    expect(tester.getSize(_barSurface).height, 72 + _homeIndicator);
-    expect(find.byKey(const ValueKey('bottom-bar-fade')), findsNothing);
-    final caption = find
-        .descendant(
-          of: find.byType(StaffDangerAction),
-          matching: find.byType(AppText),
-        )
-        .last;
-    expect(title, findsOneWidget);
-    expect(caption, findsOneWidget);
-    _expectCentred(tester, title);
-    _expectCentred(tester, caption);
-  });
-
-  testWidgets('Staff detail (invite pending): cancel action is centred', (
-    tester,
-  ) async {
-    await _setUp(tester);
-    locator.registerSingleton<TeamService>(
-      _FakeTeam(member: _member(login: _pending)),
-    );
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: StaffDetailScreen(school: _school, staffId: 's1'),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final title = find.text('Cancel invite');
-    _expectFullWidthBar(tester, title);
-    expect(title, findsOneWidget);
-    _expectCentred(tester, title);
-    final danger = find.byType(StaffDangerAction);
-    expect(tester.getSize(danger).width, _screen.width - 32);
   });
 
   testWidgets('Add Staff: Save staff member spans the gutters', (tester) async {
