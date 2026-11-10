@@ -200,7 +200,7 @@ class _ReviewViewState extends State<_ReviewView> {
             ],
           ),
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 24),
         AppSectionHeader(
           title: 'Score columns',
           caption: grading.marksLabel,
@@ -217,7 +217,7 @@ class _ReviewViewState extends State<_ReviewView> {
           columns: grading.columns,
           totalMarks: grading.totalMarks,
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 24),
         AppSectionHeader(
           title: 'Grades',
           caption:
