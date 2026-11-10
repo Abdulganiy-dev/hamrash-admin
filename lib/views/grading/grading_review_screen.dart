@@ -212,7 +212,7 @@ class _ReviewViewState extends State<_ReviewView> {
                 )
               : null,
         ),
-        const SizedBox(height: 12),
+        // const SizedBox(height: 12),
         ColumnContributionBar(
           columns: grading.columns,
           totalMarks: grading.totalMarks,
@@ -231,9 +231,9 @@ class _ReviewViewState extends State<_ReviewView> {
                 )
               : null,
         ),
-        const SizedBox(height: 12),
+        // const SizedBox(height: 12),
         _MarkedGradeBar(grading: grading, percent: review.percent),
-        const SizedBox(height: 28),
+        const SizedBox(height: 24),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Column(
@@ -274,7 +274,7 @@ class _ReviewViewState extends State<_ReviewView> {
         const AppDivider(),
         const SizedBox(height: 16),
         _Result(review: review, grading: grading),
-        const SizedBox(height: 24),
+        const SizedBox(height: 30),
       ],
     );
   }
@@ -447,6 +447,8 @@ class _ScoreRow extends StatelessWidget {
                     isCollapsed: true,
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
+                    focusedBorder: InputBorder.none,
+                    enabledBorder: InputBorder.none
                   ),
                 ),
               ),
