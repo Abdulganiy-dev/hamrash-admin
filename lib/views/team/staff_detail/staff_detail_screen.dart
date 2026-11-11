@@ -9,7 +9,6 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/utils/phone_format.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_icon_label.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
@@ -32,6 +31,7 @@ import 'package:hamrash_admin/views/team/widgets/staff_access_section.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_detail_identity.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_invite_code_field.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_status_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
 import 'package:stacked/stacked.dart';
 
@@ -154,16 +154,10 @@ class _Content extends StatelessWidget {
   }
 
   /// 9.29a / 9.29b · The block between the identity and the first card: the
-  /// invite button and its note, the unused invite's code, or nothing. The key
-  /// is the access state — that key change is what drives the crossfade.
+  /// unused invite's code, or nothing. The key is the access state — that key
+  /// change is what drives the crossfade. The invite itself lives in the
+  /// Access card's Hamrash app row.
   Widget _actionSlot(BuildContext context) {
-    if (model.isNotOnApp) {
-      return Padding(
-        key: ValueKey(model.access),
-        padding: const EdgeInsets.only(top: AppSpacing.lg),
-        child: _noLogin(context),
-      );
-    }
     if (model.isPending) {
       return Padding(
         key: ValueKey(model.access),
@@ -174,78 +168,20 @@ class _Content extends StatelessWidget {
     return SizedBox.shrink(key: ValueKey(model.access));
   }
 
-  /// 9.29a · Nothing to sign in with yet: one card row that opens the invite,
-  /// its code note underneath the label.
-  Widget _noLogin(BuildContext context) {
-    final canInvite = model.canInvite;
-    return Semantics(
-      button: canInvite,
-      enabled: canInvite,
-      label:
-          'Invite staff to Hamrash. They get a code to join. It never expires.',
-      excludeSemantics: true,
-      child: AppCard(
-        padding: const EdgeInsets.symmetric(
-          vertical: 4,
-          horizontal: AppSpacing.md,
-        ),
-        onTap: canInvite ? () => _invite(context) : null,
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            children: [
-              const SizedBox(
-                width: 20,
-                height: 20,
-                child: AppIcon(
-                  AppIcons.smartphone,
-                  size: 18,
-                  color: AppPalette.stone500,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.ms),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppText(
-                      'Invite staff to Hamrash',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.body.copyWith(
-                        fontSize: 15,
-                        height: 20 / 15,
-                        fontWeight: FontWeight.w700,
-                        color: LightColors.textStrong,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xxs),
-                    AppText(
-                      'They get a code to join. It never expires.',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.caption.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: LightColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (canInvite) ...[
-                const SizedBox(width: AppSpacing.sm),
-                const AppIcon(
-                  AppIcons.chevronRight,
-                  size: 18,
-                  color: AppPalette.stone400,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
+  /// 9.29 · The record's own status, separate from the login above it.
+  Future<void> _changeStatus(BuildContext context) async {
+    final chosen = await StaffStatusSheet.show(
+      context,
+      current: model.member.status,
     );
+    if (chosen == null || !context.mounted) return;
+    final error = await model.setStatus(chosen);
+    if (!context.mounted) return;
+    if (error != null) {
+      AppToast.show(error, type: AppToastType.error);
+    } else {
+      AppToast.show('Status changed');
+    }
   }
 
   /// 9.29b · The code is made; nobody has used it.
@@ -383,12 +319,17 @@ class _Content extends StatelessWidget {
   /// just remove for someone who never had a login.
   Widget _access(BuildContext context) => StaffAccessSection(
     roleLabel: model.role.teamLabel,
+    statusLabel: model.statusLabel,
     isOnApp: model.isOnApp,
     isPending: model.isPending,
     isSuspended: model.isSuspended,
     joinedCaption: model.joinedCaption,
     invitedCaption: model.invitedCaption,
-    onChangeRole: model.showRoleRow ? () => _changeRole(context) : null,
+    onInvite: model.canInvite ? () => _invite(context) : null,
+    onChangeRole:
+        model.canChangeRoleInSheet ? () => _changeRole(context) : null,
+    onChangeStatus:
+        model.canManageAccess ? () => _changeStatus(context) : null,
     onToggleAccess: model.canManageAccess ? () => _toggleAccess(context) : null,
     onCancelInvite: model.canCancelInvite ? () => _cancelInvite(context) : null,
     onRemove: model.canRemove ? () => _remove(context) : null,
@@ -495,7 +436,10 @@ class _Content extends StatelessWidget {
   Future<void> _changeRole(BuildContext context) async {
     final role = await _pickRole(context);
     if (role == null || role == model.role) return;
-    final error = await model.changeRole(role);
+    final error =
+        model.isPending
+            ? await model.changeInviteRole(role)
+            : await model.changeRole(role);
     if (error != null) {
       AppToast.show(error, type: AppToastType.error);
     }

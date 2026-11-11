@@ -218,13 +218,9 @@ void main() {
       ),
     );
 
-    expect(find.text('Not on app'), findsOneWidget);
+    expect(find.text('Not on app'), findsNWidgets(2));
     expect(find.text('Maths Teacher · Non-teaching'), findsOneWidget);
-    expect(find.text('Invite staff to Hamrash'), findsOneWidget);
-    expect(
-      find.text('They get a code to join. It never expires.'),
-      findsOneWidget,
-    );
+    expect(find.text('Hamrash app'), findsOneWidget);
 
     expect(find.text('Details'), findsOneWidget);
     expect(find.text('Staff number'), findsOneWidget);
@@ -234,9 +230,9 @@ void main() {
     // Staff number, phone and email, plus the four Personal rows, have nothing.
     expect(find.text('Not added'), findsNWidgets(9));
 
-    // The Access card holds just the remove action for someone never invited.
+    // The Access card holds the app row, the status action and remove for
+    // someone never invited.
     expect(find.text('Access'), findsOneWidget);
-    expect(find.text('Not invited yet'), findsOneWidget);
     expect(find.text('Role'), findsNothing);
     expect(find.text('Suspend access'), findsNothing);
 
@@ -276,7 +272,7 @@ void main() {
         );
     await pump(tester, member);
 
-    expect(find.text('On app'), findsOneWidget);
+    expect(find.text('On app'), findsNWidgets(2));
     expect(find.text('Teacher · Teaching'), findsOneWidget);
 
     expect(find.text('KCL/STF/0001'), findsOneWidget);
@@ -319,8 +315,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Invite staff to Hamrash'), findsNothing);
-    // Four Details rows, four Personal rows and the Access role row.
-    expect(find.byType(StaffInfoRow), findsNWidgets(12));
+    // Four Details rows, four Personal rows and the Access app + role rows.
+    expect(find.byType(StaffInfoRow), findsNWidgets(13));
 
     expect(
       find.text('Remove from staff list', skipOffstage: false),
@@ -366,7 +362,7 @@ void main() {
       _member(login: _login(status: OrganizationMemberStatus.suspended)),
     );
 
-    expect(find.text('Suspended'), findsOneWidget);
+    expect(find.text('Suspended'), findsNWidgets(2));
     expect(find.text('Access'), findsOneWidget);
     expect(find.text('Joined 3 Sep 2026'), findsOneWidget);
     expect(find.text('Restore access'), findsOneWidget);
@@ -868,6 +864,46 @@ void main() {
     addTearDown(tester.view.reset);
     await pump(tester, member);
   }
+
+  testWidgets('the Hamrash app row starts the invite when there is no login', (
+    tester,
+  ) async {
+    await pump(tester, _member());
+
+    expect(find.text('Hamrash app'), findsOneWidget);
+    await tester.tap(find.text('Hamrash app'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Invite staff to Hamrash'), findsOneWidget);
+  });
+
+  testWidgets('Change status saves the record status, not the login', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 1900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final member = _member(login: _login());
+    final team = _FakeTeam(member);
+    await pump(tester, member, team: team);
+
+    await tester.ensureVisible(find.text('Change status'));
+    await tester.tap(find.text('Change status'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('On leave'));
+    await tester.pumpAndSettle();
+    // The floating sheet's footer sits at the bottom of the tall test view;
+    // fire the button directly rather than hit-testing that edge.
+    tester
+        .widget<AppPrimaryButton>(
+          find.widgetWithText(AppPrimaryButton, 'Save status'),
+        )
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(team.savedChanges?.status, StaffRecordStatus.onLeave);
+    expect(team.changedRole, isNull);
+  });
 
   testWidgets('long names, emails and addresses fit at 390', (tester) async {
     await pumpAtWidth(

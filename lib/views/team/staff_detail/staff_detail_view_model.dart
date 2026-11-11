@@ -414,6 +414,35 @@ class StaffDetailViewModel extends BaseViewModel {
     );
   }
 
+  /// Changes the record's own status (active, on leave, exited) and sends
+  /// every other field back unchanged — `update_staff` takes the whole record.
+  Future<String?> setStatus(StaffRecordStatus status) async {
+    if (status == member.status) return null;
+    final record = await loadEditDetails();
+    if (record == null) return "Couldn't load their details.";
+    final staff = record.staff;
+    final details = record.privateDetails;
+    return saveDetails(
+      StaffDetailsChanges(
+        firstName: staff.firstName,
+        middleName: staff.middleName,
+        lastName: staff.lastName,
+        gender: staff.gender,
+        dateOfBirth: details.dateOfBirth,
+        jobTitle: staff.jobTitle ?? '',
+        staffType: staff.staffType,
+        status: status,
+        employmentDate: details.employmentDate,
+        stateOfOrigin: details.stateOfOrigin,
+        phone: staff.phone,
+        email: staff.email,
+        address: details.address,
+        residenceState: details.residenceState,
+        residenceLga: details.residenceLga,
+      ),
+    );
+  }
+
   /// Suspends the login, or restores it.
   Future<void> setSuspended(bool suspended) => _act(
     () => _team.setSuspended(memberId: login!.id, suspended: suspended),

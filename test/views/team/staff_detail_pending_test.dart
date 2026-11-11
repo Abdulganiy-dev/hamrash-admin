@@ -114,7 +114,7 @@ void main() {
 
     expect(find.text('Access'), findsOneWidget);
     expect(find.text('Invited 8 Nov'), findsOneWidget);
-    expect(find.text('Role'), findsNothing);
+    expect(find.text('Role'), findsOneWidget);
     expect(find.text('Suspend access'), findsNothing);
     expect(find.text('Cancel invite'), findsOneWidget);
     expect(

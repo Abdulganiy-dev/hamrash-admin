@@ -7,29 +7,37 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
 
-/// The colour a row's icon and title take: warning for the reversible
-/// actions that hold someone back, error for removal, success for restore.
-enum _ActionTone { warning, success, error }
+/// The colour a row's title takes: neutral for the record's own status,
+/// warning for the reversible actions that hold someone back, error for
+/// removal, success for restore.
+enum _ActionTone { neutral, warning, success, error }
 
-/// 9.29 / 9.29a / 9.29b · Who can use the app: the Role row for a live login,
-/// then the actions that change access. Owners and admins see this only,
-/// never on the owner's own row.
+/// 9.29 / 9.29a / 9.29b · Who can use the app. One shape for every person:
+/// the Hamrash login and its state first, the role where there is one, the
+/// record's own status, then the actions that change access. Owners and
+/// admins see this only, never on the owner's own row.
 class StaffAccessSection extends StatelessWidget {
   const StaffAccessSection({
     super.key,
     required this.roleLabel,
+    required this.statusLabel,
     required this.isOnApp,
     required this.isPending,
     required this.isSuspended,
     this.joinedCaption,
     this.invitedCaption,
+    this.onInvite,
     this.onChangeRole,
+    this.onChangeStatus,
     this.onToggleAccess,
     this.onCancelInvite,
     this.onRemove,
   });
 
   final String roleLabel;
+
+  /// "Active", "On leave" or "Exited". The record's own status, not the login.
+  final String statusLabel;
 
   /// A live login that isn't suspended.
   final bool isOnApp;
@@ -42,7 +50,9 @@ class StaffAccessSection extends StatelessWidget {
   /// "Invited 8 Nov", for an unused invite.
   final String? invitedCaption;
 
+  final VoidCallback? onInvite;
   final VoidCallback? onChangeRole;
+  final VoidCallback? onChangeStatus;
   final VoidCallback? onToggleAccess;
   final VoidCallback? onCancelInvite;
   final VoidCallback? onRemove;
@@ -50,10 +60,25 @@ class StaffAccessSection extends StatelessWidget {
   /// A live login keeps the role and suspend rows even while suspended.
   bool get _hasLogin => isOnApp || isSuspended;
 
+  /// A role exists from the moment the invite is made.
+  bool get _hasRole => isPending || _hasLogin;
+
+  bool get _notOnApp => !isOnApp && !isPending && !isSuspended;
+
+  /// "Joined 3 Sep 2026" or "Invited 8 Nov". The state itself lives on the
+  /// Hamrash app row and the hero pill; this line only adds the date.
   String? get _caption {
     if (isPending) return invitedCaption;
     if (_hasLogin) return joinedCaption;
-    return 'Not invited yet';
+    return null;
+  }
+
+  /// The value on the Hamrash app row.
+  String get _appState {
+    if (isPending) return 'Code ready';
+    if (isSuspended) return 'Suspended';
+    if (isOnApp) return 'On app';
+    return 'Not on app';
   }
 
   @override
@@ -69,7 +94,16 @@ class StaffAccessSection extends StatelessWidget {
             ),
           ),
     rows: [
-      if (_hasLogin)
+      StaffInfoRow(
+        icon: AppIcons.smartphone,
+        label: 'Hamrash app',
+        value: _appState,
+        onTap: _notOnApp ? onInvite : null,
+        semanticLabel: _notOnApp
+            ? 'Invite them to Hamrash'
+            : 'Hamrash app, $_appState',
+      ),
+      if (_hasRole)
         StaffInfoRow(
           icon: AppIcons.shield,
           label: 'Role',
@@ -79,6 +113,14 @@ class StaffAccessSection extends StatelessWidget {
               ? null
               : 'Change role, $roleLabel',
         ),
+      _AccessActionRow(
+        key: const ValueKey('access-status'),
+        icon: AppIcons.clock,
+        tone: _ActionTone.neutral,
+        title: 'Change status',
+        caption: 'Active, on leave or exited.',
+        onTap: onChangeStatus,
+      ),
       if (_hasLogin)
         _AccessActionRow(
           key: const ValueKey('access-toggle'),
@@ -132,6 +174,14 @@ class _AccessActionRow extends StatelessWidget {
   final VoidCallback? onTap;
 
   Color get _color => switch (tone) {
+    _ActionTone.neutral => LightColors.textStrong,
+    _ActionTone.warning => LightColors.warningWarningText,
+    _ActionTone.success => LightColors.successSuccessText,
+    _ActionTone.error => LightColors.errorErrorText,
+  };
+
+  Color get _iconColor => switch (tone) {
+    _ActionTone.neutral => AppPalette.stone500,
     _ActionTone.warning => LightColors.warningWarningText,
     _ActionTone.success => LightColors.successSuccessText,
     _ActionTone.error => LightColors.errorErrorText,
@@ -153,7 +203,7 @@ class _AccessActionRow extends StatelessWidget {
             SizedBox(
               width: 20,
               height: 20,
-              child: AppIcon(icon, size: 18, color: _color),
+              child: AppIcon(icon, size: 18, color: _iconColor),
             ),
             const SizedBox(width: AppSpacing.ms),
             Expanded(
