@@ -3476,12 +3476,15 @@ begin
   v_ok := v_ok and v_res -> 'counts' = '{"all":2,"on_app":2,"code_ready":0,"not_on_app":0,"suspended":0}'::jsonb;
   v_log := v_log || E'\n' || case when v_ok then 'PASS' else 'FAIL' end || ' 13 counts follow search, type and roles';
 
-  -- 14 row shape: what StaffMember.fromJson reads, no private details
+  -- 14 row shape: what StaffMember.fromJson reads, no private details (and, since
+  -- migration 37, a null `teaching` key)
   v_res := public.list_staff(v_org, p_search => 'ngozi');
   v_row := v_res -> 'rows' -> 0;
   v_ok := (select array_agg(k order by k) from jsonb_object_keys(v_row) k)
           = array['created_at', 'email', 'first_name', 'gender', 'id', 'job_title', 'last_name', 'member', 'member_id',
-                  'middle_name', 'phone', 'photo_url', 'staff_number', 'staff_type', 'status']
+                  'middle_name', 'phone', 'photo_url', 'staff_number', 'staff_type', 'status', 'teaching']
+      -- migration 37: `teaching` is there but null unless a subject or class filter is on
+      and v_row -> 'teaching' = 'null'::jsonb
       and (select array_agg(k order by k) from jsonb_object_keys(v_row -> 'member') k)
           = array['claim_code', 'clerk_user_id', 'created_at', 'id', 'joined_at', 'role', 'status']
       and v_row ->> 'id' = v_ada::text
