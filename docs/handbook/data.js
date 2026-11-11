@@ -10,7 +10,7 @@ window.HANDBOOK = {
   meta: {
     updated: '2026-11-11',
     migrationsInRepo: 35, // highest migration number in supabase/migrations/
-    migrationsLive: 34, // highest one applied to the live project (ccvyhbyrtobdsecqvhcr)
+    migrationsLive: 35, // highest one applied to the live project (ccvyhbyrtobdsecqvhcr)
   },
 
   // Screens exported from Paper (file “Hamrash”, page “Hmarash Admin”) into screens/.
