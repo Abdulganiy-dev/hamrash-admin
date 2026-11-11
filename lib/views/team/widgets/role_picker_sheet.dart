@@ -13,6 +13,10 @@ import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 /// 9.27 / 9.27a · Pick the role an invite gives, or the role a login changes
 /// to. Pops the chosen [OrganizationMemberRole].
 ///
+/// 9.42 · With [offered] it picks the role to add to someone who already has
+/// some: only those roles are listed, nothing starts picked, and the button
+/// reads [confirmLabel].
+///
 /// Rows sit straight on the white sheet: no fill, no radius, no dividers.
 /// The radio and the title's weight carry the choice. The roles a principal
 /// or vice principal can't issue (admin) are greyed and locked, with the
@@ -22,13 +26,27 @@ class RolePickerSheet extends StatefulWidget {
     super.key,
     required this.selected,
     this.title = 'Role',
+    this.subtitle,
+    this.offered,
+    this.confirmLabel,
     this.lockAdmin = false,
     this.viewerName,
     this.viewerRole,
   });
 
-  final OrganizationMemberRole selected;
+  /// The role that starts picked. Null starts with none, and the button
+  /// stays off until one is picked.
+  final OrganizationMemberRole? selected;
   final String title;
+
+  /// A helper line under the title.
+  final String? subtitle;
+
+  /// The roles to list, in order. Defaults to every role an invite can give.
+  final List<OrganizationMemberRole>? offered;
+
+  /// The button's text. Defaults to "Use" and the picked role.
+  final String? confirmLabel;
 
   /// True when the viewer may not invite admins (principal or VP).
   final bool lockAdmin;
@@ -53,27 +71,33 @@ class RolePickerSheet extends StatefulWidget {
 }
 
 class _RolePickerSheetState extends State<RolePickerSheet> {
-  late OrganizationMemberRole _selected =
+  late OrganizationMemberRole? _selected =
       widget.lockAdmin && widget.selected == OrganizationMemberRole.admin
       ? OrganizationMemberRole.principal
       : widget.selected;
 
+  List<OrganizationMemberRole> get _roles =>
+      widget.offered ?? RolePickerSheet.roles;
+
   bool get _canUse =>
+      _selected != null &&
       !(widget.lockAdmin && _selected == OrganizationMemberRole.admin);
 
   @override
   Widget build(BuildContext context) => AppSheet(
     title: widget.title,
+    subtitle: widget.subtitle,
     bodyPadding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
     body: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (final (index, role) in RolePickerSheet.roles.indexed) ...[
+        for (final (index, role) in _roles.indexed) ...[
           if (index > 0) const SizedBox(height: AppSpacing.xs),
           _RoleRow(
             key: ValueKey('role-row-${role.value}'),
             role: role,
+            showAppBadge: widget.offered == null,
             selected: _selected == role,
             locked: widget.lockAdmin && role == OrganizationMemberRole.admin,
             lockedLine: widget.lockAdmin && role == OrganizationMemberRole.admin
@@ -93,7 +117,9 @@ class _RolePickerSheetState extends State<RolePickerSheet> {
       height: 52,
       isDisabled: !_canUse,
       onPressed: _canUse ? () => Navigator.of(context).pop(_selected) : null,
-      child: Text('Use ${_selected.teamLabel}'),
+      child: Text(
+        widget.confirmLabel ?? 'Use ${_selected?.teamLabel ?? 'role'}',
+      ),
     ),
   );
 
@@ -112,6 +138,7 @@ class _RoleRow extends StatelessWidget {
     required this.selected,
     required this.locked,
     required this.onTap,
+    this.showAppBadge = true,
     this.lockedLine,
     this.lockedCaption,
   });
@@ -120,6 +147,10 @@ class _RoleRow extends StatelessWidget {
   final bool selected;
   final bool locked;
   final VoidCallback onTap;
+
+  /// The "Staff app" badge. The roles' descriptions already name the app, so
+  /// the Add role list leaves it out.
+  final bool showAppBadge;
   final String? lockedLine;
   final String? lockedCaption;
 
@@ -173,7 +204,7 @@ class _RoleRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.md),
-            if (role.isStaffAppRole) ...[
+            if (showAppBadge && role.isStaffAppRole) ...[
               const AppBadge('Staff app', tone: AppBadgeTone.neutral),
               const SizedBox(width: AppSpacing.sm),
             ],

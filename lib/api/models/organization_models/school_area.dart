@@ -1,10 +1,12 @@
-/// The parts of a school that are run from the More tab.
+/// The parts of a school that are run from the More tab, plus [team], which
+/// only carries who may see staff: the People tab's Staff side follows
+/// `accessTo(SchoolArea.team)` and More leaves it out.
 enum SchoolArea {
   academicCalendar('Academic calendar'),
   classes('Classes and arms'),
   subjects('Subjects'),
   grading('Grading'),
-  team('Staffs'),
+  team('Staff'),
   schoolDetails('School details');
 
   const SchoolArea(this.title);

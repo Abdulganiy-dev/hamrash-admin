@@ -14,6 +14,7 @@ import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/views/team/add_staff/add_staff_view_model.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_view_model.dart';
 import 'package:hamrash_admin/views/team/team_view_model.dart';
+import 'package:hamrash_admin/views/team/widgets/access_card.dart';
 
 import 'staff_page_fake.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -154,12 +155,8 @@ class _Team extends TeamService {
     StaffFilter filter = StaffFilter.initial,
     int limit = TeamService.pageSize,
     String? cursor,
-  }) async => fakeStaffPage(
-    people,
-    filter: filter,
-    limit: limit,
-    cursor: cursor,
-  );
+  }) async =>
+      fakeStaffPage(people, filter: filter, limit: limit, cursor: cursor);
 
   @override
   Future<StaffMember> getStaff(String staffId) async =>
@@ -248,11 +245,41 @@ class _Team extends TeamService {
 
   @override
   Future<void> setSuspended({
-    required String memberId,
+    required List<String> memberIds,
     required bool suspended,
   }) async {
     if (failWith case final error?) throw error;
     this.suspended = suspended;
+    suspendedMemberIds = memberIds;
+  }
+
+  List<String>? suspendedMemberIds;
+  OrganizationMemberRole? addedRole;
+  String? addedToMember;
+
+  @override
+  Future<StaffLogin> addMemberRole({
+    required String memberId,
+    required OrganizationMemberRole role,
+  }) async {
+    if (failWith case final error?) throw error;
+    addedToMember = memberId;
+    addedRole = role;
+    final index = people.indexWhere(
+      (person) => person.logins.any((login) => login.id == memberId),
+    );
+    final added = _login(
+      id: 'm-added',
+      role: role,
+      status: OrganizationMemberStatus.active,
+      code: null,
+      createdAt: _now,
+      clerkUserId: people[index].login?.clerkUserId,
+    );
+    people[index] = people[index].copyWith(
+      memberships: [...people[index].logins, added],
+    );
+    return added;
   }
 
   @override
@@ -306,13 +333,8 @@ void main() {
       expect(model.counts.notOnApp, 1); // no login; the invite is "Code ready"
       expect(model.counts.codeReady, 1);
 
-      await model.applyFilter(
-        const StaffFilter(login: StaffLoginFilter.onApp),
-      );
-      expect(model.staff.map((person) => person.firstName), [
-        'Amina',
-        'Chidi',
-      ]);
+      await model.applyFilter(const StaffFilter(login: StaffLoginFilter.onApp));
+      expect(model.staff.map((person) => person.firstName), ['Amina', 'Chidi']);
       expect(model.total, 2);
       // The counts don't move when only the login changes.
       expect(model.counts.all, 4);
@@ -346,7 +368,6 @@ void main() {
       expect(model.subtitleFor(onLeave), endsWith(' · on leave'));
       expect(model.subtitleFor(exited), endsWith(' · exited'));
     });
-
   });
 
   group('StaffDetailViewModel', () {
@@ -452,13 +473,16 @@ void main() {
       expect(model.stateOfOrigin, 'Imo');
     });
 
-    test('the access card also holds remove for someone never invited', () async {
-      final (model, _) = await loaded(_teacher);
+    test(
+      'the access card also holds remove for someone never invited',
+      () async {
+        final (model, _) = await loaded(_teacher);
 
-      expect(model.access, StaffAccess.notOnApp);
-      expect(model.showAccess, isTrue);
-      expect(model.showRoleRow, isFalse);
-    });
+        expect(model.access, StaffAccess.notOnApp);
+        expect(model.showAccess, isTrue);
+        expect(model.canAddRole, isFalse);
+      },
+    );
 
     test('the invite caption uses the login\'s created date', () async {
       final (model, _) = await loaded(_bursar);
@@ -721,5 +745,269 @@ void main() {
       expect(result.error, TeamService.addRefused);
       expect(model.error, TeamService.addRefused);
     });
+  });
+
+  group('several roles', () {
+    // Ngozi is an admin who also teaches: two active memberships, one person.
+    final ngozi =
+        _staff(
+          id: 'ngo',
+          firstName: 'Ngozi',
+          lastName: 'Eze',
+          jobTitle: 'Teacher',
+          login: _login(
+            id: 'm-admin-ngozi',
+            role: OrganizationMemberRole.admin,
+            status: OrganizationMemberStatus.active,
+            code: null,
+            joinedAt: DateTime(2026, 9, 3),
+            clerkUserId: 'user-ngozi',
+          ),
+        ).copyWith(
+          memberships: [
+            _login(
+              id: 'm-admin-ngozi',
+              role: OrganizationMemberRole.admin,
+              status: OrganizationMemberStatus.active,
+              code: null,
+              joinedAt: DateTime(2026, 9, 3),
+              clerkUserId: 'user-ngozi',
+            ),
+            _login(
+              id: 'm-teacher-ngozi',
+              role: OrganizationMemberRole.teacher,
+              status: OrganizationMemberStatus.active,
+              code: null,
+              joinedAt: DateTime(2026, 9, 3),
+              clerkUserId: 'user-ngozi',
+            ),
+          ],
+        );
+
+    Future<(StaffDetailViewModel, _Team)> detail(
+      StaffMember staff, {
+      OrganizationMemberRole viewer = OrganizationMemberRole.owner,
+    }) async {
+      final service = _Team([staff]);
+      final model = StaffDetailViewModel(
+        school: _school(role: viewer),
+        staffId: staff.id,
+        team: service,
+      );
+      await model.load();
+      return (model, service);
+    }
+
+    test('a person holds every role, the login first', () {
+      expect(ngozi.roles, [
+        OrganizationMemberRole.admin,
+        OrganizationMemberRole.teacher,
+      ]);
+      expect(ngozi.rolesLabel, 'Admin · Teacher');
+      expect(_teacher.rolesLabel, 'Teacher');
+    });
+
+    test('the list subtitle names them all', () async {
+      final service = _Team([ngozi]);
+      final model = TeamViewModel(
+        school: _school(),
+        team: service,
+        now: () => _now,
+      );
+      await model.load();
+
+      expect(model.subtitleFor(ngozi), 'Admin · Teacher · joined 3 Sep');
+    });
+
+    test('one card for each app their roles span', () async {
+      final (model, _) = await detail(ngozi);
+
+      final apps = model.accessApps();
+      expect(apps.map((app) => app.appName), [
+        'Hamrash Admin',
+        'Hamrash Staff',
+      ]);
+      expect(apps.map((app) => app.roles), [
+        ['Admin'],
+        ['Teacher'],
+      ]);
+      expect(apps.map((app) => app.state), everyElement(AccessState.onApp));
+    });
+
+    test('two roles on one app share one card', () async {
+      final both = ngozi.copyWith(
+        memberships: [
+          ngozi.logins.first,
+          _login(
+            id: 'm-bursar-ngozi',
+            role: OrganizationMemberRole.bursar,
+            status: OrganizationMemberStatus.active,
+            code: null,
+            clerkUserId: 'user-ngozi',
+          ),
+        ],
+      );
+      final (model, _) = await detail(both);
+
+      final apps = model.accessApps();
+      expect(apps, hasLength(1));
+      expect(apps.single.roles, ['Admin', 'Bursar']);
+    });
+
+    test('someone not on the app gets one tappable app row, no role', () async {
+      final (model, _) = await detail(_teacher);
+
+      final apps = model.accessApps(onInvite: () {});
+      expect(apps, hasLength(1));
+      expect(apps.single.appName, 'Hamrash Staff');
+      expect(apps.single.state, AccessState.notOnApp);
+      expect(apps.single.roles, isEmpty);
+      expect(apps.single.onTap, isNotNull);
+    });
+
+    test('Add role only shows for someone active on the app', () async {
+      expect((await detail(ngozi)).$1.canAddRole, isTrue);
+      expect((await detail(_teacher)).$1.canAddRole, isFalse); // not on app
+      expect((await detail(_bursar)).$1.canAddRole, isFalse); // code ready
+      final suspended = ngozi.copyWith(
+        memberships: [
+          for (final login in ngozi.logins)
+            StaffLogin(
+              id: login.id,
+              role: login.role,
+              status: OrganizationMemberStatus.suspended,
+              createdAt: login.createdAt,
+              clerkUserId: login.clerkUserId,
+            ),
+        ],
+      );
+      expect(
+        (await detail(
+          _with(suspended, login: suspended.logins.first),
+        )).$1.canAddRole,
+        isFalse,
+      );
+    });
+
+    test('only roles they lack and the viewer may add are offered', () async {
+      final (owner, _) = await detail(ngozi);
+      expect(owner.addableRoles, [
+        OrganizationMemberRole.principal,
+        OrganizationMemberRole.vicePrincipal,
+        OrganizationMemberRole.bursar,
+        OrganizationMemberRole.staff,
+      ]);
+
+      // A principal can't give admin, and the person already holds it anyway:
+      // use someone who is a teacher only.
+      final teacherOnApp = _admin.copyWith(
+        memberships: [
+          StaffLogin(
+            id: 'm-t',
+            role: OrganizationMemberRole.teacher,
+            status: OrganizationMemberStatus.active,
+            createdAt: DateTime(2026, 9, 3),
+            clerkUserId: 'user-t',
+          ),
+        ],
+      );
+      final (principal, _) = await detail(
+        _with(teacherOnApp, login: teacherOnApp.logins.first),
+        viewer: OrganizationMemberRole.principal,
+      );
+      expect(
+        principal.addableRoles,
+        isNot(contains(OrganizationMemberRole.admin)),
+      );
+      expect(
+        principal.addableRoles,
+        isNot(contains(OrganizationMemberRole.owner)),
+      );
+      expect(
+        principal.addableRoles,
+        isNot(contains(OrganizationMemberRole.teacher)),
+      );
+    });
+
+    test('bursars and others who cannot run setup never add roles', () async {
+      final (model, _) = await detail(
+        ngozi,
+        viewer: OrganizationMemberRole.bursar,
+      );
+      expect(model.canAddRole, isFalse);
+    });
+
+    test('adding a role calls the service and refreshes the page', () async {
+      final (model, service) = await detail(ngozi);
+
+      final error = await model.addRole(OrganizationMemberRole.bursar);
+
+      expect(error, isNull);
+      expect(service.addedRole, OrganizationMemberRole.bursar);
+      expect(service.addedToMember, 'm-admin-ngozi');
+      expect(model.changed, isTrue);
+      expect(model.rolesLabel, 'Admin · Teacher · Bursar');
+    });
+
+    test('a refused add returns the database reason', () async {
+      final (model, service) = await detail(ngozi);
+      service.failWith = const SupabaseRefusal(
+        'They already have the bursar role at this school',
+      );
+
+      final error = await model.addRole(OrganizationMemberRole.bursar);
+
+      expect(error, 'They already have the bursar role at this school');
+      expect(model.changed, isFalse);
+    });
+
+    test('the add-role copy follows the design', () async {
+      final (model, _) = await detail(ngozi);
+
+      expect(model.addRoleSubtitle, 'Ngozi Eze keeps Admin and Teacher.');
+      expect(
+        model.addRoleTitle(OrganizationMemberRole.bursar),
+        'Make Ngozi a bursar too?',
+      );
+      expect(
+        model.addRoleTitle(OrganizationMemberRole.admin),
+        'Make Ngozi an admin too?',
+      );
+      expect(model.addRoleBullets(OrganizationMemberRole.bursar), [
+        'They get fees and school records in Hamrash Admin',
+        'They stay Admin and Teacher',
+        'No new code. Their sign-in stays the same',
+      ]);
+      expect(
+        model.addRoleConfirmLabel(OrganizationMemberRole.bursar),
+        'Add bursar',
+      );
+      expect(
+        model.addedTitle(OrganizationMemberRole.bursar),
+        'Ngozi is a bursar too',
+      );
+      expect(
+        model.addedMessage(OrganizationMemberRole.bursar),
+        "Their roles are now Admin · Teacher · Bursar. They'll see fees and "
+        'school records next time they open Hamrash Admin.',
+      );
+    });
+
+    test('suspending changes every role together', () async {
+      final (model, service) = await detail(ngozi);
+
+      await model.setSuspended(true);
+
+      expect(service.suspended, isTrue);
+      expect(service.suspendedMemberIds, ['m-admin-ngozi', 'm-teacher-ngozi']);
+    });
+
+    test(
+      'with several roles the details sheet has no single role to change',
+      () async {
+        expect((await detail(ngozi)).$1.canChangeRoleInSheet, isFalse);
+        expect((await detail(_admin)).$1.canChangeRoleInSheet, isTrue);
+      },
+    );
   });
 }

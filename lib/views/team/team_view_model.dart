@@ -83,7 +83,8 @@ class TeamViewModel extends BaseViewModel {
       !_loading && _error == null && _rows.isEmpty && !_filter.isDefault;
 
   /// "Owner · you", "Admin · joined 3 Sep", "Bursar · code shared 5 Nov",
-  /// "Teacher · added today", "Teacher · suspended". A non-active record
+  /// "Teacher · added today", "Teacher · suspended". Someone with several
+  /// roles lists them all: "Admin · Teacher · joined 3 Sep". A non-active record
   /// gets " · on leave" or " · exited" as the suffix.
   String subtitleFor(StaffMember person) {
     final base = _subtitleFor(person);
@@ -96,7 +97,7 @@ class TeamViewModel extends BaseViewModel {
 
   String _subtitleFor(StaffMember person) {
     final login = person.login;
-    final role = person.role.teamLabel;
+    final role = person.rolesLabel;
     if (login == null) {
       return '$role · added ${AppDateFormat.relative(person.createdAt, now: _now())}';
     }

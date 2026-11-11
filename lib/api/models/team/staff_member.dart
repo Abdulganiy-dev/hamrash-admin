@@ -117,6 +117,7 @@ class StaffMember {
     required this.createdAt,
     this.memberId,
     this.login,
+    this.memberships = const [],
     this.privateDetails,
   });
 
@@ -147,6 +148,12 @@ class StaffMember {
 
   /// The embedded `organization_members` row, or null when there's no login.
   final StaffLogin? login;
+
+  /// Every `organization_members` row this person holds at the school, the
+  /// [login] first, then the roles added later in the order they were added.
+  /// Empty until the service reads them (a person on the app has one row per
+  /// role); use [logins] to read it.
+  final List<StaffLogin> memberships;
 
   /// The private details row, read separately for leaders. Null outside the
   /// edit sheet or when the caller can't read it.
@@ -199,7 +206,10 @@ class StaffMember {
     );
   }
 
-  StaffMember copyWith({StaffPrivateDetails? privateDetails}) => StaffMember(
+  StaffMember copyWith({
+    StaffPrivateDetails? privateDetails,
+    List<StaffLogin>? memberships,
+  }) => StaffMember(
     id: id,
     firstName: firstName,
     lastName: lastName,
@@ -216,6 +226,7 @@ class StaffMember {
     createdAt: createdAt,
     memberId: memberId,
     login: login,
+    memberships: memberships ?? this.memberships,
     privateDetails: privateDetails ?? this.privateDetails,
   );
 
@@ -230,6 +241,14 @@ class StaffMember {
   String get firstNameOnly => firstName;
 
   bool get hasLogin => login != null;
+
+  /// All the person's memberships, [login] first. One row when the service
+  /// hasn't read the rest.
+  List<StaffLogin> get logins {
+    if (memberships.isNotEmpty) return memberships;
+    final single = login;
+    return single == null ? const [] : [single];
+  }
 
   /// Staff who have left can't be given a login; the database refuses it.
   bool get canBeInvited => status != StaffRecordStatus.exited;
@@ -250,6 +269,16 @@ class StaffMember {
   /// The role the record is, or would be: the login's role when it has one,
   /// otherwise the job title's usual role.
   OrganizationMemberRole get role => login?.role ?? roleForJobTitle(jobTitle);
+
+  /// Every role they hold, the login's first. Someone with no login has the
+  /// one role their job title would get.
+  List<OrganizationMemberRole> get roles {
+    final held = [for (final row in logins) row.role];
+    return held.isEmpty ? [roleForJobTitle(jobTitle)] : held;
+  }
+
+  /// "Admin · Teacher": every role written as the team screens write it.
+  String get rolesLabel => roles.map((role) => role.teamLabel).join(' · ');
 
   /// "Teacher" from "Teacher", "Maths Teacher" or "Senior Teacher".
   static OrganizationMemberRole roleForJobTitle(String? jobTitle) {

@@ -37,6 +37,7 @@ class AppConfirmSheet extends StatefulWidget {
     required this.title,
     required this.confirmLabel,
     this.message,
+    this.body,
     this.icon,
     this.tone,
     this.cancelLabel = 'Cancel',
@@ -46,6 +47,10 @@ class AppConfirmSheet extends StatefulWidget {
 
   final String title;
   final String? message;
+
+  /// Extra content between the message and the buttons, e.g. a short list of
+  /// what will change.
+  final Widget? body;
 
   /// Shown on its own above the title, in the tone colour.
   final IconData? icon;
@@ -69,6 +74,7 @@ class AppConfirmSheet extends StatefulWidget {
     required String title,
     required String confirmLabel,
     String? message,
+    Widget? body,
     IconData? icon,
     AppBadgeTone? tone,
     String cancelLabel = 'Cancel',
@@ -81,6 +87,7 @@ class AppConfirmSheet extends StatefulWidget {
         child: AppConfirmSheet(
           title: title,
           message: message,
+          body: body,
           icon: icon,
           tone: tone,
           confirmLabel: confirmLabel,
@@ -183,6 +190,10 @@ class _AppConfirmSheetState extends State<AppConfirmSheet> {
                   color: LightColors.textBody,
                 ),
               ),
+            ],
+            if (widget.body != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              widget.body!,
             ],
             if (_error != null) ...[
               const SizedBox(height: 12),

@@ -25,8 +25,10 @@ import 'package:hamrash_admin/views/team/widgets/staff_list_card.dart';
 import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
 import 'package:stacked/stacked.dart';
 
-/// 9.3–9.3c · Staffs: everyone on the staff list, with where their login has
-/// got to. Pops `true` when something was saved, so the page behind reloads.
+/// 9.3–9.3c · Staffs as a page of its own (the Home checklist opens it).
+/// The People tab shows the same list on its Staff side through
+/// [TeamContent]. Pops `true` when something was saved, so the page behind
+/// reloads.
 class TeamScreen extends StatelessWidget {
   const TeamScreen({super.key, required this.school});
 
@@ -51,7 +53,7 @@ class TeamScreen extends StatelessWidget {
                 semanticLabel: model.filter.activeCount == 0
                     ? 'Filter staff'
                     : 'Filter staff, ${model.filter.activeCount} applied',
-                onPressed: () => _openFilter(context, model),
+                onPressed: () => openFilter(context, model),
               ),
             if (model.canAdd && model.ready)
               AppNavIconButton(
@@ -59,29 +61,17 @@ class TeamScreen extends StatelessWidget {
                 iconSize: 18,
                 iconColor: LightColors.primaryPrimaryDefault,
                 semanticLabel: 'Add staff member',
-                onPressed: () => _addStaff(context, model),
+                onPressed: () => addStaff(context, model),
               ),
           ],
-          body: AnimatedSectionContent(
-            morphHeight: false,
-            child: model.error != null
-                ? LoadErrorView(
-                    key: const ValueKey('error'),
-                    onRetry: model.load,
-                  )
-                : model.loading
-                ? const _Loading(key: ValueKey('loading'))
-                : model.showEmptyState
-                ? const _Empty(key: ValueKey('empty'))
-                : _List(key: const ValueKey('content'), model: model),
-          ),
+          body: TeamContent(model: model),
           bottomNavigationBar: model.ready && model.canAdd
-              ? _AddBar(onPressed: () => _addStaff(context, model))
+              ? TeamAddBar(onPressed: () => addStaff(context, model))
               : null,
         ),
       );
 
-  static Future<void> _openFilter(
+  static Future<void> openFilter(
     BuildContext context,
     TeamViewModel model,
   ) async {
@@ -89,7 +79,7 @@ class TeamScreen extends StatelessWidget {
     if (next != null) await model.applyFilter(next);
   }
 
-  static Future<void> _addStaff(
+  static Future<void> addStaff(
     BuildContext context,
     TeamViewModel model,
   ) async {
@@ -100,11 +90,11 @@ class TeamScreen extends StatelessWidget {
     await model.reload();
     if (!context.mounted) return;
     if (outcome.created case final staff?) {
-      await _openStaff(context, model, staff.id);
+      await openStaff(context, model, staff.id);
     }
   }
 
-  static Future<void> _openStaff(
+  static Future<void> openStaff(
     BuildContext context,
     TeamViewModel model,
     String staffId,
@@ -114,6 +104,31 @@ class TeamScreen extends StatelessWidget {
     );
     if (changed == true) await model.reload();
   }
+}
+
+/// What the Staff list shows for [model]'s state: the error view, the
+/// skeleton, the "just you" empty state or the list. Used by [TeamScreen] and
+/// by the People tab's Staff side.
+class TeamContent extends StatelessWidget {
+  const TeamContent({super.key, required this.model, this.onAdd});
+
+  final TeamViewModel model;
+
+  /// Adds an "Add staff member" step to the empty state, for a page with no
+  /// pinned bar of its own.
+  final VoidCallback? onAdd;
+
+  @override
+  Widget build(BuildContext context) => AnimatedSectionContent(
+    morphHeight: false,
+    child: model.error != null
+        ? LoadErrorView(key: const ValueKey('error'), onRetry: model.load)
+        : model.loading
+        ? const _Loading(key: ValueKey('loading'))
+        : model.showEmptyState
+        ? _Empty(key: const ValueKey('empty'), onAdd: onAdd)
+        : _List(key: const ValueKey('content'), model: model),
+  );
 }
 
 class _List extends StatefulWidget {
@@ -180,7 +195,7 @@ class _ListState extends State<_List> {
                 staff: model.staff,
                 subtitleFor: model.subtitleFor,
                 onOpen: (person) =>
-                    TeamScreen._openStaff(context, model, person.id),
+                    TeamScreen.openStaff(context, model, person.id),
               ),
             ),
           ),
@@ -390,7 +405,9 @@ class _MoreFooter extends StatelessWidget {
 /// 9.3c · No one but the owner yet: the tinted tile, one line of explanation
 /// and the pinned "Add staff member" bar.
 class _Empty extends StatelessWidget {
-  const _Empty({super.key});
+  const _Empty({super.key, this.onAdd});
+
+  final VoidCallback? onAdd;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -400,21 +417,24 @@ class _Empty extends StatelessWidget {
       AppSpacing.screen,
       0,
     ),
-    child: const Center(
+    child: Center(
       child: AppEmptyState(
         icon: AppIcons.userPlus,
         title: 'No staff yet',
         subtitle:
             'Add each person who works at the school. You can invite them '
             'to the app now or later.',
+        actionLabel: onAdd == null ? null : 'Add staff member',
+        onAction: onAdd,
         topPadding: AppSpacing.none,
       ),
     ),
   );
 }
 
-class _AddBar extends StatelessWidget {
-  const _AddBar({required this.onPressed});
+/// The pinned "Add staff member" bar.
+class TeamAddBar extends StatelessWidget {
+  const TeamAddBar({super.key, required this.onPressed});
 
   final VoidCallback onPressed;
 

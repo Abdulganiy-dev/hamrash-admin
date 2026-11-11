@@ -86,11 +86,10 @@ class SchoolService {
         if (results[5] > 0) SetupStep.students,
       });
     },
-    log:
-        (progress) => {
-          'organization_id': organization.id,
-          'done': progress.done.map((step) => step.name).toList(),
-        },
+    log: (progress) => {
+      'organization_id': organization.id,
+      'done': progress.done.map((step) => step.name).toList(),
+    },
   );
 
   /// The caller's own staff record at this school, found through any of
@@ -148,36 +147,6 @@ class SchoolService {
       return rows.isEmpty ? null : CurrentTerm.fromJson(rows.first);
     },
     log: (term) => {'organization_id': organizationId, 'found': term != null},
-  );
-
-  /// Admin-app members, joined and invited. Only school leaders can see
-  /// other members, so call this for them only.
-  Future<TeamCount> getTeamCount(String organizationId) => _run(
-    'getTeamCount',
-    () async {
-      final rows = await _supabase
-          .from('organization_members')
-          .select('status')
-          .eq('organization_id', organizationId)
-          .inFilter('role', [
-            'owner',
-            'admin',
-            'principal',
-            'vice_principal',
-            'bursar',
-          ])
-          .inFilter('status', ['active', 'invited']);
-      return TeamCount(
-        active: rows.where((row) => row['status'] == 'active').length,
-        invited: rows.where((row) => row['status'] == 'invited').length,
-      );
-    },
-    log:
-        (team) => {
-          'organization_id': organizationId,
-          'active': team.active,
-          'invited': team.invited,
-        },
   );
 
   Future<T> _run<T>(

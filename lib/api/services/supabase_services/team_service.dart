@@ -31,6 +31,10 @@ class TeamService {
       "You can't issue that login. Only the owner or an admin can invite "
       'admins.';
 
+  static const addRoleRefused =
+      "You can't give them that role. Only the owner or an admin can add "
+      'admins.';
+
   static const detailsRefused =
       'Only the owner, admins, the principal and vice principals can change '
       'staff details.';
@@ -72,7 +76,15 @@ class TeamService {
             'p_cursor': cursor,
           },
         );
-        return StaffPage.fromJson(Map<String, dynamic>.from(result as Map));
+        final page = StaffPage.fromJson(
+          Map<String, dynamic>.from(result as Map),
+        );
+        return StaffPage(
+          rows: await _withMemberships(organizationId, page.rows),
+          nextCursor: page.nextCursor,
+          total: page.total,
+          counts: page.counts,
+        );
       } on PostgrestException catch (error) {
         // The function refuses bad arguments and stale cursors with 22023
         // and a message written for people.
@@ -92,7 +104,7 @@ class TeamService {
   Future<StaffMember> getStaff(String staffId) => _run('getStaff', () async {
     final row = await _supabase
         .from('staff')
-        .select(StaffMember.columns)
+        .select('${StaffMember.columns},organization_id')
         .eq('id', staffId)
         .single();
     final details = await _supabase
@@ -100,12 +112,61 @@ class TeamService {
         .select(StaffPrivateDetails.columns)
         .eq('staff_id', staffId)
         .maybeSingle();
-    return StaffMember.fromJson(row).copyWith(
+    final staff = StaffMember.fromJson(row).copyWith(
       privateDetails: details == null
           ? null
           : StaffPrivateDetails.fromJson(details),
     );
-  }, log: (staff) => {'id': staff.id});
+    final organizationId = row['organization_id'] as String?;
+    if (organizationId == null) return staff;
+    return (await _withMemberships(organizationId, [staff])).single;
+  }, log: (staff) => {'id': staff.id, 'roles': staff.roles.length});
+
+  /// Adds every role each person holds at the school to their row. A person
+  /// on the app has one `organization_members` row per role, all with the
+  /// same `clerk_user_id`; leaders can read them all (RLS). The login the
+  /// staff row points at stays first and the others follow in the order they
+  /// were added. If this read fails the rows keep the one login they came
+  /// with, so a list or page still opens.
+  Future<List<StaffMember>> _withMemberships(
+    String organizationId,
+    List<StaffMember> rows,
+  ) async {
+    final people = {for (final person in rows) ?person.login?.clerkUserId};
+    if (people.isEmpty) return rows;
+    try {
+      final result = await _supabase
+          .from('organization_members')
+          .select(StaffLogin.columns)
+          .eq('organization_id', organizationId)
+          .inFilter('clerk_user_id', people.toList());
+      final byPerson = <String, List<StaffLogin>>{};
+      for (final row in result) {
+        final login = StaffLogin.fromJson(Map<String, dynamic>.from(row));
+        byPerson.putIfAbsent(login.clerkUserId!, () => []).add(login);
+      }
+      return [
+        for (final person in rows)
+          if (byPerson[person.login?.clerkUserId] case final held?)
+            person.copyWith(memberships: _primaryFirst(person.login!, held))
+          else
+            person,
+      ];
+    } catch (_) {
+      return rows;
+    }
+  }
+
+  static List<StaffLogin> _primaryFirst(
+    StaffLogin primary,
+    List<StaffLogin> held,
+  ) {
+    final others = [
+      for (final login in held)
+        if (login.id != primary.id) login,
+    ]..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return [primary, ...others];
+  }
 
   /// The complete staff row and private details, for the Change details
   /// sheet. `update_staff` needs every argument, so the sheet sends all of
@@ -281,18 +342,44 @@ class TeamService {
     duplicate: 'They already have that role at this school.',
   );
 
-  /// Suspends a login (it stays linked, but can't sign in) or restores it.
-  Future<void> setSuspended({
+  /// Gives someone already on the app another role at the school
+  /// (`add_member_role`): a new active membership with the same sign-in and
+  /// no new code. [memberId] is one of their active memberships. The database
+  /// refuses the owner role, roles the caller may not add, people who aren't
+  /// on the app, and roles they already hold; those reasons come back as
+  /// [SupabaseRefusal]s. Returns the new membership.
+  Future<StaffLogin> addMemberRole({
     required String memberId,
+    required OrganizationMemberRole role,
+  }) => _run(
+    'addMemberRole',
+    () async => StaffLogin.fromJson(
+      Map<String, dynamic>.from(
+        await _supabase.rpc(
+              'add_member_role',
+              params: {'p_member_id': memberId, 'p_role': role.value},
+            )
+            as Map,
+      ),
+    ),
+    log: (login) => {'member_id': memberId, 'role': login.role.value},
+    forbidden: addRoleRefused,
+  );
+
+  /// Suspends the login (it stays linked, but can't sign in) or restores it.
+  /// A person with several roles has one membership per role, so pass all of
+  /// them in [memberIds] and the whole login changes together.
+  Future<void> setSuspended({
+    required List<String> memberIds,
     required bool suspended,
   }) => _run(
     'setSuspended',
-    () => _updateMember(memberId, {
+    () => _updateMembers(memberIds, {
       'status': suspended
           ? OrganizationMemberStatus.suspended.value
           : OrganizationMemberStatus.active.value,
     }),
-    log: (_) => {'member_id': memberId, 'suspended': suspended},
+    log: (_) => {'member_ids': memberIds, 'suspended': suspended},
     forbidden: ownersOnly,
   );
 
@@ -315,14 +402,17 @@ class TeamService {
         'be removed.',
   );
 
-  Future<void> _updateMember(
-    String memberId,
+  Future<void> _updateMember(String memberId, Map<String, Object?> values) =>
+      _updateMembers([memberId], values);
+
+  Future<void> _updateMembers(
+    List<String> memberIds,
     Map<String, Object?> values,
   ) async {
     final changed = await _supabase
         .from('organization_members')
         .update(values)
-        .eq('id', memberId)
+        .inFilter('id', memberIds)
         .select('id');
     refuseIfNothingChanged(changed, ownersOnly);
   }

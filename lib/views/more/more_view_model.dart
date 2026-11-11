@@ -17,16 +17,19 @@ class MoreViewModel extends BaseViewModel {
 
   SetupProgress? _progress;
   CurrentTerm? _currentTerm;
-  TeamCount? _team;
   Object? _error;
 
   Object? get error => _error;
   bool get loading => _progress == null && _error == null;
 
-  /// Areas this person can see, in tile order.
+  /// Areas this person can see, in tile order. Staff live in the People tab,
+  /// not here.
   List<SchoolArea> get areas =>
       SchoolArea.values
-          .where((area) => school.accessTo(area).isVisible)
+          .where(
+            (area) =>
+                area != SchoolArea.team && school.accessTo(area).isVisible,
+          )
           .toList();
 
   AreaAccess accessTo(SchoolArea area) => school.accessTo(area);
@@ -41,8 +44,7 @@ class MoreViewModel extends BaseViewModel {
     SchoolArea.classes => _doneOr(SetupStep.classes),
     SchoolArea.subjects => _doneOr(SetupStep.subjects),
     SchoolArea.grading => _doneOr(SetupStep.grading),
-    SchoolArea.team =>
-      _team?.label ?? 'Add your staff and invite them to the app',
+    SchoolArea.team => '',
     SchoolArea.schoolDetails => 'Logo, address, contacts',
   };
 
@@ -114,16 +116,13 @@ class MoreViewModel extends BaseViewModel {
   }
 
   Future<void> _fetch() async {
-    final showTeam = accessTo(SchoolArea.team).isVisible;
     final results = await Future.wait<Object?>([
       _service.getSetupProgress(school.organization),
-      // Tiles still work without these, so a failure isn't fatal.
+      // Tiles still work without this, so a failure isn't fatal.
       _optional(_service.getCurrentTerm(school.id)),
-      if (showTeam) _optional(_service.getTeamCount(school.id)),
     ]);
     _progress = results[0] as SetupProgress;
     _currentTerm = results[1] as CurrentTerm?;
-    _team = showTeam ? results[2] as TeamCount? : null;
   }
 
   static Future<T?> _optional<T>(Future<T?> request) async {

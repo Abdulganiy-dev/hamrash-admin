@@ -7,10 +7,11 @@ import 'package:hamrash_admin/core/widgets/navigation/app_tab_bar.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_tab_shell.dart';
 import 'package:hamrash_admin/views/home/home_screen.dart';
 import 'package:hamrash_admin/views/more/more_screen.dart';
+import 'package:hamrash_admin/views/people/people_screen.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 
-/// The signed-in app for one school: Home, People, Fees and More. People and
-/// Fees aren't built yet; their tabs say so.
+/// The signed-in app for one school: Home, People, Fees and More. Fees isn't
+/// built yet; its tab says so.
 class HomeShell extends StatelessWidget {
   const HomeShell({
     super.key,
@@ -33,7 +34,7 @@ class HomeShell extends StatelessWidget {
   /// Null when this is their only school.
   final VoidCallback? onSwitchSchool;
 
-  static const _comingSoon = {1: 'People', 2: 'Fees'};
+  static const _comingSoon = {2: 'Fees'};
 
   void _openAccount(BuildContext context, String name, String? photoUrl) =>
       AppActionSheet.show(
@@ -91,14 +92,16 @@ class HomeShell extends StatelessWidget {
               onOpenSchoolDetails: onOpenSchoolDetails,
             ),
       ),
-      for (final MapEntry(value: label) in _comingSoon.entries)
-        AppTab(
-          item: AppTabItem(
-            icon: label == 'People' ? AppIcons.users : AppIcons.wallet,
-            label: label,
-          ),
-          builder: (_) => const SizedBox.shrink(),
-        ),
+      AppTab(
+        item: const AppTabItem(icon: AppIcons.users, label: 'People'),
+        builder:
+            (context) =>
+                PeopleScreen(key: ValueKey('people/${school.id}'), school: school),
+      ),
+      AppTab(
+        item: const AppTabItem(icon: AppIcons.wallet, label: 'Fees'),
+        builder: (_) => const SizedBox.shrink(),
+      ),
       AppTab(
         item: const AppTabItem(icon: AppIcons.layoutGrid, label: 'More'),
         builder:

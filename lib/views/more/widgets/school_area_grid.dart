@@ -85,6 +85,7 @@ class _AreaTile extends StatelessWidget {
       AppPalette.chartreuseMute,
       AppPalette.chartreuseText,
     ),
+    // Staff aren't a More tile (they're in People); never drawn.
     SchoolArea.team => (
       AppIcons.userPlus,
       AppPalette.tealMute,

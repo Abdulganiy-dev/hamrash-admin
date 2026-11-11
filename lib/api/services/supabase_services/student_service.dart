@@ -1,5 +1,6 @@
 import 'package:hamrash_admin/api/models/students/parent_match.dart';
 import 'package:hamrash_admin/api/models/students/student_registration.dart';
+import 'package:hamrash_admin/api/models/students/student_summary.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/core/utils/phone_format.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -21,6 +22,42 @@ class StudentService {
   final SupabaseClient _supabase;
 
   static const leadersOnly = "Only the school's leaders can register students.";
+
+  /// The most students the People list reads in one go.
+  static const listLimit = 1000;
+
+  /// The school's active students, A to Z, each with the arm they are in for
+  /// [sessionId] (null when there is no current session, so nobody has an
+  /// arm). One read of up to [listLimit] students: there is no paged or
+  /// searched student list on the server yet.
+  Future<List<StudentSummary>> listStudents({
+    required String organizationId,
+    String? sessionId,
+  }) => runRefusable(
+    'listStudents',
+    () async {
+      final rows = await _supabase
+          .from('students')
+          .select(StudentSummary.columns)
+          .eq('organization_id', organizationId)
+          .eq('status', 'active')
+          .order('last_name')
+          .order('first_name')
+          .limit(listLimit);
+      return [
+        for (final row in rows)
+          StudentSummary.fromJson(
+            Map<String, dynamic>.from(row),
+            sessionId: sessionId,
+          ),
+      ];
+    },
+    log: (students) => {
+      'organization_id': organizationId,
+      'count': students.length,
+    },
+    forbidden: "You don't have access to the students.",
+  );
 
   /// The most rows one phone search reads before they are compared by
   /// digits here.

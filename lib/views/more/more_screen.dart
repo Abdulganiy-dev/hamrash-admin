@@ -15,7 +15,6 @@ import 'package:hamrash_admin/views/academic_calendar/sessions/academic_sessions
 import 'package:hamrash_admin/views/classes/classes_screen.dart';
 import 'package:hamrash_admin/views/grading/grading_screen.dart';
 import 'package:hamrash_admin/views/subjects/subjects_screen.dart';
-import 'package:hamrash_admin/views/team/team_screen.dart';
 import 'package:hamrash_admin/views/more/more_view_model.dart';
 import 'package:hamrash_admin/views/more/widgets/more_account_card.dart';
 import 'package:hamrash_admin/views/more/widgets/more_school_card.dart';
@@ -116,7 +115,7 @@ class MoreScreen extends StatelessWidget {
       case SchoolArea.grading:
         await _openPage(context, model, GradingScreen(school: school));
       case SchoolArea.team:
-        await _openPage(context, model, TeamScreen(school: school));
+        break; // Staff are in the People tab.
     }
   }
 

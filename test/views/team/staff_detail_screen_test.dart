@@ -21,6 +21,7 @@ import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
 import 'package:hamrash_admin/views/team/widgets/change_details_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/choice_list_sheet.dart';
+import 'package:hamrash_admin/views/team/widgets/role_picker_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_form_fields.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
 import 'package:url_launcher_platform_interface/link.dart';
@@ -39,9 +40,26 @@ class _FakeTeam implements TeamService {
   StaffPrivateDetails? savedPrivate;
   StaffDetailsChanges? savedChanges;
   String? changedRole;
+  OrganizationMemberRole? addedRole;
+  Object? addFailure;
 
   @override
   Future<StaffMember> getStaff(String staffId) async => member;
+
+  @override
+  Future<StaffLogin> addMemberRole({
+    required String memberId,
+    required OrganizationMemberRole role,
+  }) async {
+    if (addFailure case final error?) throw error;
+    addedRole = role;
+    return StaffLogin(
+      id: 'm-new',
+      role: role,
+      status: OrganizationMemberStatus.active,
+      createdAt: DateTime(2026, 11, 11),
+    );
+  }
 
   @override
   Future<void> changeRole({
@@ -307,16 +325,18 @@ void main() {
 
     expect(find.text('Access'), findsOneWidget);
     expect(find.text('Joined 3 Sep 2026'), findsOneWidget);
+    expect(find.text('Hamrash Staff'), findsOneWidget);
     expect(find.text('Role'), findsOneWidget);
     expect(find.text('Teacher'), findsOneWidget);
+    expect(find.text('Add role'), findsOneWidget);
     expect(find.text('Suspend access'), findsOneWidget);
     expect(
       find.text("They stay on the list but can't sign in."),
       findsOneWidget,
     );
     expect(find.text('Invite staff to Hamrash'), findsNothing);
-    // Four Details rows, four Personal rows and the Access app + role rows.
-    expect(find.byType(StaffInfoRow), findsNWidgets(13));
+    // Six Details rows and five Personal rows; the Access card draws its own.
+    expect(find.byType(StaffInfoRow), findsNWidgets(11));
 
     expect(
       find.text('Remove from staff list', skipOffstage: false),
@@ -397,21 +417,85 @@ void main() {
     expect(find.text('Access'), findsNothing);
   });
 
-  testWidgets('the Role row opens the picker and saves the new role', (
-    tester,
-  ) async {
+  testWidgets('the Role row is display only', (tester) async {
     final member = _member(login: _login());
     final service = _FakeTeam(member);
     await pump(tester, member, team: service);
 
     await tester.tap(find.text('Role'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('role-row-admin')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Use Admin'));
-    await tester.pumpAndSettle();
-    expect(service.changedRole, 'admin');
+
+    expect(find.text('Change role'), findsNothing);
+    expect(find.byType(RolePickerSheet), findsNothing);
+    expect(service.changedRole, isNull);
   });
+
+  testWidgets('Add role: pick, confirm, then it says so', (tester) async {
+    final member = _member(login: _login());
+    final service = _FakeTeam(member);
+    await pump(tester, member, team: service);
+
+    await tester.tap(find.byKey(const ValueKey('access-add-role')));
+    await tester.pumpAndSettle();
+    // 9.42: only roles they don't hold; never owner; nothing picked yet.
+    expect(find.text('Add a role'), findsOneWidget);
+    expect(find.text('Tunde Ade keeps Teacher.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('role-row-teacher')), findsNothing);
+    expect(find.byKey(const ValueKey('role-row-owner')), findsNothing);
+    expect(
+      tester
+          .widget<AppPrimaryButton>(
+            find.widgetWithText(AppPrimaryButton, 'Continue'),
+          )
+          .isDisabled,
+      isTrue,
+    );
+    await tester.tap(find.byKey(const ValueKey('role-row-bursar')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Continue'));
+    await tester.pumpAndSettle();
+
+    // 9.43
+    expect(find.text('Make Tunde a bursar too?'), findsOneWidget);
+    expect(
+      find.text('They get fees and school records in Hamrash Admin'),
+      findsOneWidget,
+    );
+    expect(find.text('They stay Teacher'), findsOneWidget);
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Add bursar'));
+    await tester.pumpAndSettle();
+
+    // 9.44
+    expect(service.addedRole, OrganizationMemberRole.bursar);
+    expect(find.text('Tunde is a bursar too'), findsOneWidget);
+  });
+
+  testWidgets(
+    'a refused Add role keeps the confirmation open with the reason',
+    (tester) async {
+      final member = _member(login: _login());
+      final service = _FakeTeam(member)
+        ..addFailure = const SupabaseRefusal(
+          'They already have the bursar role at this school',
+        );
+      await pump(tester, member, team: service);
+
+      await tester.tap(find.byKey(const ValueKey('access-add-role')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('role-row-bursar')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppPrimaryButton, 'Continue'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppPrimaryButton, 'Add bursar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Make Tunde a bursar too?'), findsOneWidget);
+      expect(
+        find.text('They already have the bursar role at this school'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('Suspend access asks for confirmation', (tester) async {
     final member = _member(login: _login());

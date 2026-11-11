@@ -3,6 +3,9 @@ import 'package:hamrash_admin/api/models/organization_models/member_school.dart'
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_confirm_sheet.dart';
+import 'package:hamrash_admin/core/bottomSheets/app_result_sheet.dart';
+import 'package:hamrash_admin/core/constants/radius_containers.dart';
+import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
@@ -315,22 +318,19 @@ class _Content extends StatelessWidget {
     ],
   );
 
-  /// 9.29 – 9.29b · Who can use the app: the role and the access actions, or
-  /// just remove for someone who never had a login.
+  /// 9.29 – 9.29b · Who can use the app: one card per app their roles span,
+  /// then the actions each stage needs.
   Widget _access(BuildContext context) => StaffAccessSection(
-    roleLabel: model.role.teamLabel,
-    appName: model.role.appName,
-    statusLabel: model.statusLabel,
+    apps: model.accessApps(
+      onInvite: model.canInvite ? () => _invite(context) : null,
+    ),
     isOnApp: model.isOnApp,
     isPending: model.isPending,
     isSuspended: model.isSuspended,
     joinedCaption: model.joinedCaption,
     invitedCaption: model.invitedCaption,
-    onInvite: model.canInvite ? () => _invite(context) : null,
-    onChangeRole:
-        model.canChangeRoleInSheet ? () => _changeRole(context) : null,
-    onChangeStatus:
-        model.canManageAccess ? () => _changeStatus(context) : null,
+    onAddRole: model.canAddRole ? () => _addRole(context) : null,
+    onChangeStatus: model.canManageAccess ? () => _changeStatus(context) : null,
     onToggleAccess: model.canManageAccess ? () => _toggleAccess(context) : null,
     onCancelInvite: model.canCancelInvite ? () => _cancelInvite(context) : null,
     onRemove: model.canRemove ? () => _remove(context) : null,
@@ -342,20 +342,6 @@ class _Content extends StatelessWidget {
     AppSheetSize size = AppSheetSize.floating,
   }) =>
       Navigator.of(context).push<T>(AppSheetRoute<T>(size: size, child: sheet));
-
-  Future<OrganizationMemberRole?> _pickRole(BuildContext context) =>
-      _sheet<OrganizationMemberRole>(
-        context,
-        RolePickerSheet(
-          selected: model.role,
-          title: 'Change role',
-          lockAdmin: !model.school.canInviteAdmins,
-          viewerName: _member.fullName,
-          viewerRole: model.school.roles.isEmpty
-              ? null
-              : model.school.roles.first,
-        ),
-      );
 
   /// 9.26 → 9.28 · Create the invite, then show the code and the message.
   Future<void> _invite(BuildContext context) async {
@@ -434,16 +420,44 @@ class _Content extends StatelessWidget {
     if (saved == true) AppToast.show('Details saved');
   }
 
-  Future<void> _changeRole(BuildContext context) async {
-    final role = await _pickRole(context);
-    if (role == null || role == model.role) return;
-    final error =
-        model.isPending
-            ? await model.changeInviteRole(role)
-            : await model.changeRole(role);
-    if (error != null) {
-      AppToast.show(error, type: AppToastType.error);
-    }
+  /// 9.42 → 9.44 · Pick a role they don't hold, confirm it, then say it's
+  /// done. The page refreshes behind the sheets and pops `true` when it
+  /// closes.
+  Future<void> _addRole(BuildContext context) async {
+    final role = await _sheet<OrganizationMemberRole>(
+      context,
+      RolePickerSheet(
+        selected: null,
+        title: 'Add a role',
+        subtitle: model.addRoleSubtitle,
+        offered: model.addableRoles,
+        confirmLabel: 'Continue',
+      ),
+    );
+    if (role == null || !context.mounted) return;
+
+    // Said before the add, while the page still lists the roles they had.
+    final addedTitle = model.addedTitle(role);
+    final addedMessage = model.addedMessage(role);
+    final added = await AppConfirmSheet.show(
+      context,
+      icon: AppIcons.shieldPlus,
+      title: model.addRoleTitle(role),
+      message: model.addRoleMessage,
+      body: _AddRoleBullets(lines: model.addRoleBullets(role)),
+      confirmLabel: model.addRoleConfirmLabel(role),
+      onConfirm: () async {
+        final error = await model.addRole(role);
+        if (error != null) throw AppAlertError(error);
+      },
+    );
+    if (added != true || !context.mounted) return;
+    await AppResultSheet.show<void>(
+      context,
+      type: AppResultType.success,
+      title: addedTitle,
+      message: addedMessage,
+    );
   }
 
   Future<void> _toggleAccess(BuildContext context) async {
@@ -501,6 +515,53 @@ class _Content extends StatelessWidget {
       NavigationService.popScreen(true);
     }
   }
+}
+
+/// 9.43 · What adding the role changes: a tinted box of three ticked lines.
+class _AddRoleBullets extends StatelessWidget {
+  const _AddRoleBullets({required this.lines});
+
+  final List<String> lines;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppSpacing.md,
+      vertical: 14,
+    ),
+    decoration: BoxDecoration(
+      color: AppPalette.stone50,
+      borderRadius: AppRadius.brLg,
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (index, line) in lines.indexed) ...[
+          if (index > 0) const SizedBox(height: AppSpacing.ms),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const AppIcon(
+                AppIcons.check,
+                size: 18,
+                color: LightColors.primaryPrimaryDefault,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: AppText(
+                  line,
+                  style: AppTypography.body.copyWith(
+                    height: 20 / 14,
+                    color: LightColors.textStrong,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    ),
+  );
 }
 
 /// [StaffDetailSkeleton] where the page's content starts.

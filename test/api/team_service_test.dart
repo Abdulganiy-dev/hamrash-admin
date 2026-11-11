@@ -99,9 +99,7 @@ void main() {
     };
 
     test('sends the filter to list_staff as its parameters', () async {
-      final (service, requests) = _service(
-        (request) => _json(page(), request),
-      );
+      final (service, requests) = _service((request) => _json(page(), request));
 
       await service.listStaffPage(
         organizationId: 'kings',
@@ -131,9 +129,7 @@ void main() {
     });
 
     test('the default filter asks for active staff by name, page 1', () async {
-      final (service, requests) = _service(
-        (request) => _json(page(), request),
-      );
+      final (service, requests) = _service((request) => _json(page(), request));
 
       await service.listStaffPage(organizationId: 'kings', limit: 1);
 
@@ -185,7 +181,7 @@ void main() {
           '22023',
           request,
           'This page cursor is not valid for this list. Load the list again '
-          'from the start',
+              'from the start',
         ),
       );
 
@@ -442,4 +438,179 @@ void main() {
       );
     },
   );
+
+  group('several roles', () {
+    Map<String, dynamic> membership(String id, String role, String created) =>
+        _login(
+          id: id,
+          role: role,
+          status: 'active',
+          code: null,
+          joinedAt: '2026-09-03T09:00:00Z',
+          clerkUserId: 'user-ngozi',
+        )..['created_at'] = created;
+
+    test('a staff list page reads every role each person holds', () async {
+      final (service, requests) = _service((request) {
+        if (request.url.path == '/rest/v1/rpc/list_staff') {
+          return _json({
+            'rows': [
+              _staff(
+                firstName: 'Ngozi',
+                jobTitle: 'Teacher',
+                member: membership('m-admin', 'admin', '2026-09-03T09:00:00Z'),
+              ),
+              _staff(id: 's2', firstName: 'Chinedu', jobTitle: 'Teacher'),
+            ],
+            'next_cursor': null,
+            'total': 2,
+            'counts': {
+              'all': 2,
+              'on_app': 1,
+              'code_ready': 0,
+              'not_on_app': 1,
+              'suspended': 0,
+            },
+          }, request);
+        }
+        // The later teacher row comes back first: the login stays first
+        // anyway, the rest follow in the order they were added.
+        return _json([
+          membership('m-bursar', 'bursar', '2026-11-01T09:00:00Z'),
+          membership('m-teacher', 'teacher', '2026-10-01T09:00:00Z'),
+          membership('m-admin', 'admin', '2026-09-03T09:00:00Z'),
+        ], request);
+      });
+
+      final page = await service.listStaffPage(organizationId: 'kings');
+
+      expect(page.rows.first.roles, [
+        OrganizationMemberRole.admin,
+        OrganizationMemberRole.teacher,
+        OrganizationMemberRole.bursar,
+      ]);
+      expect(page.rows.last.roles, [OrganizationMemberRole.teacher]);
+      final read = requests.last;
+      expect(read.url.path, '/rest/v1/organization_members');
+      expect(read.url.queryParameters['organization_id'], 'eq.kings');
+      expect(read.url.queryParameters['clerk_user_id'], 'in.("user-ngozi")');
+    });
+
+    test('a failed roles read leaves the page with its one login', () async {
+      final (service, _) = _service((request) {
+        if (request.url.path == '/rest/v1/rpc/list_staff') {
+          return _json({
+            'rows': [
+              _staff(
+                member: membership('m-admin', 'admin', '2026-09-03T09:00:00Z'),
+              ),
+            ],
+            'next_cursor': null,
+            'total': 1,
+            'counts': {'all': 1},
+          }, request);
+        }
+        return _refused('XX000', request, 'boom');
+      });
+
+      final page = await service.listStaffPage(organizationId: 'kings');
+
+      expect(page.rows.single.roles, [OrganizationMemberRole.admin]);
+    });
+
+    test(
+      'add_member_role sends the member and role, returns the row',
+      () async {
+        final (service, requests) = _service(
+          (request) => _json({
+            ..._login(
+              id: 'm-new',
+              role: 'bursar',
+              status: 'active',
+              code: null,
+              clerkUserId: 'user-ngozi',
+            ),
+            'organization_id': 'kings',
+          }, request),
+        );
+
+        final added = await service.addMemberRole(
+          memberId: 'm-admin',
+          role: OrganizationMemberRole.bursar,
+        );
+
+        expect(requests.single.url.path, '/rest/v1/rpc/add_member_role');
+        final body = jsonDecode(requests.single.body) as Map;
+        expect(body, {'p_member_id': 'm-admin', 'p_role': 'bursar'});
+        expect(added.id, 'm-new');
+        expect(added.role, OrganizationMemberRole.bursar);
+        expect(added.status, OrganizationMemberStatus.active);
+      },
+    );
+
+    test('add_member_role refusals read as the database wrote them', () async {
+      final (service, _) = _service(
+        (request) => _refused(
+          'P0001',
+          request,
+          'They already have the bursar role at this school',
+        ),
+      );
+
+      await expectLater(
+        service.addMemberRole(
+          memberId: 'm-admin',
+          role: OrganizationMemberRole.bursar,
+        ),
+        throwsA(
+          isA<SupabaseRefusal>().having(
+            (error) => error.message,
+            'message',
+            'They already have the bursar role at this school',
+          ),
+        ),
+      );
+    });
+
+    test('a role the caller may not add says who can', () async {
+      final (service, _) = _service(
+        (request) => _refused('42501', request, 'not allowed'),
+      );
+
+      await expectLater(
+        service.addMemberRole(
+          memberId: 'm-admin',
+          role: OrganizationMemberRole.admin,
+        ),
+        throwsA(
+          isA<SupabaseRefusal>().having(
+            (error) => error.message,
+            'message',
+            TeamService.addRoleRefused,
+          ),
+        ),
+      );
+    });
+
+    test('suspending changes all of the memberships in one request', () async {
+      final (service, requests) = _service(
+        (request) => _json([
+          {'id': 'm-admin'},
+          {'id': 'm-teacher'},
+        ], request),
+      );
+
+      await service.setSuspended(
+        memberIds: ['m-admin', 'm-teacher'],
+        suspended: true,
+      );
+
+      expect(requests.single.method, 'PATCH');
+      expect(
+        requests.single.url.queryParameters['id'],
+        'in.("m-admin","m-teacher")',
+      );
+      expect(jsonDecode(requests.single.body), {'status': 'suspended'});
+    });
+  });
 }

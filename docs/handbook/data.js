@@ -752,11 +752,19 @@ window.HANDBOOK = {
       ops: [
         {
           id: 'team-r1', kind: 'read', title: 'List staff (search, filters, pages)', target: 'rpc list_staff',
-          trigger: 'Opening Staffs, applying or removing a filter or search in the filter sheet, scrolling near the end of the list, pull to refresh, and after a person or invite changes.',
+          trigger: 'Opening the People tab’s Staff side (or the Staffs page from the Home checklist), applying or removing a filter or search in the filter sheet, scrolling near the end of the list, pull to refresh, and after a person or invite changes.',
           touches: ['rpc list_staff (staff plus the embedded login from organization_members, no private details)'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'], note: 'Only leaders reach the screen; the bursar has no staff area.' },
-          steps: ['One page of 30 per call: search, login, roles, staff type, statuses and sort run on the server; the owner sorts first on Name A–Z.', 'Returns `rows`, `next_cursor`, `total` and the login chip counts, which ignore the login filter. Login (All, On app, Code ready, Not on app, Suspended) is picked only in the filter sheet; `counts` feed the “{total} of {counts.all}” text.', 'The filter sheet edits a local draft and makes no request; **Show results** applies it and reloads page 1. Changing the filter or search always starts again from page 1 and ignores answers to an older filter.', 'Scrolling within about 300px of the end asks for the next page with the last `next_cursor`; a failed page shows “Couldn’t load more. Tap to retry”. The list stops when `next_cursor` is null.', 'Applied filters show as removable chips with “{total} of {counts.all}”. No match shows a “No staff match” state with Clear filters / Clear search.', 'A non-active record adds “ · on leave” or “ · exited” to its subtitle; the login pill stays on the right.'],
+          steps: ['One page of 30 per call: search, login, roles, staff type, statuses and sort run on the server; the owner sorts first on Name A–Z.', 'Returns `rows`, `next_cursor`, `total` and the login chip counts, which ignore the login filter. Login (All, On app, Code ready, Not on app, Suspended) is picked only in the filter sheet; `counts` feed the “{total} of {counts.all}” text.', 'The filter sheet edits a local draft and makes no request; **Show results** applies it and reloads page 1. Changing the filter or search always starts again from page 1 and ignores answers to an older filter.', 'Scrolling within about 300px of the end asks for the next page with the last `next_cursor`; a failed page shows “Couldn’t load more. Tap to retry”. The list stops when `next_cursor` is null.', 'Applied filters show as removable chips with “{total} of {counts.all}”. No match shows a “No staff match” state with Clear filters / Clear search.', 'A non-active record adds “ · on leave” or “ · exited” to its subtitle; the login pill stays on the right.', 'A person with several roles lists them all in the subtitle (“Admin · Teacher · joined 3 Sep”), read by **Read every role a person holds** below.', 'The roles filter still matches the one login the staff row points at, so it won’t find someone by a role they were given later.'],
           sources: ['team_service.dart:listStaffPage', 'team_view_model.dart:load', 'staff_filter_sheet.dart', 'migration 30'],
+        },
+        {
+          id: 'team-r3', kind: 'read', title: 'Read every role a person holds', target: 'select organization_members',
+          trigger: 'After each staff list page and each staff page load.',
+          touches: ['select organization_members (id, role, status, claim code, joined, created, Clerk id) for the school and the people on the page'],
+          who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'], note: 'Leaders read every membership of their school (migration 01), so no new function was needed.' },
+          steps: ['One request per page: memberships of this school whose Clerk id is one of the page’s people. A person on the app has one row per role.', 'The login the staff row points at stays first; roles added later follow in the order they were added.', 'If the read fails the page keeps the one login it already has, so a list or page still opens.'],
+          sources: ['team_service.dart:_withMemberships'],
         },
         {
           id: 'team-r2', kind: 'read', title: 'Read a person’s full record for editing', target: 'staff · staff_private_details',
@@ -802,10 +810,10 @@ window.HANDBOOK = {
         },
         {
           id: 'team-c3', kind: 'create', title: 'Give someone on the app another role', target: 'rpc add_member_role',
-          trigger: 'Not in the app yet. Planned: a person on the app → **Add a role** → pick a role. Hidden for people who haven’t joined.',
+          trigger: 'A staff page, person on the app → Access → **Add role** → pick a role you may add → **Add {role}**. The row is hidden for people not on the app, with a pending invite or suspended, and for viewers who can’t add roles.',
           touches: ['rpc add_member_role', '~insert organization_members (active, same person and joined date)'],
           who: { yes: ['Owner', 'Admin'], some: ['Principal', 'Vice principal'], note: 'The invite tiers of migration 17. Principals and VPs add principal, VP, bursar, teacher or staff only. Nobody adds owner; Hamrash is refused because it isn’t a school member.' },
-          steps: ['Copies the active membership into a new active row with the chosen role: same school, Clerk id and `joined_at`, no claim code, `invited_by` = the caller.', 'Nothing to redeem: the person has the role the next time the app reads their memberships.', '`staff.member_id` is not changed; it keeps pointing at the row it had.', 'Returns the new `organization_members` row.'],
+          steps: ['Copies the active membership into a new active row with the chosen role: same school, Clerk id and `joined_at`, no claim code, `invited_by` = the caller.', 'Nothing to redeem: the person has the role the next time the app reads their memberships.', '`staff.member_id` is not changed; it keeps pointing at the row it had.', 'Returns the new `organization_members` row.', 'The page refreshes behind the confirmation and shows “{Name} is a {role} too”; the screen then pops `true`.'],
           refusals: [
             { when: 'Owner, or a role above the caller’s tier, or a member in another school', code: '42501', text: '“The owner role can’t be added this way” / “Member not found, or you can’t add that role at this school”.' },
             { when: 'Parent or student', code: '22023', text: '“A staff member can be given admin, principal, vice principal, bursar, teacher or staff”.' },
@@ -814,20 +822,20 @@ window.HANDBOOK = {
             { when: 'Their staff record has left', code: 'P0001', text: '“This staff member has left the school”.' },
             { when: 'They already hold the role', code: 'P0001', text: '“They already have the teacher role at this school”, or, if that row is suspended, “… but it’s suspended. Restore their access instead”.' },
           ],
-          sources: ['migration 35'],
+          sources: ['team_service.dart:addMemberRole', 'staff_detail_view_model.dart:addRole', 'migration 35'],
         },
         {
           id: 'team-u4', kind: 'update', title: 'Change a role, suspend or restore access', target: 'update organization_members',
-          trigger: 'A person on the app → **Change role**, or **Suspend access / Restore access** → confirm.',
+          trigger: 'The Change details sheet’s Role (people with one role), or a person on the app → **Suspend access / Restore access** → confirm. The Access card’s Role row is display only.',
           touches: ['update organization_members.role / status'],
           who: { yes: ['Owner', 'Admin'] },
-          steps: ['Role: updates the membership to the chosen role.', 'Suspend: sets `status = suspended`; the row stays linked and the person can’t sign in. Restore sets it back to `active`.', 'An empty result from `.select("id")` means the database refused.'],
+          steps: ['Role: updates the membership to the chosen role.', 'Suspend: sets `status = suspended` on every membership the person holds, in one request; the rows stay linked and the person can’t sign in. Restore sets the suspended ones back to `active`.', 'An empty result from `.select("id")` means the database refused.'],
           refusals: [
             { when: 'The person already holds that role', code: '23505', text: '“They already have that role at this school.”' },
             { when: 'Not an owner or admin', code: 'RLS · 0 rows', text: '“Only the owner and admins can do this.”' },
             { when: 'Changing an owner', code: 'P0001', text: '“A school must keep at least one active owner”. The owner row has no actions in the app.' },
           ],
-          sources: ['staff_detail_view_model.dart:203 · 210', 'team_service.dart:127 · 139', 'migration 01 · 17'],
+          sources: ['staff_detail_view_model.dart:changeRole · setSuspended', 'team_service.dart:changeRole · setSuspended', 'migration 01 · 17'],
         },
         {
           id: 'team-u5', kind: 'update', title: 'Edit staff details', target: 'rpc update_staff',
@@ -922,6 +930,14 @@ window.HANDBOOK = {
       ],
       ops: [
         {
+          id: 'stu-r2', kind: 'read', title: 'List students by class and arm', target: 'select students + student_placements',
+          trigger: 'Opening the People tab (its Students side), pull to refresh, and after a student is registered.',
+          touches: ['students (active only)', 'student_placements (embedded)', 'class_arms + classes (embedded, for the arm name and class order)', 'academic_sessions (the current session, to pick the placement)'],
+          who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal', 'Bursar'], note: 'RLS: staff read students (migration 03). Only leaders see the add button; the bursar reads the list only.' },
+          steps: ['One request for up to 1000 active students A to Z, each with its placements; the one for the current session decides the arm. Groups are made on the device: classes in their order, arms A to Z, students with no arm last (“Not in a class”).', 'There is no paged or searched student list on the server yet, so a school with more than 1000 students would see the first 1000. A `list_students` function like `list_staff` (migration 30) is the fix.', 'Tapping a student does nothing yet: student profiles are not built.'],
+          sources: ['student_service.dart:listStudents', 'students_view_model.dart:load', 'migration 03 · 04'],
+        },
+        {
           id: 'stu-r1', kind: 'read', title: 'Find a parent by phone', target: 'select parents + student_parents → students',
           trigger: 'Add student → Parents → **Add a parent** → phone number → Find parent. Also on **Add parent** when the new parent’s number was changed after the search.',
           touches: ['parents', 'student_parents (embedded)', 'students (embedded, first name)'],
@@ -966,12 +982,12 @@ window.HANDBOOK = {
           sources: ['school_service.dart:44', 'home_view_model.dart:144'],
         },
         {
-          id: 'home-r6', screens: ['more-owner'], kind: 'read', title: 'Current term and team count', target: 'academic_terms · organization_members',
+          id: 'home-r6', screens: ['more-owner'], kind: 'read', title: 'Current term', target: 'academic_terms',
           trigger: 'Opening More.',
-          touches: ['academic_terms + academic_sessions', 'organization_members'],
-          who: { yes: ['Every admin-app role'], some: ['Team count: leaders only'] },
-          steps: ['Shows “2026/27 · First term”, or “Not set up yet”.', 'Shows “4 people · 1 invite” for the admin-app roles.'],
-          sources: ['school_service.dart:148 · 166'],
+          touches: ['academic_terms + academic_sessions'],
+          who: { yes: ['Every admin-app role'] },
+          steps: ['Shows “2026/27 · First term”, or “Not set up yet”.', 'Staff are no longer a More tile: they moved to the People tab, so More no longer counts the team.'],
+          sources: ['school_service.dart:getCurrentTerm'],
         },
       ],
     },

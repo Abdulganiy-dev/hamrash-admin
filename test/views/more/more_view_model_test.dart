@@ -15,8 +15,6 @@ class _Schools extends SchoolService {
 
   final SetupProgress progress;
   final CurrentTerm? term;
-  final TeamCount team = const TeamCount(active: 4, invited: 1);
-  bool askedForTeam = false;
 
   @override
   Future<SetupProgress> getSetupProgress(Organization organization) async =>
@@ -24,12 +22,6 @@ class _Schools extends SchoolService {
 
   @override
   Future<CurrentTerm?> getCurrentTerm(String organizationId) async => term;
-
-  @override
-  Future<TeamCount> getTeamCount(String organizationId) async {
-    askedForTeam = true;
-    return team;
-  }
 }
 
 MemberSchool _school(OrganizationMemberRole role) => MemberSchool(
@@ -88,14 +80,17 @@ void main() {
       );
       await model.load();
 
-      expect(model.areas, SchoolArea.values);
+      // Staff are in the People tab, not a More tile.
+      expect(
+        model.areas,
+        SchoolArea.values.where((area) => area != SchoolArea.team),
+      );
       expect(model.areasTitle, 'Run your school');
       expect(
         model.statusFor(SchoolArea.academicCalendar),
         '2026/27 · First term',
       );
       expect(model.statusFor(SchoolArea.classes), 'Not set up yet');
-      expect(model.statusFor(SchoolArea.team), '4 people · 1 invite');
       expect(model.blockedReason(SchoolArea.academicCalendar), isNull);
       expect(
         model.blockedReason(SchoolArea.schoolDetails),
@@ -103,34 +98,22 @@ void main() {
       );
     });
 
-    test(
-      "bursars only view the calendar, classes and subjects, and never load the team",
-      () async {
-        final service = _Schools();
-        final model = MoreViewModel(
-          school: _school(OrganizationMemberRole.bursar),
-          service: service,
-        );
-        await model.load();
+    test('bursars only view the calendar, classes and subjects', () async {
+      final service = _Schools();
+      final model = MoreViewModel(
+        school: _school(OrganizationMemberRole.bursar),
+        service: service,
+      );
+      await model.load();
 
-        expect(model.areas, isNot(contains(SchoolArea.team)));
-        expect(model.areasTitle, 'About your school');
-        expect(service.askedForTeam, isFalse);
-        // These areas all have read-only views.
-        expect(model.blockedReason(SchoolArea.academicCalendar), isNull);
-        expect(model.blockedReason(SchoolArea.classes), isNull);
-        expect(model.blockedReason(SchoolArea.subjects), isNull);
-        expect(model.blockedReason(SchoolArea.grading), isNull);
-        expect(model.statusFor(SchoolArea.academicCalendar), 'Not set up yet');
-      },
-    );
-  });
-
-  test('TeamCount reads naturally', () {
-    expect(const TeamCount(active: 1, invited: 0).label, '1 person');
-    expect(
-      const TeamCount(active: 3, invited: 2).label,
-      '3 people · 2 invites',
-    );
+      expect(model.areas, isNot(contains(SchoolArea.team)));
+      expect(model.areasTitle, 'About your school');
+      // These areas all have read-only views.
+      expect(model.blockedReason(SchoolArea.academicCalendar), isNull);
+      expect(model.blockedReason(SchoolArea.classes), isNull);
+      expect(model.blockedReason(SchoolArea.subjects), isNull);
+      expect(model.blockedReason(SchoolArea.grading), isNull);
+      expect(model.statusFor(SchoolArea.academicCalendar), 'Not set up yet');
+    });
   });
 }

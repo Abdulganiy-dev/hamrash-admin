@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/models/team/invite_code.dart';
@@ -13,11 +14,13 @@ import 'package:hamrash_admin/core/utils/app_date_format.dart';
 import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/staff_teaching/teaching_catalog.dart';
+import 'package:hamrash_admin/views/team/widgets/access_card.dart';
+import 'package:hamrash_admin/views/team/widgets/role_picker_sheet.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 
 /// 9.29 – 9.29c · One staff member. Everything about inviting lives here:
-/// no login yet → invite, an unused code → share or cancel, a login → change
-/// the role, suspend, restore, or remove the record.
+/// no login yet → invite, an unused code → share or cancel, a login → add a
+/// role, suspend, restore, or remove the record.
 ///
 /// Sheet saves return an error message (null when it worked); confirmed
 /// actions throw [AppAlertError] for [AppConfirmSheet]. The message is the
@@ -60,6 +63,12 @@ class StaffDetailViewModel extends BaseViewModel {
   StaffLogin? get login => _staff?.login;
   StaffAccess get access => member.access;
   OrganizationMemberRole get role => member.role;
+
+  /// Every role they hold at the school, the login's first.
+  List<OrganizationMemberRole> get roles => member.roles;
+
+  /// "Admin · Teacher".
+  String get rolesLabel => member.rolesLabel;
 
   bool get isNotOnApp => access == StaffAccess.notOnApp;
   bool get isPending => access == StaffAccess.invitePending;
@@ -129,14 +138,131 @@ class StaffDetailViewModel extends BaseViewModel {
   /// The Change details sheet's Role row follows the existing role rules:
   /// an unused invite uses the invite tiers; a live login needs an owner or
   /// admin and never the owner's own row.
-  bool get canChangeRoleInSheet =>
-      isPending ? canCancelInvite : canManageAccess && (isOnApp || isSuspended);
+  /// With several roles there is no single role to switch, so the row only
+  /// shows for someone who holds one.
+  bool get canChangeRoleInSheet => isPending
+      ? canCancelInvite
+      : canManageAccess &&
+            (isOnApp || isSuspended) &&
+            member.logins.length <= 1;
 
   /// The same tiers as inviting: a principal can't cancel an admin's invite.
   bool get canCancelInvite => isPending && school.canInviteRole(role);
 
-  /// The Role row only exists for a live login.
-  bool get showRoleRow => canManageAccess && (isOnApp || isSuspended);
+  /// The roles a leader may still add: not the owner, none they hold, and
+  /// only the tiers the viewer may give (admins are for the owner and
+  /// admins). Same list and order as the invite picker.
+  List<OrganizationMemberRole> get addableRoles => [
+    for (final role in RolePickerSheet.roles)
+      if (!roles.contains(role) && school.canInviteRole(role)) role,
+  ];
+
+  /// "Add role" shows only for someone active on the app, when the viewer
+  /// may add roles (`add_member_role`: owner, admin, principal, vice
+  /// principal) and there is a role left to add.
+  bool get canAddRole =>
+      isOnApp &&
+      !isOwnerRow &&
+      school.canRunSetup &&
+      member.login?.status == OrganizationMemberStatus.active &&
+      addableRoles.isNotEmpty;
+
+  /// "Admin and Teacher", "Admin, Teacher and Bursar": the roles they hold.
+  String get heldRolesSentence =>
+      _sentence([for (final held in roles) held.teamLabel]);
+
+  /// 9.42 · The helper line under "Add a role".
+  String get addRoleSubtitle => '${member.fullName} keeps $heldRolesSentence.';
+
+  /// 9.43 · "Make Ngozi a bursar too?"
+  String addRoleTitle(OrganizationMemberRole role) =>
+      'Make ${member.firstNameOnly} ${_aOrAn(role)} ${_lower(role)} too?';
+
+  String get addRoleMessage =>
+      'Roles add up. ${member.firstNameOnly} keeps everything they can do now.';
+
+  /// 9.43 · The three lines of what changes.
+  List<String> addRoleBullets(OrganizationMemberRole role) => [
+    'They get ${_grants(role)} in ${role.appName}',
+    'They stay $heldRolesSentence',
+    'No new code. Their sign-in stays the same',
+  ];
+
+  String addRoleConfirmLabel(OrganizationMemberRole role) =>
+      'Add ${_lower(role)}';
+
+  /// 9.44 · "Ngozi is a bursar too".
+  String addedTitle(OrganizationMemberRole role) =>
+      '${member.firstNameOnly} is ${_aOrAn(role)} ${_lower(role)} too';
+
+  /// 9.44 · Their roles once [role] is added, and when they'll see it. Read
+  /// before the add, while the page still lists the roles they had.
+  String addedMessage(OrganizationMemberRole role) =>
+      'Their roles are now '
+      '${[
+        for (final held in [...roles, role]) held.teamLabel,
+      ].join(' · ')}. '
+      "They'll see ${_grants(role)} next time they open ${role.appName}.";
+
+  static String _lower(OrganizationMemberRole role) =>
+      role.teamLabel.toLowerCase();
+
+  static String _aOrAn(OrganizationMemberRole role) =>
+      role == OrganizationMemberRole.admin ? 'an' : 'a';
+
+  static String _sentence(List<String> items) => items.length < 2
+      ? items.join()
+      : '${items.sublist(0, items.length - 1).join(', ')} and ${items.last}';
+
+  /// What a role gives them, written to follow "They get …".
+  static String _grants(OrganizationMemberRole role) => switch (role) {
+    OrganizationMemberRole.admin => 'the admin tools that run the school',
+    OrganizationMemberRole.principal =>
+      'the tools for leading teaching and the team',
+    OrganizationMemberRole.vicePrincipal =>
+      'the tools for supporting the principal',
+    OrganizationMemberRole.bursar => 'fees and school records',
+    OrganizationMemberRole.teacher => 'their classes and results',
+    OrganizationMemberRole.staff => 'day-to-day school work',
+    _ => 'access',
+  };
+
+  /// One entry for each app their roles span, Hamrash Admin first: its state
+  /// (any live role makes it "On app") and the roles they hold there. Someone
+  /// with no login gets the one app their job title points at, tappable to
+  /// invite when [onInvite] is given.
+  List<AccessApp> accessApps({VoidCallback? onInvite}) {
+    final logins = member.logins;
+    if (logins.isEmpty) {
+      return [
+        AccessApp(
+          appName: role.appName,
+          state: AccessState.notOnApp,
+          onTap: onInvite,
+        ),
+      ];
+    }
+    return [
+      for (final adminApp in const [true, false])
+        if (logins.where((l) => l.role.isAdminAppRole == adminApp)
+            case final held when held.isNotEmpty)
+          AccessApp(
+            appName: held.first.role.appName,
+            state: _stateOf(held),
+            roles: [for (final login in held) login.role.teamLabel],
+          ),
+    ];
+  }
+
+  static AccessState _stateOf(Iterable<StaffLogin> held) {
+    if (held.any((l) => l.status == OrganizationMemberStatus.active)) {
+      return AccessState.onApp;
+    }
+    if (held.any((l) => l.status == OrganizationMemberStatus.invited)) {
+      return AccessState.codeReady;
+    }
+    return AccessState.suspended;
+  }
 
   /// "Teaching" or "Non-teaching", as the details card writes it.
   String get staffTypeLabel =>
@@ -443,9 +569,35 @@ class StaffDetailViewModel extends BaseViewModel {
     );
   }
 
-  /// Suspends the login, or restores it.
+  /// Adds [role] to someone on the app (`add_member_role`): a new membership
+  /// with their existing sign-in. Refreshes the page. Returns the reason it
+  /// failed, or null when it worked.
+  Future<String?> addRole(OrganizationMemberRole role) {
+    final source = member.logins.firstWhere(
+      (l) => l.status == OrganizationMemberStatus.active,
+      orElse: () => login!,
+    );
+    return _save(
+      () => _team.addMemberRole(memberId: source.id, role: role),
+      "Couldn't add the role. Try again.",
+      'StaffDetail.addRole',
+    );
+  }
+
+  /// Suspends the login, or restores it, across every role they hold: a
+  /// person with several roles is suspended on all of them together.
   Future<void> setSuspended(bool suspended) => _act(
-    () => _team.setSuspended(memberId: login!.id, suspended: suspended),
+    () => _team.setSuspended(
+      memberIds: [
+        for (final held in member.logins)
+          if (held.status ==
+              (suspended
+                  ? OrganizationMemberStatus.active
+                  : OrganizationMemberStatus.suspended))
+            held.id,
+      ],
+      suspended: suspended,
+    ),
     suspended
         ? "Couldn't suspend access. Try again."
         : "Couldn't restore access. Try again.",
