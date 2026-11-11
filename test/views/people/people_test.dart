@@ -273,6 +273,28 @@ void main() {
       },
     );
 
+    test('sorted by name the list is one group, not one per arm', () async {
+      final byName = [
+        _student('1', 'Ada', armId: 'a', arm: 'JSS 1A'),
+        _student('3', 'Chi', armId: 'b', arm: 'JSS 1B'),
+        _student('2', 'Bayo', armId: 'a', arm: 'JSS 1A'),
+      ];
+      final model = build(_Students(byName));
+      await model.load();
+      await model.applyFilter(
+        StudentFilter.initial.copyWith(sort: StudentSort.name),
+      );
+
+      expect(model.groups, hasLength(1));
+      expect(model.groups.single.title, 'All students');
+      expect(model.groups.single.countLabel, '3 students');
+      expect(model.groups.single.students.map((s) => s.firstName), [
+        'Ada',
+        'Chi',
+        'Bayo',
+      ]);
+    });
+
     test(
       'pages load as you scroll and an arm split across pages stays one group',
       () async {

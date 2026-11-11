@@ -91,7 +91,16 @@ class StudentsViewModel extends BaseViewModel {
 
   /// The loaded students in arm groups, in the server's order. Each header
   /// counts the whole arm, so it stays right while the rest loads.
+  ///
+  /// Sorted by name, neighbours are rarely in the same arm, so arm groups
+  /// would repeat; the list is one group instead (each row names its arm).
   List<StudentGroup> get groups {
+    if (_filter.sort == StudentSort.name) {
+      if (_rows.isEmpty) return const [];
+      return [
+        StudentGroup(title: 'All students', students: _rows, count: _total),
+      ];
+    }
     final groups = <StudentGroup>[];
     var current = <StudentSummary>[];
     String? currentKey;

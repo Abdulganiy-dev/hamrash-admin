@@ -130,7 +130,7 @@ class _ListState extends State<_List> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.ms),
                   AppCard(
                     padding: const EdgeInsets.symmetric(
                       vertical: AppSpacing.xs + AppSpacing.xxs,
