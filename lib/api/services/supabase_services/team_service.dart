@@ -74,6 +74,8 @@ class TeamService {
             'p_sort': filter.sort.value,
             'p_limit': limit,
             'p_cursor': cursor,
+            'p_subject_id': filter.subject?.id,
+            'p_class_id': filter.schoolClass?.id,
           },
         );
         final page = StaffPage.fromJson(

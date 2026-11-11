@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
-import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -17,6 +16,8 @@ import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_button.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
+import 'package:hamrash_admin/views/people/people_filter_options.dart';
+import 'package:hamrash_admin/views/people/widgets/applied_filters.dart';
 import 'package:hamrash_admin/views/team/add_staff/add_staff_screen.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
 import 'package:hamrash_admin/views/team/team_view_model.dart';
@@ -73,9 +74,14 @@ class TeamScreen extends StatelessWidget {
 
   static Future<void> openFilter(
     BuildContext context,
-    TeamViewModel model,
-  ) async {
-    final next = await StaffFilterSheet.show(context, initial: model.filter);
+    TeamViewModel model, {
+    PeopleFilterOptions options = PeopleFilterOptions.empty,
+  }) async {
+    final next = await StaffFilterSheet.show(
+      context,
+      initial: model.filter,
+      options: options,
+    );
     if (next != null) await model.applyFilter(next);
   }
 
@@ -179,7 +185,13 @@ class _ListState extends State<_List> {
       padding: EdgeInsets.zero,
       slivers: [
         if (!filter.isDefault)
-          SliverToBoxAdapter(child: _AppliedFilters(model: model)),
+          SliverToBoxAdapter(
+            child: AppliedFilters(
+              labels: [for (final chip in filter.chips) chip.label],
+              onRemove: (index) => model.removeChip(filter.chips[index]),
+              countText: '${model.total} of ${model.counts.all}',
+            ),
+          ),
         if (model.showNoResults)
           SliverFillRemaining(
             hasScrollBody: false,
@@ -205,107 +217,6 @@ class _ListState extends State<_List> {
       ],
     );
   }
-}
-
-/// 9.3a · What the list is narrowed by, each with a × to take it off, and
-/// how many of the school's people that leaves.
-class _AppliedFilters extends StatelessWidget {
-  const _AppliedFilters({required this.model});
-
-  final TeamViewModel model;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(
-      AppSpacing.screen,
-      AppSpacing.none,
-      AppSpacing.screen,
-      AppSpacing.md,
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (final chip in model.filter.chips)
-                _AppliedChip(
-                  label: chip.label,
-                  onRemove: () => model.removeChip(chip),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        // Lines up with the chips' 32px height.
-        SizedBox(
-          height: 32,
-          child: Center(
-            child: AppText(
-              '${model.total} of ${model.counts.all}',
-              style: AppTypography.body.copyWith(
-                fontSize: 13,
-                height: 18 / 13,
-                fontWeight: FontWeight.w600,
-                color: LightColors.textMuted,
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-/// A removable applied filter: 32 tall, tinted, with a small ×.
-class _AppliedChip extends StatelessWidget {
-  const _AppliedChip({required this.label, required this.onRemove});
-
-  final String label;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    label: 'Remove $label filter',
-    excludeSemantics: true,
-    child: BouncyButton(
-      onPressed: onRemove,
-      child: Container(
-        height: 32,
-        padding: const EdgeInsets.only(left: 12, right: 10),
-        decoration: BoxDecoration(
-          color: LightColors.primaryPrimaryMute,
-          borderRadius: AppRadius.brPill,
-          border: Border.all(color: LightColors.primaryPrimaryDefault),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppText(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.body.copyWith(
-                fontSize: 13,
-                height: 18 / 13,
-                fontWeight: FontWeight.w600,
-                color: LightColors.primaryPrimaryText,
-              ),
-            ),
-            const SizedBox(width: 6),
-            const AppIcon(
-              AppIcons.x,
-              size: 12,
-              color: LightColors.primaryPrimaryDefault,
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 /// 9.3b · A search or filters that match no one.

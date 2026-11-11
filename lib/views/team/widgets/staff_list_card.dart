@@ -117,6 +117,9 @@ class _StaffRow extends StatelessWidget {
                         color: LightColors.textMuted,
                       ),
                     ),
+                    if (person.teaching case final teaching?
+                        when teaching.isNotEmpty)
+                      _TeachingLines(teaching: teaching),
                   ],
                 ),
               ),
@@ -134,4 +137,58 @@ class _StaffRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Where someone teaches, one line per subject: "Mathematics · JSS 1A, JSS 2A".
+/// Shown only while the list is filtered by a subject or a class, so the
+/// teacher → subject → class link reads at a glance.
+class _TeachingLines extends StatelessWidget {
+  const _TeachingLines({required this.teaching});
+
+  final List<StaffTeaching> teaching;
+
+  /// Each subject with its classes, in the order the server sent them.
+  static Map<String, List<StaffTeaching>> _bySubject(
+    List<StaffTeaching> teaching,
+  ) {
+    final bySubject = <String, List<StaffTeaching>>{};
+    for (final entry in teaching) {
+      bySubject.putIfAbsent(entry.subjectId, () => []).add(entry);
+    }
+    return bySubject;
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: AppSpacing.xs),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final entries in _bySubject(teaching).values)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xxs),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: entries.first.subjectName,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: LightColors.textStrong,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' · ${entries.map((e) => e.armLabel).join(', ')}',
+                  ),
+                ],
+              ),
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.w600,
+                color: LightColors.textBody,
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
 }

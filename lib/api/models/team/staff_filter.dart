@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
+import 'package:hamrash_admin/api/models/students/student_filter.dart' show FilterPick;
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 
 /// Where a person's login has got to, as `list_staff` filters on it.
@@ -49,7 +50,7 @@ class StaffFilterChip {
 }
 
 /// Everything the Staffs list is narrowed by: search, login, roles, staff
-/// type, record status and sort.
+/// type, what they teach (a subject, a class), record status and sort.
 ///
 /// An empty [roles] set means every role. An empty [statuses] set means every
 /// status, so it is not the default; the default is Active only.
@@ -60,6 +61,8 @@ class StaffFilter {
     this.login = StaffLoginFilter.all,
     this.roles = const {},
     this.staffType = StaffTypeFilter.all,
+    this.subject,
+    this.schoolClass,
     this.statuses = defaultStatuses,
     this.sort = StaffSort.name,
   });
@@ -83,8 +86,18 @@ class StaffFilter {
   final StaffLoginFilter login;
   final Set<OrganizationMemberRole> roles;
   final StaffTypeFilter staffType;
+
+  /// Teachers of this subject this session.
+  final FilterPick? subject;
+
+  /// Teachers who teach in this class this session. With [subject] too, it
+  /// is the same assignment: this subject, in this class.
+  final FilterPick? schoolClass;
   final Set<StaffRecordStatus> statuses;
   final StaffSort sort;
+
+  /// A subject or class is picked, so each row also lists where they teach.
+  bool get isTeachingFilter => subject != null || schoolClass != null;
 
   String get trimmedSearch => search.trim();
 
@@ -93,6 +106,10 @@ class StaffFilter {
     StaffLoginFilter? login,
     Set<OrganizationMemberRole>? roles,
     StaffTypeFilter? staffType,
+    FilterPick? subject,
+    bool clearSubject = false,
+    FilterPick? schoolClass,
+    bool clearClass = false,
     Set<StaffRecordStatus>? statuses,
     StaffSort? sort,
   }) => StaffFilter(
@@ -100,6 +117,8 @@ class StaffFilter {
     login: login ?? this.login,
     roles: roles ?? this.roles,
     staffType: staffType ?? this.staffType,
+    subject: clearSubject ? null : (subject ?? this.subject),
+    schoolClass: clearClass ? null : (schoolClass ?? this.schoolClass),
     statuses: statuses ?? this.statuses,
     sort: sort ?? this.sort,
   );
@@ -131,6 +150,16 @@ class StaffFilter {
         StaffFilterChip(
           label: staffType.label,
           without: copyWith(staffType: StaffTypeFilter.all),
+        ),
+      if (subject != null)
+        StaffFilterChip(
+          label: 'Teaches ${subject!.label}',
+          without: copyWith(clearSubject: true),
+        ),
+      if (schoolClass != null)
+        StaffFilterChip(
+          label: 'In ${schoolClass!.label}',
+          without: copyWith(clearClass: true),
         ),
       if (!_defaultStatuses)
         if (statuses.isEmpty)
@@ -172,6 +201,8 @@ class StaffFilter {
       other.login == login &&
       setEquals(other.roles, roles) &&
       other.staffType == staffType &&
+      other.subject == subject &&
+      other.schoolClass == schoolClass &&
       setEquals(other.statuses, statuses) &&
       other.sort == sort;
 
@@ -181,6 +212,8 @@ class StaffFilter {
     login,
     Object.hashAllUnordered(roles),
     staffType,
+    subject,
+    schoolClass,
     Object.hashAllUnordered(statuses),
     sort,
   );

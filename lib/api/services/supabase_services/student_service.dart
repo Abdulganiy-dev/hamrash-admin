@@ -1,6 +1,6 @@
 import 'package:hamrash_admin/api/models/students/parent_match.dart';
 import 'package:hamrash_admin/api/models/students/student_registration.dart';
-import 'package:hamrash_admin/api/models/students/student_summary.dart';
+import 'package:hamrash_admin/api/models/students/student_filter.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/core/utils/phone_format.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -23,38 +23,55 @@ class StudentService {
 
   static const leadersOnly = "Only the school's leaders can register students.";
 
-  /// The most students the People list reads in one go.
-  static const listLimit = 1000;
+  /// How many students one page of the list holds.
+  static const pageSize = 30;
 
-  /// The school's active students, A to Z, each with the arm they are in for
-  /// [sessionId] (null when there is no current session, so nobody has an
-  /// arm). One read of up to [listLimit] students: there is no paged or
-  /// searched student list on the server yet.
-  Future<List<StudentSummary>> listStudents({
+  /// One page of the school's students (`list_students`): search, class,
+  /// arm, subject and status run on the server, in class order, with the
+  /// filtered total and each arm's count. For a subject filter every row
+  /// carries that subject and the teacher assigned to it in the student's
+  /// arm. Pass [cursor] from the previous page, and start again with null
+  /// when [filter] changes. The session is the school's current one.
+  Future<StudentPage> listStudentsPage({
     required String organizationId,
-    String? sessionId,
+    StudentFilter filter = StudentFilter.initial,
+    int limit = pageSize,
+    String? cursor,
   }) => runRefusable(
-    'listStudents',
+    'listStudentsPage',
     () async {
-      final rows = await _supabase
-          .from('students')
-          .select(StudentSummary.columns)
-          .eq('organization_id', organizationId)
-          .eq('status', 'active')
-          .order('last_name')
-          .order('first_name')
-          .limit(listLimit);
-      return [
-        for (final row in rows)
-          StudentSummary.fromJson(
-            Map<String, dynamic>.from(row),
-            sessionId: sessionId,
-          ),
-      ];
+      try {
+        final result = await _supabase.rpc(
+          'list_students',
+          params: {
+            'p_organization_id': organizationId,
+            'p_search': filter.trimmedSearch.isEmpty
+                ? null
+                : filter.trimmedSearch,
+            'p_class_id': filter.schoolClass?.id,
+            'p_arm_id': filter.arm?.id,
+            'p_subject_id': filter.subject?.id,
+            'p_statuses': filter.statuses.isEmpty
+                ? null
+                : [for (final status in filter.statuses) status.value],
+            'p_sort': filter.sort.value,
+            'p_limit': limit,
+            'p_cursor': cursor,
+          },
+        );
+        return StudentPage.fromJson(Map<String, dynamic>.from(result as Map));
+      } on PostgrestException catch (error) {
+        // Bad arguments and stale cursors are refused with 22023 and a
+        // message written for people.
+        if (error.code == '22023') throw SupabaseRefusal(error.message);
+        rethrow;
+      }
     },
-    log: (students) => {
+    log: (page) => {
       'organization_id': organizationId,
-      'count': students.length,
+      'count': page.rows.length,
+      'total': page.total,
+      'has_more': page.nextCursor != null,
     },
     forbidden: "You don't have access to the students.",
   );

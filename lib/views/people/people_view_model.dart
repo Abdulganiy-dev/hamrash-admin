@@ -1,5 +1,6 @@
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/organization_models/school_area.dart';
+import 'package:hamrash_admin/views/people/people_filter_options.dart';
 import 'package:hamrash_admin/views/people/students_view_model.dart';
 import 'package:hamrash_admin/views/team/team_view_model.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
@@ -18,7 +19,10 @@ class PeopleViewModel extends BaseViewModel {
     required this.school,
     StudentsViewModel? students,
     TeamViewModel? team,
-  }) : students = students ?? StudentsViewModel(school: school),
+    PeopleFilterOptionsLoader? options,
+  }) : _options =
+           options ?? PeopleFilterOptionsLoader(organizationId: school.id),
+       students = students ?? StudentsViewModel(school: school),
        team = school.accessTo(SchoolArea.team).isVisible
            ? (team ?? TeamViewModel(school: school))
            : null {
@@ -27,6 +31,7 @@ class PeopleViewModel extends BaseViewModel {
   }
 
   final MemberSchool school;
+  final PeopleFilterOptionsLoader _options;
   final StudentsViewModel students;
 
   /// Null when this person can't see the team.
@@ -42,6 +47,11 @@ class PeopleViewModel extends BaseViewModel {
   bool _staffLoaded = false;
 
   Future<void> load() => students.load();
+
+  /// The classes, arms and subjects the filter sheets pick from. Read once
+  /// when the first sheet opens; rethrows when it can't be read, so the
+  /// screen can say so instead of opening a sheet with nothing to pick.
+  Future<PeopleFilterOptions> filterOptions() => _options.load();
 
   void select(PeopleSide value) {
     if (value == _side || (value == PeopleSide.staff && !showStaffSide)) return;

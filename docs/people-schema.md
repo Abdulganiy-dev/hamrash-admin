@@ -106,6 +106,35 @@ final result = await supabase.rpc('list_staff', params: {
 - **Paging is keyset**, not offset. The opaque cursor holds the last row's sort key and id, so adding or removing someone while the user scrolls never repeats or skips a row. `next_cursor` is null on the last page. A cursor from the other sort, or a damaged one, is refused (`22023`), as are an unknown `p_login` or `p_sort`.
 - **Security.** It runs as the caller, so RLS decides: every active member of the school sees the profiles, and only leaders see other people's logins. For a teacher, bursar, parent or student, `member` is null except on their own row, so the login filter and counts treat everyone else as not on the app. Someone outside the school gets no rows and zero counts.
 
+**Filtering by what a teacher teaches *(migration 37)*.** `list_staff` also takes `p_subject_id`, `p_class_id`, `p_section_id` and `p_session_id` (null = the current session). They are all matched against the **same** `teaching_assignments` row, so "Mathematics in JSS 2" means they teach Mathematics in JSS 2. A teacher with several matching classes is still one row (the filter is an `EXISTS`); a teacher with no assignment this session never matches. They narrow `total` and `counts` too. When any of them is set every row also has `teaching`: `[{ subject_id, subject_name, arm_id, arm_name, class_id, class_name }]`, the matching assignments only, in section, class, arm, subject order; otherwise `teaching` is null. The assignment is the real teacher → subject → class relationship (one per session, arm and subject), not a job title or a homeroom.
+
+### Listing students *(migration 36)*
+The People tab's Students side reads one page at a time through `list_students`. It runs as the caller (RLS decides) and is also scoped to `p_organization_id`.
+
+```dart
+final result = await supabase.rpc('list_students', params: {
+  'p_organization_id': orgId,
+  'p_search': 'ada',                     // name or admission number
+  'p_session_id': null,                  // current session
+  'p_section_id': null, 'p_class_id': null, 'p_arm_id': null,
+  'p_subject_id': mathsId,
+  'p_statuses': ['active'],
+  'p_sort': 'class',                     // or 'name'
+  'p_limit': 30,
+  'p_cursor': null,
+}) as Map<String, dynamic>;
+// { rows: [{ id, first_name, middle_name, last_name, admission_number, photo_url, status,
+//            arm: { id, name, class_id, class_name, section_id, class_sort_order } | null,
+//            subject: { id, name, is_compulsory, teacher: { id, first_name, last_name } | null } | null }],
+//   next_cursor: '…' | null, total: 12, groups: [{ arm_id: uuid | null, count: n }] }
+```
+
+- **Who takes a subject.** A student is placed in an arm per session (`student_placements`). The arm *offers* a subject through `arm_subjects`. Compulsory subjects are taken by everyone in the arm and are **not** in `student_subjects`; optional ones only by students with a `student_subjects` row for the session. So the subject filter keeps students whose arm offers it and either it is compulsory or they have the optional row.
+- **Who teaches it.** `subject.teacher` is the `teaching_assignments` row for (session, the student's arm, subject): one teacher per arm, different arms can have different teachers, and `teacher` is null when nobody is assigned. `subject` is only set when `p_subject_id` is given.
+- **Filters run before the page is cut**, so `total`, `groups` (students per arm, across all pages) and `rows` describe the same set. A student appears once: placements are one per session, the subject is an `EXISTS` and the teacher join is on the assignment's primary key.
+- **Order** (`class`): section, class, arm in their set order, students with no arm last, then last name, first name, id. `name`: last name, first name, id. Keyset paging with an opaque cursor, like `list_staff`; start again with null when a filter, the search or the sort changes. Bad cursors, sorts or a null school are refused (`22023`).
+- **Search** is `LIKE` on the lowercased name and admission number, each word must match. No new indexes: the existing `students_org_name_idx`, placement, `arm_subjects`, `student_subjects` and `teaching_assignments` keys cover the joins. If a school ever has tens of thousands of students, enable `pg_trgm` and index the same expression.
+
 ### `students`: profile
 | Column | Notes |
 |--------|-------|

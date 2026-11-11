@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_details_changes.dart';
+import 'package:hamrash_admin/api/models/students/student_filter.dart'
+    show FilterPick;
 import 'package:hamrash_admin/api/models/team/staff_filter.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
@@ -612,5 +614,96 @@ void main() {
       );
       expect(jsonDecode(requests.single.body), {'status': 'suspended'});
     });
+  });
+
+  group('teaching filter', () {
+    test('sends the subject and class to list_staff', () async {
+      final (service, requests) = _service(
+        (request) => _json({
+          'rows': <Object>[],
+          'next_cursor': null,
+          'total': 0,
+          'counts': {'all': 0},
+        }, request),
+      );
+
+      await service.listStaffPage(
+        organizationId: 'kings',
+        filter: const StaffFilter(
+          subject: FilterPick('maths', 'Mathematics'),
+          schoolClass: FilterPick('jss2', 'JSS 2'),
+        ),
+      );
+
+      final body = jsonDecode(requests.single.body) as Map;
+      expect(body['p_subject_id'], 'maths');
+      expect(body['p_class_id'], 'jss2');
+    });
+
+    test('no teaching filter sends nulls', () async {
+      final (service, requests) = _service(
+        (request) => _json({
+          'rows': <Object>[],
+          'next_cursor': null,
+          'total': 0,
+          'counts': {'all': 0},
+        }, request),
+      );
+
+      await service.listStaffPage(organizationId: 'kings');
+
+      final body = jsonDecode(requests.single.body) as Map;
+      expect(body['p_subject_id'], isNull);
+      expect(body['p_class_id'], isNull);
+    });
+
+    test(
+      'reads each teacher with the classes where they teach the subject',
+      () async {
+        Map<String, dynamic> assignment(String arm, String cls) => {
+          'subject_id': 'maths',
+          'subject_name': 'Mathematics',
+          'arm_id': 'arm-$cls$arm',
+          'arm_name': arm,
+          'class_id': 'c-$cls',
+          'class_name': cls,
+        };
+        final (service, _) = _service(
+          (request) => _json({
+            'rows': [
+              {
+                ..._staff(firstName: 'John'),
+                'teaching': [
+                  assignment('A', 'JSS 1'),
+                  assignment('A', 'JSS 2'),
+                ],
+              },
+              {
+                ..._staff(id: 's2', firstName: 'Jane'),
+                'teaching': [assignment('B', 'SSS 1')],
+              },
+              _staff(id: 's3', firstName: 'Plain'),
+            ],
+            'next_cursor': null,
+            'total': 3,
+            'counts': {'all': 3},
+          }, request),
+        );
+
+        final page = await service.listStaffPage(
+          organizationId: 'kings',
+          filter: const StaffFilter(
+            subject: FilterPick('maths', 'Mathematics'),
+          ),
+        );
+
+        expect(page.rows[0].teaching?.map((t) => t.armLabel), [
+          'JSS 1A',
+          'JSS 2A',
+        ]);
+        expect(page.rows[1].teaching?.single.armLabel, 'SSS 1B');
+        expect(page.rows[2].teaching, isNull);
+      },
+    );
   });
 }

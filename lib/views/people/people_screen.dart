@@ -9,7 +9,9 @@ import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_button.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/people/people_view_model.dart';
+import 'package:hamrash_admin/views/people/people_filter_options.dart';
 import 'package:hamrash_admin/views/people/students_view_model.dart';
+import 'package:hamrash_admin/views/people/widgets/student_filter_sheet.dart';
 import 'package:hamrash_admin/views/people/widgets/students_content.dart';
 import 'package:hamrash_admin/views/students/add_student/add_student_screen.dart';
 import 'package:hamrash_admin/views/team/team_screen.dart';
@@ -45,8 +47,8 @@ class PeopleScreen extends StatelessWidget {
             title: 'People',
             subtitle: _subtitle(model.students),
             actions: staff
-                ? _staffActions(context, team!)
-                : _studentActions(context, model.students),
+                ? _staffActions(context, model, team!)
+                : _studentActions(context, model),
             body: _Body(
               model: model,
               onOpenStudent: (_) =>
@@ -67,19 +69,73 @@ class PeopleScreen extends StatelessWidget {
     return session == null ? school.name : '${school.name} · $session';
   }
 
-  List<Widget> _studentActions(BuildContext context, StudentsViewModel model) =>
-      [
-        if (model.canAdd && !model.loading && model.error == null)
-          AppNavIconButton(
-            icon: AppIcons.plus,
-            iconSize: 18,
-            iconColor: LightColors.primaryPrimaryDefault,
-            semanticLabel: 'Add student',
-            onPressed: () => _addStudent(context, model),
-          ),
-      ];
+  List<Widget> _studentActions(BuildContext context, PeopleViewModel people) {
+    final model = people.students;
+    return [
+      if (model.ready && !model.isEmpty)
+        AppNavIconButton(
+          icon: AppIcons.slidersHorizontal,
+          iconColor: LightColors.primaryPrimaryDefault,
+          appliedCount: model.filter.activeCount,
+          semanticLabel: model.filter.activeCount == 0
+              ? 'Filter students'
+              : 'Filter students, ${model.filter.activeCount} applied',
+          onPressed: () => _filterStudents(context, people),
+        ),
+      if (model.canAdd && model.ready)
+        AppNavIconButton(
+          icon: AppIcons.plus,
+          iconSize: 18,
+          iconColor: LightColors.primaryPrimaryDefault,
+          semanticLabel: 'Add student',
+          onPressed: () => _addStudent(context, model),
+        ),
+    ];
+  }
 
-  List<Widget> _staffActions(BuildContext context, TeamViewModel team) => [
+  /// Reads the classes and subjects first, so the sheet opens with
+  /// something to pick; says so when they can't be read.
+  Future<PeopleFilterOptions?> _options(PeopleViewModel people) async {
+    try {
+      return await people.filterOptions();
+    } catch (_) {
+      AppToast.show(
+        "Couldn't load the filters. Try again.",
+        type: AppToastType.error,
+      );
+      return null;
+    }
+  }
+
+  Future<void> _filterStudents(
+    BuildContext context,
+    PeopleViewModel people,
+  ) async {
+    final options = await _options(people);
+    if (options == null || !context.mounted) return;
+    final next = await StudentFilterSheet.show(
+      context,
+      initial: people.students.filter,
+      options: options,
+    );
+    if (next != null) await people.students.applyFilter(next);
+  }
+
+  Future<void> _filterStaff(
+    BuildContext context,
+    PeopleViewModel people,
+    TeamViewModel team,
+  ) async {
+    final options = await _options(people);
+    if (options == null || !context.mounted) return;
+    await TeamScreen.openFilter(context, team, options: options);
+  }
+
+  List<Widget> _staffActions(
+    BuildContext context,
+    PeopleViewModel people,
+    TeamViewModel team,
+  ) => [
     if (team.ready && !team.showEmptyState)
       AppNavIconButton(
         icon: AppIcons.slidersHorizontal,
@@ -88,7 +144,7 @@ class PeopleScreen extends StatelessWidget {
         semanticLabel: team.filter.activeCount == 0
             ? 'Filter staff'
             : 'Filter staff, ${team.filter.activeCount} applied',
-        onPressed: () => TeamScreen.openFilter(context, team),
+        onPressed: () => _filterStaff(context, people, team),
       ),
     if (team.canAdd && team.ready)
       AppNavIconButton(

@@ -1,3 +1,4 @@
+import 'package:hamrash_admin/api/models/class_structure/class_structure.dart' show fullArmName;
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
 
@@ -96,6 +97,39 @@ class StaffLogin {
   );
 }
 
+/// One class a teacher teaches a subject in, as `list_staff` returns it when
+/// the list is filtered by what they teach: the teacher → subject → class
+/// relationship, one entry per arm and subject.
+class StaffTeaching {
+  const StaffTeaching({
+    required this.subjectId,
+    required this.subjectName,
+    required this.armId,
+    required this.armName,
+    required this.classId,
+    required this.className,
+  });
+
+  final String subjectId;
+  final String subjectName;
+  final String armId;
+  final String armName;
+  final String classId;
+  final String className;
+
+  /// "JSS 1A" (the class and the arm).
+  String get armLabel => fullArmName(className, armName);
+
+  factory StaffTeaching.fromJson(Map<String, dynamic> json) => StaffTeaching(
+    subjectId: json['subject_id'] as String,
+    subjectName: json['subject_name'] as String,
+    armId: json['arm_id'] as String,
+    armName: json['arm_name'] as String,
+    classId: json['class_id'] as String,
+    className: json['class_name'] as String,
+  );
+}
+
 /// One person on the school's staff list, with their login when they have
 /// one. The staff record and the login are separate: most records start with
 /// no login, and an invite can be cancelled without touching the record.
@@ -118,6 +152,7 @@ class StaffMember {
     this.memberId,
     this.login,
     this.memberships = const [],
+    this.teaching,
     this.privateDetails,
   });
 
@@ -155,6 +190,10 @@ class StaffMember {
   /// role); use [logins] to read it.
   final List<StaffLogin> memberships;
 
+  /// Where they teach, only when the list was filtered by a subject or a
+  /// class: the matching assignments, in class order. Null otherwise.
+  final List<StaffTeaching>? teaching;
+
   /// The private details row, read separately for leaders. Null outside the
   /// edit sheet or when the caller can't read it.
   final StaffPrivateDetails? privateDetails;
@@ -190,6 +229,13 @@ class StaffMember {
       status: StaffRecordStatus.fromJson(json['status'] as String),
       createdAt: DateTime.parse(json['created_at'] as String),
       memberId: json['member_id'] as String?,
+      teaching: switch (json['teaching']) {
+        final List value => [
+          for (final row in value)
+            StaffTeaching.fromJson(Map<String, dynamic>.from(row as Map)),
+        ],
+        _ => null,
+      },
       login: member is Map
           ? StaffLogin.fromJson(Map<String, dynamic>.from(member))
           : null,
@@ -227,6 +273,7 @@ class StaffMember {
     memberId: memberId,
     login: login,
     memberships: memberships ?? this.memberships,
+    teaching: teaching,
     privateDetails: privateDetails ?? this.privateDetails,
   );
 
