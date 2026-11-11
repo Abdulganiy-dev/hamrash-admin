@@ -14,7 +14,7 @@ import 'package:hamrash_admin/core/widgets/pickers/app_picker_field.dart';
 import 'package:hamrash_admin/views/students/add_student/add_student_view_model.dart';
 import 'package:hamrash_admin/views/students/add_student/widgets/step_lead.dart';
 
-/// 11.9 / 11.12 · Step 3: the class, then the arm, for the current session.
+/// 9.8 / 9.8a · Step 3: the class, then the arm, for the current session.
 /// With no current session, or a closed one, the step is blocked and the
 /// bottom button opens Academic sessions.
 class ClassStep extends StatelessWidget {
@@ -192,7 +192,7 @@ class _ArmSummary extends StatelessWidget {
   );
 }
 
-/// 11.12 · No current session (or a closed one): why, and the pickers off.
+/// 9.8a · No current session (or a closed one): why, and the pickers off.
 class _Blocked extends StatelessWidget {
   const _Blocked({super.key, required this.model});
 

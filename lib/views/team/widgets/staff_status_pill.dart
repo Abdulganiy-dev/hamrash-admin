@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_badge.dart';
 /// The one badge that says where a staff member stands: the owner, on the
 /// app, a code ready to share, no login, or suspended.
 ///
-/// The list's pill is flat and a step smaller (8.1); the detail page keeps
+/// The list's pill is flat and a step smaller (9.3); the detail page keeps
 /// the standard bordered [AppBadge].
 class StaffStatusPill extends StatelessWidget {
   const StaffStatusPill({

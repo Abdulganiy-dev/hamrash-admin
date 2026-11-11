@@ -8,7 +8,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_bars.dart';
 
-/// 9.32 · One choice card for a grade system: what it is, a small preview of
+/// 8.32 · One choice card for a grade system: what it is, a small preview of
 /// its bands, and the note that every value stays editable.
 class GradeSystemChoiceCard extends StatelessWidget {
   const GradeSystemChoiceCard({

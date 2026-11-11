@@ -22,7 +22,7 @@ import 'package:hamrash_admin/views/students/add_student/steps/subjects_step.dar
 import 'package:hamrash_admin/views/students/add_student/widgets/registered_view.dart';
 import 'package:stacked/stacked.dart';
 
-/// 11.3–11.15 · Add a student, one step at a time. The steps sit side by
+/// 9.5–9.11 · Add a student, one step at a time. The steps sit side by
 /// side in an [AppSpringPager], so typed text and scroll survive moving back
 /// and forth. Pops `true` when a student was registered.
 class AddStudentScreen extends StatelessWidget {

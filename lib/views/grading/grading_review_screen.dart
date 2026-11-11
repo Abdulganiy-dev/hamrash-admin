@@ -25,7 +25,7 @@ import 'package:hamrash_admin/views/grading/widgets/grading_bars.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_body.dart';
 import 'package:stacked/stacked.dart';
 
-/// 9.39 · Review how one section is graded, and try a score. Nothing typed
+/// 8.39 · Review how one section is graded, and try a score. Nothing typed
 /// here is saved. Done returns to the sections list.
 class GradingReviewScreen extends StatelessWidget {
   const GradingReviewScreen({

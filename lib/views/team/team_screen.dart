@@ -25,7 +25,7 @@ import 'package:hamrash_admin/views/team/widgets/staff_list_card.dart';
 import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
 import 'package:stacked/stacked.dart';
 
-/// 8.1–8.2 · Staffs: everyone on the staff list, with where their login has
+/// 9.3–9.3c · Staffs: everyone on the staff list, with where their login has
 /// got to. Pops `true` when something was saved, so the page behind reloads.
 class TeamScreen extends StatelessWidget {
   const TeamScreen({super.key, required this.school});
@@ -192,7 +192,7 @@ class _ListState extends State<_List> {
   }
 }
 
-/// 8.1a · What the list is narrowed by, each with a × to take it off, and
+/// 9.3a · What the list is narrowed by, each with a × to take it off, and
 /// how many of the school's people that leaves.
 class _AppliedFilters extends StatelessWidget {
   const _AppliedFilters({required this.model});
@@ -293,7 +293,7 @@ class _AppliedChip extends StatelessWidget {
   );
 }
 
-/// 8.1b · A search or filters that match no one.
+/// 9.3b · A search or filters that match no one.
 class _NoResults extends StatelessWidget {
   const _NoResults({required this.model});
 
@@ -387,7 +387,7 @@ class _MoreFooter extends StatelessWidget {
   }
 }
 
-/// 8.2 · No one but the owner yet: the tinted tile, one line of explanation
+/// 9.3c · No one but the owner yet: the tinted tile, one line of explanation
 /// and the pinned "Add staff member" bar.
 class _Empty extends StatelessWidget {
   const _Empty({super.key});

@@ -19,7 +19,7 @@ import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_preview_line.dart';
 
-/// 9.35–9.38 · Add or edit one grade: its name, From and To, remark and
+/// 8.35–8.38 · Add or edit one grade: its name, From and To, remark and
 /// whether it is a pass. Moves the neighbouring ranges as the design does:
 /// editing To moves where the grade above starts, editing From moves where
 /// the grade below ends. Pops `true` once saved.

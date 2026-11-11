@@ -22,7 +22,7 @@ AppListLeading parentLeading(AddedParent parent) {
   return AppListLeading.initials(parent.fullName);
 }
 
-/// 11.6 · One parent on the Parents step: picture, name, relationship and
+/// 9.7a · One parent on the Parents step: picture, name, relationship and
 /// phone, and either the Main contact pill or "Make main".
 class ParentCard extends StatelessWidget {
   const ParentCard({

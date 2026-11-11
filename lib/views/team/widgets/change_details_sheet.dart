@@ -27,7 +27,7 @@ import 'package:hamrash_admin/core/widgets/pickers/app_picker_field.dart';
 import 'package:hamrash_admin/views/team/widgets/role_picker_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_form_fields.dart';
 
-/// 8.11 · Change the details a school keeps about a staff member. The role
+/// 9.30 · Change the details a school keeps about a staff member. The role
 /// changes immediately through the existing picker; the rest waits for Save.
 /// `update_staff` wants every field, so the view model sends the untouched
 /// middle name, gender, number, photo, status and private details back too.

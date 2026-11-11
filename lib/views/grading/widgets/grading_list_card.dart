@@ -46,7 +46,7 @@ class GradingRow {
   final VoidCallback? onTap;
 }
 
-/// 9.2 · White card with the score columns or the grade scale, one row each.
+/// 8.2 · White card with the score columns or the grade scale, one row each.
 class GradingListCard extends StatelessWidget {
   const GradingListCard({super.key, required this.rows});
 

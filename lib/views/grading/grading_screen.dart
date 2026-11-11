@@ -20,7 +20,7 @@ import 'package:hamrash_admin/views/grading/widgets/grading_body.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_empty_state.dart';
 import 'package:stacked/stacked.dart';
 
-/// 9.20–9.22 · Grading from the More tab or the Home checklist: one row per
+/// 8.20–8.22 · Grading from the More tab or the Home checklist: one row per
 /// active section, each with its own grading. Pops `true` when something was
 /// saved, so the page behind reloads.
 class GradingScreen extends StatelessWidget {
@@ -51,7 +51,7 @@ class GradingScreen extends StatelessWidget {
       );
 }
 
-/// 9.20 · The active sections, in teaching order.
+/// 8.20 · The active sections, in teaching order.
 class _Sections extends StatelessWidget {
   const _Sections({required this.model});
 
@@ -161,7 +161,7 @@ class _SectionRow extends StatelessWidget {
   }
 }
 
-/// 9.21 · No active section yet.
+/// 8.21 · No active section yet.
 class _NoSections extends StatelessWidget {
   const _NoSections({required this.model});
 

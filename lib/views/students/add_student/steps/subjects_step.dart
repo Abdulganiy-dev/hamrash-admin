@@ -11,7 +11,7 @@ import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart
 import 'package:hamrash_admin/views/students/add_student/add_student_view_model.dart';
 import 'package:hamrash_admin/views/students/add_student/widgets/step_lead.dart';
 
-/// 11.10 · Step 5, only when the arm offers optional subjects: a flat list
+/// 9.9 · Step 5, only when the arm offers optional subjects: a flat list
 /// to tick (Design System "flat list"), then the compulsory subjects
 /// everyone takes. Continue works with none chosen.
 class SubjectsStep extends StatelessWidget {

@@ -9,7 +9,7 @@ import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/views/students/add_student/add_student_view_model.dart';
 
-/// 11.13 · Registered: where they are, their admission number, the main
+/// 9.11 · Registered: where they are, their admission number, the main
 /// contact and how many parents were linked.
 class RegisteredView extends StatelessWidget {
   const RegisteredView({super.key, required this.model});

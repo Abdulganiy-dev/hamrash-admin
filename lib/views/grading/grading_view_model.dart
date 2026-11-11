@@ -8,7 +8,7 @@ import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.da
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 
-/// 9.20–9.22 · The sections list: one row per active section, with how far its
+/// 8.20–8.22 · The sections list: one row per active section, with how far its
 /// grading has got and an entry into its own setup.
 ///
 /// Switched-off sections are hidden and don't count. Leaders change grading;

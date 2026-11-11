@@ -14,7 +14,7 @@ import 'package:hamrash_admin/core/widgets/selection/app_selection_controls.dart
 
 enum GradeCopyPart { both, columns, grades }
 
-/// 9.31 · Copy score columns and/or grades from another section into this
+/// 8.31 · Copy score columns and/or grades from another section into this
 /// one. The target keeps its own copy, so later changes stay separate.
 class GradingCopySheet extends StatefulWidget {
   const GradingCopySheet({

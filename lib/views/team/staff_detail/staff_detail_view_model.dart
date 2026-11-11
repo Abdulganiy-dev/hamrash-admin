@@ -15,7 +15,7 @@ import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/staff_teaching/teaching_catalog.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 
-/// 8.14 – 8.18 · One staff member. Everything about inviting lives here:
+/// 9.29 – 9.29c · One staff member. Everything about inviting lives here:
 /// no login yet → invite, an unused code → share or cancel, a login → change
 /// the role, suspend, restore, or remove the record.
 ///

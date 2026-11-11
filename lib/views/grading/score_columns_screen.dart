@@ -28,7 +28,7 @@ import 'package:hamrash_admin/views/grading/widgets/grading_empty_state.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_text_link.dart';
 import 'package:stacked/stacked.dart';
 
-/// 9.26–9.30 · What a subject's score is made of in one section.
+/// 8.26–8.30 · What a subject's score is made of in one section.
 class ScoreColumnsScreen extends StatelessWidget {
   const ScoreColumnsScreen({
     super.key,
@@ -79,7 +79,7 @@ class ScoreColumnsScreen extends StatelessWidget {
       );
 }
 
-/// 9.27 · The columns, their shares, and the total.
+/// 8.27 · The columns, their shares, and the total.
 class _Columns extends StatelessWidget {
   const _Columns({required this.model, required this.actions});
 
@@ -280,7 +280,7 @@ class _ColumnRow extends StatelessWidget {
   }
 }
 
-/// 9.26 · No columns in this section yet.
+/// 8.26 · No columns in this section yet.
 class _Empty extends StatelessWidget {
   const _Empty({required this.model, required this.actions});
 

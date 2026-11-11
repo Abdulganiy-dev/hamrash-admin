@@ -29,7 +29,7 @@ import 'package:hamrash_admin/views/grading/widgets/grading_body.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_secondary_button.dart';
 import 'package:stacked/stacked.dart';
 
-/// 9.32–9.34, 9.40 · One section's grades: choose a system, then edit the
+/// 8.32–8.34, 8.40 · One section's grades: choose a system, then edit the
 /// ranges. Every save sends the whole new scale.
 class GradesScreen extends StatefulWidget {
   const GradesScreen({
@@ -112,7 +112,7 @@ class _GradesScreenState extends State<GradesScreen> {
       );
 }
 
-/// 9.32 · Pick WAEC or Standard as a starting point.
+/// 8.32 · Pick WAEC or Standard as a starting point.
 class _ChooseSystem extends StatelessWidget {
   const _ChooseSystem({
     required this.model,
@@ -184,7 +184,7 @@ class _ChooseSystem extends StatelessWidget {
   );
 }
 
-/// 9.33 · The ranges, and what a percentage gets.
+/// 8.33 · The ranges, and what a percentage gets.
 class _Ranges extends StatelessWidget {
   const _Ranges({required this.model, required this.actions});
 

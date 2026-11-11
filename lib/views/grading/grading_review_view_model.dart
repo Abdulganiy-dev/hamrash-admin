@@ -6,7 +6,7 @@ import 'package:hamrash_admin/api/services/supabase_services/grading_service.dar
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 
-/// 9.39 · Review how one section is graded. The score fields are worked out
+/// 8.39 · Review how one section is graded. The score fields are worked out
 /// locally; nothing on this page is saved.
 class GradingReviewViewModel extends BaseViewModel {
   GradingReviewViewModel({

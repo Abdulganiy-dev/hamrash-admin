@@ -9,7 +9,7 @@ import 'package:hamrash_admin/core/utils/app_date_format.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 
-/// 8.1–8.2 · Everyone on the school's staff list, with their login when they
+/// 9.3–9.3c · Everyone on the school's staff list, with their login when they
 /// have one. Leaders add people and open a person's page; bursars never
 /// reach this screen.
 ///
@@ -74,11 +74,11 @@ class TeamViewModel extends BaseViewModel {
   int get total => _total;
   StaffCounts get counts => _counts;
 
-  /// 8.2 is rare: the owner's own staff record is made when they join.
+  /// 9.3c is rare: the owner's own staff record is made when they join.
   bool get showEmptyState =>
       !_loading && _error == null && _rows.isEmpty && _filter.isDefault;
 
-  /// 8.1b · Filters or a search are applied and nothing matches.
+  /// 9.3b · Filters or a search are applied and nothing matches.
   bool get showNoResults =>
       !_loading && _error == null && _rows.isEmpty && !_filter.isDefault;
 

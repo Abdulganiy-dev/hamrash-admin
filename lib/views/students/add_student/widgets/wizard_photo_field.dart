@@ -5,7 +5,7 @@ import 'package:hamrash_admin/views/students/add_student/add_student_view_model.
 import 'package:hamrash_admin/views/students/add_student/photo_draft.dart';
 
 /// An [AppPhotoField] for one of the wizard's photos: tapping it opens the
-/// photo options (11.4) and hands the choice to the view model.
+/// photo options (9.5a) and hands the choice to the view model.
 class WizardPhotoField extends StatelessWidget {
   const WizardPhotoField({
     super.key,

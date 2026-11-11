@@ -7,7 +7,7 @@ import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.da
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 
-/// 9.23–9.25 · One section's setup: score columns, grades, copying another
+/// 8.23–8.25 · One section's setup: score columns, grades, copying another
 /// section's work, and giving the section its own copy of the school's setup.
 class SectionGradingViewModel extends BaseViewModel {
   SectionGradingViewModel({

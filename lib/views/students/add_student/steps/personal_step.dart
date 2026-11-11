@@ -8,7 +8,7 @@ import 'package:hamrash_admin/views/students/add_student/steps/student_step.dart
 import 'package:hamrash_admin/views/students/add_student/widgets/step_lead.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_form_fields.dart';
 
-/// 11.15 · Step 2: the student's private details. All are needed except the
+/// 9.6 · Step 2: the student's private details. All are needed except the
 /// medical notes; Continue waits for them.
 class PersonalStep extends StatelessWidget {
   const PersonalStep({super.key, required this.model});

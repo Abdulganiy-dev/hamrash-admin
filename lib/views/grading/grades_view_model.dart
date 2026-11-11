@@ -11,7 +11,7 @@ import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 
-/// 9.32–9.34 · One section's grades: choose a system, add/edit/remove ranges,
+/// 8.32–8.34 · One section's grades: choose a system, add/edit/remove ranges,
 /// or copy another section's grades. Every save sends the whole new list to
 /// `set_grade_scale`.
 class GradesViewModel extends BaseViewModel {
@@ -228,7 +228,7 @@ class GradesViewModel extends BaseViewModel {
     if (message != null) throw AppAlertError(message);
   }
 
-  /// The 9.40 confirmation copy.
+  /// The 8.40 confirmation copy.
   String systemChangeMessage(GradeSystem to) {
     final current = system;
     final currentCount = grading.grades.length;

@@ -127,7 +127,7 @@ class AddedParent {
       };
 }
 
-/// 11.3–11.15 · Add a student: who they are, their optional personal
+/// 9.5–9.11 · Add a student: who they are, their optional personal
 /// details, their parents, their class and arm, their optional subjects,
 /// then a review. Nothing is saved until
 /// Register, which sends everything to `register_student` in one call.
@@ -588,7 +588,7 @@ class AddStudentViewModel extends BaseViewModel {
   final newParentPhone = TextEditingController();
   PhotoDraft newParentPhoto = PhotoDraft(MediaKind.parentPhoto);
 
-  /// 11.8 · A new parent's private details, all needed in the app.
+  /// 9.7c · A new parent's private details, all needed in the app.
   final newParentEmail = TextEditingController();
   final newParentOccupation = TextEditingController();
   final newParentAddress = TextEditingController();

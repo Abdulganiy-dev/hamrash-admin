@@ -24,7 +24,7 @@ class AppDivider extends StatelessWidget {
       endIndent = 0;
 
   /// The faint divider colour, defined once (`--color-stone-100`).
-  static const faint = AppPalette.stone50;
+  static const faint = AppPalette.stone100;
 
   /// Left inset, from the card edge.
   final double indent;
@@ -37,7 +37,7 @@ class AppDivider extends StatelessWidget {
 
   final bool vertical;
 
-  Color get color => onPage ? AppPalette.stone100 : faint;
+  Color get color => onPage ? AppPalette.stone200 : faint;
 
   @override
   Widget build(BuildContext context) {

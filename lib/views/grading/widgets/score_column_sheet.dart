@@ -19,7 +19,7 @@ import 'package:hamrash_admin/core/widgets/button/app_sheet_link_action.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_preview_line.dart';
 
-/// 9.28–9.30 · Add or edit a score column: its name, what it is out of, where
+/// 8.28–8.30 · Add or edit a score column: its name, what it is out of, where
 /// it sits on the report card, and what saving does to the total. Pops `true`
 /// once saved.
 class ScoreColumnSheet extends StatefulWidget {

@@ -12,7 +12,7 @@ import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_avatar.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_status_pill.dart';
 
-/// 8.1 · Everyone on the staff list in one white card: initials, name, the
+/// 9.3 · Everyone on the staff list in one white card: initials, name, the
 /// role line and where their login has got to, separated by hairlines.
 ///
 /// [subtitleFor] comes from [TeamViewModel.subtitleFor] so the copy stays in

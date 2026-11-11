@@ -22,7 +22,7 @@ import 'package:hamrash_admin/core/widgets/pickers/app_picker_field.dart';
 import 'package:hamrash_admin/views/students/add_student/add_student_view_model.dart';
 import 'package:hamrash_admin/views/students/add_student/widgets/wizard_photo_field.dart';
 
-/// 11.7 / 11.8 · Add a parent. Search the school's parents by phone first:
+/// 9.7b / 9.7c · Add a parent. Search the school's parents by phone first:
 /// a match is shown with "Use {name}"; no match opens the new parent form
 /// with the number filled in. Pops `true` when a parent was added.
 class AddParentSheet extends StatelessWidget {

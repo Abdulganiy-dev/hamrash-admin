@@ -20,7 +20,7 @@ BoxDecoration _box() => BoxDecoration(
   borderRadius: BorderRadius.circular(12),
 );
 
-/// 9.3, 9.4 · The quiet line in a column sheet that shows what saving will
+/// 8.3, 8.4 · The quiet line in a column sheet that shows what saving will
 /// do: "Total becomes 120 marks, from 100 now", "Total stays 100 marks".
 /// [muted] is for the prompt before there is anything to show.
 class GradingPreviewLine extends StatelessWidget {
@@ -50,7 +50,7 @@ class GradingPreviewLine extends StatelessWidget {
   );
 }
 
-/// 9.5, 9.6a · What saving a grade changes, one line each: "New grade 65 to
+/// 8.5, 8.6a · What saving a grade changes, one line each: "New grade 65 to
 /// 69", "B becomes 60 to 64, from 60 to 69".
 class GradingChangesBlock extends StatelessWidget {
   const GradingChangesBlock({super.key, required this.changes});

@@ -10,7 +10,7 @@ import 'package:hamrash_admin/views/students/add_student/widgets/step_lead.dart'
 import 'package:hamrash_admin/views/students/add_student/widgets/wizard_photo_field.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_form_fields.dart';
 
-/// 11.3 · Step 1: who the student is. Names, gender and date of birth are
+/// 9.5 · Step 1: who the student is. Names, gender and date of birth are
 /// needed; the middle name, admission number and photo are optional.
 class StudentStep extends StatelessWidget {
   const StudentStep({super.key, required this.model});

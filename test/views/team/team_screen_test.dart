@@ -234,7 +234,7 @@ void main() {
     expect(find.textContaining('Bursar · code shared'), findsOneWidget);
   });
 
-  testWidgets('the card keeps 8.1\'s gutters and row height', (tester) async {
+  testWidgets('the card keeps 9.3\'s gutters and row height', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -304,7 +304,7 @@ void main() {
     expect(opened?.id, 'adm');
   });
 
-  testWidgets('no staff shows 8.2 with the pinned add button', (tester) async {
+  testWidgets('no staff shows 9.3c with the pinned add button', (tester) async {
     await _pumpTeam(tester, _FakeTeam(const []));
 
     final empty = find.byType(AppEmptyState);
@@ -396,7 +396,7 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
     }
 
-    /// Opens 8.17, changes the draft and taps "Show results".
+    /// Opens 9.4, changes the draft and taps "Show results".
     Future<void> apply(
       WidgetTester tester, {
       String? search,

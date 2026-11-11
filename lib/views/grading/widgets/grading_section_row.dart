@@ -7,7 +7,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_status_badge.dart';
 
-/// 9.20 · One section on the sections list: its name, how far its grading has
+/// 8.20 · One section on the sections list: its name, how far its grading has
 /// got, a one-line summary, and whether it follows the school's setup.
 class GradingSectionRow extends StatelessWidget {
   const GradingSectionRow({

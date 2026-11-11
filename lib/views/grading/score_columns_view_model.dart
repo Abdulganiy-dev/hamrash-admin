@@ -10,7 +10,7 @@ import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 
-/// 9.26–9.30 · One section's score columns: what a subject's score is made of
+/// 8.26–8.30 · One section's score columns: what a subject's score is made of
 /// and how much each part is worth.
 class ScoreColumnsViewModel extends BaseViewModel {
   ScoreColumnsViewModel({

@@ -40,7 +40,7 @@ grade_boundaries         A1 75–100 "Excellent" · B2 70–74 … F9 0–39    
 
 - **The school's setup and a section's own.** Score columns and grade boundaries with **no section** are the school's. Rows **with a section** are that section's own.
 - **Fall-back:** an arm uses its section's score columns **if the section has any**, otherwise the school's. Grade boundaries work the same way, **independently**. So Secondary can keep the school's CA 1 / CA 2 / Exam and only change its grade boundaries to WAEC, with nothing copied.
-- **Per-section setup (the redesign, Paper "§ 9b · Grading by section"):** every section is meant to have its own columns and grade scale. The school-level set (no section) stays as the legacy default and the fall-back.
+- **Per-section setup (the redesign, Paper "§ 8b · Grading by section"):** every section is meant to have its own columns and grade scale. The school-level set (no section) stays as the legacy default and the fall-back.
   - `copy_section_grading(school, from, to, columns, grades)` copies columns and/or grades from the school-level set (from = null, "Give Primary its own setup") or another section into a section, **replacing** that section's own rows of each kind, in one transaction. Once the gradebook exists, replacing columns that already have scores is refused by the scores foreign key, and nothing changes.
   - `apply_grade_system(school, section, 'waec' | 'standard')` puts a preset on a section: WAEC A1 75–100, B2 70–74, B3 65–69, C4 60–64, C5 55–59, C6 50–54, D7 45–49, E8 40–44, F9 0–39 (fail); standard A 70–100, B 60–69, C 50–59, D 45–49, E 40–44, F 0–39 (fail).
   - `remove_section_grade_scale(school, section)` deletes a section's own grades, so it uses the school-level scale again.

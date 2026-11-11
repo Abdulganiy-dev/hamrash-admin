@@ -13,7 +13,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 
-/// 8.17 · Filter and search the staff list. Works on a local draft: "Show
+/// 9.4 · Filter and search the staff list. Works on a local draft: "Show
 /// results" applies it and closes, closing any other way throws it away.
 /// Nothing is asked of the server until then.
 class StaffFilterSheet extends StatefulWidget {

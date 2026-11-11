@@ -27,7 +27,7 @@ import 'package:hamrash_admin/views/grading/widgets/grading_body.dart';
 import 'package:hamrash_admin/views/grading/widgets/grading_secondary_button.dart';
 import 'package:stacked/stacked.dart';
 
-/// 9.23–9.25 · One section's setup: its two tasks, copying another
+/// 8.23–8.25 · One section's setup: its two tasks, copying another
 /// section's work, or giving it its own copy of the school's setup.
 class SectionGradingScreen extends StatelessWidget {
   const SectionGradingScreen({
@@ -309,7 +309,7 @@ class _TaskRow extends StatelessWidget {
   );
 }
 
-/// 9.25 · The rows the section follows from the school, with nothing of its
+/// 8.25 · The rows the section follows from the school, with nothing of its
 /// own to edit yet.
 class _InheritedSetup extends StatelessWidget {
   const _InheritedSetup({required this.grading});

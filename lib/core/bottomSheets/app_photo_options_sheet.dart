@@ -10,7 +10,7 @@ import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 /// What was chosen on the photo options sheet.
 enum AppPhotoChoice { retry, camera, library, remove }
 
-/// 11.4 · Where a photo comes from: take one, choose one from the library,
+/// 9.5a · Where a photo comes from: take one, choose one from the library,
 /// or (once one is added) remove it. [canRetry] adds "Upload it again" for a
 /// photo whose upload failed. Pops the choice, or null.
 abstract final class AppPhotoOptionsSheet {

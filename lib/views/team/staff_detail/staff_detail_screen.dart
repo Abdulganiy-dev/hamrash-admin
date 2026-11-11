@@ -36,7 +36,7 @@ import 'package:hamrash_admin/views/team/widgets/staff_invite_code_field.dart';
 import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
 import 'package:stacked/stacked.dart';
 
-/// 8.14 – 8.18 · One staff member. The page is the same in every state;
+/// 9.29 – 9.29c · One staff member. The page is the same in every state;
 /// where their login has got to decides what it offers. Pops `true` when
 /// something was saved.
 class StaffDetailScreen extends StatelessWidget {
@@ -154,7 +154,7 @@ class _Content extends StatelessWidget {
     );
   }
 
-  /// 8.15 / 8.16 · The block between the identity and the first card: the
+  /// 9.29a / 9.29b · The block between the identity and the first card: the
   /// invite button and its note, the unused invite's code, or nothing. The key
   /// is the access state — that key change is what drives the crossfade.
   Widget _actionSlot(BuildContext context) {
@@ -175,7 +175,7 @@ class _Content extends StatelessWidget {
     return SizedBox.shrink(key: ValueKey(model.access));
   }
 
-  /// 8.15 · Nothing to sign in with yet.
+  /// 9.29a · Nothing to sign in with yet.
   Widget _noLogin(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
@@ -199,7 +199,7 @@ class _Content extends StatelessWidget {
     ],
   );
 
-  /// 8.16 · The code is made; nobody has used it.
+  /// 9.29b · The code is made; nobody has used it.
   Widget _pending(BuildContext context) => StaffInviteCodeField(
     code: model.rawCode,
     onShare: model.rawCode.isEmpty
@@ -330,7 +330,7 @@ class _Content extends StatelessWidget {
     ],
   );
 
-  /// 8.14 – 8.16 · Who can use the app: the role and the access actions, or
+  /// 9.29 – 9.29b · Who can use the app: the role and the access actions, or
   /// just remove for someone who never had a login.
   Widget _access(BuildContext context) => StaffAccessSection(
     roleLabel: model.role.teamLabel,
@@ -366,7 +366,7 @@ class _Content extends StatelessWidget {
         ),
       );
 
-  /// 8.5 → 8.8 · Create the invite, then show the code and the message.
+  /// 9.26 → 9.28 · Create the invite, then show the code and the message.
   Future<void> _invite(BuildContext context) async {
     final code = await _sheet<String>(
       context,
@@ -397,7 +397,7 @@ class _Content extends StatelessWidget {
     await model.reload();
   }
 
-  /// 8.11 · Read the whole record, then let a leader change the editable
+  /// 9.30 · Read the whole record, then let a leader change the editable
   /// fields. The role in the sheet applies immediately.
   Future<void> _changeDetails(BuildContext context) async {
     // One tap only: a second tap while the sheet is loading or open is

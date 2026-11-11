@@ -13,7 +13,7 @@ import 'package:hamrash_admin/views/students/add_student/add_student_view_model.
 import 'package:hamrash_admin/views/students/add_student/widgets/parent_card.dart';
 import 'package:hamrash_admin/views/students/add_student/widgets/step_lead.dart';
 
-/// 11.11 · Step 6: everything entered, in section cards with Edit, before
+/// 9.10 · Step 6: everything entered, in section cards with Edit, before
 /// Register. Nothing has been saved yet.
 class ReviewStep extends StatelessWidget {
   const ReviewStep({super.key, required this.model});

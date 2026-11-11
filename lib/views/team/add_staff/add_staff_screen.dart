@@ -33,7 +33,7 @@ class AddStaffOutcome {
   final bool addedAny;
 }
 
-/// 8.3 · Add Staff Members: who they are, their job title, and how to reach
+/// 9.25 · Add Staff Members: who they are, their job title, and how to reach
 /// them. Saving goes straight to their staff page; "Save and add another"
 /// stays here.
 class AddStaffScreen extends StatelessWidget {

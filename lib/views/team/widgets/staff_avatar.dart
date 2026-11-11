@@ -4,7 +4,7 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 
-/// A staff member's initials in a 44 circle, as 8.1 draws them:
+/// A staff member's initials in a 44 circle, as 9.3 draws them:
 ///
 /// - the owner is solid aubergine with white initials;
 /// - an invite nobody has claimed yet is pale aubergine inside a dashed ring;

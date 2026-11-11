@@ -58,7 +58,7 @@ void main() {
       .widget<AppFilterChip>(find.widgetWithText(AppFilterChip, label))
       .selected;
 
-  testWidgets('lays out the sections of 8.17', (tester) async {
+  testWidgets('lays out the sections of 9.4', (tester) async {
     await open(tester);
 
     expect(find.text('Filter staff'), findsOneWidget);

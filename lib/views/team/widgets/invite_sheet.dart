@@ -12,7 +12,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/team/widgets/role_picker_sheet.dart';
 
-/// 8.5 · Choose the role for a new invite, then create it. Pops the raw
+/// 9.26 · Choose the role for a new invite, then create it. Pops the raw
 /// 8-character code once `invite_staff` returns it.
 class InviteSheet extends StatefulWidget {
   const InviteSheet({

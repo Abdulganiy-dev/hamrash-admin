@@ -66,7 +66,7 @@ class AppEmptyState extends StatelessWidget {
   final Color? iconColor;
 
   /// Puts the icon on a 72px rounded tile of this colour and steps the title
-  /// up to [AppTypography.h2] (8.2's "No staff yet"). Leave null for the
+  /// up to [AppTypography.h2] (9.3c's "No staff yet"). Leave null for the
   /// plain icon every other screen uses.
   final Color? iconTileColor;
 

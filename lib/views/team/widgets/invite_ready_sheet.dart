@@ -12,7 +12,7 @@ import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/team/widgets/share_invite.dart';
 
-/// 8.8 · Shown right after `invite_staff` returns: the code, the exact
+/// 9.28 · Shown right after `invite_staff` returns: the code, the exact
 /// message to send, and one button that opens the phone's share sheet.
 class InviteReadySheet extends StatelessWidget {
   const InviteReadySheet({

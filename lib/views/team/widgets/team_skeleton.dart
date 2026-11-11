@@ -5,7 +5,7 @@ import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_shimmer.dart';
 
-/// 8.1 · The team list while it loads: one card of hairline-separated rows,
+/// 9.3 · The team list while it loads: one card of hairline-separated rows,
 /// the same shape as the finished page.
 class TeamSkeleton extends StatelessWidget {
   const TeamSkeleton({super.key});
@@ -76,7 +76,7 @@ class _RowSkeleton extends StatelessWidget {
   );
 }
 
-/// 8.4–8.10 · A staff page while it loads: the identity header, a card of
+/// 9.29–9.29c · A staff page while it loads: the identity header, a card of
 /// details and the page's action.
 class StaffDetailSkeleton extends StatelessWidget {
   const StaffDetailSkeleton({super.key});

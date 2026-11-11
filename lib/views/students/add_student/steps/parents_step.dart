@@ -14,7 +14,7 @@ import 'package:hamrash_admin/views/students/add_student/widgets/add_parent_shee
 import 'package:hamrash_admin/views/students/add_student/widgets/parent_card.dart';
 import 'package:hamrash_admin/views/students/add_student/widgets/step_lead.dart';
 
-/// 11.5 / 11.6 · Step 2: at least one parent or guardian, exactly one of
+/// 9.7 / 9.7a · Step 2: at least one parent or guardian, exactly one of
 /// them the main contact (the first added, until another is made main).
 class ParentsStep extends StatelessWidget {
   const ParentsStep({super.key, required this.model});

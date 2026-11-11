@@ -11,7 +11,7 @@ import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
 /// actions that hold someone back, error for removal, success for restore.
 enum _ActionTone { warning, success, error }
 
-/// 8.14 / 8.15 / 8.16 · Who can use the app: the Role row for a live login,
+/// 9.29 / 9.29a / 9.29b · Who can use the app: the Role row for a live login,
 /// then the actions that change access. Owners and admins see this only,
 /// never on the owner's own row.
 class StaffAccessSection extends StatelessWidget {

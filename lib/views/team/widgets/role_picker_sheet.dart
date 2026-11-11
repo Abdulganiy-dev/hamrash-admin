@@ -10,7 +10,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 
-/// 8.6 / 8.7 · Pick the role an invite gives, or the role a login changes
+/// 9.27 / 9.27a · Pick the role an invite gives, or the role a login changes
 /// to. Pops the chosen [OrganizationMemberRole].
 ///
 /// Rows sit straight on the white sheet: no fill, no radius, no dividers.

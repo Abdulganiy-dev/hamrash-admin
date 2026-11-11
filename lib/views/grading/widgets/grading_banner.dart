@@ -6,7 +6,7 @@ import 'package:hamrash_admin/core/widgets/app_text.dart';
 
 enum GradingBannerTone { success, warning, plain }
 
-/// 9.2, 9.8, 9.9 · A tinted card with a title and a line under it: whether
+/// 8.2, 8.8, 8.9 · A tinted card with a title and a line under it: whether
 /// the grade scale covers 0 to 100, what's missing, or that the page is
 /// read only.
 class GradingBanner extends StatelessWidget {

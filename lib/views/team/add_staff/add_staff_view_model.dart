@@ -9,7 +9,7 @@ import 'package:hamrash_admin/core/utils/validation_util.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 
-/// 8.3 · Add a staff member: name, job title and, optionally, phone and
+/// 9.25 · Add a staff member: name, job title and, optionally, phone and
 /// email. Saving makes the record only; inviting is on the person's page.
 class AddStaffViewModel extends BaseViewModel {
   AddStaffViewModel({required this.school, TeamService? team})

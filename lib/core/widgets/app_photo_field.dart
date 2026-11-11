@@ -7,7 +7,7 @@ import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 
-/// Where an optional photo is (11.14).
+/// Where an optional photo is (9.5b).
 enum AppPhotoStatus {
   /// Initials, "Add a photo".
   empty,
@@ -22,8 +22,8 @@ enum AppPhotoStatus {
   failed,
 }
 
-/// How big an [AppPhotoField] is: 80 on a page (11.3), 64 in a sheet (11.8).
-/// [hero] is the 88 avatar at the top of a review (11.11).
+/// How big an [AppPhotoField] is: 80 on a page (9.5), 64 in a sheet (9.7c).
+/// [hero] is the 88 avatar at the top of a review (9.10).
 enum AppPhotoFieldSize {
   large(80, 16, 26, 32, 30, 15),
   compact(64, 14, 20, 26, 26, 13),
@@ -82,7 +82,7 @@ class AppPhotoField extends StatelessWidget {
   /// The picked photo, shown while it uploads, once added and when it failed.
   final ImageProvider? image;
 
-  /// Bold line above the link, e.g. the person's name on 11.3.
+  /// Bold line above the link, e.g. the person's name on 9.5.
   final String? title;
 
   /// Under "Add a photo".
