@@ -104,7 +104,7 @@ void main() {
     expect(find.widgetWithText(AppPrimaryButton, 'Share invite'), findsNothing);
     expect(find.text('Share invite'), findsNothing);
     expect(find.text('EXPIRES'), findsNothing);
-    expect(find.text('Invite to Hamrash'), findsNothing);
+    expect(find.text('Invite staff to Hamrash'), findsNothing);
 
     // Details hold the record; the Access card holds the invite actions.
     expect(find.text('Staff number'), findsOneWidget);

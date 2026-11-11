@@ -9,6 +9,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/utils/phone_format.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
+import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_icon_label.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
@@ -16,8 +17,6 @@ import 'package:hamrash_admin/core/widgets/animated_section_content.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
-import 'package:hamrash_admin/core/widgets/button/app_button_types.dart';
-import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
@@ -175,29 +174,79 @@ class _Content extends StatelessWidget {
     return SizedBox.shrink(key: ValueKey(model.access));
   }
 
-  /// 9.29a · Nothing to sign in with yet.
-  Widget _noLogin(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      if (model.canInvite) ...[
-        AppPrimaryButton(
-          size: AppButtonSize.large,
-          onPressed: () => _invite(context),
-          child: const Text('Invite to Hamrash'),
+  /// 9.29a · Nothing to sign in with yet: one card row that opens the invite,
+  /// its code note underneath the label.
+  Widget _noLogin(BuildContext context) {
+    final canInvite = model.canInvite;
+    return Semantics(
+      button: canInvite,
+      enabled: canInvite,
+      label:
+          'Invite staff to Hamrash. They get a code to join. It never expires.',
+      excludeSemantics: true,
+      child: AppCard(
+        padding: const EdgeInsets.symmetric(
+          vertical: 4,
+          horizontal: AppSpacing.md,
         ),
-        const SizedBox(height: 10),
-      ],
-      AppText(
-        'They get a code to join. It never expires.',
-        style: AppTypography.body.copyWith(
-          fontSize: 13,
-          height: 18 / 13,
-          fontWeight: FontWeight.w600,
-          color: LightColors.textBody,
+        onTap: canInvite ? () => _invite(context) : null,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            children: [
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: AppIcon(
+                  AppIcons.smartphone,
+                  size: 18,
+                  color: AppPalette.stone500,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.ms),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(
+                      'Invite staff to Hamrash',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.body.copyWith(
+                        fontSize: 15,
+                        height: 20 / 15,
+                        fontWeight: FontWeight.w700,
+                        color: LightColors.textStrong,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xxs),
+                    AppText(
+                      'They get a code to join. It never expires.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.caption.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: LightColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (canInvite) ...[
+                const SizedBox(width: AppSpacing.sm),
+                const AppIcon(
+                  AppIcons.chevronRight,
+                  size: 18,
+                  color: AppPalette.stone400,
+                ),
+              ],
+            ],
+          ),
         ),
       ),
-    ],
-  );
+    );
+  }
 
   /// 9.29b · The code is made; nobody has used it.
   Widget _pending(BuildContext context) => StaffInviteCodeField(

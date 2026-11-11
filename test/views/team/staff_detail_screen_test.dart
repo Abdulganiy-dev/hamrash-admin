@@ -220,7 +220,7 @@ void main() {
 
     expect(find.text('Not on app'), findsOneWidget);
     expect(find.text('Maths Teacher · Non-teaching'), findsOneWidget);
-    expect(find.text('Invite to Hamrash'), findsOneWidget);
+    expect(find.text('Invite staff to Hamrash'), findsOneWidget);
     expect(
       find.text('They get a code to join. It never expires.'),
       findsOneWidget,
@@ -318,7 +318,7 @@ void main() {
       find.text("They stay on the list but can't sign in."),
       findsOneWidget,
     );
-    expect(find.text('Invite to Hamrash'), findsNothing);
+    expect(find.text('Invite staff to Hamrash'), findsNothing);
     // Four Details rows, four Personal rows and the Access role row.
     expect(find.byType(StaffInfoRow), findsNWidgets(12));
 

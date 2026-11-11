@@ -92,7 +92,7 @@ class _InviteSheetState extends State<InviteSheet> {
 
   @override
   Widget build(BuildContext context) => AppSheet(
-    title: 'Invite to Hamrash',
+    title: 'Invite staff to Hamrash',
     subtitle: 'For ${widget.fullName}',
     bodyPadding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
     body: Column(
