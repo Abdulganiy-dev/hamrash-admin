@@ -10,7 +10,6 @@ import 'package:hamrash_admin/api/models/team/staff_filter.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_page.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
-import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
@@ -309,10 +308,6 @@ void main() {
 
     final empty = find.byType(AppEmptyState);
     expect(empty, findsOneWidget);
-    expect(
-      tester.widget<AppEmptyState>(empty).iconTileColor,
-      LightColors.categoryTealMute,
-    );
     expect(find.text('No staff yet'), findsOneWidget);
     expect(
       find.text(

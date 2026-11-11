@@ -403,8 +403,6 @@ class _Empty extends StatelessWidget {
     child: const Center(
       child: AppEmptyState(
         icon: AppIcons.userPlus,
-        iconColor: LightColors.categoryTealText,
-        iconTileColor: LightColors.categoryTealMute,
         title: 'No staff yet',
         subtitle:
             'Add each person who works at the school. You can invite them '

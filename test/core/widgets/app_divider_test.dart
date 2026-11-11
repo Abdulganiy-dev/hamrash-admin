@@ -13,13 +13,13 @@ void main() {
   Color colorOf(WidgetTester tester) =>
       tester.widget<ColoredBox>(find.byType(ColoredBox).last).color;
 
-  testWidgets('is a 1px faint (stone-100) rule inset 16/16 by default', (
+  testWidgets('is a 1px faint (stone-50) rule inset 16/16 by default', (
     tester,
   ) async {
     await pump(tester, const Align(child: AppDivider()));
 
-    expect(colorOf(tester), AppPalette.stone100);
-    expect(AppDivider.faint, AppPalette.stone100);
+    expect(colorOf(tester), AppPalette.stone50);
+    expect(AppDivider.faint, AppPalette.stone50);
     final rect = tester.getRect(find.byType(AppDivider));
     expect(rect.height, 1);
     final line = tester.getRect(find.byType(ColoredBox).last);
@@ -27,9 +27,9 @@ void main() {
     expect(rect.right - line.right, 16);
   });
 
-  testWidgets('onPage keeps stone-200', (tester) async {
+  testWidgets('onPage uses stone-100', (tester) async {
     await pump(tester, const Align(child: AppDivider(onPage: true)));
-    expect(colorOf(tester), AppPalette.stone200);
+    expect(colorOf(tester), AppPalette.stone100);
   });
 
   testWidgets('custom indents and the vertical rule', (tester) async {
@@ -48,6 +48,6 @@ void main() {
     final size = tester.getSize(find.byType(AppDivider));
     expect(size.width, 1);
     expect(size.height, 100);
-    expect(colorOf(tester), AppPalette.stone100);
+    expect(colorOf(tester), AppPalette.stone50);
   });
 }

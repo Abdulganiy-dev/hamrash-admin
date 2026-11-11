@@ -3,10 +3,10 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 
 /// The one divider between rows inside a card, list or sheet: 1px, faint.
 ///
-/// Faint ([faint], stone-100) on white cards, white sheets and stone-50
-/// groups. On the linen page stone-100 disappears, so pass [onPage] to keep
-/// stone-200. Never use it for a card's outer edge, a field, chip or button
-/// border; those keep their own strokes.
+/// [faint] is stone-50 on white cards and white sheets. On the linen page
+/// stone-50 vanishes, so pass [onPage] for stone-100. Never use it for a
+/// card's outer edge, a field, chip or button border; those keep their own
+/// strokes.
 class AppDivider extends StatelessWidget {
   /// A horizontal 1px rule inset by [indent] and [endIndent].
   const AppDivider({
@@ -23,8 +23,8 @@ class AppDivider extends StatelessWidget {
       indent = 0,
       endIndent = 0;
 
-  /// The faint divider colour, defined once (`--color-stone-100`).
-  static const faint = AppPalette.stone100;
+  /// The faint divider colour, stone-50; [onPage] lifts it to stone-100.
+  static const faint = AppPalette.stone50;
 
   /// Left inset, from the card edge.
   final double indent;
@@ -37,7 +37,7 @@ class AppDivider extends StatelessWidget {
 
   final bool vertical;
 
-  Color get color => onPage ? AppPalette.stone200 : faint;
+  Color get color => onPage ? AppPalette.stone100 : faint;
 
   @override
   Widget build(BuildContext context) {

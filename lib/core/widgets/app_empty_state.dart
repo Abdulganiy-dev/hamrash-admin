@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
-import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
@@ -42,7 +41,6 @@ class AppEmptyState extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.iconColor,
-    this.iconTileColor,
     this.actionLabel,
     this.onAction,
     this.secondaryLabel,
@@ -65,11 +63,6 @@ class AppEmptyState extends StatelessWidget {
   /// Defaults to aubergine, or stone-400 when [compact].
   final Color? iconColor;
 
-  /// Puts the icon on a 72px rounded tile of this colour and steps the title
-  /// up to [AppTypography.h2] (9.3c's "No staff yet"). Leave null for the
-  /// plain icon every other screen uses.
-  final Color? iconTileColor;
-
   /// The one next step. A filled button, or a text link when [compact].
   final String? actionLabel;
   final VoidCallback? onAction;
@@ -91,24 +84,15 @@ class AppEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasAction = actionLabel != null && onAction != null;
     final hasSecondary = secondaryLabel != null && onSecondary != null;
-    final tiled = iconTileColor != null;
 
     final iconColor =
         this.iconColor ??
         (compact ? AppPalette.stone400 : LightColors.primaryPrimaryDefault);
-    final iconWidget =
-        tiled
-            ? Container(
-              width: 72,
-              height: 72,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: iconTileColor,
-                borderRadius: BorderRadius.circular(AppRadius.dialog),
-              ),
-              child: AppIcon(icon, size: 32, color: iconColor),
-            )
-            : AppIcon(icon, size: compact ? 36 : 56, color: iconColor);
+    final iconWidget = AppIcon(
+      icon,
+      size: compact ? 36 : 56,
+      color: iconColor,
+    );
 
     return Padding(
       padding: EdgeInsets.only(top: topPadding),
@@ -119,30 +103,26 @@ class AppEmptyState extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               iconWidget,
-              SizedBox(height: tiled ? AppSpacing.ms : (compact ? 12 : 20)),
+              SizedBox(height: compact ? 12 : 20),
               AppText(
                 title,
                 textAlign: TextAlign.center,
                 colorType: AppTextColor.textStrong,
                 style:
-                    tiled
-                        ? AppTypography.h2
-                        : compact
+                    compact
                         ? AppTypography.title.copyWith(
                           fontWeight: FontWeight.w800,
                         )
                         : AppTypography.h3,
               ),
               if (subtitle != null) ...[
-                SizedBox(height: tiled ? AppSpacing.ms : (compact ? 2 : 6)),
+                SizedBox(height: compact ? 2 : 6),
                 AppText(
                   subtitle!,
                   textAlign: TextAlign.center,
                   colorType: AppTextColor.textBody,
                   style:
-                      tiled
-                          ? AppTypography.body
-                          : compact
+                      compact
                           ? AppTypography.body
                           : AppTypography.body.copyWith(
                             fontSize: 15,
