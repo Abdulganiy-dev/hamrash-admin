@@ -21,6 +21,7 @@ import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
 import 'package:hamrash_admin/core/widgets/navigation/app_nav_button.dart';
+import 'package:hamrash_admin/core/widgets/person_detail_skeleton.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
 import 'package:hamrash_admin/views/students/student_detail/student_detail_view_model.dart';
 import 'package:hamrash_admin/views/students/add_student/widgets/add_parent_sheet.dart';
@@ -35,7 +36,6 @@ import 'package:hamrash_admin/views/students/student_detail/widgets/student_stat
 import 'package:hamrash_admin/views/team/widgets/access_card.dart';
 import 'package:hamrash_admin/views/team/widgets/invite_ready_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_info_rows.dart';
-import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
 import 'package:stacked/stacked.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -85,7 +85,10 @@ class StudentDetailScreen extends StatelessWidget {
                     onRetry: model.load,
                   )
                 : model.loading
-                ? const _Loading(key: ValueKey('loading'))
+                ? PersonDetailLoading(
+                    key: const ValueKey('loading'),
+                    skeleton: StudentDetailSkeleton(leader: model.canEdit),
+                  )
                 : _Content(key: const ValueKey('content'), model: model),
           ),
         ),
@@ -905,27 +908,6 @@ class _Bullets extends StatelessWidget {
           ),
         ],
       ],
-    ),
-  );
-}
-
-/// The page's skeleton where its content starts.
-class _Loading extends StatelessWidget {
-  const _Loading({super.key});
-
-  @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    physics: const NeverScrollableScrollPhysics(),
-    child: Builder(
-      builder: (context) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.screen,
-          ScaffoldInsets.bodyTopInsetOf(context),
-          AppSpacing.screen,
-          0,
-        ),
-        child: const StaffDetailSkeleton(),
-      ),
     ),
   );
 }
