@@ -2,6 +2,33 @@
 // Regenerate with: python3 docs/handbook/extract_sql.py
 window.SNIPPETS = {
  "functions": {
+  "add_member_role": {
+   "calls": [
+    "my_org_ids"
+   ],
+   "doc": "add_member_role Returns the new organization_members row.",
+   "file": "supabase/migrations/20261111120000_35_add_member_role.sql",
+   "lines": [
+    53,
+    150
+   ],
+   "migration": 35,
+   "params": [
+    {
+     "default": null,
+     "name": "p_member_id",
+     "type": "uuid"
+    },
+    {
+     "default": null,
+     "name": "p_role",
+     "type": "public.member_role"
+    }
+   ],
+   "returns": "public.organization_members",
+   "security": "definer",
+   "sql": "create function public.add_member_role(\n  p_member_id uuid,\n  p_role      public.member_role\n)\nreturns public.organization_members\nlanguage plpgsql\nsecurity definer\nset search_path = ''\nas $$\ndeclare\n  v_sub      text := (select auth.jwt() ->> 'sub');\n  v_staff    constant public.member_role[] := array['owner', 'admin', 'principal', 'vice_principal', 'bursar', 'teacher', 'staff']::public.member_role[];\n  v_source   public.organization_members;\n  v_existing public.organization_members;\n  v_label    text := replace(p_role::text, '_', ' ');\n  v_member   public.organization_members;\nbegin\n  if v_sub is null or v_sub = '' then\n    raise exception 'Not authenticated' using errcode = '28000';\n  end if;\n\n  -- \u2500\u2500 the role \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  if p_role is null then\n    raise exception 'Choose a role to add' using errcode = '22023';\n  end if;\n  if p_role = 'owner' then\n    raise exception 'The owner role can''t be added this way' using errcode = '42501';\n  end if;\n  if p_role not in ('admin', 'principal', 'vice_principal', 'bursar', 'teacher', 'staff') then\n    raise exception 'A staff member can be given admin, principal, vice principal, bursar, teacher or staff' using errcode = '22023';\n  end if;\n\n  -- \u2500\u2500 who, and the source row \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  -- Owners and admins: any of the roles above. Principals and VPs: up to their\n  -- own level (migration 17). A row in another school is \"not found\".\n  select m.* into v_source\n  from public.organization_members m\n  where m.id = p_member_id\n    and (\n      m.organization_id in (select private.my_org_ids(array['owner', 'admin']::public.member_role[]))\n      or (p_role in ('principal', 'vice_principal', 'bursar', 'teacher', 'staff')\n          and m.organization_id in (select private.my_org_ids(array['principal', 'vice_principal']::public.member_role[])))\n    )\n  for update;\n  if not found then\n    raise exception 'Member not found, or you can''t add that role at this school' using errcode = '42501';\n  end if;\n\n  if v_source.role <> all (v_staff) then\n    raise exception 'Only staff on the app can be given another staff role' using errcode = 'P0001';\n  end if;\n  if v_source.status = 'invited' or v_source.clerk_user_id is null then\n    raise exception 'This person isn''t on the app yet. They need to join with their code before they can get another role'\n      using errcode = 'P0001';\n  end if;\n  if v_source.status <> 'active' then\n    raise exception 'This person''s access is suspended. Restore their access before giving them another role'\n      using errcode = 'P0001';\n  end if;\n\n  if exists (\n    select 1\n    from public.staff s\n    join public.organization_members m on m.id = s.member_id\n    where m.organization_id = v_source.organization_id\n      and m.clerk_user_id   = v_source.clerk_user_id\n      and s.status = 'exited'\n  ) then\n    raise exception 'This staff member has left the school' using errcode = 'P0001';\n  end if;\n\n  -- \u2500\u2500 already holds it \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  select m.* into v_existing\n  from public.organization_members m\n  where m.organization_id = v_source.organization_id\n    and m.clerk_user_id   = v_source.clerk_user_id\n    and m.role            = p_role;\n  if found then\n    if v_existing.status = 'active' then\n      raise exception 'They already have the % role at this school', v_label using errcode = 'P0001';\n    end if;\n    raise exception 'They already have the % role, but it''s suspended. Restore their access instead', v_label\n      using errcode = 'P0001';\n  end if;\n\n  -- \u2500\u2500 the new membership \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  begin\n    insert into public.organization_members (organization_id, clerk_user_id, role, status, joined_at, invited_by)\n    values (v_source.organization_id, v_source.clerk_user_id, p_role, 'active', v_source.joined_at, v_sub)\n    returning * into v_member;\n  exception\n    when unique_violation then\n      raise exception 'They already have the % role at this school', v_label using errcode = 'P0001';\n  end;\n\n  return v_member;\nend;\n$$;"
+  },
   "apply_grade_system": {
    "calls": [
     "can_manage_academics",
@@ -2702,6 +2729,7 @@ window.SNIPPETS = {
    "sql": "create function private.my_org_ids(\n  p_roles                 public.member_role[] default null,\n  p_include_inactive_orgs boolean default false\n)\nreturns setof uuid\nlanguage sql\nstable\nsecurity definer\nset search_path = ''\nas $$\n  select m.organization_id\n  from public.organization_members m\n  join public.organizations o on o.id = m.organization_id\n  where m.clerk_user_id = (select auth.jwt() ->> 'sub')\n    and m.status = 'active'\n    and (p_roles is null or m.role = any (p_roles))\n    and (p_include_inactive_orgs or o.status in ('trial', 'active'));\n$$;",
    "usedBy": {
     "functions": [
+     "add_member_role",
      "arm_subject_usage",
      "register_student",
      "reopen_session",

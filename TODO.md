@@ -108,7 +108,7 @@ Decisions so far: [docs/academic-structure.md → Promotion](docs/academic-struc
   - What should the admin UI show: one "Suspend" action that does both, or two separate controls?
 - [ ] **Hide a parent from other parents (custody cases).** Migration 07 already stops co-parents seeing each other's email, occupation or address. Still to decide: should a school be able to hide a parent from other parents **entirely**, including name and phone? See [docs/people-schema.md](docs/people-schema.md).
 - [ ] **Link the owner's own staff record** to the login they got from Hamrash.
-- [ ] **Extra roles for one staff member,** such as a principal who also teaches, without a second claim code.
+- [ ] **Extra roles for one staff member,** such as a principal who also teaches, without a second claim code. Database side written: `add_member_role` (migration 35, not applied yet). Still to do: the app action on the staff page.
 
 ## Later
 

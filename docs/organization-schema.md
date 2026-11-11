@@ -94,6 +94,7 @@ There is no try limit. The table is in `private` (not exposed by the Data API) w
 | `invited_by`, `joined_at` | |
 
 - One row per (school, person, role). A teacher who is also a parent at the same school has two rows. Someone at two schools has rows in both.
+- **A second staff role with no code** *(migration 35)*: `add_member_role(p_member_id, p_role)` copies an **active** staff membership into a new **active** row for the same school and person (same `clerk_user_id` and `joined_at`, no `claim_code`, `invited_by` = the caller) and returns it. It follows the invite tiers (owners and admins: any role but owner; principals and VPs: principal, VP, bursar, teacher, staff), only for members of that school (Hamrash platform admins are refused), and never adds `owner`, `parent` or `student`. It refuses, with readable messages, an unclaimed invite, a suspended login, a staff record that has left, and a role the person already holds (or holds but suspended: restore it instead). `staff.member_id` keeps pointing at the row it had.
 - `unique (organization_id, id)` lets the people tables point at a membership with a composite FK, so a membership can't be attached to the wrong school.
 
 ---
@@ -169,6 +170,7 @@ with check (organization_id in (select private.my_org_ids(array['owner','admin',
 | Delete unclaimed invites | ✓ | ✓ | same tiers as inviting | | ✓ |
 | Issue a login for a staff record (`invite_staff`) | ✓ | ✓ | principal, VP, bursar, teacher, staff *(migration 28)* | | ✓ |
 | Issue a login for a student or parent | ✓ | ✓ | | | ✓ |
+| Give someone on the app another staff role (`add_member_role`) | ✓ | ✓ | principal, VP, bursar, teacher, staff *(migration 35)* | | |
 
 **Guards enforced by the database:**
 - An admin can't promote anyone, including themselves, to owner, and can't demote or suspend an owner.

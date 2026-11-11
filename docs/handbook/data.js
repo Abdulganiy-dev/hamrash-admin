@@ -8,8 +8,8 @@
 
 window.HANDBOOK = {
   meta: {
-    updated: '2026-11-09',
-    migrationsInRepo: 34, // highest migration number in supabase/migrations/
+    updated: '2026-11-11',
+    migrationsInRepo: 35, // highest migration number in supabase/migrations/
     migrationsLive: 34, // highest one applied to the live project (ccvyhbyrtobdsecqvhcr)
   },
 
@@ -108,6 +108,7 @@ window.HANDBOOK = {
           { action: 'Change a member’s role or suspend them', target: 'update organization_members', cells: 'E E N N N N N N E', notes: { 1: 'Not owner rows' }, note: 'A school must keep at least one active owner.' },
           { action: 'Give a staff member a login', target: 'rpc invite_staff', cells: 'E E S S N N N N E', notes: { 2: 'Principal, VP, bursar, teacher or staff logins (migration 28)', 3: 'Principal, VP, bursar, teacher or staff logins (migration 28)' } },
           { action: 'Give a student or parent a login', target: 'rpc invite_student / invite_parent', cells: 'E E N N N N N N E' },
+          { action: 'Give someone on the app another role', target: 'rpc add_member_role', cells: 'E E S S N N N N N', notes: { 0: 'Any role except owner', 1: 'Any role except owner', 2: 'Principal, VP, bursar, teacher or staff', 3: 'Principal, VP, bursar, teacher or staff', 8: 'Not a school member, so refused' }, note: 'Only for an active staff login; no code is made (migration 35).' },
         ],
       },
       {
@@ -800,6 +801,22 @@ window.HANDBOOK = {
           sources: ['staff_detail_view_model.dart:197', 'team_service.dart:94', 'migration 28'],
         },
         {
+          id: 'team-c3', kind: 'create', title: 'Give someone on the app another role', target: 'rpc add_member_role',
+          trigger: 'Not in the app yet. Planned: a person on the app → **Add a role** → pick a role. Hidden for people who haven’t joined.',
+          touches: ['rpc add_member_role', '~insert organization_members (active, same person and joined date)'],
+          who: { yes: ['Owner', 'Admin'], some: ['Principal', 'Vice principal'], note: 'The invite tiers of migration 17. Principals and VPs add principal, VP, bursar, teacher or staff only. Nobody adds owner; Hamrash is refused because it isn’t a school member.' },
+          steps: ['Copies the active membership into a new active row with the chosen role: same school, Clerk id and `joined_at`, no claim code, `invited_by` = the caller.', 'Nothing to redeem: the person has the role the next time the app reads their memberships.', '`staff.member_id` is not changed; it keeps pointing at the row it had.', 'Returns the new `organization_members` row.'],
+          refusals: [
+            { when: 'Owner, or a role above the caller’s tier, or a member in another school', code: '42501', text: '“The owner role can’t be added this way” / “Member not found, or you can’t add that role at this school”.' },
+            { when: 'Parent or student', code: '22023', text: '“A staff member can be given admin, principal, vice principal, bursar, teacher or staff”.' },
+            { when: 'Not on the app yet (an unclaimed invite)', code: 'P0001', text: '“This person isn’t on the app yet. They need to join with their code before they can get another role”.' },
+            { when: 'Their access is suspended', code: 'P0001', text: '“This person’s access is suspended. Restore their access before giving them another role”.' },
+            { when: 'Their staff record has left', code: 'P0001', text: '“This staff member has left the school”.' },
+            { when: 'They already hold the role', code: 'P0001', text: '“They already have the teacher role at this school”, or, if that row is suspended, “… but it’s suspended. Restore their access instead”.' },
+          ],
+          sources: ['migration 35'],
+        },
+        {
           id: 'team-u4', kind: 'update', title: 'Change a role, suspend or restore access', target: 'update organization_members',
           trigger: 'A person on the app → **Change role**, or **Suspend access / Restore access** → confirm.',
           touches: ['update organization_members.role / status'],
@@ -1102,12 +1119,13 @@ window.HANDBOOK = {
     { n: 32, title: 'Register student: switched-off section', text: '`register_student` also refuses a class whose section is switched off (the same function, one extra check before any write).' },
     { n: 33, title: 'Reorder score columns', text: '`reorder_score_columns`: one set of score columns (the school’s, or one section’s) in its complete new order, written as `sort_order` 1..n in one UPDATE after locking the set, with readable refusals checked before the write.' },
     { n: 34, title: 'Grade ranges and per-section grading', text: '`grade_boundaries.max_percent` (backfilled per set; stops if any start is a decimal); whole-number ranges that must cover 0 to 100 (deferred trigger); percentages rounded before grading; grade rows written only through `set_grade_scale`, `apply_grade_system`, `copy_section_grading` and `remove_section_grade_scale` (security definer); `create_standard_grading` writes `max_percent`; `grading_problems` reports a legacy set that doesn’t cover 0 to 100. **The app must be updated before it is applied.**' },
+    { n: 35, title: 'Another role for someone on the app', text: '`add_member_role`: copies an active staff membership into a new active row with another role (same school, Clerk id and joined date, no claim code). Invite tiers of migration 17, school members only, never owner; readable refusals for invites, suspended logins, exited staff and roles they already hold. `staff.member_id` is unchanged.' },
   ],
 
   // ────────────────────────────────────────────────────────────────────
   tables: [
     { name: 'organizations', purpose: 'One row per school (the tenant).', read: 'Active members of the school (including suspended and archived, so they can see the status) and Hamrash.', write: 'Created only by `create_organization`. Owner and Hamrash can update name, contact, logo, number prefix and confirm details.', del: 'Never. Schools are archived.', rules: 'Name not blank. Prefix 2–8 letters or digits. Status, creator and created date can only change through Hamrash (update guard).', migrations: '01 · 03 · 14 · 15 · 16 · 17 · 27 (drops `code`)' },
-    { name: 'organization_members', purpose: 'Who can sign in to which school, and as what. One row per school, person and role.', read: 'Your own rows anywhere; leaders see their school’s; Hamrash sees all.', write: 'Leaders insert invites (owner/admin any role except owner; principal/VP up to their level; Hamrash any). Owner/admin change role or status.', del: 'Only unclaimed invites. Deleting unlinks the person record.', rules: 'One role per person per school. Active rows need a Clerk id, invites need a claim code. A school must keep one active owner; only owners change owner rows.', migrations: '01 · 17' },
+    { name: 'organization_members', purpose: 'Who can sign in to which school, and as what. One row per school, person and role.', read: 'Your own rows anywhere; leaders see their school’s; Hamrash sees all.', write: 'Leaders insert invites (owner/admin any role except owner; principal/VP up to their level; Hamrash any). Owner/admin change role or status. A second active role for someone already on the app only through `add_member_role`.', del: 'Only unclaimed invites. Deleting unlinks the person record.', rules: 'One role per person per school. Active rows need a Clerk id, invites need a claim code. A school must keep one active owner; only owners change owner rows.', migrations: '01 · 17 · 35' },
     { name: 'platform_admins', purpose: 'The Hamrash team.', read: 'Your own row; Hamrash reads all.', write: 'Only through `redeem_platform_join_code` or the SQL editor. Turning someone off is SQL only.', del: 'SQL only.', migrations: '01 · 26 (adds `joined_at`)' },
     { name: 'private.platform_join_code', purpose: 'The single shared team code (hash and last 4 characters).', read: 'Nobody directly; `platform_join_code_status` for Hamrash.', write: 'Only the team-code RPCs, or the SQL editor for the first code.', del: 'Not used.', migrations: '26' },
     { name: 'staff · staff_private_details', purpose: 'Every employee; personal details in the private table.', read: 'Profiles: every member. Private: leaders, bursar, the person themselves, Hamrash.', write: 'Leaders (`create_staff`, `update_staff`). Staff number generated as `PREFIX/STF/0001`.', del: 'Owner and admin. Cascades to private details, class teachers and teaching assignments; refused if any of those are in a closed session. Their unclaimed invite is deleted or their login suspended; an active owner’s record can’t be deleted.', migrations: '03 · 05 · 09 · 28 · 29' },
@@ -1129,6 +1147,7 @@ window.HANDBOOK = {
     { group: 'Schools and joining', name: 'check_claim_code', security: 'definer', who: 'Anyone signed in.', does: 'Looks a code up without using it: status, school, role, app, whether an owner name is needed.', errors: [['28000', 'Not authenticated']], from: 'Hamrash Admin → Join your school.' },
     { group: 'Schools and joining', name: 'redeem_claim_code', security: 'definer', who: 'Anyone signed in with a valid code.', does: 'Activates the invite for the caller; for a new owner also creates their staff record. Returns NULL for a wrong or used code.', errors: [['P0001', 'This school is not currently active'], ['22023', 'Enter your first and last name to finish setting up your school'], ['P0001', 'You already have this role at this school']], from: 'Hamrash Admin → Join.' },
     { group: 'Schools and joining', name: 'invite_staff · invite_student · invite_parent', security: 'definer', who: 'Owner, admin, Hamrash. Principals and VPs can call `invite_staff` for principal, VP, bursar, teacher and staff logins (migration 28).', does: 'Creates (or reuses) an invite for a person record and returns its claim code.', errors: [['42501', '… record not found, or you can’t issue logins for it'], ['42501', 'You can’t change this person’s invite (a principal reissuing an admin’s invite)'], ['P0001', 'This person already has a login'], ['P0001', 'This staff member has left the school']], from: 'Hamrash Admin → a staff member → Invite staff to Hamrash.' },
+    { group: 'Schools and joining', name: 'add_member_role', security: 'definer', who: 'Owner and admin (any role except owner); principal and VP (principal, VP, bursar, teacher, staff). Members of that school only; Hamrash is refused.', does: 'Gives a person already on the app another role at the same school: a new active `organization_members` row with the same Clerk id and joined date, no code. Returns the new row; `staff.member_id` is unchanged.', errors: [['42501', 'The owner role can’t be added this way'], ['42501', 'Member not found, or you can’t add that role at this school'], ['22023', 'A staff member can be given admin, principal, vice principal, bursar, teacher or staff'], ['P0001', 'This person isn’t on the app yet…'], ['P0001', 'This person’s access is suspended…'], ['P0001', 'This staff member has left the school'], ['P0001', 'They already have the % role at this school']], from: 'Not called by the app yet (migration 35).' },
     { group: 'Hamrash team', name: 'redeem_platform_join_code', security: 'definer', who: 'Anyone signed in.', does: 'Joins the Hamrash team with the shared code. NULL for a wrong code, joining off or no code.', errors: [['42501', 'Your platform access was turned off…'], ['22023', 'Enter your full name to join the Hamrash team']], from: 'Platform Admin → Join the team.' },
     { group: 'Hamrash team', name: 'rotate_platform_join_code', security: 'definer', who: 'Active platform admins.', does: 'Makes a new code (returned once), stops the old one, switches joining on.', errors: [['42501', 'Only Hamrash platform admins can change the team code']], from: 'Platform Admin → Team.' },
     { group: 'Hamrash team', name: 'set_platform_join_enabled', security: 'definer', who: 'Active platform admins.', does: 'Switches joining on or off.', errors: [['P0001', 'There is no team code yet. Create one first.']], from: 'Platform Admin → Team.' },
