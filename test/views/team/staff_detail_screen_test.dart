@@ -220,7 +220,7 @@ void main() {
 
     expect(find.text('Not on app'), findsNWidgets(2));
     expect(find.text('Maths Teacher · Non-teaching'), findsOneWidget);
-    expect(find.text('Hamrash app'), findsOneWidget);
+    expect(find.text('Hamrash Staff'), findsOneWidget);
 
     expect(find.text('Details'), findsOneWidget);
     expect(find.text('Staff number'), findsOneWidget);
@@ -865,13 +865,13 @@ void main() {
     await pump(tester, member);
   }
 
-  testWidgets('the Hamrash app row starts the invite when there is no login', (
+  testWidgets('the app row starts the invite when there is no login', (
     tester,
   ) async {
     await pump(tester, _member());
 
-    expect(find.text('Hamrash app'), findsOneWidget);
-    await tester.tap(find.text('Hamrash app'));
+    expect(find.text('Hamrash Staff'), findsOneWidget);
+    await tester.tap(find.text('Hamrash Staff'));
     await tester.pumpAndSettle();
 
     expect(find.text('Invite staff to Hamrash'), findsOneWidget);

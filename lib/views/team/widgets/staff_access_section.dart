@@ -20,6 +20,7 @@ class StaffAccessSection extends StatelessWidget {
   const StaffAccessSection({
     super.key,
     required this.roleLabel,
+    required this.appName,
     required this.statusLabel,
     required this.isOnApp,
     required this.isPending,
@@ -35,6 +36,10 @@ class StaffAccessSection extends StatelessWidget {
   });
 
   final String roleLabel;
+
+  /// "Hamrash Admin" or "Hamrash Staff": the app this person's login signs
+  /// in to. Leaders use the admin app; teachers and staff use the staff app.
+  final String appName;
 
   /// "Active", "On leave" or "Exited". The record's own status, not the login.
   final String statusLabel;
@@ -96,12 +101,12 @@ class StaffAccessSection extends StatelessWidget {
     rows: [
       StaffInfoRow(
         icon: AppIcons.smartphone,
-        label: 'Hamrash app',
+        label: appName,
         value: _appState,
         onTap: _notOnApp ? onInvite : null,
         semanticLabel: _notOnApp
-            ? 'Invite them to Hamrash'
-            : 'Hamrash app, $_appState',
+            ? 'Invite them to $appName'
+            : '$appName, $_appState',
       ),
       if (_hasRole)
         StaffInfoRow(

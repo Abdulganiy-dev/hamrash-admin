@@ -319,6 +319,7 @@ class _Content extends StatelessWidget {
   /// just remove for someone who never had a login.
   Widget _access(BuildContext context) => StaffAccessSection(
     roleLabel: model.role.teamLabel,
+    appName: model.role.appName,
     statusLabel: model.statusLabel,
     isOnApp: model.isOnApp,
     isPending: model.isPending,
