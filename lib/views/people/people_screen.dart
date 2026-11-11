@@ -47,6 +47,8 @@ class PeopleScreen extends StatelessWidget {
           return DefaultScaffold(
             backgroundColor: AppPalette.linen,
             title: 'People',
+  
+            busy: model.busy,
             subtitle: _subtitle(model.students),
             actions: staff
                 ? _staffActions(context, model, team!)

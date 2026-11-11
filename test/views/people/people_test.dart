@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/api/models/class_structure/class_structure.dart';
@@ -136,6 +138,22 @@ class _Subjects implements SubjectService {
     Subject(id: 'a', name: 'Art', code: 'ART', sortOrder: 1, isActive: true),
     Subject(id: 'x', name: 'Old', code: 'OLD', sortOrder: 3, isActive: false),
   ];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _GatedSubjects implements SubjectService {
+  _GatedSubjects(this.result);
+
+  final Future<List<Subject>> result;
+  int reads = 0;
+
+  @override
+  Future<List<Subject>> listSubjects(String organizationId) {
+    reads++;
+    return result;
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -585,6 +603,78 @@ void main() {
 
       expect(find.text('No students yet'), findsOneWidget);
       expect(find.text('Add student'), findsWidgets);
+    });
+  });
+
+  group('filter options loading', () {
+    test('the page is busy while the options load, once', () async {
+      final gate = Completer<List<Subject>>();
+      final subjects = _GatedSubjects(gate.future);
+      final school = _school(OrganizationMemberRole.principal);
+      final model = PeopleViewModel(
+        school: school,
+        students: StudentsViewModel(
+          school: school,
+          students: _Students([]),
+          structure: _Structure(),
+        ),
+        team: TeamViewModel(school: school, team: _Team([_staff()])),
+        options: PeopleFilterOptionsLoader(
+          organizationId: 'kings',
+          structure: _Structure(),
+          subjects: subjects,
+        ),
+      );
+      final busyStates = <bool>[];
+      model.addListener(() => busyStates.add(model.busy));
+
+      final pending = model.filterOptions();
+      expect(model.busy, isTrue);
+
+      gate.complete(const [
+        Subject(
+          id: 'm',
+          name: 'Maths',
+          code: 'MTH',
+          sortOrder: 1,
+          isActive: true,
+        ),
+      ]);
+      final options = await pending;
+      expect(model.busy, isFalse);
+      expect(options.subjects.map((s) => s.label), ['Maths']);
+
+      // Already read: no spinner the second time.
+      busyStates.clear();
+      await model.filterOptions();
+      expect(busyStates, isEmpty);
+      expect(subjects.reads, 1);
+      model.dispose();
+    });
+
+    test('a failed read clears busy and the next open tries again', () async {
+      final school = _school(OrganizationMemberRole.principal);
+      final subjects = _GatedSubjects(Future.error(Exception('offline')));
+      final model = PeopleViewModel(
+        school: school,
+        students: StudentsViewModel(
+          school: school,
+          students: _Students([]),
+          structure: _Structure(),
+        ),
+        team: TeamViewModel(school: school, team: _Team([_staff()])),
+        options: PeopleFilterOptionsLoader(
+          organizationId: 'kings',
+          structure: _Structure(),
+          subjects: subjects,
+        ),
+      );
+
+      await expectLater(model.filterOptions(), throwsException);
+      expect(model.busy, isFalse);
+      await expectLater(model.filterOptions(), throwsException);
+      expect(subjects.reads, 2);
+      model.dispose();
     });
   });
 

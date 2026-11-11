@@ -162,7 +162,7 @@ class _ParentChangeDetailsSheetState extends State<ParentChangeDetailsSheet> {
                 value: _title,
                 items: ParentTitles.values,
                 placeholder: 'Title',
-                isOptional: true,
+                // isOptional: true,
                 onChanged: (value) => setState(() {
                   _title = value;
                   _error = null;

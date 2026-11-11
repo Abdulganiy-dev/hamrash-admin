@@ -48,10 +48,24 @@ class PeopleViewModel extends BaseViewModel {
 
   Future<void> load() => students.load();
 
-  /// The classes, arms and subjects the filter sheets pick from. Read once
-  /// when the first sheet opens; rethrows when it can't be read, so the
-  /// screen can say so instead of opening a sheet with nothing to pick.
-  Future<PeopleFilterOptions> filterOptions() => _options.load();
+  bool _optionsReady = false;
+
+  /// The classes, arms and subjects the filter sheets pick from. Read once,
+  /// the first time a sheet is opened, with the page [busy] while it loads so
+  /// the person sees something is happening; later opens are instant.
+  /// Rethrows when it can't be read, so the screen can say so instead of
+  /// opening a sheet with nothing to pick.
+  Future<PeopleFilterOptions> filterOptions() async {
+    if (_optionsReady) return _options.load();
+    setBusy(true);
+    try {
+      final options = await _options.load();
+      _optionsReady = true;
+      return options;
+    } finally {
+      setBusy(false);
+    }
+  }
 
   void select(PeopleSide value) {
     if (value == _side || (value == PeopleSide.staff && !showStaffSide)) return;
