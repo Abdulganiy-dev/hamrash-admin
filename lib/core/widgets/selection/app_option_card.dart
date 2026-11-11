@@ -18,7 +18,7 @@ import 'package:hamrash_admin/core/widgets/app_icons.dart';
 /// AppOptionCard(
 ///   title: 'Standard structure',
 ///   badge: 'Recommended',
-///   subtitle: '15 classes in 3 sections.',
+///   subtitle: '15 classes in 4 sections.',
 ///   value: Start.standard,
 ///   groupValue: start,
 ///   onChanged: pick,

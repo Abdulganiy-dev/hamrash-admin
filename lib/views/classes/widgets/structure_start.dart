@@ -27,7 +27,7 @@ class StructureStartPicker extends StatelessWidget {
       AppOptionCard(
         title: 'Standard structure',
         badge: 'Recommended',
-        subtitle: '15 classes in 3 sections. You add the arms next.',
+        subtitle: '15 classes in 4 sections. You add the arms next.',
         value: StructureStart.standard,
         groupValue: value,
         onChanged: onChanged,
@@ -35,7 +35,8 @@ class StructureStartPicker extends StatelessWidget {
           rows: [
             ('Nursery', 'Nursery 1 – 3'),
             ('Primary', 'Primary 1 – 6'),
-            ('Secondary', 'JSS 1 – SS 3'),
+            ('Junior Secondary', 'JSS 1 – 3'),
+            ('Senior Secondary', 'SS 1 – 3'),
           ],
           note: 'Students graduate after SS 3',
           noteIcon: AppIcons.graduationCap,

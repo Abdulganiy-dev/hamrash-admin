@@ -59,8 +59,9 @@ class ClassStructureService {
     log: (session) => {'organization_id': organizationId, 'id': session?.id},
   );
 
-  /// Nursery 1–3, Primary 1–6 and JSS 1–SS 3, with SS 3 graduating. Only
-  /// for a school with no sections yet. Returns how many classes it made.
+  /// Nursery 1–3, Primary 1–6, Junior Secondary (JSS 1–3) and Senior
+  /// Secondary (SS 1–3), with SS 3 graduating. Only for a school with no
+  /// sections yet. Returns how many classes it made.
   Future<int> createStandardStructure(String organizationId) => _run(
     'createStandardStructure',
     () async =>

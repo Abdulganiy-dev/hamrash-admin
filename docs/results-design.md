@@ -56,7 +56,7 @@ grade_boundaries         A1 75–100 "Excellent" · B2 70–74 … F9 0–39    
 - **Changes after scores exist are restricted.** Once scores exist for a score column, its max score can't change and it can't be deleted. This is enforced in the gradebook migration.
 - **One-tap standard setup,** `create_standard_grading` (school with no setup; writes `max_percent` from 34):
   - The school's setup: CA 1 (20) + CA 2 (20) + Exam (60), graded A 70–100 … F 0–39. Nursery and Primary use it.
-  - Secondary gets only its own **WAEC grade boundaries** (A1 75–100 … F9 0–39) and keeps the school's columns.
+  - Senior Secondary (or a pre-39 "Secondary" section) gets only its own **WAEC grade boundaries** (A1 75–100 … F9 0–39) and keeps the school's columns. Junior Secondary uses the school's A–F.
 - **Behaviour traits are a fixed list,** not a table. The app shows them and their group. The gradebook stores each rating with the trait as a Postgres **enum** (`behaviour_trait`), so the database accepts only these. Adding one later is a one-line migration.
 
   | Affective | Psychomotor |

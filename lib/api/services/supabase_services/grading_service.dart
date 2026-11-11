@@ -56,8 +56,8 @@ class GradingService {
   );
 
   /// CA 1 (20), CA 2 (20) and Exam (60), and grades A to F, plus WAEC
-  /// grades for a section named Secondary. Only for a school with no
-  /// grading setup yet.
+  /// grades for Senior Secondary (or an older "Secondary" section). Only
+  /// for a school with no grading setup yet.
   Future<void> createStandardGrading(String organizationId) =>
       _run('createStandardGrading', () async {
         await _supabase.rpc(

@@ -6,7 +6,7 @@
 -- It acts as several fake users, checks every rule, then raises an exception on
 -- purpose so EVERYTHING is rolled back. The "error" at the end is the report.
 --
--- Requires migrations 01–34. Migration 34's own tests: 21_grade_scales_test.sql.
+-- Requires migrations 01–39 (39 named the WAEC section Senior Secondary). Migration 34's own tests: 21_grade_scales_test.sql.
 
 do $test$
 declare
@@ -17,7 +17,7 @@ declare
   v_org  uuid;  v_claim  text;
   v_org2 uuid;  v_claim2 text;
   v_nursery uuid; v_secondary uuid;
-  v_nur1a uuid; v_pry1a uuid; v_jss1a uuid;
+  v_nur1a uuid; v_pry1a uuid; v_ss1a uuid;
   v_teacher uuid; v_t_code text;
   v_s1 uuid; v_p1 uuid; v_p_code text;
 begin
@@ -46,13 +46,13 @@ begin
   perform public.redeem_claim_code(v_claim, 'Olu', 'Owner');
   perform public.create_standard_structure(v_org);
   select id into v_nursery   from public.sections where organization_id = v_org and name = 'Nursery';
-  select id into v_secondary from public.sections where organization_id = v_org and name = 'Secondary';
+  select id into v_secondary from public.sections where organization_id = v_org and name = 'Senior Secondary';
   insert into public.class_arms (organization_id, class_id, name)
     select v_org, id, 'A' from public.classes where organization_id = v_org and name = 'Nursery 1' returning id into v_nur1a;
   insert into public.class_arms (organization_id, class_id, name)
     select v_org, id, 'A' from public.classes where organization_id = v_org and name = 'Primary 1' returning id into v_pry1a;
   insert into public.class_arms (organization_id, class_id, name)
-    select v_org, id, 'A' from public.classes where organization_id = v_org and name = 'JSS 1' returning id into v_jss1a;
+    select v_org, id, 'A' from public.classes where organization_id = v_org and name = 'SS 1' returning id into v_ss1a;
 
   insert into public.staff (organization_id, first_name, last_name) values (v_org, 'Ada', 'Teacher') returning id into v_teacher;
   v_t_code := public.invite_staff(v_teacher);
@@ -61,7 +61,7 @@ begin
   insert into public.student_parents (organization_id, student_id, parent_id, relationship, is_primary_contact) values (v_org, v_s1, v_p1, 'mother', true);
   v_p_code := public.invite_parent(v_p1);
 
-  -- 00a standard setup: the school's columns + A–F, Secondary's own WAEC boundaries only
+  -- 00a standard setup: the school's columns + A–F, Senior Secondary's own WAEC boundaries only
   perform public.create_standard_grading(v_org);
   v_ok := (select count(*) from public.score_columns    where organization_id = v_org and section_id is null) = 3
       and (select sum(max_score) from public.score_columns where organization_id = v_org and section_id is null) = 100
@@ -81,20 +81,20 @@ begin
     v_log := v_log || E'\n' || case when sqlerrm like '%already has a grading setup%' then 'PASS' else 'FAIL' end || ' 00b standard setup only for a new school [' || sqlerrm || ']';
   end;
 
-  -- 01 fall-back: JSS 1A uses the school's columns but Secondary's grade boundaries;
+  -- 01 fall-back: SS 1A uses the school's columns but Senior Secondary's grade boundaries;
   --    Primary 1A uses the school's for both
-  select string_agg(name, ',' order by sort_order) into v_txt from public.score_columns_for_arm(v_jss1a);
+  select string_agg(name, ',' order by sort_order) into v_txt from public.score_columns_for_arm(v_ss1a);
   v_ok := v_txt = 'CA 1,CA 2,Exam'
-      and (select count(*) from public.grade_boundaries_for_arm(v_jss1a)) = 9
+      and (select count(*) from public.grade_boundaries_for_arm(v_ss1a)) = 9
       and (select count(*) from public.grade_boundaries_for_arm(v_pry1a)) = 6;
   v_log := v_log || E'\n' || case when v_ok then 'PASS' else 'FAIL' end || ' 01 columns and boundaries each fall back to the school''s';
 
   -- 02 grades come from the ranges; a percentage is rounded half-up first (migration 34)
-  v_txt := (public.grade_for(v_jss1a, 74.4)).grade || ',' || (public.grade_for(v_jss1a, 74.5)).grade || ','
-        || (public.grade_for(v_jss1a, 39.49)).grade || ',' || (public.grade_for(v_pry1a, 69.99)).grade || ','
+  v_txt := (public.grade_for(v_ss1a, 74.4)).grade || ',' || (public.grade_for(v_ss1a, 74.5)).grade || ','
+        || (public.grade_for(v_ss1a, 39.49)).grade || ',' || (public.grade_for(v_pry1a, 69.99)).grade || ','
         || (public.grade_for(v_pry1a, 0)).grade || ',' || (public.grade_for(v_pry1a, 100)).grade;
   v_log := v_log || E'\n' || case when v_txt = 'B2,A1,F9,A,F,A' then 'PASS' else 'FAIL' end || ' 02 grades come from the ranges, rounded first [' || coalesce(v_txt, 'null') || ']';
-  v_ok := not (public.grade_for(v_jss1a, 30)).is_pass and (public.grade_for(v_jss1a, 45)).is_pass;
+  v_ok := not (public.grade_for(v_ss1a, 30)).is_pass and (public.grade_for(v_ss1a, 45)).is_pass;
   v_log := v_log || E'\n' || case when v_ok then 'PASS' else 'FAIL' end || ' 02b pass/fail flag comes with the grade';
 
   -- 03 Nursery gets its own single column; it still uses the school's grade boundaries
@@ -180,14 +180,14 @@ begin
   select (select count(*) from public.score_columns) + (select count(*) from public.grade_boundaries) into v_n;
   v_log := v_log || E'\n' || case when v_n = 0 then 'PASS' else 'FAIL' end || ' 08 other school sees none of School A''s setup [' || v_n || ']';
 
-  -- ── owner: removing Secondary's boundaries falls back to the school's ─
+  -- ── owner: removing Senior Secondary's boundaries falls back to the school's ─
   execute 'reset role';
   perform set_config('request.jwt.claims', '{"sub":"test_owner","role":"authenticated"}', true);
   execute 'set local role authenticated';
   perform public.remove_section_grade_scale(v_org, v_secondary);
-  v_ok := (public.grade_for(v_jss1a, 74.5)).grade = 'A'
-      and (select count(*) from public.grade_boundaries_for_arm(v_jss1a)) = 6;
-  v_log := v_log || E'\n' || case when v_ok then 'PASS' else 'FAIL' end || ' 09 without its own boundaries, Secondary uses the school''s';
+  v_ok := (public.grade_for(v_ss1a, 74.5)).grade = 'A'
+      and (select count(*) from public.grade_boundaries_for_arm(v_ss1a)) = 6;
+  v_log := v_log || E'\n' || case when v_ok then 'PASS' else 'FAIL' end || ' 09 without its own boundaries, Senior Secondary uses the school''s';
 
   -- 10 anon has no access
   execute 'reset role';

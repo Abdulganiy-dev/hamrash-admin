@@ -8,7 +8,7 @@
 
 ```
 School
- └─ Section     Nursery · Primary · Secondary            created by the school, ordered
+ └─ Section     Nursery · Primary · Junior Secondary · Senior Secondary   created by the school, ordered
      └─ Class   Primary 1 … Primary 6 · JSS 1 … SS 3     ordered within its section
          └─ Arm A · B · Gold · Science  →  "JSS 1A"      created by the school admin
 
@@ -34,8 +34,10 @@ Class teacher  staff → arm, for one session               up to one lead + two
 |---|---|
 | Nursery | Nursery 1, Nursery 2, Nursery 3 |
 | Primary | Primary 1 … Primary 6 |
-| Secondary | JSS 1, JSS 2, JSS 3, SS 1, SS 2, SS 3 (SS 3 marked as the graduating class) |
+| Junior Secondary | JSS 1, JSS 2, JSS 3 |
+| Senior Secondary | SS 1, SS 2, SS 3 (SS 3 marked as the graduating class) |
 
+- Junior and Senior Secondary are separate sections (migration 39) so each can have its own head, grading and switch. Schools set up before 39 keep their single Secondary section.
 - It only works for a school with **no sections yet**, so it can't duplicate anything.
 - Everything it creates can be renamed, reordered or deactivated afterwards.
 - It doesn't create arms; the admin adds those.

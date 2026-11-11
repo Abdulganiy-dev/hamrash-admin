@@ -37,7 +37,7 @@ Gaps inside finished sections:
 
 ### 8 · Grading (Paper § 8 and § 8b) 📝
 Schema is done (`score_columns`, `grade_boundaries`, `create_standard_grading`, `grading_problems`; `reorder_score_columns` in migration 33). Migration 34 (in the repo, **not applied** until the app follows it): grades get a stored `max_percent` (whole-number From/To ranges covering 0 to 100, percentages rounded before grading), and grade rows are written only through `set_grade_scale`, `apply_grade_system`, `copy_section_grading` and `remove_section_grade_scale` (per-section setup, Paper § 9b). Needed before the gradebook. Design: [results-design.md → 08](results-design.md).
-- [ ] 8.1 Start: one-tap standard setup (CA 1/CA 2/Exam, A–F; Secondary gets WAEC boundaries)
+- [ ] 8.1 Start: one-tap standard setup (CA 1/CA 2/Exam, A–F; Senior Secondary gets WAEC boundaries)
 - [ ] 8.2 Overview: the school's setup, and which sections use their own
 - [ ] 8.3 Score columns: add, edit, reorder; max score
 - [ ] 8.3a Column in use: max score locked and can't be deleted once scores exist
