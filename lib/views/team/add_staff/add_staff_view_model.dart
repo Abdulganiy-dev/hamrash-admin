@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/team/staff_job_title.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_type_option.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
 import 'package:hamrash_admin/core/utils/phone_format.dart';
@@ -9,8 +10,9 @@ import 'package:hamrash_admin/core/utils/validation_util.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/viewModel/base_view_model.dart';
 
-/// 9.25 · Add a staff member: name, job title and, optionally, phone and
-/// email. Saving makes the record only; inviting is on the person's page.
+/// 9.25 · Add a staff member: name, job title, staff type and, optionally,
+/// phone and email. Saving makes the record only; inviting is on the
+/// person's page.
 class AddStaffViewModel extends BaseViewModel {
   AddStaffViewModel({required this.school, TeamService? team})
     : _team = team ?? locator<TeamService>();
@@ -26,6 +28,14 @@ class AddStaffViewModel extends BaseViewModel {
   final email = TextEditingController();
 
   StaffJobTitleOption? jobTitle;
+
+  /// `teaching` or `non_teaching`. Starts from the job title, then the
+  /// person's own pick wins (see [_staffTypePicked]).
+  StaffTypeOption? staffType;
+
+  /// Once they pick a staff type, changing the job title leaves it alone.
+  bool _staffTypePicked = false;
+
   StaffGender? gender;
   DateTime? dateOfBirth;
   DateTime? employmentDate;
@@ -87,7 +97,8 @@ class AddStaffViewModel extends BaseViewModel {
       lastNameProblem == null &&
       phoneProblem == null &&
       emailProblem == null &&
-      jobTitle != null;
+      jobTitle != null &&
+      staffType != null;
 
   String get previewName {
     final name = '${firstName.text.trim()} ${lastName.text.trim()}'.trim();
@@ -97,8 +108,17 @@ class AddStaffViewModel extends BaseViewModel {
   String get previewSubtitle =>
       '${jobTitle?.label ?? 'Job title'} · not on the app yet';
 
+  /// The staff type follows the job title until the person picks one.
   void pickJobTitle(StaffJobTitleOption value) {
     jobTitle = value;
+    if (!_staffTypePicked) staffType = value.staffType;
+    _error = null;
+    notifyListeners();
+  }
+
+  void pickStaffType(StaffTypeOption value) {
+    staffType = value;
+    _staffTypePicked = true;
     _error = null;
     notifyListeners();
   }
@@ -150,7 +170,8 @@ class AddStaffViewModel extends BaseViewModel {
   Future<({StaffMember? staff, String? error})> save() async {
     if (_saving) return (staff: null, error: null);
     final job = jobTitle;
-    if (!canSave || job == null) {
+    final type = staffType;
+    if (!canSave || job == null || type == null) {
       notifyListeners();
       return (staff: null, error: null);
     }
@@ -171,7 +192,7 @@ class AddStaffViewModel extends BaseViewModel {
         phone: _storedPhone,
         email: _storedEmail,
         jobTitle: job.jobTitle,
-        staffType: job.staffType,
+        staffType: type.value,
         address: _storedAddress,
         residenceState: residenceState,
         residenceLga: residenceLga,
@@ -193,7 +214,9 @@ class AddStaffViewModel extends BaseViewModel {
     }
   }
 
-  /// "Save and add another": the job title stays, everything else clears.
+  /// "Save and add another": the job title and staff type stay, everything
+  /// else clears. A picked staff type stays picked, so a new job title on the
+  /// fresh form doesn't change it back.
   void clearForAnother() {
     firstName.clear();
     lastName.clear();

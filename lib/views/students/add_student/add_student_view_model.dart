@@ -165,7 +165,8 @@ class AddStudentViewModel extends BaseViewModel {
 
   /// Resolved when first used, so the Add a parent sheet can be driven by
   /// this model without the subject service.
-  SubjectService get _subjects => _subjectsOverride ?? locator<SubjectService>();
+  SubjectService get _subjects =>
+      _subjectsOverride ?? locator<SubjectService>();
   final ImageService? _imagesOverride;
   final ImagePicker _picker;
   final DateTime _today;
@@ -1224,12 +1225,17 @@ class AddStudentViewModel extends BaseViewModel {
     notifyListeners();
   }
 
-  /// "They are in JSS 1 Gold for 2026/27, with 2 optional subjects."
-  String get registeredSummary {
-    final where = 'They are in $armLabel for $sessionName';
-    final chosen = _registered?.subjectIds.length ?? chosenSubjectIds.length;
-    if (chosen == 0) return '$where.';
-    return '$where, with ${_count(chosen, 'optional subject')}.';
+  /// "JSS 1 Gold · 2026/27" under the registered title.
+  String get registeredPlacement =>
+      [armLabel, sessionName].where((each) => each.isNotEmpty).join(' · ');
+
+  /// "9 core · 2 optional" on the registered page, or just "9 core" when
+  /// they took no optional subjects.
+  String get registeredSubjects {
+    final optional = _registered?.subjectIds.length ?? chosenSubjectIds.length;
+    return optional == 0
+        ? '$compulsoryCount core'
+        : '$compulsoryCount core · $optional optional';
   }
 
   static String _count(int count, String noun) =>

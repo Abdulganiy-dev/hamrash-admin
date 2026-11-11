@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/core/widgets/app_step_segments.dart';
@@ -32,6 +33,33 @@ void main() {
 
   AppStepSegments segments(WidgetTester tester) =>
       tester.widget<AppStepSegments>(find.byType(AppStepSegments));
+
+  /// Registers Chioma on JSS 1 Gold with French chosen.
+  Future<void> reachRegistered() async {
+    fillStudent(model);
+    model.next();
+    fillPersonal(model);
+    model.next();
+    fakes.students.matches = const [ngozi];
+    model
+      ..startParentSheet()
+      ..searchPhone.text = '08035550142';
+    await model.findParent();
+    model
+      ..useFoundParent()
+      ..next();
+    await model.loadPlacement();
+    final jss1 = model.classes.single;
+    model
+      ..pickClass(jss1)
+      ..pickArm(model.armsOf(jss1).first);
+    await model.loadOfferings();
+    model
+      ..next()
+      ..toggleSubject('french')
+      ..next();
+    await model.register();
+  }
 
   testWidgets('moves forward and back through the steps and keeps typed text', (
     tester,
@@ -238,15 +266,61 @@ void main() {
     await tester.tap(find.widgetWithText(AppPrimaryButton, 'Register student'));
     await tester.pumpAndSettle();
     expect(find.text('Ada is registered'), findsOneWidget);
+    expect(find.text('JSS 1 Gold · 2026/27'), findsOneWidget);
     expect(find.text('KCL/2026/0042'), findsOneWidget);
-    expect(segments(tester).complete, isTrue);
+    expect(find.text('ADMISSION NUMBER'), findsOneWidget);
+    expect(find.text('Copy'), findsOneWidget);
 
-    await tester.tap(
-      find.widgetWithText(AppSecondaryButton, 'Add another student'),
-    );
+    // Registered: no steps left, so no progress bar and no back arrow.
+    expect(find.byType(AppStepSegments), findsNothing);
+    expect(find.bySemanticsLabel('Back'), findsNothing);
+    expect(find.bySemanticsLabel('Close'), findsOneWidget);
+
+    expect(find.text('Main contact'), findsOneWidget);
+    expect(find.text('Mrs Ngozi Okafor'), findsOneWidget);
+    expect(find.text('Subjects'), findsOneWidget);
+    expect(find.text('1 core · 1 optional'), findsOneWidget);
+    expect(find.text('Parents'), findsOneWidget);
+    expect(find.text('1 linked'), findsOneWidget);
+    expect(find.text('Open Ada’s profile'), findsOneWidget);
+
+    await tester.tap(find.text('Add another student'));
     await tester.pumpAndSettle();
     expect(find.text('Who is the student?'), findsOneWidget);
     expect(model.firstName.text, isEmpty);
+    expect(find.byType(AppStepSegments), findsOneWidget);
+  });
+
+  testWidgets('Copy puts the admission number on the clipboard', (
+    tester,
+  ) async {
+    final copied = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copied.add(
+            (call.arguments as Map<Object?, Object?>)['text']! as String,
+          );
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    await pump(tester);
+    await reachRegistered();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Chioma is registered'), findsOneWidget);
+    await tester.tap(find.text('Copy'));
+    await tester.pumpAndSettle();
+    expect(copied, ['KCL/2026/0042']);
   });
 
   testWidgets('the subjects step shows both sections and the running total', (

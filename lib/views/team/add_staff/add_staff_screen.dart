@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/api/models/team/staff_job_title.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_type_option.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
@@ -33,9 +34,9 @@ class AddStaffOutcome {
   final bool addedAny;
 }
 
-/// 9.25 · Add Staff Members: who they are, their job title, and how to reach
-/// them. Saving goes straight to their staff page; "Save and add another"
-/// stays here.
+/// 9.25 · Add Staff Members: who they are, their job title and staff type,
+/// and how to reach them. Saving goes straight to their staff page; "Save and
+/// add another" stays here.
 class AddStaffScreen extends StatelessWidget {
   const AddStaffScreen({super.key, required this.school});
 
@@ -216,6 +217,18 @@ class _Form extends StatelessWidget {
                 items: StaffJobTitleOption.values,
                 labelBuilder: (option) => option.label,
                 onChanged: model.pickJobTitle,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              AppSelectField<StaffTypeOption>(
+                label: 'Staff type',
+                value: model.staffType,
+                items: StaffTypeOption.values,
+                labelBuilder: (option) => option.label,
+                enabled: model.jobTitle != null,
+                helperText: model.jobTitle == null
+                    ? 'Choose a job title first'
+                    : null,
+                onChanged: model.pickStaffType,
               ),
               const SizedBox(height: AppSpacing.md),
               AppDateField(

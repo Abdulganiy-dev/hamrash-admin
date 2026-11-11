@@ -584,6 +584,36 @@ void main() {
       expect(model.registered, isNull);
       expect(model.hasPersonalDetails, isFalse);
     });
+
+    test(
+      'the registered page reads the placement and the subject split',
+      () async {
+        await reachReview();
+        expect(await model.register(), isTrue);
+        expect(model.registeredPlacement, 'JSS 1 Gold · 2026/27');
+        expect(model.registeredSubjects, '1 core · 1 optional');
+      },
+    );
+
+    test('with no optional subjects the split is just the core', () async {
+      fillStudent(model);
+      model.next();
+      fillPersonal(model);
+      model.next();
+      await addNgozi();
+      model.next();
+      await model.loadPlacement();
+      final jss1 = model.classes.single;
+      model.pickClass(jss1);
+      model.pickArm(model.armsOf(jss1).last); // Blue: compulsory only
+      await model.loadOfferings();
+      model.next(); // Subjects is skipped.
+      expect(model.step, AddStudentStep.review);
+
+      expect(await model.register(), isTrue);
+      expect(model.registeredPlacement, 'JSS 1 Blue · 2026/27');
+      expect(model.registeredSubjects, '1 core');
+    });
   });
 
   group('photos', () {

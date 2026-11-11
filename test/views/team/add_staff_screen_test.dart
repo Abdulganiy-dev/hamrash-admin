@@ -126,4 +126,58 @@ void main() {
     expect(picker(tester, 'State').valueText, 'Oyo');
     expect(picker(tester, 'LGA').valueText, isNull);
   });
+
+  testWidgets('the staff type waits for a job title', (tester) async {
+    await pump(tester);
+
+    expect(find.text('Staff type'), findsOneWidget);
+    expect(picker(tester, 'Staff type').enabled, isFalse);
+    expect(picker(tester, 'Staff type').valueText, isNull);
+    expect(find.text('Choose a job title first'), findsOneWidget);
+  });
+
+  testWidgets('a job title fills the staff type in', (tester) async {
+    await pump(tester);
+
+    await tester.tap(find.widgetWithText(AppPickerField, 'Job title'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Teacher').last);
+    await tester.pumpAndSettle();
+
+    expect(picker(tester, 'Staff type').enabled, isTrue);
+    expect(picker(tester, 'Staff type').valueText, 'Teaching');
+    expect(find.text('Choose a job title first'), findsNothing);
+
+    await tester.tap(find.widgetWithText(AppPickerField, 'Job title'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bursar').last);
+    await tester.pumpAndSettle();
+
+    expect(picker(tester, 'Staff type').valueText, 'Non-teaching');
+  });
+
+  testWidgets('a picked staff type survives a job title change', (
+    tester,
+  ) async {
+    await pump(tester);
+
+    await tester.tap(find.widgetWithText(AppPickerField, 'Job title'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Admin').last);
+    await tester.pumpAndSettle();
+    expect(picker(tester, 'Staff type').valueText, 'Non-teaching');
+
+    await tester.tap(find.widgetWithText(AppPickerField, 'Staff type'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Teaching').last);
+    await tester.pumpAndSettle();
+    expect(picker(tester, 'Staff type').valueText, 'Teaching');
+
+    await tester.tap(find.widgetWithText(AppPickerField, 'Job title'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bursar').last);
+    await tester.pumpAndSettle();
+
+    expect(picker(tester, 'Staff type').valueText, 'Teaching');
+  });
 }

@@ -777,10 +777,10 @@ window.HANDBOOK = {
         },
         {
           id: 'team-c1', kind: 'create', title: 'Add a staff member', target: 'rpc create_staff',
-          trigger: 'Staffs → **+** or **Add staff member** → names, job title, contact and optional personal details → Save staff member.',
+          trigger: 'Staffs → **+** or **Add staff member** → names, job title and staff type, contact and optional personal details → Save staff member.',
           touches: ['rpc create_staff', '~insert staff', '~insert staff_private_details'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
-          steps: ['Writes the staff profile and its private details row in one transaction, leaving the staff number to the database.', 'Also saves the optional middle name, gender, date of birth, home address and residence state/LGA. Empty text is stored as null.', 'Stores the job title label; “Other staff” is stored as “Staff”.', 'Teacher is `teaching`; every other job title is `non_teaching`.', 'Saving opens the new person’s page; there is no login until they are invited.'],
+          steps: ['Writes the staff profile and its private details row in one transaction, leaving the staff number to the database.', 'Also saves the optional middle name, gender, date of birth, home address and residence state/LGA. Empty text is stored as null.', 'Stores the job title label; “Other staff” is stored as “Staff”.', 'The job title fills **Staff type** in until they pick one: Teacher starts on Teaching, every other job title on Non-teaching. A picked type stays when the job title changes, so an admin or a principal who also teaches is saved as `teaching`.', 'Saving opens the new person’s page; there is no login until they are invited.'],
           refusals: [
             { when: 'Blank first or last name', code: '23514', text: 'The form asks for both names before Save works.' },
             { when: 'Not a leader', code: '42501', text: '“Only the owner, admins, the principal and vice principals can add staff.”' },

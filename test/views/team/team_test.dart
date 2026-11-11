@@ -7,6 +7,7 @@ import 'package:hamrash_admin/api/models/team/staff_filter.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/api/models/team/staff_page.dart';
 import 'package:hamrash_admin/api/models/team/staff_private_details.dart';
+import 'package:hamrash_admin/api/models/team/staff_type_option.dart';
 import 'package:hamrash_admin/api/models/team/invite_code.dart';
 import 'package:hamrash_admin/api/services/supabase_services/supabase_refusal.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
@@ -706,6 +707,74 @@ void main() {
 
       expect(service.createdJobTitle, 'Teacher');
       expect(service.createdStaffType, 'teaching');
+    });
+
+    test('the staff type starts from the job title', () async {
+      final (model, _) = await form();
+
+      model.pickJobTitle(StaffJobTitleOption.teacher);
+      expect(model.staffType, StaffTypeOption.teaching);
+
+      model.pickJobTitle(StaffJobTitleOption.bursar);
+      expect(model.staffType, StaffTypeOption.nonTeaching);
+    });
+
+    test('an admin who teaches is saved as teaching staff', () async {
+      final (model, service) = await form();
+      model.firstName.text = 'Ngozi';
+      model.lastName.text = 'Eze';
+      model.pickJobTitle(StaffJobTitleOption.admin);
+      expect(model.staffType, StaffTypeOption.nonTeaching);
+
+      model.pickStaffType(StaffTypeOption.teaching);
+      await model.save();
+
+      expect(service.createdJobTitle, 'Admin');
+      expect(service.createdStaffType, 'teaching');
+    });
+
+    test('a picked staff type survives a later job title change', () async {
+      final (model, service) = await form();
+      model.firstName.text = 'Chinedu';
+      model.lastName.text = 'Obi';
+      model.pickJobTitle(StaffJobTitleOption.teacher);
+      model.pickStaffType(StaffTypeOption.nonTeaching);
+
+      model.pickJobTitle(StaffJobTitleOption.principal);
+      expect(model.staffType, StaffTypeOption.nonTeaching);
+
+      await model.save();
+      expect(service.createdStaffType, 'non_teaching');
+    });
+
+    test(
+      'a staff type is needed to save, and the job title gives one',
+      () async {
+        final (model, _) = await form();
+        model.firstName.text = 'Chinedu';
+        model.lastName.text = 'Obi';
+
+        expect(model.staffType, isNull);
+        expect(model.canSave, isFalse);
+
+        model.pickJobTitle(StaffJobTitleOption.otherStaff);
+        expect(model.staffType, isNotNull);
+        expect(model.canSave, isTrue);
+      },
+    );
+
+    test('save and add another keeps the job title and staff type', () async {
+      final (model, _) = await form();
+      model.firstName.text = 'Chinedu';
+      model.lastName.text = 'Obi';
+      model.pickJobTitle(StaffJobTitleOption.admin);
+      model.pickStaffType(StaffTypeOption.teaching);
+
+      await model.save();
+      model.clearForAnother();
+
+      expect(model.jobTitle, StaffJobTitleOption.admin);
+      expect(model.staffType, StaffTypeOption.teaching);
     });
 
     test('save and add another keeps the job title', () async {

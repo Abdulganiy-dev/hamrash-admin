@@ -1,31 +1,48 @@
 import 'package:hamrash_admin/api/models/organization_models/organization_member.dart';
+import 'package:hamrash_admin/api/models/team/staff_type_option.dart';
 
 /// What the school calls a staff member's job. The form offers these six
 /// and stores [jobTitle] in `staff.job_title`; "Other staff" is stored as
 /// plain "Staff".
 ///
-/// `staff_type` is `teaching` only for [teacher]; the database asks for a
-/// type and the job title is all the form knows.
+/// [staffType] is only the default the Add Staff form starts from: a teacher
+/// is `teaching`, every other job title is `non_teaching`. The person's own
+/// pick wins, since a principal or an admin may also teach.
 enum StaffJobTitleOption {
-  teacher('Teacher', 'Teacher', 'teaching', OrganizationMemberRole.teacher),
-  bursar('Bursar', 'Bursar', 'non_teaching', OrganizationMemberRole.bursar),
+  teacher(
+    'Teacher',
+    'Teacher',
+    StaffTypeOption.teaching,
+    OrganizationMemberRole.teacher,
+  ),
+  bursar(
+    'Bursar',
+    'Bursar',
+    StaffTypeOption.nonTeaching,
+    OrganizationMemberRole.bursar,
+  ),
   vicePrincipal(
     'Vice principal',
     'Vice principal',
-    'non_teaching',
+    StaffTypeOption.nonTeaching,
     OrganizationMemberRole.vicePrincipal,
   ),
   principal(
     'Principal',
     'Principal',
-    'non_teaching',
+    StaffTypeOption.nonTeaching,
     OrganizationMemberRole.principal,
   ),
-  admin('Admin', 'Admin', 'non_teaching', OrganizationMemberRole.admin),
+  admin(
+    'Admin',
+    'Admin',
+    StaffTypeOption.nonTeaching,
+    OrganizationMemberRole.admin,
+  ),
   otherStaff(
     'Other staff',
     'Staff',
-    'non_teaching',
+    StaffTypeOption.nonTeaching,
     OrganizationMemberRole.staff,
   );
 
@@ -42,8 +59,8 @@ enum StaffJobTitleOption {
   /// What goes in `staff.job_title`.
   final String jobTitle;
 
-  /// `teaching` or `non_teaching`, the values `staff_type` accepts.
-  final String staffType;
+  /// The staff type this job title starts the form on.
+  final StaffTypeOption staffType;
 
   /// The login role this job title usually gets, before the viewer's tier
   /// is taken into account.
