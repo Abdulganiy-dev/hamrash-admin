@@ -373,7 +373,7 @@ class StudentDetailScreen extends StatelessWidget {
       leading: _ParentCircle(parent: parent, fill: tintFill, ink: tintInk),
       tiles: [
         AppSheetTile(
-          label: '${model.phoneLabel(parent.phone)}',
+          label: model.phoneLabel(parent.phone),
           icon: AppIcons.phone,
           onTap: () => launch(Uri(scheme: 'tel', path: parent.phone)),
         ),

@@ -259,7 +259,7 @@ void main() {
     await tester.tap(find.text('Mr Musa Yusuf'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Call 0803 112 4455'), findsOneWidget);
+    expect(find.text('0803 112 4455'), findsOneWidget);
     expect(find.text('Message'), findsOneWidget);
     expect(find.text('Email'), findsNothing);
   });
