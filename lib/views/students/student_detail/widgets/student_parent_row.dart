@@ -4,10 +4,11 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_person_photo.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 
-/// A 68 row for the Parents card: a 40 initials circle, the name over
+/// A 68 row for the Parents card: a 40 circle (their photo, or initials), the name over
 /// "Mother · Primary contact" (or their number), and a chevron when the row
 /// opens the parent's actions.
 class StudentParentRow extends StatelessWidget {
@@ -53,16 +54,23 @@ class StudentParentRow extends StatelessWidget {
       height: rowHeight,
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(color: tint.fill, shape: BoxShape.circle),
-            child: AppText(
-              parent.initials,
-              style: AppTypography.body.copyWith(
-                fontWeight: FontWeight.w800,
-                color: tint.foreground,
+          AppPersonPhoto(
+            url: parent.photoUrl,
+            size: 40,
+            fallback: Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: tint.fill,
+                shape: BoxShape.circle,
+              ),
+              child: AppText(
+                parent.initials,
+                style: AppTypography.body.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: tint.foreground,
+                ),
               ),
             ),
           ),

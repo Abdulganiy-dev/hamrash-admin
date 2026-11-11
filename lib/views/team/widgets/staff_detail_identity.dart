@@ -5,6 +5,7 @@ import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/utils/phone_format.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_person_photo.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -101,20 +102,22 @@ class StaffDetailIdentity extends StatelessWidget {
           dimension: avatarSize,
           child: CustomPaint(
             foregroundPainter: _pending ? const _DashedCircleRing() : null,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: tint.fill,
-                shape: BoxShape.circle,
-              ),
-              child: AppText(
-                _initials,
-                style: AppTypography.heading(
-                  26,
-                  lineHeight: 32,
-                ).copyWith(fontWeight: FontWeight.w800, color: tint.foreground),
+            child: AppPersonPhoto(
+              url: member.photoUrl,
+              size: avatarSize,
+              fallback: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: tint.fill,
+                  shape: BoxShape.circle,
+                ),
+                child: AppText(
+                  _initials,
+                  style: AppTypography.heading(26, lineHeight: 32).copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: tint.foreground,
+                  ),
+                ),
               ),
             ),
           ),

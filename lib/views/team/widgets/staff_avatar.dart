@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
+import 'package:hamrash_admin/core/widgets/app_person_photo.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 
 /// A staff member's initials in a 44 circle, as 9.3 draws them:
@@ -88,16 +89,20 @@ class StaffAvatar extends StatelessWidget {
       dimension: size,
       child: CustomPaint(
         foregroundPainter: pending ? const _DashedAvatarRing() : null,
-        child: Container(
-          alignment: Alignment.center,
-          decoration: BoxDecoration(color: tint.fill, shape: BoxShape.circle),
-          child: AppText(
-            _initials,
-            style: AppTypography.title.copyWith(
-              fontSize: 15,
-              height: 20 / 15,
-              fontWeight: FontWeight.w800,
-              color: tint.foreground,
+        child: AppPersonPhoto(
+          url: person.photoUrl,
+          size: size,
+          fallback: Container(
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: tint.fill, shape: BoxShape.circle),
+            child: AppText(
+              _initials,
+              style: AppTypography.title.copyWith(
+                fontSize: 15,
+                height: 20 / 15,
+                fontWeight: FontWeight.w800,
+                color: tint.foreground,
+              ),
             ),
           ),
         ),
