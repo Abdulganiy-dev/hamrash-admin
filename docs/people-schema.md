@@ -135,6 +135,18 @@ final result = await supabase.rpc('list_students', params: {
 - **Order** (`class`): section, class, arm in their set order, students with no arm last, then last name, first name, id. `name`: last name, first name, id. Keyset paging with an opaque cursor, like `list_staff`; start again with null when a filter, the search or the sort changes. Bad cursors, sorts or a null school are refused (`22023`).
 - **Search** is `LIKE` on the lowercased name and admission number, each word must match. No new indexes: the existing `students_org_name_idx`, placement, `arm_subjects`, `student_subjects` and `teaching_assignments` keys cover the joins. If a school ever has tens of thousands of students, enable `pg_trgm` and index the same expression.
 
+### Moving a student *(migration 38)*
+`move_student_to_arm(p_student_id, p_arm_id)` moves the student's placement in the **current** session to another arm and, in the same transaction, deletes the student's optional `student_subjects` rows for that session that the new arm does not offer as optional (`arm_subjects.is_compulsory = false`). It returns how many were deleted. A plain `UPDATE` of `student_placements.arm_id` is still allowed to leaders, but it leaves choices behind, because `student_subjects` is only checked on insert.
+
+It runs as the caller, so only leaders can use it. Refusals are readable: no current session, not placed this session, the same arm, a switched-off arm or section (`P0001`), and a student or arm from another school, or a caller who can't move students (`42501`). A closed session is refused by the existing placement trigger.
+
+```dart
+final dropped = await supabase.rpc('move_student_to_arm', params: {
+  'p_student_id': studentId,
+  'p_arm_id': armId,
+}) as int;
+```
+
 ### `students`: profile
 | Column | Notes |
 |--------|-------|

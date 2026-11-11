@@ -13,7 +13,9 @@ import 'package:hamrash_admin/views/people/people_filter_options.dart';
 import 'package:hamrash_admin/views/people/students_view_model.dart';
 import 'package:hamrash_admin/views/people/widgets/student_filter_sheet.dart';
 import 'package:hamrash_admin/views/people/widgets/students_content.dart';
+import 'package:hamrash_admin/api/models/students/student_summary.dart';
 import 'package:hamrash_admin/views/students/add_student/add_student_screen.dart';
+import 'package:hamrash_admin/views/students/student_detail/student_detail_screen.dart';
 import 'package:hamrash_admin/views/team/team_screen.dart';
 import 'package:hamrash_admin/views/team/team_view_model.dart';
 import 'package:stacked/stacked.dart';
@@ -51,8 +53,8 @@ class PeopleScreen extends StatelessWidget {
                 : _studentActions(context, model),
             body: _Body(
               model: model,
-              onOpenStudent: (_) =>
-                  AppToast.show('Student profiles are coming soon'),
+              onOpenStudent: (student) =>
+                  _openStudent(context, model.students, student),
               onAddStudent: model.students.canAdd
                   ? () => _addStudent(context, model.students)
                   : null,
@@ -156,6 +158,19 @@ class PeopleScreen extends StatelessWidget {
       ),
   ];
 
+  /// 9.12 · A student's page. It pops `true` when something was saved or the
+  /// student was removed, so the list reloads.
+  Future<void> _openStudent(
+    BuildContext context,
+    StudentsViewModel model,
+    StudentSummary student,
+  ) async {
+    final changed = await NavigationService.animatedNavigation<bool>(
+      screen: StudentDetailScreen(school: model.school, studentId: student.id),
+    );
+    if (changed == true) await model.refresh().catchError((_) {});
+  }
+
   Future<void> _addStudent(
     BuildContext context,
     StudentsViewModel model,
@@ -176,7 +191,7 @@ class _Body extends StatelessWidget {
   });
 
   final PeopleViewModel model;
-  final ValueChanged<Object> onOpenStudent;
+  final ValueChanged<StudentSummary> onOpenStudent;
   final VoidCallback? onAddStudent;
   final VoidCallback? onAddStaff;
 
@@ -192,7 +207,7 @@ class _Body extends StatelessWidget {
         ? TeamContent(model: team!, onAdd: onAddStaff)
         : StudentsContent(
             model: model.students,
-            onOpen: onOpenStudent.call,
+            onOpen: onOpenStudent,
             onAdd: onAddStudent,
           );
 

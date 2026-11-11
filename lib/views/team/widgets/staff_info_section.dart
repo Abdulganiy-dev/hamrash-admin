@@ -234,6 +234,7 @@ class StaffTeachingRow extends StatelessWidget {
     required this.caption,
     required this.value,
     this.onTap,
+    this.showChevron = true,
   });
 
   final IconData icon;
@@ -247,6 +248,10 @@ class StaffTeachingRow extends StatelessWidget {
   final String value;
 
   final VoidCallback? onTap;
+
+  /// The chevron that says the row opens something. A read-only page leaves
+  /// it off.
+  final bool showChevron;
 
   static const double rowHeight = 64;
   static const double tileSize = 36;
@@ -297,12 +302,14 @@ class StaffTeachingRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
-            const AppIcon(
-              AppIcons.chevronRight,
-              size: 18,
-              color: AppPalette.stone400,
-            ),
+            if (showChevron) ...[
+              const SizedBox(width: AppSpacing.sm),
+              const AppIcon(
+                AppIcons.chevronRight,
+                size: 18,
+                color: AppPalette.stone400,
+              ),
+            ],
           ],
         ),
       ),

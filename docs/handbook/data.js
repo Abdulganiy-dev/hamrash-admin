@@ -9,8 +9,8 @@
 window.HANDBOOK = {
   meta: {
     updated: '2026-11-11',
-    migrationsInRepo: 37, // highest migration number in supabase/migrations/
-    migrationsLive: 35, // highest one applied to the live project (ccvyhbyrtobdsecqvhcr)
+    migrationsInRepo: 38, // highest migration number in supabase/migrations/
+    migrationsLive: 38, // highest one applied to the live project (ccvyhbyrtobdsecqvhcr)
   },
 
   // Screens exported from Paper (file “Hamrash”, page “Hmarash Admin”) into screens/.
@@ -935,9 +935,109 @@ window.HANDBOOK = {
           trigger: 'Opening the People tab (its Students side), applying or removing a filter in the filter sheet, scrolling near the end of the list, pull to refresh, and after a student is registered.',
           touches: ['rpc list_students (students, student_placements, class_arms, classes, sections, arm_subjects, student_subjects, teaching_assignments, staff)'],
           who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal', 'Bursar'], note: 'Security invoker: RLS decides (staff read students, migration 03). The school is also scoped by `p_organization_id`, so someone outside it gets nothing. Only leaders see the add button; the bursar reads the list only.' },
-          steps: ['One page of 30 per call, keyset-paged like `list_staff`: `p_cursor` is the previous `next_cursor`, `total` is everyone matching every filter, and `groups` gives the student count of each arm for the whole filtered set so headers stay right while the rest loads.', 'Filters run before the page is cut: search (name or admission number, each word must match), class, arm, subject, status (the app sends Active by default) and sort (`class`: sections, classes, arms in their set order with students that have no arm last; `name`).', 'The class is the student’s placement in the current session (`student_placements`). **Subject**: a student takes it when the arm they sit in offers it (`arm_subjects`) and it is compulsory there, or they have an optional row in `student_subjects` for the session. Compulsory subjects are not in `student_subjects`.', 'With a subject filter every row carries the subject and the **teacher of that subject in the student’s own arm** (the `teaching_assignments` row for session, arm and subject; one per triple, so the teacher differs by arm). `teacher` is null when nobody is assigned: the app says “No teacher assigned yet”.', 'Nobody is listed twice: a placement is one per student per session, the subject is matched with EXISTS and the teacher join is on the assignment’s primary key.', 'Changing any filter, the search or the sort starts again from page 1; a stale or wrong-sort cursor is refused with 22023.', 'Tapping a student does nothing yet: student profiles are not built.'],
+          steps: ['One page of 30 per call, keyset-paged like `list_staff`: `p_cursor` is the previous `next_cursor`, `total` is everyone matching every filter, and `groups` gives the student count of each arm for the whole filtered set so headers stay right while the rest loads.', 'Filters run before the page is cut: search (name or admission number, each word must match), class, arm, subject, status (the app sends Active by default) and sort (`class`: sections, classes, arms in their set order with students that have no arm last; `name`).', 'The class is the student’s placement in the current session (`student_placements`). **Subject**: a student takes it when the arm they sit in offers it (`arm_subjects`) and it is compulsory there, or they have an optional row in `student_subjects` for the session. Compulsory subjects are not in `student_subjects`.', 'With a subject filter every row carries the subject and the **teacher of that subject in the student’s own arm** (the `teaching_assignments` row for session, arm and subject; one per triple, so the teacher differs by arm). `teacher` is null when nobody is assigned: the app says “No teacher assigned yet”.', 'Nobody is listed twice: a placement is one per student per session, the subject is matched with EXISTS and the teacher join is on the assignment’s primary key.', 'Changing any filter, the search or the sort starts again from page 1; a stale or wrong-sort cursor is refused with 22023.', 'Tapping a student opens their page; it pops `true` when something was saved so this list reloads.'],
           refusals: [{ when: 'A bad cursor, sort or no school', code: '22023', text: '“This page cursor is not valid for this list. Load the list again from the start” and similar.' }],
           sources: ['student_service.dart:listStudentsPage', 'students_view_model.dart:load · loadMore', 'student_filter_sheet.dart', 'migration 36'],
+        },
+        {
+          id: 'stu-r3', kind: 'read', title: 'Read one student (their page)', target: 'select students + parents + placement',
+          trigger: 'Tapping a student on the People tab, pull to refresh, and after any change on the page.',
+          touches: ['students (+ student_private_details, organization_members for the login)', 'student_parents + parents (+ parent_private_details email)', 'academic_sessions (current)', 'student_placements → class_arms → classes', 'arm_subjects + subjects', 'student_subjects', 'class_teachers + staff (the lead)'],
+          who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'], some: ['Bursar'], note: 'RLS decides. A bursar reads the student, parents and class but not the private details or the login (they come back empty), so the page stops at Details.' },
+          steps: ['The student row with its login and private details embedded, the parent links, and the current session read at once; then, when they have a placement, the arm’s subjects, their optional choices and the arm’s class teachers read at once.', 'Parents list the primary contact first, then by name. The lead class teacher is the `is_lead` row.', '“Withdrawn on 10 Nov 2026” reads `students.updated_at`: the record keeps no separate date for its status, so this is the closest date it has (a later edit moves it).'],
+          sources: ['student_service.dart:getStudent', 'student_detail_view_model.dart:load', 'migration 03 · 04 · 06 · 07'],
+        },
+        {
+          id: 'stu-u1', kind: 'update', title: 'Change a student’s details or status', target: 'rpc update_student',
+          trigger: 'A student page → **Change** (Details) or ⋯ → Change details; Change status → pick a status → Mark as {status}.',
+          touches: ['rpc update_student', '~update students', '~update student_private_details'],
+          who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
+          steps: ['`update_student` takes the whole record, so the app sends every field back with only the changed ones different (the admission number, photo and status are unchanged by Change details).', 'Status is active, graduated, transferred or withdrawn. A student who isn’t active comes off class lists (the list filters on status), keeps their results and parents, and can’t be invited.'],
+          refusals: [{ when: 'Not a leader', code: '42501', text: '“Student record not found, or you can’t edit it.”' }],
+          sources: ['student_service.dart:updateStudentDetails · setStudentStatus', 'migration 07'],
+        },
+        {
+          id: 'stu-u2', kind: 'update', title: 'Move a student to another arm', target: 'rpc move_student_to_arm',
+          trigger: 'A student page → Class and arm (or ⋯ → Move to another arm) → pick an arm of their class → Move to {arm}.',
+          touches: ['rpc move_student_to_arm', '~update student_placements.arm_id', '~delete student_subjects (choices the new arm doesn’t offer)'],
+          who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
+          steps: ['Moves the placement in the current session and removes the optional subject choices the new arm doesn’t offer as optional, in one transaction; returns how many were removed, which the app says (“Moved. 1 optional subject dropped”).', 'The sheet lists the arms of the student’s own class with this session’s headcount and lead teacher (class arms, `student_placements` count and `class_teachers`, filtered to the session). Scores already recorded stay with the old arm.'],
+          refusals: [
+            { when: 'No current session, no placement, the same arm, a switched-off arm or section', code: 'P0001', text: 'Each has its own message, e.g. “They are already in that arm”.' },
+            { when: 'Another school’s student or arm, or not a leader', code: '42501', text: '“Student not found, or you can’t move them” / “That class arm wasn’t found at this school”.' },
+          ],
+          sources: ['student_service.dart:moveToArm', 'student_detail_view_model.dart:moveToArm', 'migration 38'],
+        },
+        {
+          id: 'stu-u3', kind: 'update', title: 'Change a student’s optional subjects', target: 'insert · delete student_subjects',
+          trigger: 'A student page → Subjects (or ⋯ → Change optional subjects) → tick the ones they take → Save changes.',
+          touches: ['~insert student_subjects', '~delete student_subjects'],
+          who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
+          steps: ['Adds the newly ticked subjects first, then takes off the unticked ones, so a refused add leaves what they had.', 'The sheet shows what the arm offers: compulsory ones are included for everyone, only optional ones are ticked.'],
+          refusals: [{ when: 'The arm doesn’t offer it, or it is compulsory there', code: '23514', text: '“The student isn’t placed that session in an arm that offers this subject” / “This subject is compulsory…”.' }],
+          sources: ['student_service.dart:setOptionalSubjects', 'migration 06'],
+        },
+        {
+          id: 'stu-c2', kind: 'create', title: 'Give a student a login, cancel it, suspend or restore it', target: 'rpc invite_student · organization_members',
+          trigger: 'A student page → Access → Hamrash Student (Not on app) to invite; Cancel invite, Suspend access or Restore access once there is a login.',
+          touches: ['rpc invite_student', '~insert organization_members (invited, role student)', '~update students.member_id', '~delete / update organization_members'],
+          who: { yes: ['Owner', 'Admin'], some: ['Principal', 'Vice principal'], note: 'Leaders can issue the code (`invite_student`); only the owner and admins cancel an invite or suspend and restore (the same rule as staff logins).' },
+          steps: ['Makes an invited student membership with an 8-character code; the app shows R4TB-8KXW and the message to send (“Open the Hamrash student app, sign in with Apple or Google…”). Hamrash never sends it.', 'Cancel deletes the unclaimed membership (the student record stays); suspend and restore set the membership’s status.'],
+          refusals: [{ when: 'The student isn’t active', code: 'P0001', text: '“Only active students can be given a login”.' }],
+          sources: ['student_service.dart:inviteStudent · cancelInvite · setSuspended', 'migration 03 · 28'],
+        },
+        {
+          id: 'stu-d1', kind: 'delete', title: 'Remove a student', target: 'delete students',
+          trigger: 'A student page → Access → Remove student (or ⋯) → confirm. Only for a mistake: the confirm offers “Change status instead”.',
+          touches: ['delete students', '~cascades placement, subject choices, private details, parent links', '~trigger removes or suspends the login'],
+          who: { yes: ['Owner', 'Admin'] },
+          steps: ['Removes the record and its class place and subjects. Parents stay with any other children. A login stops working (migration 28).'],
+          refusals: [{ when: 'Not an owner or admin', code: 'RLS · 0 rows', text: '“Only the owner and admins can do this.”' }],
+          sources: ['student_service.dart:removeStudent', 'migration 03 · 28'],
+        },
+        {
+          id: 'par-r1', kind: 'read', title: 'Read one parent (their page)', target: 'select parents + student_parents',
+          trigger: 'A student page → a parent → **View profile**; pull to refresh and after any change on the page.',
+          touches: ['parents (+ parent_private_details, organization_members for the login)', 'student_parents → students → student_placements → class_arms → classes', 'academic_sessions (current)'],
+          who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'], some: ['Bursar'], note: 'RLS decides (leaders and the bursar read parents and their details). A bursar’s page has no Access card.' },
+          steps: ['The parent row with their login and private details embedded, their links with each child, and the current session are read at once.', 'Children list the primary contact first, then by name; the arm shown is the child’s in the current session (“JSS 1B · Primary contact”).', 'The hero reads “Parent of 2 · Pharmacist”; the pill is where their login has got to.'],
+          sources: ['student_service.dart:getParent', 'parent_detail_view_model.dart:load', 'migration 03 · 07'],
+        },
+        {
+          id: 'par-u1', kind: 'update', title: 'Change a parent’s details', target: 'rpc update_parent',
+          trigger: 'A parent page → **Change** (Details) → Save changes.',
+          touches: ['rpc update_parent', '~update parents', '~update parent_private_details'],
+          who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
+          steps: ['Title, name, phone, email, occupation and home address, the same fields as a new parent in the Add student flow. `update_parent` takes the whole record, so the photo, second phone and active flag are sent back unchanged.'],
+          refusals: [{ when: 'The phone belongs to another parent', code: '23505', text: '“A parent with this phone number is already at the school.”' }],
+          sources: ['student_service.dart:updateParentDetails', 'migration 07'],
+        },
+        {
+          id: 'par-c1', kind: 'create', title: 'Give a parent a login, cancel it, suspend or restore it', target: 'rpc invite_parent · organization_members',
+          trigger: 'A parent page → Access → Hamrash Student (Not on app) to invite; Cancel invite, Suspend access or Restore access once there is a login.',
+          touches: ['rpc invite_parent', '~insert organization_members (invited, role parent)', '~update parents.member_id', '~delete / update organization_members'],
+          who: { yes: ['Owner', 'Admin'], some: ['Principal', 'Vice principal'], note: 'Leaders can issue the code; only the owner and admins cancel an invite or suspend and restore, as for staff and students.' },
+          steps: ['Parents and students share the family app, so the card reads “Hamrash Student” and the message says to open the Hamrash student app. The code is shown as R4TB-8KXW and shared by the person; Hamrash never sends it.'],
+          refusals: [{ when: 'The parent record is inactive', code: 'P0001', text: '“This parent record is inactive”.' }],
+          sources: ['student_service.dart:inviteParent · cancelInvite · setSuspended', 'migration 03 · 28'],
+        },
+        {
+          id: 'par-d1', kind: 'delete', title: 'Remove a parent', target: 'delete parents',
+          trigger: 'A parent page → Access → Remove parent → confirm. Only for a mistake.',
+          touches: ['delete parents', '~cascades parent_private_details and student_parents', '~trigger removes or suspends the login'],
+          who: { yes: ['Owner', 'Admin'] },
+          steps: ['Removes the parent record, their links to their children and their login. The children stay at the school.'],
+          refusals: [{ when: 'Not an owner or admin', code: 'RLS · 0 rows', text: '“Only the owner and admins can do this.”' }],
+          sources: ['student_service.dart:removeParent', 'migration 03 · 28'],
+        },
+        {
+          id: 'stu-p1', kind: 'update', title: 'Add, change or unlink a parent', target: 'rpc create_parent · student_parents',
+          trigger: 'A student page → Parents → **Add** (find by phone, then link or create), or a parent → Change relationship / Unlink.',
+          touches: ['rpc create_parent (a parent not yet at the school)', '~insert · update · delete student_parents'],
+          who: { yes: ['Owner', 'Admin', 'Principal', 'Vice principal'] },
+          steps: ['The sheet is the Add student flow’s own Add a parent sheet (same phone search, “Found” row, new parent form with its optional photo and the same required fields), driven by that flow’s view model; it starts with the student’s existing parents so one of them shows as “already added”. What it adds is then saved: a found parent is linked with the relationship picked (their title suggests one); a new one is created by `create_parent` (with the uploaded photo id and url) and linked.', 'A student’s first parent is the primary contact. Unlinking the primary hands the role to the next parent, which the confirm says; the parent stays at the school.'],
+          refusals: [{ when: 'Already linked', code: '23505', text: '“They are already linked to this student.”' }],
+          sources: ['student_service.dart:linkParent · createAndLinkParent · setParentRelationship · unlinkParent', 'migration 03 · 07'],
         },
         {
           id: 'stu-r1', kind: 'read', title: 'Find a parent by phone', target: 'select parents + student_parents → students',
@@ -1138,8 +1238,9 @@ window.HANDBOOK = {
     { n: 33, title: 'Reorder score columns', text: '`reorder_score_columns`: one set of score columns (the school’s, or one section’s) in its complete new order, written as `sort_order` 1..n in one UPDATE after locking the set, with readable refusals checked before the write.' },
     { n: 34, title: 'Grade ranges and per-section grading', text: '`grade_boundaries.max_percent` (backfilled per set; stops if any start is a decimal); whole-number ranges that must cover 0 to 100 (deferred trigger); percentages rounded before grading; grade rows written only through `set_grade_scale`, `apply_grade_system`, `copy_section_grading` and `remove_section_grade_scale` (security definer); `create_standard_grading` writes `max_percent`; `grading_problems` reports a legacy set that doesn’t cover 0 to 100. **The app must be updated before it is applied.**' },
     { n: 35, title: 'Another role for someone on the app', text: '`add_member_role`: copies an active staff membership into a new active row with another role (same school, Clerk id and joined date, no claim code). Invite tiers of migration 17, school members only, never owner; readable refusals for invites, suspended logins, exited staff and roles they already hold. `staff.member_id` is unchanged.' },
-    { n: 36, title: 'Student list in pages', text: '`list_students`: one page of the school’s students with search, class, arm, subject and status filters, the filtered total and each arm’s count, keyset-paged like `list_staff`. A subject filter returns each student with that subject and the teacher assigned to it in their own arm (`teaching_assignments`); compulsory subjects come from `arm_subjects`, optional ones from `student_subjects`. Security invoker, no new indexes. Not applied yet.' },
-    { n: 37, title: 'Staff list filtered by what they teach', text: '`list_staff` gains `p_subject_id`, `p_class_id`, `p_section_id` and `p_session_id` (same assignment must match all), and returns each row’s matching `teaching` entries (subject, class, arm). It replaces the migration 30 signature (drop and create); the old calls keep working since the new parameters default to null. Not applied yet.' },
+    { n: 36, title: 'Student list in pages', text: '`list_students`: one page of the school’s students with search, class, arm, subject and status filters, the filtered total and each arm’s count, keyset-paged like `list_staff`. A subject filter returns each student with that subject and the teacher assigned to it in their own arm (`teaching_assignments`); compulsory subjects come from `arm_subjects`, optional ones from `student_subjects`. Security invoker, no new indexes.' },
+    { n: 37, title: 'Staff list filtered by what they teach', text: '`list_staff` gains `p_subject_id`, `p_class_id`, `p_section_id` and `p_session_id` (same assignment must match all), and returns each row’s matching `teaching` entries (subject, class, arm). It replaces the migration 30 signature (drop and create); the old calls keep working since the new parameters default to null.' },
+    { n: 38, title: 'Move a student to another arm', text: '`move_student_to_arm`: moves the student’s placement in the current session and, in the same transaction, drops the optional subject choices the new arm doesn’t offer as optional (they would otherwise be left on an arm that doesn’t teach them). Returns how many were dropped. Security invoker (leaders only), readable refusals.' },
   ],
 
   // ────────────────────────────────────────────────────────────────────

@@ -149,7 +149,7 @@ class AddStudentViewModel extends BaseViewModel {
     TeachingCatalog? catalog,
     DateTime? today,
   }) : _students = students ?? locator<StudentService>(),
-       _subjects = subjects ?? locator<SubjectService>(),
+       _subjectsOverride = subjects,
        _imagesOverride = images,
        _picker = picker ?? ImagePicker(),
        catalog =
@@ -161,7 +161,11 @@ class AddStudentViewModel extends BaseViewModel {
 
   final MemberSchool school;
   final StudentService _students;
-  final SubjectService _subjects;
+  final SubjectService? _subjectsOverride;
+
+  /// Resolved when first used, so the Add a parent sheet can be driven by
+  /// this model without the subject service.
+  SubjectService get _subjects => _subjectsOverride ?? locator<SubjectService>();
   final ImageService? _imagesOverride;
   final ImagePicker _picker;
   final DateTime _today;

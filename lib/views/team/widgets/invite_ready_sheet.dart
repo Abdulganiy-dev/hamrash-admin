@@ -18,13 +18,19 @@ class InviteReadySheet extends StatelessWidget {
   const InviteReadySheet({
     super.key,
     required this.firstName,
-    required this.role,
+    this.role,
+    this.caption,
     required this.code,
     required this.message,
-  });
+  }) : assert(role != null || caption != null, 'Give a role or a caption.');
 
   final String firstName;
-  final OrganizationMemberRole role;
+
+  /// The role the invite gives. Its name captions the code.
+  final OrganizationMemberRole? role;
+
+  /// Captions the code when there is no role to name (a student's invite).
+  final String? caption;
 
   /// Raw 8 characters: `K7M2QX9P`.
   final String code;
@@ -44,7 +50,7 @@ class InviteReadySheet extends StatelessWidget {
         children: [
           InviteCodeDisplay(
             code: code,
-            caption: 'Invite code · ${role.teamLabel}',
+            caption: caption ?? 'Invite code · ${role!.teamLabel}',
           ),
           const SizedBox(height: AppSpacing.md),
           AppText(

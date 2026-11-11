@@ -32,6 +32,9 @@ abstract final class AppIcons {
   static const columns3 = LucideIcons.columns3;
   static const copy = LucideIcons.copy;
   static const ellipsis = LucideIcons.ellipsis;
+  static const droplet = LucideIcons.droplet;
+  static const dna = LucideIcons.dna;
+  static const heartPulse = LucideIcons.heartPulse;
   static const eye = LucideIcons.eye;
   static const eyeOff = LucideIcons.eyeOff;
   static const flag = LucideIcons.flag;
