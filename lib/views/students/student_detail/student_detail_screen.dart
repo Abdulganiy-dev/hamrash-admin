@@ -12,6 +12,7 @@ import 'package:hamrash_admin/core/widgets/animated_section_content.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
+import 'package:hamrash_admin/core/widgets/app_person_photo.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
 import 'package:hamrash_admin/core/widgets/app_section_card.dart';
@@ -372,7 +373,7 @@ class StudentDetailScreen extends StatelessWidget {
       leading: _ParentCircle(parent: parent, fill: tintFill, ink: tintInk),
       tiles: [
         AppSheetTile(
-          label: 'Call ${model.phoneLabel(parent.phone)}',
+          label: '${model.phoneLabel(parent.phone)}',
           icon: AppIcons.phone,
           onTap: () => launch(Uri(scheme: 'tel', path: parent.phone)),
         ),
@@ -853,16 +854,20 @@ class _ParentCircle extends StatelessWidget {
   final Color ink;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: 44,
-    height: 44,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(color: fill, shape: BoxShape.circle),
-    child: AppText(
-      parent.initials,
-      style: AppTypography.subtitle.copyWith(
-        fontWeight: FontWeight.w800,
-        color: ink,
+  Widget build(BuildContext context) => AppPersonPhoto(
+    url: parent.photoUrl,
+    size: 44,
+    fallback: Container(
+      width: 44,
+      height: 44,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: fill, shape: BoxShape.circle),
+      child: AppText(
+        parent.initials,
+        style: AppTypography.subtitle.copyWith(
+          fontWeight: FontWeight.w800,
+          color: ink,
+        ),
       ),
     ),
   );
