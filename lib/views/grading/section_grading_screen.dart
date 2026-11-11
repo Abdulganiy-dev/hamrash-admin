@@ -9,6 +9,7 @@ import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
@@ -320,7 +321,7 @@ class _InheritedSetup extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      AppSectionHeader(
+      AppSectionCard(
         title: 'Score columns',
         trailing: AppText(
           grading.marksLabel,
@@ -331,43 +332,38 @@ class _InheritedSetup extends StatelessWidget {
             color: LightColors.primaryPrimaryText,
           ),
         ),
-      ),
-      const SizedBox(height: 12),
-      AppCard(
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-        child: Column(
-          children: [
-            for (final (i, column) in grading.columns.indexed) ...[
-              if (i > 0) const AppDivider(),
-              SizedBox(
-                height: 48,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: AppText(
-                        column.name,
-                        style: AppTypography.subtitle.copyWith(
-                          fontSize: 15,
-                          color: LightColors.textStrong,
-                        ),
+        dividerIndent: 16,
+        dividerEndIndent: 16,
+        children: [
+          for (final column in grading.columns)
+            SizedBox(
+              height: 48,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: AppText(
+                      column.name,
+                      style: AppTypography.subtitle.copyWith(
+                        fontSize: 15,
+                        color: LightColors.textStrong,
                       ),
                     ),
-                    AppText(
-                      column.outOf,
-                      style: AppTypography.body.copyWith(
-                        fontSize: 14,
-                        color: LightColors.textBody,
-                      ),
+                  ),
+                  AppText(
+                    column.outOf,
+                    style: AppTypography.body.copyWith(
+                      fontSize: 14,
+                      color: LightColors.textBody,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ],
-        ),
+            ),
+        ],
       ),
       const SizedBox(height: 24),
-      AppSectionHeader(
+      AppSection(
         title: 'Grades',
         trailing: AppText(
           grading.gradeSystem == null
@@ -381,9 +377,8 @@ class _InheritedSetup extends StatelessWidget {
             color: LightColors.primaryPrimaryText,
           ),
         ),
+        child: GradeRangeBar(grading: grading),
       ),
-      const SizedBox(height: 12),
-      GradeRangeBar(grading: grading),
       const SizedBox(height: 10),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),

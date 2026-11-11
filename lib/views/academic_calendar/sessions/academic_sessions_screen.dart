@@ -4,10 +4,10 @@ import 'package:hamrash_admin/api/models/organization_models/member_school.dart'
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
@@ -119,13 +119,17 @@ class _List extends StatelessWidget {
       onRefresh: model.refresh,
       children: [
         if (current != null) ...[
-          const AppSectionHeader(title: 'Current session'),
-          const SizedBox(height: 12),
-          CurrentSessionCard(session: current, onTap: () => onOpen(current)),
+          AppSection(
+            title: 'Current session',
+            child: CurrentSessionCard(
+              session: current,
+              onTap: () => onOpen(current),
+            ),
+          ),
           const SizedBox(height: 24),
         ],
         if (others.isNotEmpty) ...[
-          AppSectionHeader(
+          AppSection(
             title: current == null ? 'Sessions' : 'Other sessions',
             trailing: AppText(
               others.length == 1 ? '1 session' : '${others.length} sessions',
@@ -134,18 +138,22 @@ class _List extends StatelessWidget {
                 color: AppPalette.stone500,
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          for (final session in others) ...[
-            AppListRow(
-              title: session.name,
-              subtitle:
-                  '${sessionDates(session.dates)} · ${session.terms.length} terms',
-              badge: _badge(model.statusOf(session)),
-              onTap: () => onOpen(session),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final session in others) ...[
+                  AppListRow(
+                    title: session.name,
+                    subtitle:
+                        '${sessionDates(session.dates)} · ${session.terms.length} terms',
+                    badge: _badge(model.statusOf(session)),
+                    onTap: () => onOpen(session),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ],
             ),
-            const SizedBox(height: 12),
-          ],
+          ),
         ],
       ],
     );

@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/students/student_summary.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
-import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/animated_section_content.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
-import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_spinner.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -120,7 +118,7 @@ class _ListState extends State<_List> {
               children: [
                 for (final (index, group) in model.groups.indexed) ...[
                   if (index > 0) const SizedBox(height: AppSpacing.md),
-                  AppSectionHeader(
+                  AppSectionCard(
                     title: group.title,
                     trailing: AppText(
                       group.countLabel,
@@ -129,28 +127,19 @@ class _ListState extends State<_List> {
                         color: LightColors.textMuted,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.ms),
-                  AppCard(
                     padding: const EdgeInsets.symmetric(
                       vertical: AppSpacing.xs + AppSpacing.xxs,
                     ),
-                    child: ClipRRect(
-                      borderRadius: AppRadius.brCard,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          for (final (row, student) in group.students.indexed) ...[
-                            if (row > 0) const AppDivider(indent: 72),
-                            _StudentRow(
-                              student: student,
-                              subtitle: model.subtitleFor(student),
-                              onTap: () => widget.onOpen(student),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
+                    dividerIndent: 72,
+                    dividerEndIndent: 16,
+                    children: [
+                      for (final student in group.students)
+                        _StudentRow(
+                          student: student,
+                          subtitle: model.subtitleFor(student),
+                          onTap: () => widget.onOpen(student),
+                        ),
+                    ],
                   ),
                 ],
               ],

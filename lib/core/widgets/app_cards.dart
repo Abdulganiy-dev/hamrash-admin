@@ -47,11 +47,13 @@ class AppShadows {
 
 /// White card that sits flat on the linen page (card study B2).
 ///
-/// Holds content only: put a section title above it with [AppSectionHeader]
-/// and any action button below it, outside the card.
+/// Holds content only. For a titled section use `AppSectionCard` (or
+/// `AppSection` when the content isn't a card): it sets the header-to-card
+/// gap, 12 without an action and 0 with one, so don't add a spacer yourself.
+/// Any action button below the card goes outside it.
 ///
 /// ```dart
-/// AppSectionHeader(
+/// AppSectionCard(
 ///   title: 'Your classes',
 ///   action: AppSectionAction(
 ///     label: 'See all',
@@ -59,9 +61,8 @@ class AppShadows {
 ///     semanticLabel: 'See all classes',
 ///     onPressed: _openClasses,
 ///   ),
-/// ),
-/// const SizedBox(height: AppSpacing.ms),
-/// AppCard(child: ...),
+///   children: [...],
+/// )
 /// ```
 class AppCard extends StatelessWidget {
   const AppCard({

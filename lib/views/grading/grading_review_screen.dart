@@ -8,12 +8,12 @@ import 'package:hamrash_admin/api/models/grading/section_grading.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_keyboard_bar.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
@@ -201,7 +201,7 @@ class _ReviewViewState extends State<_ReviewView> {
           ),
         ),
         const SizedBox(height: 24),
-        AppSectionHeader(
+        AppSection(
           title: 'Score columns',
           caption: grading.marksLabel,
           action: widget.model.canChange
@@ -211,14 +211,13 @@ class _ReviewViewState extends State<_ReviewView> {
                   onPressed: () => widget.actions.openColumns(context),
                 )
               : null,
-        ),
-        // const SizedBox(height: 12),
-        ColumnContributionBar(
-          columns: grading.columns,
-          totalMarks: grading.totalMarks,
+          child: ColumnContributionBar(
+            columns: grading.columns,
+            totalMarks: grading.totalMarks,
+          ),
         ),
         const SizedBox(height: 24),
-        AppSectionHeader(
+        AppSection(
           title: 'Grades',
           caption:
               '${grading.gradeSystem?.label ?? 'Custom'}, '
@@ -230,9 +229,8 @@ class _ReviewViewState extends State<_ReviewView> {
                   onPressed: () => widget.actions.openGrades(context),
                 )
               : null,
+          child: _MarkedGradeBar(grading: grading, percent: review.percent),
         ),
-        // const SizedBox(height: 12),
-        _MarkedGradeBar(grading: grading, percent: review.percent),
         const SizedBox(height: 24),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),

@@ -7,10 +7,10 @@ import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_search_field.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_segmented_control.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
@@ -137,29 +137,29 @@ class _Overview extends StatelessWidget {
         ] else ...[
           AppSearchField(hintText: 'Search subjects', onChanged: model.search),
           const SizedBox(height: 16),
-          AppSectionHeader(
+          AppSection(
             title:
                 subjects.length == 1
                     ? '1 subject'
                     : '${subjects.length} subjects',
             caption: model.query.trim().isEmpty ? 'in report-card order' : null,
+            child:
+                subjects.isEmpty
+                    ? AppEmptyState(
+                      icon: AppIcons.search,
+                      compact: true,
+                      title: 'No subject matches "${model.query.trim()}"',
+                    )
+                    : SubjectListCard(
+                      subjects: subjects,
+                      detailsOf: model.usageOf,
+                      onTap:
+                          model.canChange
+                              ? (subject) =>
+                                  actions.editSubject(context, subject)
+                              : null,
+                    ),
           ),
-          const SizedBox(height: 10),
-          if (subjects.isEmpty)
-            AppEmptyState(
-              icon: AppIcons.search,
-              compact: true,
-              title: 'No subject matches "${model.query.trim()}"',
-            )
-          else
-            SubjectListCard(
-              subjects: subjects,
-              detailsOf: model.usageOf,
-              onTap:
-                  model.canChange
-                      ? (subject) => actions.editSubject(context, subject)
-                      : null,
-            ),
         ],
         const SizedBox(height: 24),
       ],

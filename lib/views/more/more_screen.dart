@@ -3,9 +3,9 @@ import 'package:hamrash_admin/api/models/organization_models/member_school.dart'
 import 'package:hamrash_admin/api/models/organization_models/school_area.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/core/widgets/load_error_view.dart';
@@ -75,17 +75,18 @@ class MoreScreen extends StatelessWidget {
                     onSwitch: onSwitchSchool,
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  AppSectionHeader(title: model.areasTitle),
-                  const SizedBox(height: AppSpacing.ms),
-                  if (model.error != null)
-                    LoadErrorView(onRetry: model.load)
-                  else if (model.loading)
-                    const SchoolAreaGridSkeleton()
-                  else
-                    SchoolAreaGrid(
-                      model: model,
-                      onOpen: (area) => _open(context, model, area),
-                    ),
+                  AppSection(
+                    title: model.areasTitle,
+                    child:
+                        model.error != null
+                            ? LoadErrorView(onRetry: model.load)
+                            : model.loading
+                            ? const SchoolAreaGridSkeleton()
+                            : SchoolAreaGrid(
+                              model: model,
+                              onOpen: (area) => _open(context, model, area),
+                            ),
+                  ),
                   const SizedBox(height: AppSpacing.lg),
                   MoreAccountCard(onSignOut: onSignOut),
                   SizedBox(height: AppSpacing.xl),

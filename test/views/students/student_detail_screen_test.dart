@@ -12,7 +12,7 @@ import 'package:hamrash_admin/views/students/student_detail/widgets/move_arm_she
 import 'package:hamrash_admin/views/students/student_detail/widgets/optional_subjects_sheet.dart';
 import 'package:hamrash_admin/views/students/student_detail/widgets/student_parent_row.dart';
 import 'package:hamrash_admin/views/team/widgets/access_card.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_info_rows.dart';
 
 import 'student_detail_fakes.dart';
 

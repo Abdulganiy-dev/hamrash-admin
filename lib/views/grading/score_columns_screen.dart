@@ -7,11 +7,10 @@ import 'package:hamrash_admin/core/bottomSheets/app_confirm_sheet.dart';
 import 'package:hamrash_admin/core/bottomSheets/app_sheet.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
-import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
@@ -149,7 +148,7 @@ class _Columns extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 24),
-      AppSectionHeader(
+      AppSectionCard(
         title: 'Columns',
         action: model.canChange
             ? AppSectionAction(
@@ -158,25 +157,20 @@ class _Columns extends StatelessWidget {
                 onPressed: () => actions.add(context),
               )
             : null,
-      ),
-      // const SizedBox(height: 12),
-      AppCard(
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-        child: Column(
-          children: [
-            for (final (i, column) in model.columns.indexed) ...[
-              if (i > 0) const AppDivider(),
-              _ColumnRow(
-                column: column,
-                position: i + 1,
-                share: model.grading.shareOf(column),
-                onTap: model.canChange
-                    ? () => actions.edit(context, column, i)
-                    : null,
-              ),
-            ],
-          ],
-        ),
+        dividerIndent: 16,
+        dividerEndIndent: 16,
+        children: [
+          for (final (i, column) in model.columns.indexed)
+            _ColumnRow(
+              column: column,
+              position: i + 1,
+              share: model.grading.shareOf(column),
+              onTap: model.canChange
+                  ? () => actions.edit(context, column, i)
+                  : null,
+            ),
+        ],
       ),
       const SizedBox(height: 16),
       if (model.canChange)
@@ -323,7 +317,7 @@ class _Inherited extends StatelessWidget {
             'its own copy to change them here.',
       ),
       const SizedBox(height: 24),
-      AppSectionHeader(
+      AppSectionCard(
         title: 'Score columns',
         trailing: AppText(
           model.grading.marksLabel,
@@ -334,40 +328,35 @@ class _Inherited extends StatelessWidget {
             color: LightColors.primaryPrimaryText,
           ),
         ),
-      ),
-      const SizedBox(height: 12),
-      AppCard(
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-        child: Column(
-          children: [
-            for (final (i, column) in model.columns.indexed) ...[
-              if (i > 0) const AppDivider(),
-              SizedBox(
-                height: 48,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: AppText(
-                        column.name,
-                        style: AppTypography.subtitle.copyWith(
-                          fontSize: 15,
-                          color: LightColors.textStrong,
-                        ),
+        dividerIndent: 16,
+        dividerEndIndent: 16,
+        children: [
+          for (final column in model.columns)
+            SizedBox(
+              height: 48,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: AppText(
+                      column.name,
+                      style: AppTypography.subtitle.copyWith(
+                        fontSize: 15,
+                        color: LightColors.textStrong,
                       ),
                     ),
-                    AppText(
-                      column.outOf,
-                      style: AppTypography.body.copyWith(
-                        fontSize: 14,
-                        color: LightColors.textBody,
-                      ),
+                  ),
+                  AppText(
+                    column.outOf,
+                    style: AppTypography.body.copyWith(
+                      fontSize: 14,
+                      color: LightColors.textBody,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ],
-        ),
+            ),
+        ],
       ),
       const SizedBox(height: 24),
       if (model.canChange)

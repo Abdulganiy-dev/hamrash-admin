@@ -5,9 +5,10 @@ import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_info_rows.dart';
 
 /// Where one app stands for one person. The words are the Access card's.
 enum AccessState {
@@ -97,32 +98,27 @@ class AccessCards extends StatelessWidget {
   static const double cardGap = AppSpacing.ms;
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      SizedBox(
-        height: StaffInfoSection.headerHeight,
-        child: Row(
-          children: [
-            Expanded(child: StaffSectionTitle(title)),
-            if (caption != null)
-              AppText(
-                caption!,
-                style: AppTypography.caption.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: LightColors.textMuted,
-                ),
-              ),
-          ],
-        ),
-      ),
-      const SizedBox(height: StaffInfoSection.headerGap),
-      for (final app in apps) ...[
-        AccessAppCard(app: app),
-        const SizedBox(height: cardGap),
+  Widget build(BuildContext context) => AppSection(
+    title: title,
+    trailing: caption == null
+        ? null
+        : AppText(
+            caption!,
+            style: AppTypography.caption.copyWith(
+              fontWeight: FontWeight.w600,
+              color: LightColors.textMuted,
+            ),
+          ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final app in apps) ...[
+          AccessAppCard(app: app),
+          const SizedBox(height: cardGap),
+        ],
+        if (actions.isNotEmpty) AccessActionsCard(actions: actions),
       ],
-      if (actions.isNotEmpty) AccessActionsCard(actions: actions),
-    ],
+    ),
   );
 }
 
@@ -134,7 +130,7 @@ class AccessAppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AppCard(
-    padding: StaffInfoSection.cardPadding,
+    padding: AppSectionCard.cardPadding,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -263,7 +259,7 @@ class AccessActionsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AppCard(
-    padding: StaffInfoSection.cardPadding,
+    padding: AppSectionCard.cardPadding,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

@@ -9,10 +9,10 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/widgets/app_alert_dialog.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
@@ -259,7 +259,7 @@ class _Ranges extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 24),
-        AppSectionHeader(
+        AppSection(
           title: 'Grades',
           action: model.canChange
               ? AppSectionAction(
@@ -268,23 +268,22 @@ class _Ranges extends StatelessWidget {
                   onPressed: () => actions.add(context, fromZero: gap != null),
                 )
               : null,
-        ),
-
-        GradingListCard(
-          rows: [
-            for (final grade in grading.grades)
-              GradingRow(
-                tile: grade.grade,
-                tone: grade.isPass
-                    ? GradingTileTone.pass
-                    : GradingTileTone.fail,
-                title: grading.rangeOf(grade),
-                details: grading.detailsOf(grade),
-                onTap: model.canChange && gap == null
-                    ? () => actions.edit(context, grade)
-                    : null,
-              ),
-          ],
+          child: GradingListCard(
+            rows: [
+              for (final grade in grading.grades)
+                GradingRow(
+                  tile: grade.grade,
+                  tone: grade.isPass
+                      ? GradingTileTone.pass
+                      : GradingTileTone.fail,
+                  title: grading.rangeOf(grade),
+                  details: grading.detailsOf(grade),
+                  onTap: model.canChange && gap == null
+                      ? () => actions.edit(context, grade)
+                      : null,
+                ),
+            ],
+          ),
         ),
         if (gap == null) ...[
           const SizedBox(height: 16),

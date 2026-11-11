@@ -23,7 +23,7 @@ import 'package:hamrash_admin/views/team/widgets/change_details_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/choice_list_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/role_picker_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_form_fields.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_info_rows.dart';
 import 'package:url_launcher_platform_interface/link.dart';
 import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
 
@@ -317,7 +317,7 @@ void main() {
     expect(find.text('Imo'), findsOneWidget);
 
     // Teaching staff get the card with the session and their two rows.
-    expect(find.widgetWithText(StaffSectionTitle, 'Teaching'), findsOneWidget);
+    expect(find.widgetWithText(AppSectionHeader, 'Teaching'), findsOneWidget);
     expect(find.text('Homeroom'), findsOneWidget);
     expect(find.text('Not assigned'), findsOneWidget);
     expect(find.text('Subjects · 0 this session'), findsOneWidget);
@@ -554,18 +554,23 @@ void main() {
     );
   });
 
-  testWidgets('the details header is 32 tall and Change is flush right', (
+  testWidgets('Change sits in the Details header, which touches the card', (
     tester,
   ) async {
     await pump(tester, _member(login: _login()));
 
-    final header = find.byKey(const ValueKey('details-header'));
-    expect(tester.getSize(header).height, 32);
-    final action = find.byType(AppSectionAction);
-    expect(
-      tester.getTopRight(action).dx,
-      closeTo(tester.getTopRight(header).dx, 0.5),
+    final header = find.ancestor(
+      of: find.text('Details'),
+      matching: find.byType(AppSectionHeader),
     );
+    final action = find.byType(AppSectionAction);
+    // The header carries the action's 44 tall tap box and no gap under it.
+    expect(tester.getSize(header).height, 44);
+    expect(
+      find.descendant(of: header, matching: find.byType(AppSectionAction)),
+      findsOneWidget,
+    );
+    expect(tester.getTopRight(action).dx, lessThanOrEqualTo(tester.getTopRight(header).dx));
   });
 
   testWidgets('rows are 52 tall inside the 16 gutter cards', (tester) async {

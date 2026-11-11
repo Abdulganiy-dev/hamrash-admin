@@ -10,11 +10,11 @@ import 'package:hamrash_admin/core/constants/radius_containers.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/animated_section_content.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -34,7 +34,7 @@ import 'package:hamrash_admin/views/students/student_detail/widgets/student_pare
 import 'package:hamrash_admin/views/students/student_detail/widgets/student_status_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/access_card.dart';
 import 'package:hamrash_admin/views/team/widgets/invite_ready_sheet.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_info_rows.dart';
 import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
 import 'package:stacked/stacked.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -519,8 +519,10 @@ class _Content extends StatelessWidget {
   Widget _classCard(BuildContext context) {
     final placement = _student.placement;
     final editable = model.canChangeClass && placement != null;
-    return StaffInfoSection(
+    return AppSectionCard(
       title: 'Class',
+      // 36 tile + 12 gap.
+      dividerIndent: StaffTeachingRow.tileSize + AppSpacing.ms,
       trailing: model.classCaption == null
           ? null
           : AppText(
@@ -530,7 +532,7 @@ class _Content extends StatelessWidget {
                 color: LightColors.textMuted,
               ),
             ),
-      rows: [
+      children: [
         StaffTeachingRow(
           key: const ValueKey('student-class'),
           icon: AppIcons.house,
@@ -562,8 +564,10 @@ class _Content extends StatelessWidget {
 
   Widget _parents(BuildContext context) {
     final parents = _student.parents;
-    return _Section(
+    return AppSectionCard(
       title: 'Parents',
+      // Dividers start where the text does: 40 picture + 12 gap.
+      dividerIndent: 52,
       action: model.canEdit && _student.isActive
           ? AppSectionAction(
               label: 'Add',
@@ -572,55 +576,51 @@ class _Content extends StatelessWidget {
               onPressed: () => StudentDetailScreen._addParent(context, model),
             )
           : null,
-      child: parents.isEmpty
-          ? SizedBox(
-              height: 56,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: AppText(
-                  'No parents yet',
-                  style: AppTypography.body.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: LightColors.textDisabled,
-                  ),
+      children: [
+        if (parents.isEmpty)
+          SizedBox(
+            height: 56,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: AppText(
+                'No parents yet',
+                style: AppTypography.body.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: LightColors.textDisabled,
                 ),
               ),
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final (index, parent) in parents.indexed) ...[
-                  if (index > 0) const AppDivider(indent: 0, endIndent: 0),
-                  StudentParentRow(
-                    key: ValueKey('parent-${parent.id}'),
-                    parent: parent,
-                    caption: parent.isPrimaryContact
-                        ? parent.caption
-                        : '${parent.relationship.label} · '
-                              '${model.phoneLabel(parent.phone)}',
-                    tint: StudentParentRow.tints[
-                        index % StudentParentRow.tints.length],
-                    onTap: model.canEdit
-                        ? () {
-                            final tint = StudentParentRow.tints[
-                                index % StudentParentRow.tints.length];
-                            StudentDetailScreen._openParent(
-                              context,
-                              model,
-                              parent,
-                              tint.fill,
-                              tint.foreground,
-                            );
-                          }
-                        : null,
-                  ),
-                ],
-              ],
             ),
+          )
+        else
+          for (final (index, parent) in parents.indexed)
+            StudentParentRow(
+              key: ValueKey('parent-${parent.id}'),
+              parent: parent,
+              caption: parent.isPrimaryContact
+                  ? parent.caption
+                  : '${parent.relationship.label} · '
+                        '${model.phoneLabel(parent.phone)}',
+              tint: StudentParentRow.tints[
+                  index % StudentParentRow.tints.length],
+              onTap: model.canEdit
+                  ? () {
+                      final tint = StudentParentRow.tints[
+                          index % StudentParentRow.tints.length];
+                      StudentDetailScreen._openParent(
+                        context,
+                        model,
+                        parent,
+                        tint.fill,
+                        tint.foreground,
+                      );
+                    }
+                  : null,
+            ),
+      ],
     );
   }
 
-  Widget _details(BuildContext context) => StaffInfoSection(
+  Widget _details(BuildContext context) => AppSectionCard(
     title: 'Details',
     action: model.canEdit
         ? AppSectionAction(
@@ -630,7 +630,7 @@ class _Content extends StatelessWidget {
             onPressed: () => StudentDetailScreen._changeDetails(context, model),
           )
         : null,
-    rows: [
+    children: [
       StaffInfoRow(
         icon: AppIcons.hash,
         label: 'Admission number',
@@ -655,7 +655,7 @@ class _Content extends StatelessWidget {
     ],
   );
 
-  Widget _personal() => StaffInfoSection(
+  Widget _personal() => AppSectionCard(
     title: 'Personal',
     trailing: Row(
       mainAxisSize: MainAxisSize.min,
@@ -671,7 +671,7 @@ class _Content extends StatelessWidget {
         ),
       ],
     ),
-    rows: [
+    children: [
       StaffInfoRow(
         icon: AppIcons.mapPin,
         label: 'State of origin',
@@ -764,22 +764,6 @@ class _Content extends StatelessWidget {
       ],
     );
   }
-}
-
-/// A titled section whose card holds free-form [child] content.
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child, this.action});
-
-  final String title;
-  final Widget child;
-  final AppSectionAction? action;
-
-  @override
-  Widget build(BuildContext context) => StaffInfoSection(
-    title: title,
-    action: action,
-    rows: [child],
-  );
 }
 
 /// 9.22 · The page of a student who has left: when, what it means, and a way

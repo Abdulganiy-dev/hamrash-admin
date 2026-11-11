@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/academic_calendar/academic_session.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:intl/intl.dart';
@@ -21,14 +21,11 @@ class LastSessionCard extends StatelessWidget {
   final VoidCallback onClose;
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget build(BuildContext context) => AppSectionCard(
+    title: 'Last session',
+    padding: const EdgeInsets.all(16),
     children: [
-      const AppSectionHeader(title: 'Last session'),
-      const SizedBox(height: 12),
-      AppCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
@@ -74,7 +71,6 @@ class LastSessionCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
     ],
   );
 }

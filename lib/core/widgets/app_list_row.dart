@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hamrash_admin/core/widgets/app_divider.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
@@ -212,13 +213,21 @@ class AppCompactList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shown = items.take(maxRows).toList();
+    final rows = Column(
+      children: [
+        for (var i = 0; i < shown.length; i++) ...[
+          if (i > 0) AppDivider(indent: shown[i].leading != null ? 68 : 16),
+          _CompactRow(item: shown[i]),
+        ],
+      ],
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (title != null) ...[
-          AppSectionHeader(
+        if (title != null)
+          AppSectionCard(
             title: title!,
             trailing:
                 headerTrailing == null
@@ -229,21 +238,16 @@ class AppCompactList extends StatelessWidget {
                       ),
                       child: headerTrailing!,
                     ),
-          ),
-          const SizedBox(height: AppSpacing.stack),
-        ],
-        AppCard(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(
+            padding: const EdgeInsets.symmetric(vertical: 4),
             children: [
-              for (var i = 0; i < shown.length; i++) ...[
-                if (i > 0)
-                  AppDivider(indent: shown[i].leading != null ? 68 : 16),
-                _CompactRow(item: shown[i]),
-              ],
+              rows,
             ],
+          )
+        else
+          AppCard(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: rows,
           ),
-        ),
         if (onViewAll != null)
           BouncyButton(
             onPressed: onViewAll,

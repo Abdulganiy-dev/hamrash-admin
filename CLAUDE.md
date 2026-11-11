@@ -25,6 +25,7 @@ Service → ViewModel → View. No repositories. Services in `lib/api/services/s
 - **Two stacked buttons (any kind, incl. text links) are 16px apart** (visible gap).
 - Tappable custom surfaces use `BouncyButton` (spring press + haptic), not a bare `GestureDetector`.
 - Buttons: page CTAs are flat (aubergine fill); gradients only on buttons inside sheets and alerts. Chips are flat tinted (no gradient, no check mark, no animation).
+- A title over a card is `AppSectionCard` (or `AppSection` for non-card content), never `AppSectionHeader` + a hand-written `SizedBox`: the gap is built in (12 without an action, 0 with an `AppSectionAction`).
 - Dividers inside cards/lists/sheets: `AppDivider` (faint colour, inset 16; staff list rows start at the text column). Card outer border stays `AppPalette.stone200`.
 - Icon + label groups use `AppIconLabel` (fixed icon slot, same optical alignment as the sign-in buttons).
 - Dates: `AppDateFormat`; Nigerian phones shown nationally (`PhoneFormat`), stored as saved.

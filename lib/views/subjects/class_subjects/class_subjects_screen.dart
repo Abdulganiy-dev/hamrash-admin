@@ -9,10 +9,10 @@ import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
 import 'package:hamrash_admin/core/constants/spacing_constants.dart';
 import 'package:hamrash_admin/core/widgets/app_badge.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_chip_row.dart';
 import 'package:hamrash_admin/core/widgets/app_empty_state.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -152,28 +152,26 @@ class _Body extends StatelessWidget {
                 : null,
           ),
         if (compulsory.isNotEmpty) ...[
-          AppSectionHeader(
+          AppSection(
             title: 'Compulsory',
             caption: '${compulsory.length} · every student takes these',
-          ),
-          const SizedBox(height: 10),
-          SubjectListCard(
-            subjects: compulsory,
-            trailingIcon: AppIcons.ellipsis,
-            onTap: onTap,
+            child: SubjectListCard(
+              subjects: compulsory,
+              trailingIcon: AppIcons.ellipsis,
+              onTap: onTap,
+            ),
           ),
           const SizedBox(height: 20),
         ],
         if (optional.isNotEmpty) ...[
-          AppSectionHeader(
+          AppSection(
             title: 'Optional',
             caption: '${optional.length} · only students who pick them',
-          ),
-          const SizedBox(height: 10),
-          SubjectListCard(
-            subjects: optional,
-            trailingIcon: AppIcons.ellipsis,
-            onTap: onTap,
+            child: SubjectListCard(
+              subjects: optional,
+              trailingIcon: AppIcons.ellipsis,
+              onTap: onTap,
+            ),
           ),
         ],
         const SizedBox(height: 24),

@@ -17,6 +17,7 @@ import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/animated_section_content.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
@@ -32,7 +33,7 @@ import 'package:hamrash_admin/views/team/widgets/role_picker_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/share_invite.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_access_section.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_detail_identity.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_info_rows.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_invite_code_field.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_status_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
@@ -195,9 +196,8 @@ class _Content extends StatelessWidget {
         : (origin) => shareInvite(model.currentShareMessage, origin: origin),
   );
 
-  Widget _details(BuildContext context) => StaffInfoSection(
+  Widget _details(BuildContext context) => AppSectionCard(
     title: 'Details',
-    headerKey: const ValueKey('details-header'),
     action: model.canEditDetails
         ? AppSectionAction(
             label: 'Change',
@@ -206,7 +206,7 @@ class _Content extends StatelessWidget {
             onPressed: () => _changeDetails(context),
           )
         : null,
-    rows: [
+    children: [
       StaffInfoRow(
         icon: AppIcons.hash,
         label: 'Staff number',
@@ -238,8 +238,10 @@ class _Content extends StatelessWidget {
 
   /// Where this person teaches this session. Both rows open the teaching
   /// sheet; a save refreshes the card.
-  Widget _teaching(BuildContext context) => StaffInfoSection(
+  Widget _teaching(BuildContext context) => AppSectionCard(
     title: 'Teaching',
+    // 36 tile + 12 gap.
+    dividerIndent: StaffTeachingRow.tileSize + AppSpacing.ms,
     trailing: model.teachingSession.isEmpty
         ? null
         : AppText(
@@ -249,7 +251,7 @@ class _Content extends StatelessWidget {
               color: LightColors.textMuted,
             ),
           ),
-    rows: [
+    children: [
       StaffTeachingRow(
         key: const ValueKey('teaching-homeroom'),
         icon: AppIcons.house,
@@ -272,7 +274,7 @@ class _Content extends StatelessWidget {
   );
 
   /// Private to leaders: the page is leaders-only, and the guard stays.
-  Widget _personal() => StaffInfoSection(
+  Widget _personal() => AppSectionCard(
     title: 'Personal',
     trailing: AppIconLabel(
       icon: AppIcons.lock,
@@ -286,7 +288,7 @@ class _Content extends StatelessWidget {
         color: LightColors.textMuted,
       ),
     ),
-    rows: [
+    children: [
       StaffInfoRow(
         icon: AppIcons.cake,
         // The cake's mass sits low in its box; lift it onto the label's line.

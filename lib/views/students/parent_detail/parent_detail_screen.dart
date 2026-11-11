@@ -14,6 +14,7 @@ import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_list_row.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
 import 'package:hamrash_admin/core/widgets/app_section_action.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/app_toast.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
@@ -26,7 +27,7 @@ import 'package:hamrash_admin/views/students/student_detail/student_detail_scree
 import 'package:hamrash_admin/views/team/widgets/access_card.dart';
 import 'package:hamrash_admin/views/team/widgets/invite_ready_sheet.dart';
 import 'package:hamrash_admin/views/team/widgets/staff_detail_status_pill.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
+import 'package:hamrash_admin/views/team/widgets/staff_info_rows.dart';
 import 'package:hamrash_admin/views/team/widgets/team_skeleton.dart';
 import 'package:hamrash_admin/api/models/team/staff_member.dart' show StaffAccess;
 import 'package:stacked/stacked.dart';
@@ -212,9 +213,11 @@ class _Content extends StatelessWidget {
     );
   }
 
-  Widget _children(BuildContext context) => StaffInfoSection(
+  Widget _children(BuildContext context) => AppSectionCard(
     title: 'Children',
-    rows: _parent.children.isEmpty
+    // Dividers start where the text does: 40 picture + 12 gap.
+    dividerIndent: 52,
+    children: _parent.children.isEmpty
         ? [
             SizedBox(
               height: 56,
@@ -247,7 +250,7 @@ class _Content extends StatelessWidget {
     if (changed == true) await model.refresh().catchError((_) {});
   }
 
-  Widget _details(BuildContext context) => StaffInfoSection(
+  Widget _details(BuildContext context) => AppSectionCard(
     title: 'Details',
     action: model.canEdit
         ? AppSectionAction(
@@ -257,7 +260,7 @@ class _Content extends StatelessWidget {
             onPressed: () => ParentDetailScreen._changeDetails(context, model),
           )
         : null,
-    rows: [
+    children: [
       StaffInfoRow(
         icon: AppIcons.phone,
         label: 'Phone',

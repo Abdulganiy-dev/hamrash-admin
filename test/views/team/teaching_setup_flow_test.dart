@@ -10,12 +10,12 @@ import 'package:hamrash_admin/api/models/team/teaching.dart';
 import 'package:hamrash_admin/api/services/supabase_services/class_structure_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/subject_service.dart';
 import 'package:hamrash_admin/api/services/supabase_services/team_service.dart';
+import 'package:hamrash_admin/core/widgets/app_cards.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/button/app_button_variants.dart';
 import 'package:hamrash_admin/core/widgets/pickers/app_picker_field.dart';
 import 'package:hamrash_admin/singleton_locator/locator.dart';
 import 'package:hamrash_admin/views/team/staff_detail/staff_detail_screen.dart';
-import 'package:hamrash_admin/views/team/widgets/staff_info_section.dart';
 
 class _FakeTeam implements TeamService {
   _FakeTeam(this.member);
@@ -263,7 +263,7 @@ void main() {
     ];
     await pump(tester, _staff());
 
-    expect(find.widgetWithText(StaffSectionTitle, 'Teaching'), findsOneWidget);
+    expect(find.widgetWithText(AppSectionHeader, 'Teaching'), findsOneWidget);
     expect(find.text('2026/27'), findsOneWidget);
     expect(find.text('Homeroom · Lead teacher'), findsOneWidget);
     expect(find.text('Subjects · 1 this session'), findsOneWidget);
@@ -273,7 +273,7 @@ void main() {
 
   testWidgets('a non-teaching record has no Teaching card', (tester) async {
     await pump(tester, _staff(staffType: 'non_teaching'));
-    expect(find.widgetWithText(StaffSectionTitle, 'Teaching'), findsNothing);
+    expect(find.widgetWithText(AppSectionHeader, 'Teaching'), findsNothing);
   });
 
   testWidgets('a non-teaching record has no teaching action', (tester) async {

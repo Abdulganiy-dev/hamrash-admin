@@ -4,10 +4,9 @@ import 'package:hamrash_admin/api/models/grading/section_grading.dart';
 import 'package:hamrash_admin/api/models/organization_models/member_school.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
-import 'package:hamrash_admin/core/widgets/app_divider.dart';
 import 'package:hamrash_admin/core/widgets/app_icons.dart';
 import 'package:hamrash_admin/core/widgets/app_refresh_scroll_view.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/default_scaffold.dart';
 import 'package:hamrash_admin/services/navigation_service.dart';
@@ -99,7 +98,7 @@ class _Sections extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 24),
-      AppSectionHeader(
+      AppSectionCard(
         title: 'Sections',
         trailing: AppText(
           '${model.setUpCount} of ${model.sectionCount} set up',
@@ -110,18 +109,13 @@ class _Sections extends StatelessWidget {
             color: LightColors.primaryPrimaryText,
           ),
         ),
-      ),
-      const SizedBox(height: 12),
-      AppCard(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(
-          children: [
-            for (final (i, grading) in model.sections.indexed) ...[
-              if (i > 0) const AppDivider(),
-              _SectionRow(grading: grading, model: model),
-            ],
-          ],
-        ),
+        dividerIndent: 16,
+        dividerEndIndent: 16,
+        children: [
+          for (final grading in model.sections)
+            _SectionRow(grading: grading, model: model),
+        ],
       ),
 
       const SizedBox(height: 24),

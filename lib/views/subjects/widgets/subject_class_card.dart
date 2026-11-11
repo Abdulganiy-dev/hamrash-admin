@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hamrash_admin/api/models/class_structure/class_structure.dart';
 import 'package:hamrash_admin/core/constants/app_colors.dart';
 import 'package:hamrash_admin/core/constants/app_typography.dart';
-import 'package:hamrash_admin/core/widgets/app_cards.dart';
+import 'package:hamrash_admin/core/widgets/app_section_card.dart';
 import 'package:hamrash_admin/core/widgets/app_text.dart';
 import 'package:hamrash_admin/core/widgets/button/bouncy_button.dart';
 import 'package:hamrash_admin/views/subjects/subjects_view_model.dart';
@@ -27,25 +27,19 @@ class SubjectClassCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppSectionHeader(
+        AppSectionCard(
           title: section.name,
           caption:
               classes.length == 1 ? '1 class' : '${classes.length} classes',
-        ),
-        const SizedBox(height: 10),
-        AppCard(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: Column(
-            children: [
-              for (var i = 0; i < classes.length; i++)
-                _Row(
-                  name: classes[i].name,
-                  summary: summaryOf(classes[i]),
-                  showDivider: i < classes.length - 1,
-                  onTap: () => onOpen(classes[i]),
-                ),
-            ],
-          ),
+          children: [
+            for (final schoolClass in classes)
+              _Row(
+                name: schoolClass.name,
+                summary: summaryOf(schoolClass),
+                onTap: () => onOpen(schoolClass),
+              ),
+          ],
         ),
       ],
     );
@@ -56,13 +50,11 @@ class _Row extends StatelessWidget {
   const _Row({
     required this.name,
     required this.summary,
-    required this.showDivider,
     required this.onTap,
   });
 
   final String name;
   final ClassSubjectsSummary summary;
-  final bool showDivider;
   final VoidCallback onTap;
 
   @override
@@ -72,12 +64,6 @@ class _Row extends StatelessWidget {
     child: Container(
       constraints: const BoxConstraints(minHeight: 56),
       padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        border:
-            showDivider
-                ? const Border(bottom: BorderSide(color: AppPalette.stone100))
-                : null,
-      ),
       child: Row(
         children: [
           Expanded(
